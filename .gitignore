@@ -1,0 +1,34 @@
+# Compiled
+__pycache__/
+*.py[cod]
+
+# Distrubution
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Extension
+*.so
+
+# Testing
+.tox
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+
+# Log
+*.log
+
+# Sphinx
+docs/_build/

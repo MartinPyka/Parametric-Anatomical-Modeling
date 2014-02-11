@@ -1,1 +1,1 @@
-# PAM - Parametric Anatomical Mapping in Blender
+# PAM - Parametric Anatomical Modeling in Blender

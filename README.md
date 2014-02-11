@@ -1,1 +1,1 @@
-# APM - Anatomical Parametric Mapping in Blender
+# PAM - Parametric Anatomical Mapping in Blender

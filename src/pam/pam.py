@@ -31,6 +31,7 @@ def computeUVScalingFactor(object):
     return np.mean(result)
 
 
+# TODO(SK): Quads into triangles (indices)
 def map3dPointToUV(object, object_uv, point):
     """Converts a given 3d-point into uv-coordinates,
     object for the 3d point and object_uv must have the same topology

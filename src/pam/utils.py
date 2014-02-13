@@ -1,6 +1,7 @@
 """Utils Module"""
 
 import logging
+import timeit
 
 import bpy
 
@@ -28,8 +29,9 @@ def log_initialize():
     level = log_level()
 
     formatter = logging.Formatter(
-        "%(asctime)s [%(levelname)s] (%(name)s:%(module)s:%(lineno)d) "
-        "%(message)s"
+        fmt="%(asctime)s [%(levelname)s] (%(module)s:%(lineno)d) "
+            "%(message)s",
+        datefmt="%Y-%m-%d, %H:%M:%S"
     )
 
     # Setting up loghandlers for stdout and file logging
@@ -59,3 +61,14 @@ def log_callback_properties_changed(self, context):
     logger = logging.getLogger(__package__)
     logger.handlers = []
     log_initialize()
+
+
+def profiling(func):
+    """Profiling functions in miliseconds"""
+    def wrapper(*args, **kwargs):
+        start_time = timeit.default_timer()
+        result = func(*args, **kwargs)
+        duration = (timeit.default_timer() - start_time) * 1000
+        logger.debug("%s in %d ms", func.__name__, duration)
+        return result
+    return wrapper

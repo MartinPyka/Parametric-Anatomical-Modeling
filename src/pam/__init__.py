@@ -5,6 +5,7 @@ import logging
 import bpy
 
 from . import gui
+from . import helper
 from . import utils
 
 logger = logging.getLogger(__name__)
@@ -30,8 +31,7 @@ def register():
     bpy.utils.register_class(gui.PAMPreferencesPane)
     utils.log_initialize()
 
-    # TODO(SK): Commented out until we actually have a class to register
-    # bpy.utils.register_module(__name__)
+    bpy.utils.register_module(__name__)
     logger.debug("Registering addon")
 
 

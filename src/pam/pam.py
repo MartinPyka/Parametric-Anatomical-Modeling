@@ -171,8 +171,21 @@ def computeMapping(layers, connections, distances, point):
 
     # go through all connection-elements
     for i in range(0, len(connections)):
+        # if normal mapping should be computed
+        if connections[i] == 0:
+            # compute the point on the next intermediate layer
+            if (i < (len(connections)-1)):
+                p3d_n = map3dPointTo3d(layers[i+1], layers[i+1], p3d[-1])
+            # or the last point before the synaptic layer
+            else:
+                # for euclidean distance
+                if distances[i] == 0:
+                    p3d_n = p3d[-1]
+                # for normal-uv or euclidean-uv mapping
+                elif (distances[i] == 1) | (distances[i] == 2):
+                    p3d_n = map3dPointTo3d(layers[i+1], layers[i+1], p3d[-1])
         # if both layers are topologically identical
-        if connections[i] == 1:
+        elif connections[i] == 1:
             # if this is not the last layer, compute the topological mapping
             if (i < (len(connections)-1)):            
                 p3d_n = map3dPointTo3d(layers[i], layers[i+1], p3d[-1])
@@ -191,8 +204,6 @@ def computeMapping(layers, connections, distances, point):
                 elif distances[i] == 2:
                     # compute the topologically corresponding point
                     p3d_n = map3dPointTo3d(layers[i], layers[i+1], p3d[-1])
-        else:
-            p3d_n = map3dPointTo3d(layers[i+1], layers[i+1], p3d[-1])
 
 
         # compute distance between both points, here according to the euclidean
@@ -208,7 +219,7 @@ def computeMapping(layers, connections, distances, point):
                 p3d_i = p3d_i[0]
                 # compute uv-coordintes for euclidean distance and topological mapping
                 p2d_i1 = map3dPointToUV(layers[i+1], layers[i+1], p3d[-1])
-                p2d_i2 = map3dPointToUV(layers[i], layers[i+1], p3d[-1])
+                p2d_i2 = map3dPointToUV(layers[i+1], layers[i+1], p3d_n)
                 # compute distances
                 d = d + (p3d[-1] - p3d_i).length  # distance in space between both layers based on euclidean distance
                 d = d + (p2d_i1 - p2d_i2).length * layers[i+1]['uv_scaling']  # distance on uv-level (incorporated with scaling parameter)
@@ -320,6 +331,8 @@ def initialize3D():
                 o['uv_scaling'] = computeUVScalingFactor(o)
 
 
+# TODO(MP): visualization procedures in separate module
+
 def setCursor(loc):
     """Just a more convenient way to set the location of the cursor"""
 
@@ -412,6 +425,7 @@ def test():
     
     t1 = bpy.data.objects['t1']
     t2 = bpy.data.objects['t2']
+    t201 = bpy.data.objects['t2.001']
     t3 = bpy.data.objects['t3']
     t4 = bpy.data.objects['t4']
     t5 = bpy.data.objects['t5']
@@ -419,7 +433,7 @@ def test():
     point, n, p = t1.closest_point_on_mesh(getCursor())
 	
 
-    p3, p2, d = computeMapping([t1, t2, t3, t4, t5], [1, 1, 1, 1], [0, 0, 0, 0], point)
+    p3, p2, d = computeMapping([t1, t2, t201, t3, t4, t5], [1, 0, 1, 1, 1], [0, 0, 0, 0, 0], point)
     print(p3)
     print(p2)
     print(d)
@@ -483,7 +497,7 @@ if __name__ == "__main__":
     ## Here the connectivity between two layers using an intermediate layer
     ##############################################################################################
 
-    # test() 
-    hippotest()
+    test() 
+    #hippotest()
        
 

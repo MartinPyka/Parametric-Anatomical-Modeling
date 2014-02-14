@@ -5,7 +5,7 @@ import math
 import numpy as np
 
 samples = 1000 # number of samples to compute connection probability
-
+vis_objects = 0
 debug_level = 0
 
 def computeUVScalingFactor(object):
@@ -140,6 +140,19 @@ def computeMapping(layers, connections, distances, point):
     connections         : list of values determining the type of layer-mapping
     distances           : list of values determining the calculation of the distances between layers
     point               : 3d vector for which the mapping should be calculated
+    
+    Return values
+    -----------------
+    p3d                 : 3d-vector of the neuron position on the last layer
+    p2d                 : 2d-vector of the neuron position on the UV map of the last layer
+    d                   : distance between neuron position on the first layer and last position before
+                          the synapse! This is not the distance to the p3d point! This is either the 
+                          distance to the 3d-position of the last but one layer or, in case
+                          euclidean-uv-distance was used, the distance to the position of the last
+                          layer determind by euclidean-distance. Functions, like computeConnectivity()
+                          add the distance to the synapse to value d in order to retrieve
+                          the complete distance from the pre- or post-synaptic neuron 
+                          to the synapse
     '''
     
     p3d = point
@@ -153,20 +166,27 @@ def computeMapping(layers, connections, distances, point):
         else:
             p3d_n = map3dPointTo3d(layers[i+1], layers[i+1], p3d)
 
-        # compute distance between both points            
+        # compute distance between both points, here according to the euclidean-uv-way
         if distances[i] == 1:
-            # determine closest point on second layer
-            p3d_i = layers[i+1].closest_point_on_mesh(p3d)
-            p3d_i = p3d_i[0]
-            visualizePoint(p3d_i)
-            # compute uv-coordintes for euclidean distance and topological mapping
-            p2d_i1 = map3dPointToUV(layers[i+1], layers[i+1], p3d)
-            p2d_i2 = map3dPointToUV(layers[i], layers[i+1], p3d)
-            # compute distances
-            d = d + (p3d - p3d_i).length  # distance in space between both layers based on euclidean distance
-            d = d + (p2d_i1 - p2d_i2).length * layers[i+1]['uv_scaling']  # distance on uv-level (incorporated with scaling parameter)
+            # if we are not on the last layer
+            if (i <= (len(connections)-1)):
+                # determine closest point on second layer
+                p3d_i = layers[i+1].closest_point_on_mesh(p3d)
+                p3d_i = p3d_i[0]
+                # compute uv-coordintes for euclidean distance and topological mapping
+                p2d_i1 = map3dPointToUV(layers[i+1], layers[i+1], p3d)
+                p2d_i2 = map3dPointToUV(layers[i], layers[i+1], p3d)
+                # compute distances
+                d = d + (p3d - p3d_i).length  # distance in space between both layers based on euclidean distance
+                d = d + (p2d_i1 - p2d_i2).length * layers[i+1]['uv_scaling']  # distance on uv-level (incorporated with scaling parameter)
+            else:   # if we are in the last layer
+                # determine closest point on second layer
+                p3d_i = layers[i+1].closest_point_on_mesh(p3d)
+                p3d_i = p3d_i[0]
+                d = d + (p3d - p3d_i).length  # distance in space between both layers based on euclidean distance
         else:
-            d = d + (p3d - p3d_n).length
+            if (i <= (len(connections)-1)):
+                d = d + (p3d - p3d_n).length
             
         # for the synaptic layer, compute the uv-coordinates
         if (i == (len(connections)-1)):
@@ -212,8 +232,11 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections, dis
                                                         distances[:(slayer-1):-1],
                                                         layers[-1].particle_systems[neuronset2].particles[j].location)
             
-            # determine connectivity probabiltiy and distance values
-            conn[i, j] = computeConnectivityProbability(pre_p2d, post_p2d, func, args)
+            # determine connectivity probabiltiy and distance values, incorporating the
+            # uv-scaling value
+            conn[i, j] = computeConnectivityProbability(pre_p2d * layers[slayer]['uv_scaling'], post_p2d * layers[slayer]['uv_scaling'], func, args)
+            
+            # depending on the value given in the distance-list for the synapse layer
             dist[i, j] = pre_d + post_d + (pre_p2d - post_p2d).length
      
     return conn, dist
@@ -273,25 +296,32 @@ def visualizePostNeurons(layer, neuronset, connectivity):
     layer       : post-synaptic layer 
     neuronset   : name of the particlesystem
     connectivity: connectivity-vector '''
-        
+    
+    global vis_objects
+    
     for i in range(0, len(connectivity)):
         if connectivity[i] > 0.7:
              bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location=layer.particle_systems[neuronset].particles[i].location, layers=(True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
              bpy.ops.transform.resize(value=(0.05, 0.05, 0.05))
-             bpy.context.selected_objects[0].name = 'visualization'
+             bpy.context.selected_objects[0].name = "visualization.%03d" % vis_objects
+             vis_objects = vis_objects + 1
              
 def visualizePoint(point):
     ''' visualizes a point in 3d by creating a small sphere '''
+    global vis_objects    
     bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location=point, layers=(True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
     bpy.ops.transform.resize(value=(0.05, 0.05, 0.05))
-    bpy.context.selected_objects[0].name = 'visualization'
+    bpy.context.selected_objects[0].name = "visualization.%03d" % vis_objects
+    vis_objects = vis_objects + 1
     
 def visualizeClean():
     ''' delete all visualization objects '''    
     # delete all previous spheres
+    global vis_objects    
     bpy.ops.object.select_all(action='DESELECT')
     bpy.ops.object.select_pattern(pattern="visualization*")
-    bpy.ops.object.delete(use_global=False)    
+    bpy.ops.object.delete(use_global=False)   
+    vis_objects = 0 
 
 dg = bpy.data.objects['DG_sg']
 ca3 = bpy.data.objects['CA3_sp']
@@ -320,7 +350,7 @@ print('Compute Connectivity for ca3 to ca3')
 #                                1, 0, 
 #                                connfunc_gauss, [3.0, 0.3, 2.3, 0.00])
 
-params = [3 , 0.05, 0, 0.00]
+params = [10., 3., 5., 0.00]
 
 c_ca3_ca3, d_ca3_ca3 = computeConnectivity([ca3, al_ca3, ca3],                     # layers involved in the connection
                                             'CA3_Pyramidal', 'CA3_Pyramidal',       # neuronsets involved
@@ -345,7 +375,7 @@ c_ca3_ca1, d_ca3_ca1 = computeConnectivity([ca3, al_ca3, ca1],                  
 ## the rest is just for visualization
 visualizeClean()
 
-particle = 20
+particle = 26
 
 setCursor(ca3.particle_systems['CA3_Pyramidal'].particles[particle].location)
 
@@ -354,17 +384,17 @@ setCursor(ca3.particle_systems['CA3_Pyramidal'].particles[particle].location)
 visualizePostNeurons(ca3, 'CA3_Pyramidal', c_ca3_ca3[particle])
 visualizePostNeurons(ca1, 'CA1_Pyramidal', c_ca3_ca1[particle])
 
-t1 = bpy.data.objects['t1']
-t2 = bpy.data.objects['t2']
-t3 = bpy.data.objects['t3']
-t4 = bpy.data.objects['t4']
-t5 = bpy.data.objects['t5']
-
-point = getCursor()
-
-p3, p2, d = computeMapping([t1, t2, t3, t4, t5], [1, 1, 1, 1], [0, 0, 0, 1], point)
-print(p3)
-print(p2)
-print(d)
-
-visualizePoint(p3)
+#t1 = bpy.data.objects['t1']
+#t2 = bpy.data.objects['t2']
+#t3 = bpy.data.objects['t3']
+#t4 = bpy.data.objects['t4']
+#t5 = bpy.data.objects['t5']
+#
+#point = getCursor()
+#
+#p3, p2, d = computeMapping([t1, t2, t3, t4, t5], [1, 1, 1, 1], [0, 0, 0, 1], point)
+#print(p3)
+#print(p2)
+#print(d)
+#
+#visualizePoint(p3)

@@ -4,10 +4,12 @@ import mathutils
 import math
 import numpy as np
 
+import pam_vis as pv
+
 # number of samples to compute connection probability
 samples = 1000
 debug_level = 0
-vis_objects = 0
+
 
 def computeUVScalingFactor(object):
     """computes the scaling factor between uv- and 3d-coordinates for a
@@ -84,7 +86,7 @@ def map3dPointTo3d(o1, o2, point):
     A1 = o1.data.vertices[o1.data.polygons[f].vertices[0]].co
     B1 = o1.data.vertices[o1.data.polygons[f].vertices[1]].co
     C1 = o1.data.vertices[o1.data.polygons[f].vertices[2]].co
-
+    
     # project the point on a 2d-surface and check, whether we are in the right triangle
     t1 = mathutils.Vector()
     t2 = mathutils.Vector((1.0, 0.0, 0.0))
@@ -107,7 +109,7 @@ def map3dPointTo3d(o1, o2, point):
         A1 = o1.data.vertices[o1.data.polygons[f].vertices[0]].co
         B1 = o1.data.vertices[o1.data.polygons[f].vertices[2]].co
         C1 = o1.data.vertices[o1.data.polygons[f].vertices[3]].co
-
+        
         A2 = o2.data.vertices[o2.data.polygons[f].vertices[0]].co
         B2 = o2.data.vertices[o2.data.polygons[f].vertices[2]].co
         C2 = o2.data.vertices[o2.data.polygons[f].vertices[3]].co
@@ -331,97 +333,10 @@ def initialize3D():
                 o['uv_scaling'] = computeUVScalingFactor(o)
 
 
-# TODO(MP): visualization procedures in separate module
-
-def setCursor(loc):
-    """Just a more convenient way to set the location of the cursor"""
-
-    bpy.data.screens['Default'].scene.cursor_location = loc
-
-
-def getCursor():
-    """Just returns the cursor location. A bit shorter to type ;)"""
-
-    return bpy.data.screens['Default'].scene.cursor_location
-
-
-def visualizePostNeurons(layer, neuronset, connectivity):
-    """visualizes the post-synaptic neurons that are connected with a given
-    neuron from the presynaptic layer
-    layer       : post-synaptic layer
-    neuronset   : name of the particlesystem
-    connectivity: connectivity-vector """
-    
-    global vis_objects
-    
-    for i in range(0, len(connectivity)):
-        if connectivity[i] > 0.7:
-             bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location=layer.particle_systems[neuronset].particles[i].location, layers=(True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
-             bpy.ops.transform.resize(value=(0.05, 0.05, 0.05))
-             bpy.context.selected_objects[0].name = "visualization.%03d" % vis_objects
-             vis_objects = vis_objects + 1
-             
-def visualizePoint(point):
-    """ visualizes a point in 3d by creating a small sphere """
-    global vis_objects    
-    bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location=point, layers=(True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
-    bpy.ops.transform.resize(value=(0.05, 0.05, 0.05))
-    bpy.context.selected_objects[0].name = "visualization.%03d" % vis_objects
-    vis_objects = vis_objects + 1
-    
-    
-def visualizePath(pointlist):
-    """ Create path for a given point list 
-    
-    This code is taken from the bTrace-Addon for Blender
-    http://blenderartists.org/forum/showthread.php?214872  """
-    
-    global vis_objects
-    
-     # trace the origins
-    tracer = bpy.data.curves.new('tracer','CURVE')
-    tracer.dimensions = '3D'
-    spline = tracer.splines.new('BEZIER')
-    spline.bezier_points.add(len(pointlist)-1)
-    curve = bpy.data.objects.new('curve',tracer)
-    bpy.context.scene.objects.link(curve)
-    
-    # render ready curve
-    tracer.resolution_u = 8
-    tracer.bevel_resolution = 8 # Set bevel resolution from Panel options
-    tracer.fill_mode = 'FULL'
-    tracer.bevel_depth = 0.01 # Set bevel depth from Panel options
-    
-    # move nodes to objects
-    for i in range(0, len(pointlist)):
-        p = spline.bezier_points[i]
-        p.co = pointlist[i]
-        p.handle_right_type='VECTOR'
-        p.handle_left_type='VECTOR'
-
-    bpy.context.scene.objects.active = curve
-    bpy.ops.object.mode_set()    
-    curve.name = "visualization.%03d" % vis_objects
-    
-    vis_objects = vis_objects + 1
-    
-    
-def visualizeClean():
-    """delete all visualization objects"""
-
-    # delete all previous spheres
-    global vis_objects    
-    bpy.ops.object.select_all(action='DESELECT')
-    bpy.ops.object.select_pattern(pattern="visualization*")
-    bpy.ops.object.delete(use_global=False)   
-    vis_objects = 0 
-
-
-
 def test():
     """ Just a routine to perform some tests """
     initialize3D()
-    visualizeClean()
+    pv.visualizeClean()
     
     t1 = bpy.data.objects['t1']
     t2 = bpy.data.objects['t2']
@@ -430,7 +345,7 @@ def test():
     t4 = bpy.data.objects['t4']
     t5 = bpy.data.objects['t5']
 	
-    point, n, p = t1.closest_point_on_mesh(getCursor())
+    point, n, p = t1.closest_point_on_mesh(pv.getCursor())
 	
 
     p3, p2, d = computeMapping([t1, t2, t201, t3, t4, t5], [1, 0, 1, 1, 1], [0, 0, 0, 0, 0], point)
@@ -438,7 +353,7 @@ def test():
     print(p2)
     print(d)
 	
-    visualizePath(p3)
+    pv.visualizePath(p3)
     
     
 def hippotest():
@@ -481,14 +396,14 @@ def hippotest():
 	#c_ca3_ca1 = computeConnectivity(ca3, 'CA3_Pyramidal', ca1, 'CA1_Pyramidal', al_ca3, 1, 0, connfunc_gauss, [3.0, 0.3, 2.3, 0.00])
     
 	## the rest is just for visualization
-    visualizeClean()
+    pv.visualizeClean()
     
     particle = 44
     
-    setCursor(ca3.particle_systems['CA3_Pyramidal'].particles[particle].location)
+    pv.setCursor(ca3.particle_systems['CA3_Pyramidal'].particles[particle].location)
     
-    visualizePostNeurons(ca3, 'CA3_Pyramidal', c_ca3_ca3[particle])
-    visualizePostNeurons(ca1, 'CA1_Pyramidal', c_ca3_ca1[particle])
+    pv.visualizePostNeurons(ca3, 'CA3_Pyramidal', c_ca3_ca3[particle])
+    pv.visualizePostNeurons(ca1, 'CA1_Pyramidal', c_ca3_ca1[particle])
     
 
 if __name__ == "__main__":

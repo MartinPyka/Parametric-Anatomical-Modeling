@@ -1,6 +1,7 @@
 """Temporary Helper Module"""
 
 import logging
+import math
 
 import bpy
 
@@ -40,40 +41,13 @@ class PAMTestOperator(bpy.types.Operator):
     def execute(self, context):
         active_obj = context.active_object
 
-        x, y = uvpoint_from_origin_with_dist(active_obj, (0.3, 0.5), None)
+        raster = UVRaster(active_obj)
+        print(raster)
 
         return {'FINISHED'}
 
 
-# TODO(SK): missing docstring
-@utils.profiling
-def rasterize_uv(obj, resolution):
-    pass
-
-
-# TODO(SK): missing docstring
-# TODO(SK): needs implementation
-@utils.profiling
-def uvpoint_from_origin_with_dist(obj, origin, dist_func):
-    x_max, y_max = uv_bounds(obj)
-    x, y = origin
-
-    x_random = 0.0
-    y_random = 0.0
-
-    logger.debug(
-        "x: %f, y: %f, rx: %f, ry: %f, dist_func: %s",
-        x,
-        y,
-        x_random,
-        y_random,
-        dist_func
-    )
-
-    return None, None
-
-
-# TODO(SK): missing docstring
+# TODO(SK): docstring missing
 @utils.profiling
 def uv_bounds(obj):
     active_uv = obj.data.uv_layers.active
@@ -81,12 +55,94 @@ def uv_bounds(obj):
     if not hasattr(active_uv, "data"):
         raise Exception("%s has no uv data", obj)
 
-    x_values = [mesh.uv[0] for mesh in active_uv.data]
-    y_values = [mesh.uv[1] for mesh in active_uv.data]
+    u_values = [mesh.uv[0] for mesh in active_uv.data]
+    v_values = [mesh.uv[1] for mesh in active_uv.data]
+    u_max = max(u_values)
+    v_max = max(v_values)
+    logger.debug("max(u): %f, max(v): %f", u_max, v_max)
 
-    x_max = max(x_values)
-    y_max = max(y_values)
+    return u_max, v_max
 
-    logger.debug("max(x): %f, max(y): %f", x_max, y_max)
 
-    return x_max, y_max
+# TODO(SK): docstring missing
+@utils.profiling
+def dimension_raster(x, y, res):
+    minor = min(x, y)
+
+    dim1 = math.ceil(1.0 / res)
+    dim2 = math.ceil(minor / res)
+
+    if minor is y:
+        logger.debug("x: %d y: %d", dim1, dim2)
+        return dim1, dim2
+    else:
+        logger.debug("x: %d y: %d", dim2, dim1)
+        return dim2, dim1
+
+
+# TODO(SK): doctstring missing
+class UVRaster(object):
+    _obj = None
+    _list = []
+    _res = 0.0
+    __x = 0
+    __y = 0
+    _u = 0.0
+    _v = 0.0
+
+    def __init__(self, obj, res=0.01):
+        self._obj = obj
+        self._res = res
+
+        u, v = uv_bounds(obj)
+        x, y = dimension_raster(u, v, res)
+
+        self._u = u
+        self._v = v
+        self._x = x
+        self._y = y
+
+        self._list = [[[] for j in range(y)] for i in range(x)]
+        print(self._list)
+
+    def __del__(self):
+        del self._list
+        self._obj = None
+
+    def __repr__(self):
+        return "<UVRaster dim: %s len: %d, res: %f, max uv: %s>" % \
+               (self.dim, self.res, len(self), self.uv)
+
+    # TODO(SK): needs implementation
+    def __str__(self):
+        return self.__repr__()
+
+    def __getitem__(self, index):
+        if len(index) is not 2:
+            raise Exception("Index has to be a two-dimensional tuple")
+
+        x, y = index
+        if x >= self._x | y >= self._y:
+            raise IndexError("Index out of range for %s")
+
+        return self._list[x][y]
+
+    # TODO(SK): test! (bug!)
+    def __nonzero__(self):
+        return any([any(sublist) for sublist in self._list])
+
+    # TODO(SK): test! (bug!)
+    def __len__(self):
+        return sum([len(sublist) for sublist in self._list])
+
+    @property
+    def dim(self):
+        return self._x, self._y
+
+    @property
+    def res(self):
+        return self._res
+
+    @property
+    def uv(self):
+        return self._u, self._v

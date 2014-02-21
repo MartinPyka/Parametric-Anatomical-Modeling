@@ -157,7 +157,7 @@ class UVGrid(object):
         self._kernel = func
 
     # TODO(SK): missing docstring
-    def compute_kernel(self, u, v):
+    def compute_kernel(self, u, v, *args, **kwargs):
         pass
 
     def cell(self, u, v):

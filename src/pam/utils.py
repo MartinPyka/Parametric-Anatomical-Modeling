@@ -29,8 +29,8 @@ def log_initialize():
     level = log_level()
 
     formatter = logging.Formatter(
-        fmt="%(asctime)s [%(levelname)s] "
-            "[%(module)s:%(funcName)s:%(lineno)d]: %(message)s",
+        fmt="%(asctime)s [%(levelname)-8s] - "
+        "%(message)s (%(filename)s:%(funcName)s:%(lineno)s)",
         datefmt="%Y-%m-%d, %H:%M:%S"
     )
 

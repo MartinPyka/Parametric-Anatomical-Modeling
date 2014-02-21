@@ -79,3 +79,4 @@ class PAMMeasurementToolsPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         col = layout.column()
+        col.operator("pam.measure_mesh", "Measure mesh")

@@ -6,6 +6,7 @@ import bpy
 
 from . import gui
 from . import helper
+from . import measure
 from . import utils
 
 logger = logging.getLogger(__name__)

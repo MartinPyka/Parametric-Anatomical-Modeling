@@ -42,7 +42,6 @@ class PAMTestOperator(bpy.types.Operator):
         active_obj = context.active_object
 
         raster = UVRaster(active_obj)
-        print(raster)
 
         return {'FINISHED'}
 

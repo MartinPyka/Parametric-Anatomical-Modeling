@@ -55,13 +55,12 @@ def uv_bounds(obj):
     if not hasattr(active_uv, "data"):
         raise Exception("%s has no uv data", obj)
 
-    u_values = [mesh.uv[0] for mesh in active_uv.data]
-    v_values = [mesh.uv[1] for mesh in active_uv.data]
-    u_max = max(u_values)
-    v_max = max(v_values)
-    logger.debug("max(u): %f, max(v): %f", u_max, v_max)
+    u = max([mesh.uv[0] for mesh in active_uv.data])
+    v = max([mesh.uv[1] for mesh in active_uv.data])
 
-    return u_max, v_max
+    logger.debug("%s uv bounds (%f, %f)", obj, u, v)
+
+    return u, v
 
 
 # TODO(SK): docstring missing

@@ -53,3 +53,29 @@ class PAMPreferencesPane(bpy.types.AddonPreferences):
         col.prop(self, "log_directory", text="Directory")
         col.prop(self, "log_filename", text="Filename")
         col.prop(self, "log_level", text="Level")
+
+
+class PAMToolsPanel(bpy.types.Panel):
+    """A tools panel inheriting all neuronal modelling operations"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "PAM Tools"
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+
+
+class PAMMeasurementToolsPanel(bpy.types.Panel):
+    """A tools panel inheriting all measurment operations"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "PAM Measurement Tools"
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()

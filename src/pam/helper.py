@@ -2,6 +2,7 @@
 
 import logging
 import math
+import types
 
 import bpy
 
@@ -109,6 +110,8 @@ class UVGrid(object):
         for l in [self._objects, self._weights]:
             l = [[[] for j in range(col)] for i in range(row)]
 
+        self._kernel = None
+
     def __del__(self):
         del self._objects
         del self._weights
@@ -147,6 +150,10 @@ class UVGrid(object):
 
     @kernel.setter
     def kernel(self, func):
+        if not isinstance(func, types.FunctionType):
+            logger.error("kernel must be a function, %s is not", func)
+            raise Exception("kernel must be a function")
+
         self._kernel = func
 
     # TODO(SK): missing docstring

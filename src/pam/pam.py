@@ -4,6 +4,7 @@ import mathutils
 import math
 import numpy as np
 
+# import module for visualization
 import pam_vis as pv
 
 # number of samples to compute connection probability
@@ -376,7 +377,7 @@ def hippotest():
     params = [10., 3., 7., 0.00]
     
     print('Compute Connectivity for ca3 to ca1')
-    c_ca3_ca3, d_ca3_ca3 = computeConnectivity([ca3, al_ca3, ca3],                     # layers involved in the connection
+    c_ca3_ca3, d_ca3_ca3 = computeConnectivity([ca3, al_ca3, ca3],                      # layers involved in the connection
                                                 'CA3_Pyramidal', 'CA3_Pyramidal',       # neuronsets involved
                                                 1,                                      # synaptic layer
                                                 [1, 0],                                 # connection mapping

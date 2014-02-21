@@ -106,37 +106,25 @@ class UVRaster(object):
         self._y = y
 
         self._list = [[[] for j in range(y)] for i in range(x)]
-        print(self._list)
 
     def __del__(self):
         del self._list
         self._obj = None
 
     def __repr__(self):
-        return "<UVRaster dim: %s len: %d, res: %f, max uv: %s>" % \
-               (self.dim, self.res, len(self), self.uv)
-
-    # TODO(SK): needs implementation
-    def __str__(self):
-        return self.__repr__()
+        return "<UVRaster dim: %s items: %d, res: %f, max uv: %s>" % \
+               (self.dim, self.res, len(self), self.uv_bounds)
 
     def __getitem__(self, index):
-        if len(index) is not 2:
-            raise Exception("Index has to be a two-dimensional tuple")
+        return self._list[index]
 
-        x, y = index
-        if x >= self._x | y >= self._y:
-            raise IndexError("Index out of range for %s")
-
-        return self._list[x][y]
-
-    # TODO(SK): test! (bug!)
-    def __nonzero__(self):
-        return any([any(sublist) for sublist in self._list])
-
-    # TODO(SK): test! (bug!)
     def __len__(self):
-        return sum([len(sublist) for sublist in self._list])
+        sum = 0
+        for row in self._list:
+            for col in row:
+                if any(col):
+                    sum += len(col)
+        return sum
 
     @property
     def dim(self):
@@ -147,5 +135,16 @@ class UVRaster(object):
         return self._res
 
     @property
-    def uv(self):
+    def uv_bounds(self):
         return self._u, self._v
+
+    def uv_to_cell(self, u, v):
+        if u > self._u or v > self._v or u < 0.0 or v < 0.0:
+            raise Exception("uv out of bounds")
+
+        row = math.ceil(u / self._res)
+        col = math.ceil(v / self._res)
+
+        logger.debug("uv (%f, %f) to cell [%d][%d]", u, v, row, col)
+
+        return self._list[row][col]

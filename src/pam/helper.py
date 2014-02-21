@@ -65,18 +65,23 @@ def uv_bounds(obj):
 
 # TODO(SK): docstring missing
 @utils.profiling
-def dimension_raster(x, y, res):
-    minor = min(x, y)
+def uv_to_matrix_dimension(u, v, res):
+    minor = min(u, v)
 
-    dim1 = math.ceil(1.0 / res)
-    dim2 = math.ceil(minor / res)
+    row = math.ceil(1.0 / res)
+    col = math.ceil(minor / res)
 
-    if minor is y:
-        logger.debug("x: %d y: %d", dim1, dim2)
-        return dim1, dim2
-    else:
-        logger.debug("x: %d y: %d", dim2, dim1)
-        return dim2, dim1
+    if minor is u:
+        tmp = row
+        row = col
+        col = tmp
+
+    logger.debug(
+        "uv bounds (%f, %f) to matrix dimension [%d][%d]",
+        u, v, row, col
+    )
+
+    return row, col
 
 
 # TODO(SK): doctstring missing
@@ -94,8 +99,7 @@ class UVRaster(object):
         self._res = res
 
         u, v = uv_bounds(obj)
-        x, y = dimension_raster(u, v, res)
-
+        x, y = uv_to_matrix_dimension(u, v, res)
         self._u = u
         self._v = v
         self._x = x

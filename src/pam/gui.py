@@ -79,8 +79,12 @@ class PAMMeasurementToolsPanel(bpy.types.Panel):
     def draw(self, context):
         active_obj = context.active_object
 
+        name = ""
+        if active_obj.type == "MESH":
+            name = active_obj.name
+
         layout = self.layout
-        layout.label("Active Object: %s" % active_obj.name)
+        layout.label("Active Object: %s" % name)
 
         row = layout.row()
         col = row.column()
@@ -89,6 +93,6 @@ class PAMMeasurementToolsPanel(bpy.types.Panel):
 
         row = layout.row()
         col = row.column()
-        op = col.operator("pam.measure_layer", "Measure mesh")
+        op = col.operator("pam.measure_layer", "Calculate")
         col.label("Total number of neurons:")
         col.label("%d" % context.scene.pam_neurons)

@@ -77,6 +77,18 @@ class PAMMeasurementToolsPanel(bpy.types.Panel):
     bl_label = "PAM Measurement Tools"
 
     def draw(self, context):
+        active_obj = context.active_object
+
         layout = self.layout
-        col = layout.column()
-        col.operator("pam.measure_layer", "Measure mesh")
+        layout.label("Active Object: %s" % active_obj.name)
+
+        row = layout.row()
+        col = row.column()
+        col.prop(context.scene, "pam_quantity", text="Neurons")
+        col.prop(context.scene, "pam_area", text="Area")
+
+        row = layout.row()
+        col = row.column()
+        op = col.operator("pam.measure_layer", "Measure mesh")
+        col.label("Total number of neurons:")
+        col.label("%d" % context.scene.pam_neurons)

@@ -11,12 +11,7 @@ logger = logging.getLogger(__package__)
 
 
 class PAMMeasureLayer(bpy.types.Operator):
-    """Calculates neuron quantity across the active object
-
-    Important:
-        * depends on scene scaling
-        * implemented only for metric system
-    """
+    """Calculates neuron quantity across the active object"""
 
     bl_idname = "pam.measure_layer"
     bl_label = "Measure layer"

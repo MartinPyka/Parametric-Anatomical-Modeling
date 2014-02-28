@@ -51,6 +51,10 @@ def uv_bounds(obj):
 # TODO(SK): docstring missing
 @utils.profiling
 def uv_to_matrix_dimension(u, v, res):
+    if u < 0.0 or u > 1.0 or v < 0.0 or v > 1.0:
+        logger.error("uv coordinates out of bounds (%f, %f)", u, v)
+        raise Exception("UV coordinates are out of bounds")
+
     minor = min(u, v)
     row = math.ceil(1.0 / res)
     col = math.ceil(minor / res)

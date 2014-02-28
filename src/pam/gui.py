@@ -96,3 +96,19 @@ class PAMMeasurementToolsPanel(bpy.types.Panel):
         op = col.operator("pam.measure_layer", "Calculate")
         col.label("Total number of neurons:")
         col.label("%d" % context.scene.pam_neurons)
+
+
+class PAMTestPanel(bpy.types.Panel):
+    """Test Panel"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "PAM Testing Tools"
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        col.operator(
+            "pam.test_operator",
+        )

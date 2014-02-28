@@ -11,22 +11,6 @@ from . import utils
 logger = logging.getLogger(__package__)
 
 
-class PAMTestPanel(bpy.types.Panel):
-    """Test Panel"""
-
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS"
-    bl_context = "objectmode"
-    bl_label = "PAM Testing Tools"
-
-    def draw(self, context):
-        layout = self.layout
-        col = layout.column()
-        col.operator(
-            "pam.test_operator",
-        )
-
-
 class PAMTestOperator(bpy.types.Operator):
     """Test Operator"""
 

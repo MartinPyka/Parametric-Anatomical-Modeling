@@ -101,8 +101,9 @@ def uv_to_grid_dimension(u, v, res):
 # TODO(SK): needs implementation
 # TODO(SK): docstring missing
 @utils.profiling
-def kernel_gaussian(x, y, vx, vy, sx, sy):
-    return 0.0
+def gaussian_kernel(x, y, origin_x, origin_y, var_x, var_y):
+    return math.exp(-((x + origin_x) ** 2 / (2 * var_x) +
+                      (y + origin_y) ** 2 / (2 * var_y)))
 
 
 class UVGrid(object):

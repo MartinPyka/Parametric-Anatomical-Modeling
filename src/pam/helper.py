@@ -74,12 +74,12 @@ def uv_bounds(obj):
     return u, v
 
 
-# TODO(SK): docstring missing
 @utils.profiling
-def uv_to_matrix_dimension(u, v, res):
+def uv_to_grid_dimension(u, v, res):
+    """Calculates grid dimension from uv bounds"""
     if u < 0.0 or u > 1.0 or v < 0.0 or v > 1.0:
-        logger.error("uv coordinates out of bounds (%f, %f)", u, v)
-        raise Exception("UV coordinates are out of bounds")
+        logger.error("uv coordinate out of bounds (%f, %f)", u, v)
+        raise Exception("UV coordinate are out of bounds")
 
     minor = min(u, v)
     row = math.ceil(1.0 / res)
@@ -91,7 +91,7 @@ def uv_to_matrix_dimension(u, v, res):
         col = tmp
 
     logger.debug(
-        "uv bounds (%f, %f) to matrix dimension [%d][%d]",
+        "uv bounds (%f, %f) to grid dimension [%d][%d]",
         u, v, row, col
     )
 
@@ -115,7 +115,7 @@ class UVGrid(object):
         self._res = res
 
         u, v = uv_bounds(obj)
-        row, col = uv_to_matrix_dimension(u, v, res)
+        row, col = uv_to_grid_dimension(u, v, res)
         self._u = u
         self._v = v
         self._row = row

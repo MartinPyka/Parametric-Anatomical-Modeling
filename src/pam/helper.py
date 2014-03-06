@@ -196,6 +196,18 @@ class UVGrid(object):
 
         return cell, weight
 
+    def weight(self, u, v):
+        """Returns distribution weight for uv coordinate"""
+        row, col = self._uv_to_cell_index(u, v)
+        weight = self._weights[row][col]
+
+        logger.debug(
+            "weight at index [%d][%d] with value (%f)",
+            row, col, weight
+        )
+
+        return weight
+
     def _uv_to_cell_index(self, u, v):
         """Returns cell index for a uv coordinate"""
         if u > self._u or v > self._v or u < 0.0 or v < 0.0:
@@ -221,3 +233,8 @@ class UVGrid(object):
         )
 
         return u, v
+
+    def _reset_weights(self):
+        """Resets weights across the grid"""
+        self._weights = [[[] for j in range(self._col)]
+                         for i in range(self._row)]

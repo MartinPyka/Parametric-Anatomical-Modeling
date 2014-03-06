@@ -184,7 +184,7 @@ class UVGrid(object):
         return cell
 
     def cell_with_weight(self, u, v):
-        """Returns cell for uv coordinate with distribution weight"""
+        """Returns cell and distribution weight for uv coordinate"""
         row, col = self._uv_to_cell_index(u, v)
         cell = self._objects[row][col]
         weight = self._weights[row][col]
@@ -199,8 +199,8 @@ class UVGrid(object):
     def _uv_to_cell_index(self, u, v):
         """Returns cell index for a uv coordinate"""
         if u > self._u or v > self._v or u < 0.0 or v < 0.0:
-            logger.error("uv coordinates out of bounds (%f, %f)", u, v)
-            raise Exception("uv coordinates out of bounds")
+            logger.error("uv coordinate out of bounds (%f, %f)", u, v)
+            raise Exception("uv coordinate out of bounds")
 
         row = math.ceil(u / self._res)
         col = math.ceil(v / self._res)
@@ -210,7 +210,7 @@ class UVGrid(object):
         return row, col
 
     def _cell_index_to_uv(self, row, col):
-        """Returns uv coordinates of the center of a cell"""
+        """Returns uv coordinate from the center of a cell"""
         center = self._res / 2
         u = row * self._res + center
         v = col * self._res + center

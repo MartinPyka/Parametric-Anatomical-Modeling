@@ -98,10 +98,9 @@ def uv_to_grid_dimension(u, v, res):
     return row, col
 
 
-# TODO(SK): needs implementation
-# TODO(SK): docstring missing
 @utils.profiling
 def gaussian_kernel(x, y, origin_x, origin_y, var_x, var_y):
+    """Computes distribution value in two dimensional gaussian kernel"""
     return math.exp(-((x + origin_x) ** 2 / (2 * var_x) +
                       (y + origin_y) ** 2 / (2 * var_y)))
 

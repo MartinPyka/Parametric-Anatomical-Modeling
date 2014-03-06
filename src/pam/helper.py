@@ -171,9 +171,21 @@ class UVGrid(object):
 
         self._kernel = func
 
-    # TODO(SK): missing docstring
-    def compute_kernel(self, u, v, *args, **kwargs):
-        pass
+    def compute_kernel(self, *args, **kwargs):
+        """Computes weights with current registered kernel across the grid"""
+        self._reset_weights()
+
+        for row in range(self._row):
+            for col in range(self._col):
+                u, v = self._cell_index_to_uv(row, col)
+                weight = self._kernel(u, v, *args, **kwargs)
+
+                logger.debug(
+                    "kernel %s at cell [%d][%d] with weight (%f)",
+                    self._kernel.__name__, row, col, weight
+                )
+
+                self._weights[row][col] = weight
 
     def cell(self, u, v):
         """Returns cell for uv coordinate"""

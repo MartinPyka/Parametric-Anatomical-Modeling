@@ -31,12 +31,12 @@ class PAMTestOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# TODO(SK): docstring missing
 @utils.profiling
 def uv_pixel_values(image, u, v):
+    """Returns rgba value at uv coordinate from an image"""
     if u < 0.0 or u > 1.0 or v < 0.0 or v > 1.0:
-        logger.error("uv coordinates out of bounds (%f, %f)", u, v)
-        raise Exception("UV coordinates are out of bounds")
+        logger.error("uv coordinate out of bounds (%f, %f)", u, v)
+        raise Exception("UV coordinate are out of bounds")
 
     if not image.generated_type == "UV_GRID":
         logger.error("images is not of generated_type UV_GRID")

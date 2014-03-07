@@ -57,9 +57,9 @@ def uv_pixel_values(image, u, v):
     return r, g, b, a
 
 
-# TODO(SK): docstring missing
 @utils.profiling
 def uv_bounds(obj):
+    """Returns upper uv bounds of an object"""
     active_uv = obj.data.uv_layers.active
 
     if not hasattr(active_uv, "data"):
@@ -76,7 +76,7 @@ def uv_bounds(obj):
 
 @utils.profiling
 def uv_to_grid_dimension(u, v, res):
-    """Calculates grid dimension from uv bounds"""
+    """Calculates grid dimension from upper uv bounds"""
     if u < 0.0 or u > 1.0 or v < 0.0 or v > 1.0:
         logger.error("uv coordinate out of bounds (%f, %f)", u, v)
         raise Exception("UV coordinate are out of bounds")

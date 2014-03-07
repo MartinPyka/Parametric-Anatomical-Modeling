@@ -80,8 +80,9 @@ class PAMMeasurementToolsPanel(bpy.types.Panel):
         active_obj = context.active_object
 
         name = ""
-        if active_obj.type == "MESH":
-            name = active_obj.name
+        if active_obj is not None:
+            if active_obj.type == "MESH":
+                name = active_obj.name
 
         layout = self.layout
         layout.label("Active Object: %s" % name)

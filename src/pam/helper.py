@@ -86,9 +86,7 @@ def uv_to_grid_dimension(u, v, res):
     col = math.ceil(minor / res)
 
     if minor is u:
-        tmp = row
-        row = col
-        col = tmp
+        row, col = col, row
 
     logger.debug(
         "uv bounds (%f, %f) to grid dimension [%d][%d]",

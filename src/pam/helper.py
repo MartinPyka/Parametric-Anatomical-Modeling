@@ -121,8 +121,8 @@ class UVGrid(object):
         self._row = row
         self._col = col
 
-        for l in [self._objects, self._weights]:
-            l = [[[] for j in range(col)] for i in range(row)]
+        self._objects = [[[] for j in range(col)] for i in range(row)]
+        self._weights = [[[] for j in range(col)] for i in range(row)]
 
         self._kernel = None
 
@@ -139,12 +139,7 @@ class UVGrid(object):
         return self._objects[index]
 
     def __len__(self):
-        sum = 0
-        for row in self._objects:
-            for col in row:
-                if any(col):
-                    sum += len(col)
-        return sum
+        return any([len(c) for r in self._objects for c in r if any(c)])
 
     @property
     def dimensions(self):

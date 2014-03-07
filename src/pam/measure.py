@@ -20,7 +20,10 @@ class PAMMeasureLayer(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         active_obj = context.active_object
-        return active_obj.type == "MESH"
+        if active_obj is not None:
+            return active_obj.type == "MESH"
+        else:
+            return False
 
     def execute(self, context):
         active_obj = context.active_object

@@ -6,10 +6,14 @@ import numpy as np
 
 # import module for visualization
 import pam_vis as pv
+# model with some hard-coded constants
+import config as cfg
 
 # number of samples to compute connection probability
 samples = 1000
 debug_level = 0
+
+cfg.ray_fac = 1.0
 
 
 def computeUVScalingFactor(object):
@@ -33,13 +37,23 @@ def computeUVScalingFactor(object):
 
 
 # TODO(SK): Quads into triangles (indices)
-def map3dPointToUV(object, object_uv, point):
+def map3dPointToUV(object, object_uv, point, normal=None):
     """Converts a given 3d-point into uv-coordinates,
     object for the 3d point and object_uv must have the same topology
-    """
+    if normal is not None, the normal is used to detect the point on object, otherwise
+    the closest_point_on_mesh operation is used
+    """ 
 
-    # get point, normal and face of closest point to particle
-    p, n, f = object.closest_point_on_mesh(point)
+    # if normal is None, we don't worry about orthogonal projections
+    if normal == None:
+        # get point, normal and face of closest point to a given point 
+        p, n, f = object.closest_point_on_mesh(point)
+    else:
+        p, n, f = object.ray_cast(point + normal * cfg.ray_fac, point - normal * cfg.ray_fac)
+        # if no collision could be detected, return None
+        if f == -1:
+            return None
+        
 
     # get the uv-coordinate of the first triangle of the polygon
     A = object.data.vertices[object.data.polygons[f].vertices[0]].co
@@ -71,13 +85,20 @@ def map3dPointToUV(object, object_uv, point):
     return p_uv.to_2d()
 
 
-def map3dPointTo3d(o1, o2, point):
+def map3dPointTo3d(o1, o2, point, normal=None):
     """maps a 3d-point on a given object on another object. Both objects must have the
     same topology
     """
 
-    # get point, normal and face of closest point to particle
-    p, n, f = o1.closest_point_on_mesh(point)
+    # if normal is None, we don't worry about orthogonal projections
+    if normal == None:
+        # get point, normal and face of closest point to a given point 
+        p, n, f = o1.closest_point_on_mesh(point)
+    else:
+        p, n, f = o1.ray_cast(point + normal * cfg.ray_fac, point - normal * cfg.ray_fac)
+        # if no collision could be detected, return None
+        if f == -1:
+            return None
 
     # if o1 and o2 are identical, there is nothing more to do
     if (o1 == o2):
@@ -174,66 +195,85 @@ def computeMapping(layers, connections, distances, point):
 
     # go through all connection-elements
     for i in range(0, len(connections)):
-        # if normal mapping should be computed
-        if connections[i] == 0:
+        
+        
+        # if euclidean mapping should be computed
+        if connections[i] == cfg.MAP_euclid:
             # compute the point on the next intermediate layer
             if (i < (len(connections)-1)):
                 p3d_n = map3dPointTo3d(layers[i+1], layers[i+1], p3d[-1])
+                d = d + (p3d[-1] - p3d_n).length 
             # or the last point before the synaptic layer
             else:
                 # for euclidean distance
-                if distances[i] == 0:
+                if distances[i] == cfg.DIS_euclid:
                     p3d_n = p3d[-1]
                 # for normal-uv or euclidean-uv mapping
-                elif (distances[i] == 1) | (distances[i] == 2):
+                elif (distances[i] == cfg.DIS_normalUV) | (distances[i] == cfg.DIS_euclidUV):
                     p3d_n = map3dPointTo3d(layers[i+1], layers[i+1], p3d[-1])
+                    d = d + (p3d[-1] - p3d_n).length
+                    
+                    
+        # if normal mapping should be computed
+        elif connections[i] == cfg.MAP_normal:
+            # compute normal on layer for the last point
+            p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
+            # determine new point
+            p3d_n = map3dPointTo3d(layers[i+1], layers[i+1], p3d[-1], n)
+            # if there is no intersection, abort
+            if (p3d_n == None):
+                return None, None, None
+            if (i < (len(connections)-1)):
+                d = d + (p3d[-1] - p3d_n).length 
+            else:
+                if distances[i] == cfg.DIS_euclid:
+                    p3d_n = p3d[-1]
+                elif (distances[i] == cfg.DIS_normalUV) | (distances[i] == cfg.DIS_euclidUV):
+                    d = d + (p3d[-1] - p3d_n).length 
+                    
+                    
         # if both layers are topologically identical
-        elif connections[i] == 1:
+        elif connections[i] == cfg.MAP_top:
+            
             # if this is not the last layer, compute the topological mapping
-            if (i < (len(connections)-1)):            
+            if (i < (len(connections)-1)):         
                 p3d_n = map3dPointTo3d(layers[i], layers[i+1], p3d[-1])
+                
+                # for euclidean and euclideanUV-distance
+                if (distances[i] == cfg.DIS_euclid) | (distances[i] == cfg.DIS_euclidUV):
+                    d = d + (p3d[-1] - p3d_n).length 
+                # for normal-uv-distance,     
+                elif distances[i] == cfg.DIS_normalUV:
+                    # determine closest point on second layer
+                    p3d_i = layers[i+1].closest_point_on_mesh(p3d[-1])
+                    p3d_i = p3d_i[0]
+                    # compute uv-coordintes for euclidean distance and topological mapping
+                    p2d_i1 = map3dPointToUV(layers[i+1], layers[i+1], p3d[-1])
+                    p2d_i2 = map3dPointToUV(layers[i+1], layers[i+1], p3d_n)
+                    # compute distances
+                    d = d + (p3d[-1] - p3d_i).length  # distance in space between both layers based on euclidean distance
+                    d = d + (p2d_i1 - p2d_i2).length * layers[i+1]['uv_scaling']  # distance on uv-level (incorporated with scaling parameter)
+                    p3d.append(p3d_i)
+                
+                
             # if this is the last layer, compute the last p3d-point depending on the 
             # distance value
             else:
                 # for euclidean distance
-                if distances[i] == 0:
+                if distances[i] == cfg.DIS_euclid:
                     # remain at the last position
                     p3d_n = p3d[-1]
                 # for normal-uv-distance,     
-                elif distances[i] == 1:
+                elif distances[i] == cfg.DIS_normalUV:
                     # get the point on the next layer according to the normal
                     p3d_n = map3dPointTo3d(layers[i+1], layers[i+1], p3d[-1])
+                    d = d + (p3d[-1] - p3d_n).length
                 # for euclidean-uv distance
-                elif distances[i] == 2:
+                elif distances[i] == cfg.DIS_euclidUV:
                     # compute the topologically corresponding point
                     p3d_n = map3dPointTo3d(layers[i], layers[i+1], p3d[-1])
+                    d = d + (p3d[-1] - p3d_n).length
 
-
-        # compute distance between both points, here according to the euclidean
-        if distances[i] == 0:
-            if (i < (len(connections)-1)):
-                d = d + (p3d[-1] - p3d_n).length            
-        
-        elif distances[i] == 1:           # compute distance between both points, here according to the euclidean-uv-way
-            # if we are not on the last layer
-            if (i < (len(connections)-1)):
-                # determine closest point on second layer
-                p3d_i = layers[i+1].closest_point_on_mesh(p3d[-1])
-                p3d_i = p3d_i[0]
-                # compute uv-coordintes for euclidean distance and topological mapping
-                p2d_i1 = map3dPointToUV(layers[i+1], layers[i+1], p3d[-1])
-                p2d_i2 = map3dPointToUV(layers[i+1], layers[i+1], p3d_n)
-                # compute distances
-                d = d + (p3d[-1] - p3d_i).length  # distance in space between both layers based on euclidean distance
-                d = d + (p2d_i1 - p2d_i2).length * layers[i+1]['uv_scaling']  # distance on uv-level (incorporated with scaling parameter)
-                p3d.append(p3d_i)
-            else:   # if we are in the last layer
-                # determine closest point on second layer
-                d = d + (p3d[-1] - p3d_n).length  # distance in space between both layers based on euclidean distance
-        elif distances[i] == 2:
-            # determine closest point on second layer
-            d = d + (p3d[-1] - p3d_n).length
-            
         # for the synaptic layer, compute the uv-coordinates
         if (i == (len(connections)-1)):
             p2d = map3dPointToUV(layers[i+1], layers[i+1], p3d_n)
@@ -270,6 +310,8 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections, dis
                                                  connections[0:slayer],
                                                  distances[0:slayer],
                                                  layers[0].particle_systems[neuronset1].particles[i].location)
+        if pre_p3d == None:
+            continue
 
         for j in range(0, len(layers[-1].particle_systems[neuronset2].particles)):
             # compute position, uv-coordinates and distance for the post-synaptic neuron
@@ -277,6 +319,9 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections, dis
                                                         connections[:(slayer-1):-1],
                                                         distances[:(slayer-1):-1],
                                                         layers[-1].particle_systems[neuronset2].particles[j].location)
+            
+            if post_p3d == None:
+                continue                                                        
 
             # determine connectivity probabiltiy and distance values
             conn[i, j] = computeConnectivityProbability(pre_p2d * layers[slayer]['uv_scaling'], post_p2d * layers[slayer]['uv_scaling'], func, args)
@@ -348,13 +393,16 @@ def test():
 	
     point, n, p = t1.closest_point_on_mesh(pv.getCursor())
 	
-
-    p3, p2, d = computeMapping([t1, t2, t201, t3, t4, t5], [1, 0, 1, 1, 1], [0, 0, 0, 0, 0], point)
+    p3, p2, d = computeMapping([t1, t2, t201, t3, t4, t5], 
+                               [cfg.MAP_normal, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top], 
+                               [cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid], 
+                               point)
     print(p3)
     print(p2)
     print(d)
 	
-    pv.visualizePath(p3)
+    if (p3 != None):
+        pv.visualizePath(p3)
     
     
 def hippotest():
@@ -380,16 +428,16 @@ def hippotest():
     c_ca3_ca3, d_ca3_ca3 = computeConnectivity([ca3, al_ca3, ca3],                      # layers involved in the connection
                                                 'CA3_Pyramidal', 'CA3_Pyramidal',       # neuronsets involved
                                                 1,                                      # synaptic layer
-                                                [1, 0],                                 # connection mapping
-                                                [1, 0],                                 # distance calculation
+                                                [cfg.MAP_top, cfg.MAP_euclid],                                 # connection mapping
+                                                [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
                                                 connfunc_gauss, params)   # kernel function plus parameters                                               
         
     print('Compute Connectivity for ca3 to ca1')
     c_ca3_ca1, d_ca3_ca1 = computeConnectivity([ca3, al_ca3, ca1],                      # layers involved in the connection
                                                'CA3_Pyramidal', 'CA1_Pyramidal',       # neuronsets involved
                                                1,                                      # synaptic layer
-                                               [1, 0],                                 # connection mapping
-                                               [1, 0],                                 # distance calculation
+                                               [cfg.MAP_top, cfg.MAP_euclid],                                 # connection mapping
+                                               [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
                                                connfunc_gauss, params)   # kernel function plus parameters
     
     
@@ -406,6 +454,32 @@ def hippotest():
     pv.visualizePostNeurons(ca3, 'CA3_Pyramidal', c_ca3_ca3[particle])
     pv.visualizePostNeurons(ca1, 'CA1_Pyramidal', c_ca3_ca1[particle])
     
+def subiculumtest():
+    ca1 = bpy.data.objects['CA1_sp']
+    al_ca1 = bpy.data.objects['CA1_sp_axons_all']
+    sub = bpy.data.objects['Subiculum']
+    
+    print('Initialize data')
+    initialize3D()    
+
+    params = [0.5, 3., 0., 0.]
+    
+    c_ca1_sub, d_ca1_sub = computeConnectivity([ca1, al_ca1, sub],                      # layers involved in the connection
+                                                'CA1_Pyramidal', 'CA1_Pyramidal',       # neuronsets involved
+                                                1,                                      # synaptic layer
+                                                [1, 0],                                 # connection mapping
+                                                [1, 0],                                 # distance calculation
+                                                connfunc_gauss, params)   # kernel function plus parameters                                               
+                                                
+    pv.visualizeClean()
+    
+    particle = 44
+    
+    pv.setCursor(ca1.particle_systems['CA1_Pyramidal'].particles[particle].location)
+    
+    pv.visualizePostNeurons(ca1, 'CA1_Pyramidal', c_ca1_sub[particle])
+                                               
+
 
 if __name__ == "__main__":
     ##############################################################################################
@@ -415,5 +489,6 @@ if __name__ == "__main__":
 
     test() 
     #hippotest()
+    #subiculumtest()
        
 

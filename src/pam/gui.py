@@ -53,3 +53,63 @@ class PAMPreferencesPane(bpy.types.AddonPreferences):
         col.prop(self, "log_directory", text="Directory")
         col.prop(self, "log_filename", text="Filename")
         col.prop(self, "log_level", text="Level")
+
+
+class PAMToolsPanel(bpy.types.Panel):
+    """A tools panel inheriting all neuronal modelling operations"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "PAM Tools"
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+
+
+class PAMMeasurementToolsPanel(bpy.types.Panel):
+    """A tools panel inheriting all measurment operations"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "PAM Measurement Tools"
+
+    def draw(self, context):
+        active_obj = context.active_object
+
+        name = ""
+        if active_obj is not None:
+            if active_obj.type == "MESH":
+                name = active_obj.name
+
+        layout = self.layout
+        layout.label("Active Object: %s" % name)
+
+        row = layout.row()
+        col = row.column()
+        col.prop(context.scene, "pam_quantity", text="Neurons")
+        col.prop(context.scene, "pam_area", text="Area")
+
+        row = layout.row()
+        col = row.column()
+        op = col.operator("pam.measure_layer", "Calculate")
+        col.label("Total number of neurons:")
+        col.label("%d" % context.scene.pam_neurons)
+
+
+class PAMTestPanel(bpy.types.Panel):
+    """Test Panel"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "PAM Testing Tools"
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        col.operator(
+            "pam.test_operator",
+        )

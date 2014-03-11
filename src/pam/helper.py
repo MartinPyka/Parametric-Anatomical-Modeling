@@ -31,7 +31,6 @@ class PAMTestOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-@utils.profiling
 def uv_pixel_values(image, u, v):
     """Returns rgba value at uv coordinate from an image"""
     if u < 0.0 or u > 1.0 or v < 0.0 or v > 1.0:
@@ -57,7 +56,6 @@ def uv_pixel_values(image, u, v):
     return r, g, b, a
 
 
-@utils.profiling
 def uv_bounds(obj):
     """Returns upper uv bounds of an object"""
     active_uv = obj.data.uv_layers.active
@@ -74,7 +72,6 @@ def uv_bounds(obj):
     return u, v
 
 
-@utils.profiling
 def uv_to_grid_dimension(u, v, res):
     """Calculates grid dimension from upper uv bounds"""
     if u < 0.0 or u > 1.0 or v < 0.0 or v > 1.0:
@@ -96,17 +93,17 @@ def uv_to_grid_dimension(u, v, res):
     return row, col
 
 
-@utils.profiling
 def gaussian_kernel(x, y, origin_x, origin_y, var_x, var_y):
     """Computes distribution value in two dimensional gaussian kernel"""
-    return math.exp(-((x + origin_x) ** 2 / (2 * var_x) +
-                      (y + origin_y) ** 2 / (2 * var_y)))
+    return math.exp(-((x - origin_x) ** 2 / (2 * var_x ** 2) +
+                      (y - origin_y) ** 2 / (2 * var_y ** 2)))
 
 
 class UVGrid(object):
     """Convenience class to raster and project on uv mesh"""
     _objects = None
     _weights = None
+    _uvcoords = None
 
     def __init__(self, obj, res=0.01):
         self._obj = obj
@@ -121,8 +118,11 @@ class UVGrid(object):
 
         self._objects = [[[] for j in range(col)] for i in range(row)]
         self._weights = [[[] for j in range(col)] for i in range(row)]
+        self._uvcoords = [[[] for j in range(col)] for i in range(row)]
 
         self._kernel = None
+
+        self._compute_uvcoords()
 
     def __del__(self):
         del self._objects
@@ -169,12 +169,12 @@ class UVGrid(object):
 
         for row in range(self._row):
             for col in range(self._col):
-                u, v = self._cell_index_to_uv(row, col)
+                u, v = self._uvcoords[row][col]
                 weight = self._kernel(u, v, *args, **kwargs)
 
                 logger.debug(
-                    "kernel %s at cell [%d][%d] with weight (%f)",
-                    self._kernel.__name__, row, col, weight
+                    "%s(%s, %s) at cell [%d][%d] with weight (%f)",
+                    self._kernel.__name__, args, kwargs, row, col, weight
                 )
 
                 self._weights[row][col] = weight
@@ -187,6 +187,18 @@ class UVGrid(object):
         logger.debug("cell at index [%d][%d]", row, col)
 
         return cell
+
+    def weight(self, u, v):
+        """Returns distribution weight for uv coordinate"""
+        row, col = self._uv_to_cell_index(u, v)
+        weight = self._weights[row][col]
+
+        logger.debug(
+            "weight at index [%d][%d] with value (%f)",
+            row, col, weight
+        )
+
+        return weight
 
     def cell_with_weight(self, u, v):
         """Returns cell and distribution weight for uv coordinate"""
@@ -201,17 +213,16 @@ class UVGrid(object):
 
         return cell, weight
 
-    def weight(self, u, v):
-        """Returns distribution weight for uv coordinate"""
+    def append(self, item, u, v):
+        """Appends an item to a cell"""
         row, col = self._uv_to_cell_index(u, v)
-        weight = self._weights[row][col]
 
         logger.debug(
-            "weight at index [%d][%d] with value (%f)",
-            row, col, weight
+            "added %s to cell [%d][%d]",
+            item, row, col
         )
 
-        return weight
+        self._objects[row][col].append(item)
 
     def append(self, item, u, v):
         """Appends an item to a cell"""
@@ -249,6 +260,13 @@ class UVGrid(object):
         )
 
         return u, v
+
+    def _compute_uvcoords(self):
+        """Computes corresponding uv coordinate across grid"""
+        for row in range(self._row):
+            for col in range(self._col):
+                u, v = self._cell_index_to_uv(row, col)
+                self._uvcoords[row][col] = (u, v)
 
     def _reset_weights(self):
         """Resets weights across the grid"""

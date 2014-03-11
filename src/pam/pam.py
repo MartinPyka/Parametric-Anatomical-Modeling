@@ -3,6 +3,7 @@ import mathutils.geometry as mug
 import mathutils
 import math
 import numpy as np
+import random
 
 # import module for visualization
 import pam_vis as pv
@@ -14,6 +15,34 @@ samples = 1000
 debug_level = 0
 
 cfg.ray_fac = 1.0
+
+
+
+def computePoint(v1, v2, v3, v4, x1, x2):
+    # computes an average point on the polygon depending on x1 and x2
+    mv12_co = v1.co * x1 + v2.co * (1-x1)
+    mv34_co = v3.co * (1-x1) + v4.co * x1
+    mv_co = mv12_co * x2 + mv34_co * (1-x2)
+    
+    return mv_co
+
+def selectRandomPoint(object):
+        # select a random polygon
+        p_select = random.random() * object['area_sum']
+        polygon = object.data.polygons[np.nonzero(np.array(object['area_cumsum']) > p_select)[0][0]]
+        
+        # define position on the polygon
+        vert_inds = polygon.vertices[:]
+        poi = computePoint(object.data.vertices[vert_inds[0]],
+                           object.data.vertices[vert_inds[1]],
+                           object.data.vertices[vert_inds[2]],
+                           object.data.vertices[vert_inds[3]],
+                           random.random(), random.random())
+        
+        p, n, f = object.closest_point_on_mesh(poi)
+        return p, n, f
+              
+
 
 
 def computeUVScalingFactor(object):
@@ -156,8 +185,8 @@ def connfunc_gauss(u, v, *args):
     su = args[0][2]
     sv = args[0][3]
 
-    return math.exp(-((u + su) ** 2 / (2 * vu ** 2) +
-                    (v + sv) ** 2 / (2 * vv ** 2)))
+    return math.exp(-((u - su) ** 2 / (2 * vu ** 2) +
+                    (v - sv) ** 2 / (2 * vv ** 2)))
 
 
 def connfunc_unity(u, v, *args):
@@ -230,6 +259,47 @@ def computeMapping(layers, connections, distances, point):
                     p3d_n = p3d[-1]
                 elif (distances[i] == cfg.DIS_normalUV) | (distances[i] == cfg.DIS_euclidUV):
                     d = d + (p3d[-1] - p3d_n).length 
+                    
+        # if random mapping should be used                    
+        elif connections[i] == cfg.MAP_random:
+            # if this is not the synapse layer
+            if (i < (len(connections)-1)):
+                p, n, f = selectRandomPoint(layers[i+1])
+                p3d_n = p
+
+                # for euclidean and euclideanUV-distance
+                if (distances[i] == cfg.DIS_euclid) | (distances[i] == cfg.DIS_euclidUV):
+                    d = d + (p3d[-1] - p3d_n).length 
+                # for normal-uv-distance,     
+                elif distances[i] == cfg.DIS_normalUV:
+                    # determine closest point on second layer
+                    p3d_i = layers[i+1].closest_point_on_mesh(p3d[-1])
+                    p3d_i = p3d_i[0]
+                    # compute uv-coordintes for euclidean distance and topological mapping
+                    p2d_i1 = map3dPointToUV(layers[i+1], layers[i+1], p3d[-1])
+                    p2d_i2 = map3dPointToUV(layers[i+1], layers[i+1], p3d_n)
+                    # compute distances
+                    d = d + (p3d[-1] - p3d_i).length  # distance in space between both layers based on euclidean distance
+                    d = d + (p2d_i1 - p2d_i2).length * layers[i+1]['uv_scaling']  # distance on uv-level (incorporated with scaling parameter)
+                    p3d.append(p3d_i)
+            # if this is the last layer, compute the last p3d-point depending on the 
+            # distance value
+            else:
+                # for euclidean distance
+                if distances[i] == cfg.DIS_euclid:
+                    # remain at the last position
+                    p3d_n = p3d[-1]
+                # for normal-uv-distance,     
+                elif distances[i] == cfg.DIS_normalUV:
+                    # get the point on the next layer according to the normal
+                    p3d_n = map3dPointTo3d(layers[i+1], layers[i+1], p3d[-1])
+                    d = d + (p3d[-1] - p3d_n).length
+                # for euclidean-uv distance
+                elif distances[i] == cfg.DIS_euclidUV:
+                    # compute the topologically corresponding point
+                    d = d + (p3d[-1] - p3d_n).length
+
+                
                     
                     
         # if both layers are topologically identical
@@ -376,7 +446,22 @@ def initialize3D():
     for o in bpy.data.objects:
         if o.type == 'MESH':
             if len(o.data.uv_layers) > 0:
+                print(o.name)
                 o['uv_scaling'] = computeUVScalingFactor(o)
+                
+            ''' area size of each polygon '''
+            p_areas = []
+            
+            ''' collect area values for all polygons '''
+            for p in o.data.polygons:
+                p_areas.append(p.area)
+                
+            # convert everything to numpy    
+            p_areas = np.array(p_areas)
+            p_cumsum = p_areas.cumsum()     # compute the cumulative sum
+            p_sum = p_areas.sum()           # compute the sum of all areas
+            o['area_cumsum'] = p_cumsum
+            o['area_sum'] = p_sum
 
 
 def test():
@@ -394,8 +479,8 @@ def test():
     point, n, p = t1.closest_point_on_mesh(pv.getCursor())
 	
     p3, p2, d = computeMapping([t1, t2, t201, t3, t4, t5], 
-                               [cfg.MAP_normal, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top], 
-                               [cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid], 
+                               [cfg.MAP_normal, cfg.MAP_random, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top], 
+                               [cfg.DIS_euclid, cfg.DIS_normalUV, cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid], 
                                point)
     print(p3)
     print(p2)

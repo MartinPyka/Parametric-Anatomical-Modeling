@@ -4,7 +4,8 @@
 # some key-values for the mapping-procedure
 MAP_euclid= 0
 MAP_normal = 1
-MAP_top = 2
+MAP_random = 2
+MAP_top = 3
 
 DIS_euclid = 0
 DIS_normalUV = 1

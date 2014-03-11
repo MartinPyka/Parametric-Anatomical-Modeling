@@ -213,6 +213,17 @@ class UVGrid(object):
 
         return weight
 
+    def append(self, item, u, v):
+        """Appends an item to a cell"""
+        row, col = self._uv_to_cell_index(u, v)
+
+        logger.debug(
+            "added %s to cell [%d][%d]",
+            item, row, col
+        )
+
+        self._objects[row][col].append(item)
+
     def _uv_to_cell_index(self, u, v):
         """Returns cell index for a uv coordinate"""
         if u > self._u or v > self._v or u < 0.0 or v < 0.0:

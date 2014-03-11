@@ -31,7 +31,6 @@ class PAMTestOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-@utils.profiling
 def uv_pixel_values(image, u, v):
     """Returns rgba value at uv coordinate from an image"""
     if u < 0.0 or u > 1.0 or v < 0.0 or v > 1.0:
@@ -57,7 +56,6 @@ def uv_pixel_values(image, u, v):
     return r, g, b, a
 
 
-@utils.profiling
 def uv_bounds(obj):
     """Returns upper uv bounds of an object"""
     active_uv = obj.data.uv_layers.active
@@ -74,7 +72,6 @@ def uv_bounds(obj):
     return u, v
 
 
-@utils.profiling
 def uv_to_grid_dimension(u, v, res):
     """Calculates grid dimension from upper uv bounds"""
     if u < 0.0 or u > 1.0 or v < 0.0 or v > 1.0:
@@ -96,7 +93,6 @@ def uv_to_grid_dimension(u, v, res):
     return row, col
 
 
-@utils.profiling
 def gaussian_kernel(x, y, origin_x, origin_y, var_x, var_y):
     """Computes distribution value in two dimensional gaussian kernel"""
     return math.exp(-((x + origin_x) ** 2 / (2 * var_x) +

@@ -15,6 +15,8 @@ DEFAULT_LOCATION = mathutils.Vector((0.0, 0.0, 0.0))
 DEFAULT_SCALE = mathutils.Vector((1.0, 1.0, 1.0))
 DEFAULT_ROTATION = mathutils.Euler((0.0, 0.0, 0.0), "XYZ")
 
+KERNEL_THRESHOLD = 0.5
+
 
 class PAMTestOperator(bpy.types.Operator):
     """Test Operator"""
@@ -127,7 +129,6 @@ def gaussian_kernel(x, y, origin_x, origin_y, var_x, var_y):
 
 class UVGrid(object):
     """Convenience class to raster and project on uv mesh"""
-    _objects = None
     _weights = None
     _uvcoords = None
 
@@ -142,7 +143,6 @@ class UVGrid(object):
         self._row = row
         self._col = col
 
-        self._objects = [[[] for j in range(col)] for i in range(row)]
         self._weights = [[[] for j in range(col)] for i in range(row)]
         self._uvcoords = [[[] for j in range(col)] for i in range(row)]
 
@@ -151,7 +151,6 @@ class UVGrid(object):
         self._compute_uvcoords()
 
     def __del__(self):
-        del self._objects
         del self._weights
         self._obj = None
 
@@ -160,10 +159,13 @@ class UVGrid(object):
                (self.uv_bounds, self.resolution, self.dimension, len(self))
 
     def __getitem__(self, index):
-        return self._objects[index]
+        return self._weights[index]
+
+    def __setitem__(self, index):
+        pass
 
     def __len__(self):
-        return any([len(c) for r in self._objects for c in r if any(c)])
+        return any([len(c) for r in self._weights for c in r if any(c)])
 
     @property
     def dimensions(self):
@@ -189,7 +191,7 @@ class UVGrid(object):
 
         self._kernel = func
 
-    def compute_kernel(self, *args, **kwargs):
+    def compute_kernel(self, index, *args, **kwargs):
         """Computes weights with current registered kernel across the grid"""
         self._reset_weights()
 
@@ -203,7 +205,8 @@ class UVGrid(object):
                     self._kernel.__name__, args, kwargs, row, col, weight
                 )
 
-                self._weights[row][col] = weight
+                if weight > KERNEL_THRESHOLD:
+                    self._weights[row][col].append((index, weight))
 
     def cell(self, u, v):
         """Returns cell for uv coordinate"""
@@ -213,53 +216,6 @@ class UVGrid(object):
         logger.debug("cell at index [%d][%d]", row, col)
 
         return cell
-
-    def weight(self, u, v):
-        """Returns distribution weight for uv coordinate"""
-        row, col = self._uv_to_cell_index(u, v)
-        weight = self._weights[row][col]
-
-        logger.debug(
-            "weight at index [%d][%d] with value (%f)",
-            row, col, weight
-        )
-
-        return weight
-
-    def cell_with_weight(self, u, v):
-        """Returns cell and distribution weight for uv coordinate"""
-        row, col = self._uv_to_cell_index(u, v)
-        cell = self._objects[row][col]
-        weight = self._weights[row][col]
-
-        logger.debug(
-            "cell at index [%d][%d] with weight (%f)",
-            row, col, weight
-        )
-
-        return cell, weight
-
-    def append(self, item, u, v):
-        """Appends an item to a cell"""
-        row, col = self._uv_to_cell_index(u, v)
-
-        logger.debug(
-            "added %s to cell [%d][%d]",
-            item, row, col
-        )
-
-        self._objects[row][col].append(item)
-
-    def append(self, item, u, v):
-        """Appends an item to a cell"""
-        row, col = self._uv_to_cell_index(u, v)
-
-        logger.debug(
-            "added %s to cell [%d][%d]",
-            item, row, col
-        )
-
-        self._objects[row][col].append(item)
 
     def _uv_to_cell_index(self, u, v):
         """Returns cell index for a uv coordinate"""

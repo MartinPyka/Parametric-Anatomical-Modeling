@@ -2,6 +2,7 @@
 
 import logging
 import math
+import random
 import types
 
 import bpy
@@ -37,6 +38,38 @@ class PAMTestOperator(bpy.types.Operator):
         print(transformed_objects())
 
         return {'FINISHED'}
+
+
+def accumulate(items):
+    """Generator function for cumulative sum"""
+    total = 0
+    for item in items:
+        total += item
+        yield total
+
+
+def random_select_indices(items, quantity):
+    """Returns a list of randomly selected indices"""
+    if quantity < 0:
+        logger.error("quantity must not be smaller than zero")
+        raise Exception("Quantity must not be smaller than zero")
+
+    sum = sum(items)
+    cumsum = [accumulate(items)]
+
+    indices = []
+
+    while quantity:
+        limiter = random.random() * sum
+        index = 0
+
+        while cumsum[select] < limiter:
+            index =+ 1
+
+        indices.append(index)
+        quantity -= 1
+
+    return indices
 
 
 def transformed_objects():
@@ -216,6 +249,20 @@ class UVGrid(object):
         logger.debug("cell at index [%d][%d]", row, col)
 
         return cell
+
+
+    def select_random(self, u, v, quantity):
+        """Returns a number of randomly selected items from uv coordinate
+        corresponding cell
+        """
+        cell = self.cell(u, v)
+        weights = [item[1] for item in cell]
+
+        indices = random_select_indices(weights, quantity)
+        selected = [cell[index] for index in indices]
+
+        return selected
+
 
     def _uv_to_cell_index(self, u, v):
         """Returns cell index for a uv coordinate"""

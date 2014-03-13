@@ -5,10 +5,15 @@ import math
 import types
 
 import bpy
+import mathutils
 
 from . import utils
 
 logger = logging.getLogger(__package__)
+
+DEFAULT_LOCATION = mathutils.Vector((0.0, 0.0, 0.0))
+DEFAULT_SCALE = mathutils.Vector((1.0, 1.0, 1.0))
+DEFAULT_ROTATION = mathutils.Euler((0.0, 0.0, 0.0), "XYZ")
 
 
 class PAMTestOperator(bpy.types.Operator):
@@ -26,9 +31,30 @@ class PAMTestOperator(bpy.types.Operator):
     def execute(self, context):
         active_obj = context.active_object
 
-        raster = UVGrid(active_obj)
+        # raster = UVGrid(active_obj)
+        print(transformed_objects())
 
         return {'FINISHED'}
+
+
+def transformed_objects():
+    """Returns a list of all objects with transformation modifiers applied"""
+    objects = bpy.data.objects
+    transformed = []
+
+    for obj in objects:
+        is_relocated = obj.location != DEFAULT_LOCATION
+        is_scaled = obj.scale != DEFAULT_SCALE
+        is_rotated = obj.rotation_euler != DEFAULT_ROTATION
+        if is_relocated or is_scaled or is_rotated:
+            transformed.append(obj)
+
+            logger.debug(
+                "%s is transformed, location: %s scale: %s rotation %s",
+                obj, obj.location, obj.scale, obj.rotation_euler
+            )
+
+    return transformed
 
 
 def uv_pixel_values(image, u, v):

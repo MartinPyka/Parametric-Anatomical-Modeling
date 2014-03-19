@@ -433,53 +433,53 @@ def computeConnectivityAll(layers, neuronset1, neuronset2, slayer, connections, 
     return conn, dist
 
 
-def computeConnectivity(layers, neuronset1, neuronset2, slayer, 
-                        connections, distances, 
-                        func_pre, args_pre, func_post, args_post, 
-                        no_synapses ):
-    ''' Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
-    with the given parameters
-    layers              : list of layers connecting a pre- with a post-synaptic layer
-    neuronset1,
-    neuronset2          : name of the neuronset (particle system) of the pre- and post-synaptic layer
-    slayer              : index in layers for the synaptic layer
-    connections         : list of values determining the type of layer-mapping
-    distances           : list of values determining the calculation of the distances between layers
-    func_pre, args_pre  : function of the pre-synaptic connectivity kernel, if func_pre is None
-                          only the mapping position of the pre-synaptic neuron on the synaptic layer
-                          is used
-    func_post, args_post: same, as for func_pre and and args_pre, but now for the post-synaptic neurons
-                          again, func_post can be None. Then a neuron is just assigned to the cell
-                          of its corresponding position on the synapse layer
-    no_synapses         : number of synapses for each pre-synaptic neuron
-    '''
-    # connection matrix
-    conn = np.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
-
-    # distance matrix
-    dist = np.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
-    
-    grid = helper.UVGrid(layers[slayer])
-    grid.kernel = func_post
-    
-    # fill grid with post-neuron-links
-    for i in range(0, len(layers[-1].particle_systems[neuronset2].particles)):
-        post_p3d, post_p2d, post_d = computeMapping(layers[:(slayer-1):-1],
-                                                    connections[:(slayer-1):-1],
-                                                    distances[:(slayer-1):-1],
-                                                    layers[-1].particle_systems[neuronset2].particles[j].location)
-        grid.compute_kernel(i, post_p2d[0], post_p2d[1], args_post )
-        
-    for i in range(0, len(layers[0].particle_systems[neuronset1].particles)):
-        pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer+1)],
-                                                 connections[0:slayer],
-                                                 distances[0:slayer],
-                                                 layers[0].particle_systems[neuronset1].particles[i].location)
-        cell_uv = pre_p2d + func_pre(pre_p2d[0], pre_p2d[1], args_pre)
-        cell = grid.cell(cell_uv[0], cell_uv[1])
-        weights = sum([w[1] for w in cell])
-
-
+#def computeConnectivity(layers, neuronset1, neuronset2, slayer, 
+#                        connections, distances, 
+#                        func_pre, args_pre, func_post, args_post, 
+#                        no_synapses ):
+#    ''' Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
+#    with the given parameters
+#    layers              : list of layers connecting a pre- with a post-synaptic layer
+#    neuronset1,
+#    neuronset2          : name of the neuronset (particle system) of the pre- and post-synaptic layer
+#    slayer              : index in layers for the synaptic layer
+#    connections         : list of values determining the type of layer-mapping
+#    distances           : list of values determining the calculation of the distances between layers
+#    func_pre, args_pre  : function of the pre-synaptic connectivity kernel, if func_pre is None
+#                          only the mapping position of the pre-synaptic neuron on the synaptic layer
+#                          is used
+#    func_post, args_post: same, as for func_pre and and args_pre, but now for the post-synaptic neurons
+#                          again, func_post can be None. Then a neuron is just assigned to the cell
+#                          of its corresponding position on the synapse layer
+#    no_synapses         : number of synapses for each pre-synaptic neuron
+#    '''
+#    # connection matrix
+#    conn = np.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
+#
+#    # distance matrix
+#    dist = np.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
+#    
+#    grid = helper.UVGrid(layers[slayer])
+#    grid.kernel = func_post
+#    
+#    # fill grid with post-neuron-links
+#    for i in range(0, len(layers[-1].particle_systems[neuronset2].particles)):
+#        post_p3d, post_p2d, post_d = computeMapping(layers[:(slayer-1):-1],
+#                                                    connections[:(slayer-1):-1],
+#                                                    distances[:(slayer-1):-1],
+#                                                    layers[-1].particle_systems[neuronset2].particles[j].location)
+#        grid.compute_kernel(i, post_p2d[0], post_p2d[1], args_post )
+#        
+#    for i in range(0, len(layers[0].particle_systems[neuronset1].particles)):
+#        pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer+1)],
+#                                                 connections[0:slayer],
+#                                                 distances[0:slayer],
+#                                                 layers[0].particle_systems[neuronset1].particles[i].location)
+#        cell_uv = pre_p2d + func_pre(pre_p2d[0], pre_p2d[1], args_pre)
+#        cell = grid.cell(cell_uv[0], cell_uv[1])
+#        weights = sum([w[1] for w in cell])
+#
+#
 #computeConnectivity([ca3, al_ca3, ca3],                     # layers involved in the connection
 #                    'CA3_Pyramidal', 'CA3_Pyramidal',       # neuronsets involved
 #                    1,                                      # synaptic layer

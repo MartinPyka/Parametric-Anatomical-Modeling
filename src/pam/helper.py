@@ -39,6 +39,13 @@ class PAMTestOperator(bpy.types.Operator):
 
         return {'FINISHED'}
 
+def sum(items):
+    """ Computes the sum for a given list of numbers """
+    total = 0
+    for item in items:
+        total += item
+    return total
+
 
 def accumulate(items):
     """Generator function for cumulative sum"""
@@ -54,13 +61,13 @@ def random_select_indices(items, quantity):
         logger.error("quantity must not be smaller than zero")
         raise Exception("Quantity must not be smaller than zero")
 
-    sum = sum(items)
+    sum_items = sum(items)
     cumsum = [accumulate(items)]
 
     indices = []
 
     while quantity:
-        limiter = random.random() * sum
+        limiter = random.random() * sum_items
         index = 0
 
         while cumsum[select] < limiter:
@@ -224,7 +231,7 @@ class UVGrid(object):
 
         self._kernel = func
 
-    def compute_kernel(self, index, *args, **kwargs):
+    def compute_kernel(self, index, d, *args, **kwargs):
         """Computes weights with current registered kernel across the grid"""
         self._reset_weights()
 
@@ -239,7 +246,7 @@ class UVGrid(object):
                 )
 
                 if weight > KERNEL_THRESHOLD:
-                    self._weights[row][col].append((index, weight))
+                    self._weights[row][col].append((index, weight, d))
 
     def cell(self, u, v):
         """Returns cell for uv coordinate"""

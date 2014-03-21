@@ -1,5 +1,6 @@
 import bpy
 import mathutils.geometry as mug
+from mathutils import Vector
 import mathutils
 import math
 import numpy as np
@@ -10,15 +11,13 @@ import pam_vis as pv
 # model with some hard-coded constants
 import config as cfg
 
-from . import helper
+import helper
 
 # number of samples to compute connection probability
 samples = 1000
 debug_level = 0
 
 cfg.ray_fac = 1.0
-
-
 
 def computePoint(v1, v2, v3, v4, x1, x2):
     # computes an average point on the polygon depending on x1 and x2
@@ -175,7 +174,7 @@ def map3dPointTo3d(o1, o2, point, normal=None):
     return p_new
 
 
-def connfunc_gauss_post(u, v, *args):
+def connfunc_gauss_post(uv, guv, *args):
     """Gauss-function for 2d
     u, v    : coordinates, to determine the function value
     vu, vv  : variance for both dimensions
@@ -186,9 +185,11 @@ def connfunc_gauss_post(u, v, *args):
     vv = args[0][1]
     su = args[0][2]
     sv = args[0][3]
+    
+    ruv = guv - uv;  # compute relative position
 
-    return math.exp(-((u + su) ** 2 / (2 * vu ** 2) +
-                    (v + sv) ** 2 / (2 * vv ** 2)))
+    return math.exp(-((ruv[0] + su) ** 2 / (2 * vu ** 2) +
+                    (ruv[1] + sv) ** 2 / (2 * vv ** 2)))
 
     # TODO(MP): Kernel definition must be equal across code fragments
     # TODO(MP): Kernel functions can moved to separate module
@@ -462,71 +463,41 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
     grid = helper.UVGrid(layers[slayer])
     grid.kernel = func_post
     
+    
+    print("Compute Post-Mapping")
+    
     # fill grid with post-neuron-links
     for i in range(0, len(layers[-1].particle_systems[neuronset2].particles)):
         post_p3d, post_p2d, post_d = computeMapping(layers[:(slayer-1):-1],
                                                     connections[:(slayer-1):-1],
                                                     distances[:(slayer-1):-1],
-                                                    layers[-1].particle_systems[neuronset2].particles[j].location)
-        grid.compute_kernel(i, post_d, post_p2d[0], post_p2d[1], args_post )
-        
+                                                    layers[-1].particle_systems[neuronset2].particles[i].location)
+        grid.compute_kernel(i, post_d, post_p2d, args_post )
+    
+    
+    print("Compute Pre-Mapping")        
     for i in range(0, len(layers[0].particle_systems[neuronset1].particles)):
         pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer+1)],
                                                  connections[0:slayer],
                                                  distances[0:slayer],
                                                  layers[0].particle_systems[neuronset1].particles[i].location)
+
+        if (pre_p3d == None):
+            continue
+        
         for j in range(0, no_synapses):
-            cell_uv = pre_p2d + func_pre(pre_p2d[0], pre_p2d[1], args_pre)
+            cell_uv = pre_p2d + Vector(func_pre(pre_p2d[0], pre_p2d[1], args_pre))
             post_neuron = grid.select_random(cell_uv[0], cell_uv[1], 1)
-            conn[i, j] = post_neuron[0]      # the index of the post-neuron
-            dist[i, j] = pre_d + post_neuron[2]      # the distance of the post-neuron
+            if (len(post_neuron) > 0):
+                conn[i, j] = post_neuron[0][0]      # the index of the post-neuron
+                dist[i, j] = pre_d + post_neuron[0][2]      # the distance of the post-neuron
+            else:
+                conn[i, j] = -1
             
             # TODO (MP): add exact distance calculation here, taking into account
             #            the UV-coordinates of the synapse
         
-    return conn, dist
-
-#
-#
-#computeConnectivity([ca3, al_ca3, ca3],                     # layers involved in the connection
-#                    'CA3_Pyramidal', 'CA3_Pyramidal',       # neuronsets involved
-#                    1,                                      # synaptic layer
-#                    [1, 0],                                 # connection mapping
-#                    [1, 0],                                 # distance calculation
-#                    connfunc_gauss, [3.0, 0.3, 2.3, 0.00],  # kernel function plus parameters for pre-neurons
-#                    connfunc_gauss, [0.1, 0.1, 0.0, 0.00],  # kernel function plus parameters for pre-neurons
-#                    300)                                    # number of connections of each pre-synaptic 
-                                                            # neuron to post-synaptic neurons
-
-#def computeConnectivity(l1, p1, l2, p2, al, l1t, l2t, func, args):
-#    """computes the connectivity probability between two layers l1 and l2 using
-#    an axon layer al
-#    l1, l2      : layers with neuronsets (with particlesystems)
-#    p1, p2      : name of the neuronsets (particlesystems)
-#    al          : axon layer
-#    l1t, l2t    : 1, if topologically identical with al, 0, if not '''
-#
-#    result = np.zeros((len(l1.particle_systems[p1].particles), len(l2.particle_systems[p2].particles)))
-#    
-#    # go through all neurons of l1 
-#    for i in range(0, len(l1.particle_systems[p1].particles)):
-#        # get uv-coordinates of the neuron on al-layer
-#        if l1t == 1:
-#            a_uv_l1 = map3dPointToUV(l1, al, l1.particle_systems[p1].particles[i].location)
-#        else: 
-#            a_uv_l1 = map3dPointToUV(al, al, l1.particle_systems[p1].particles[i].location)            
-#
-#        # go through all neurons of l2
-#        for j in range(0, len(l2.particle_systems[p2].particles)):
-#            # get uv-coordinate of the neuron on al-layer        
-#            if l2t == 1:
-#                a_uv_l2 = map3dPointToUV(l2, al, l2.particle_systems[p2].particles[j].location)
-#            else:
-#                a_uv_l2 = map3dPointToUV(al, al, l2.particle_systems[p2].particles[j].location)
-#            
-#            result[i, j] = computeConnectivityProbability(a_uv_l1, a_uv_l2, func, args)   
-#            
-#    return result
+    return grid, conn, dist
 
 
 def initialize3D():
@@ -662,6 +633,28 @@ def subiculumtest():
     pv.visualizePostNeurons(ca1, 'CA1_Pyramidal', c_ca1_sub[particle])
                                                
 
+def connectiontest():
+    initialize3D()
+    pv.visualizeClean()
+    
+    t1 = bpy.data.objects['t1']
+    t2 = bpy.data.objects['t2']
+    t201 = bpy.data.objects['t2.001']
+    t3 = bpy.data.objects['t3']
+    t4 = bpy.data.objects['t4']
+    t5 = bpy.data.objects['t5']
+    
+    params = [0.1, 0.1, 0.0, 0.0]
+
+    grid, conn, dist = computeConnectivity([t1, t2, t201, t3, t4, t5],                      # layers involved in the connection
+                                           'ParticleSystem', 'ParticleSystem',       # neuronsets involved
+                                           2,                                      # synaptic layer
+                                           [cfg.MAP_top, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top], 
+                                           [cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid],                                 # distance calculation
+                                           connfunc_gauss_pre, params, connfunc_gauss_post, params,
+                                           20)   # kernel function plus parameters                                               
+    
+    return grid, conn, dist
 
 if __name__ == "__main__":
     ##############################################################################################
@@ -670,7 +663,16 @@ if __name__ == "__main__":
     ##############################################################################################
 
     #test() 
-    hippotest()
+    #hippotest()
     #subiculumtest()
-       
-
+    grid, conn, dist = connectiontest()
+    print(conn[2])
+    print(dist[2])
+    
+#    t201 = bpy.data.objects['t2.001']
+#    grid = helper.UVGrid(t201)
+#    grid.kernel = connfunc_gauss_post
+#    grid.compute_kernel(0, 1, Vector((0.0, 0.0)), [0.1, 0.1, 0., 0.])
+#    print(grid._weights[0][0])
+#    grid.compute_kernel(1, 1, Vector((0.0, 0.0)), [0.1, 0.1, 0., 0.])
+#    print(grid._weights[0][0])    

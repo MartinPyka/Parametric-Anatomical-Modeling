@@ -7,8 +7,9 @@ import types
 
 import bpy
 import mathutils
+from mathutils import Vector
 
-from . import utils
+import utils
 
 logger = logging.getLogger(__package__)
 
@@ -62,7 +63,7 @@ def random_select_indices(items, quantity):
         raise Exception("Quantity must not be smaller than zero")
 
     sum_items = sum(items)
-    cumsum = [accumulate(items)]
+    cumsum = accumulate(items)
 
     indices = []
 
@@ -70,7 +71,9 @@ def random_select_indices(items, quantity):
         limiter = random.random() * sum_items
         index = 0
 
-        while cumsum[select] < limiter:
+        for i in cumsum:
+            if i > limiter:
+                break
             index =+ 1
 
         indices.append(index)
@@ -174,6 +177,7 @@ class UVGrid(object):
 
     def __init__(self, obj, res=0.01):
         self._obj = obj
+        self._scaling = obj['uv_scaling']
         self._res = res
 
         u, v = uv_bounds(obj)
@@ -231,27 +235,30 @@ class UVGrid(object):
 
         self._kernel = func
 
-    def compute_kernel(self, index, d, *args, **kwargs):
+    def compute_kernel(self, index, d, uv, *args):
         """Computes weights with current registered kernel across the grid"""
-        self._reset_weights()
-
+        #self._reset_weights()
         for row in range(self._row):
             for col in range(self._col):
-                u, v = self._uvcoords[row][col]
-                weight = self._kernel(u, v, *args, **kwargs)
+                guv = self._uvcoords[row][col]
+                weight = self._kernel(uv, guv, *args)
 
                 logger.debug(
-                    "%s(%s, %s) at cell [%d][%d] with weight (%f)",
-                    self._kernel.__name__, args, kwargs, row, col, weight
+                    "%s(%s) at cell [%d][%d] with weight (%f)",
+                    self._kernel.__name__, args, row, col, weight
                 )
-
+                
                 if weight > KERNEL_THRESHOLD:
-                    self._weights[row][col].append((index, weight, d))
+                    distance = d + (guv-uv).length * self._scaling
+                    self._weights[row][col].append((index, weight, distance))
 
     def cell(self, u, v):
         """Returns cell for uv coordinate"""
         row, col = self._uv_to_cell_index(u, v)
-        cell = self._objects[row][col]
+        if row == -1:
+            return []
+        
+        cell = self._weights[row][col]
 
         logger.debug("cell at index [%d][%d]", row, col)
 
@@ -263,6 +270,9 @@ class UVGrid(object):
         corresponding cell
         """
         cell = self.cell(u, v)
+        if (len(cell) == 0):
+            return []
+        
         weights = [item[1] for item in cell]
 
         indices = random_select_indices(weights, quantity)
@@ -273,12 +283,12 @@ class UVGrid(object):
 
     def _uv_to_cell_index(self, u, v):
         """Returns cell index for a uv coordinate"""
-        if u > self._u or v > self._v or u < 0.0 or v < 0.0:
+        if u >= self._u or v >= self._v or u < 0.0 or v < 0.0:
             logger.error("uv coordinate out of bounds (%f, %f)", u, v)
-            raise Exception("uv coordinate out of bounds")
+            return -1, -1
 
-        row = math.ceil(u / self._res)
-        col = math.ceil(v / self._res)
+        row = math.floor(u / self._res)
+        col = math.floor(v / self._res)
 
         logger.debug("uv (%f, %f) to cell index [%d][%d]", u, v, row, col)
 
@@ -302,7 +312,7 @@ class UVGrid(object):
         for row in range(self._row):
             for col in range(self._col):
                 u, v = self._cell_index_to_uv(row, col)
-                self._uvcoords[row][col] = (u, v)
+                self._uvcoords[row][col] = Vector((u, v))
 
     def _reset_weights(self):
         """Resets weights across the grid"""

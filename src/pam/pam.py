@@ -14,10 +14,7 @@ import config as cfg
 import helper
 
 # number of samples to compute connection probability
-samples = 1000
 debug_level = 0
-
-cfg.ray_fac = 1.0
 
 def computePoint(v1, v2, v3, v4, x1, x2):
     # computes an average point on the polygon depending on x1 and x2
@@ -174,9 +171,10 @@ def map3dPointTo3d(o1, o2, point, normal=None):
     return p_new
 
 
-def connfunc_gauss_post(uv, guv, *args):
+def connfunc_gauss_post(n_uv, guv, *args):
     """Gauss-function for 2d
-    u, v    : coordinates, to determine the function value
+    n_uv    : neuron position
+    p_uv    : uv of point on surface
     vu, vv  : variance for both dimensions
     su, sv  : shift in u and v direction
     """
@@ -186,10 +184,10 @@ def connfunc_gauss_post(uv, guv, *args):
     su = args[0][2]
     sv = args[0][3]
     
-    ruv = guv - uv;  # compute relative position
+    r_uv = p_uv - n_uv;  # compute relative position
 
-    return math.exp(-((ruv[0] + su) ** 2 / (2 * vu ** 2) +
-                    (ruv[1] + sv) ** 2 / (2 * vv ** 2)))
+    return math.exp(-((r_uv[0] + su) ** 2 / (2 * vu ** 2) +
+                    (r_uv[1] + sv) ** 2 / (2 * vv ** 2)))
 
     # TODO(MP): Kernel definition must be equal across code fragments
     # TODO(MP): Kernel functions can moved to separate module
@@ -214,7 +212,7 @@ def connfunc_unity(u, v, *args):
     return 1
 
 def computeConnectivityProbability(uv1, uv2, func, args):
-    return func(uv2[0]-uv1[0], uv2[1]-uv1[1], args)
+    return func(uv1, uv2, args)
 
 
 def computeMapping(layers, connections, distances, point):
@@ -539,7 +537,7 @@ def test():
     point, n, p = t1.closest_point_on_mesh(pv.getCursor())
 	
     p3, p2, d = computeMapping([t1, t2, t201, t3, t4, t5], 
-                               [cfg.MAP_normal, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top], 
+                               [cfg.MAP_top, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top], 
                                [cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid], 
                                point)
     print(p3)
@@ -548,6 +546,7 @@ def test():
 	
     if (p3 != None):
         pv.visualizePath(p3)
+    return p3
     
     
 def hippotest():
@@ -575,7 +574,7 @@ def hippotest():
                                                   1,                                      # synaptic layer
                                                   [cfg.MAP_top, cfg.MAP_euclid],                                 # connection mapping
                                                   [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
-                                                  connfunc_gauss, params)   # kernel function plus parameters                                               
+                                                  connfunc_gauss_post, params)   # kernel function plus parameters                                               
         
     print('Compute Connectivity for ca3 to ca1')
     c_ca3_ca1, d_ca3_ca1 = computeConnectivityAll([ca3, al_ca3, ca1],                      # layers involved in the connection
@@ -583,7 +582,7 @@ def hippotest():
                                                  1,                                      # synaptic layer
                                                  [cfg.MAP_top, cfg.MAP_euclid],                                 # connection mapping
                                                  [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
-                                                 connfunc_gauss, params)   # kernel function plus parameters
+                                                 connfunc_gauss_post, params)   # kernel function plus parameters
     
     
     
@@ -652,8 +651,16 @@ def connectiontest():
                                            [cfg.MAP_top, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top], 
                                            [cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid],                                 # distance calculation
                                            connfunc_gauss_pre, params, connfunc_gauss_post, params,
-                                           20)   # kernel function plus parameters                                               
+                                           40)   # kernel function plus parameters                                               
     
+    pv.visualizeConnectionsForNeuron([t1, t2, t201, t3, t4, t5],                      # layers involved in the connection
+                                     'ParticleSystem', 'ParticleSystem',       # neuronsets involved
+                                     2,                                      # synaptic layer
+                                     [cfg.MAP_top, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top],
+                                     [cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid],
+                                     3,
+                                     conn[3])                                       
+
     return grid, conn, dist
 
 if __name__ == "__main__":
@@ -665,9 +672,9 @@ if __name__ == "__main__":
     #test() 
     #hippotest()
     #subiculumtest()
-    grid, conn, dist = connectiontest()
-    print(conn[2])
-    print(dist[2])
+    connectiontest()
+    
+    
     
 #    t201 = bpy.data.objects['t2.001']
 #    grid = helper.UVGrid(t201)
@@ -675,4 +682,4 @@ if __name__ == "__main__":
 #    grid.compute_kernel(0, 1, Vector((0.0, 0.0)), [0.1, 0.1, 0., 0.])
 #    print(grid._weights[0][0])
 #    grid.compute_kernel(1, 1, Vector((0.0, 0.0)), [0.1, 0.1, 0., 0.])
-#    print(grid._weights[0][0])    
+#    print(grid._weights[0][0])

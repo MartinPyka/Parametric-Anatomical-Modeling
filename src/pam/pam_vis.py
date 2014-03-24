@@ -1,4 +1,6 @@
 import bpy
+import pam
+
 
 
 vis_objects = 0
@@ -74,7 +76,34 @@ def visualizePath(pointlist):
     curve.name = "visualization.%03d" % vis_objects
     
     vis_objects = vis_objects + 1
-    
+
+def visualizeConnectionsForNeuron(layers, neuronset1, neuronset2, slayer, 
+                                  connections, distances, pre_index, post_indices):
+    """ Visualizes all connections between a given pre-synaptic neuron and its connections
+    to all post-synaptic neurons 
+    layers              : list of layers connecting a pre- with a post-synaptic layer
+    neuronset1,
+    neuronset2          : name of the neuronset (particle system) of the pre- and post-synaptic layer
+    slayer              : index in layers for the synaptic layer
+    connections         : list of values determining the type of layer-mapping
+    distances           : list of values determining the calculation of the distances between layers
+    pre_index           : index of pre-synaptic neuron
+    post_indices        : index-list of post-synaptic neurons
+    """
+
+    # path of the presynaptic neuron to the synaptic layer    
+    pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer+1)],
+                                                 connections[0:slayer],
+                                                 distances[0:slayer],
+                                                 layers[0].particle_systems[neuronset1].particles[pre_index].location)
+
+    for i in post_indices:
+        post_p3d, post_p2d, post_d = pam.computeMapping(layers[:(slayer-1):-1],
+                                                        connections[:(slayer-1):-1],
+                                                        distances[:(slayer-1):-1],
+                                                        layers[-1].particle_systems[neuronset2].particles[int(i)].location)    
+        visualizePath(pre_p3d + post_p3d[::-1])
+        
     
 def visualizeClean():
     """delete all visualization objects"""

@@ -276,7 +276,7 @@ class UVGrid(object):
         weights = [item[1] for item in cell]
 
         indices = random_select_indices(weights, quantity)
-        selected = [cell[index] for index in indices]
+        selected = [int(cell[index]) for index in indices]
 
         return selected
 

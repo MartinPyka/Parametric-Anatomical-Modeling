@@ -8,8 +8,10 @@ MAP_random = 2
 MAP_top = 3
 
 DIS_euclid = 0
-DIS_normalUV = 1
-DIS_euclidUV = 2
+DIS_euclidUV = 1
+DIS_normalUV = 2
+DIS_UVnormal = 3
+
 
 # length of a ray along a normal-vector. This is used for pam.map3dPointToUV() and 
 # pam.map3dPointTo3d() to map points along the normal between two layers

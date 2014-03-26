@@ -26,12 +26,13 @@ def visualizePostNeurons(layer, neuronset, connectivity):
     
     global vis_objects
     
-    for i in connectivity):
-         bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location=layer.particle_systems[neuronset].particles[i].location, layers=(True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
-         bpy.ops.transform.resize(value=(0.05, 0.05, 0.05))
-         bpy.context.selected_objects[0].name = "visualization.%03d" % vis_objects
-         vis_objects = vis_objects + 1
-         
+    for i in connectivity:
+         if (i >= 0):
+             bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location=layer.particle_systems[neuronset].particles[i].location, layers=(True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+             bpy.ops.transform.resize(value=(0.05, 0.05, 0.05))
+             bpy.context.selected_objects[0].name = "visualization.%03d" % vis_objects
+             vis_objects = vis_objects + 1
+             
 def visualizePoint(point):
     """ visualizes a point in 3d by creating a small sphere """
     global vis_objects    
@@ -77,7 +78,7 @@ def visualizePath(pointlist):
     vis_objects = vis_objects + 1
 
 def visualizeConnectionsForNeuron(layers, neuronset1, neuronset2, slayer, 
-                                  connections, distances, pre_index, post_indices):
+                                  connections, distances, pre_index, post_indices, synapses = None):
     """ Visualizes all connections between a given pre-synaptic neuron and its connections
     to all post-synaptic neurons 
     layers              : list of layers connecting a pre- with a post-synaptic layer
@@ -101,7 +102,8 @@ def visualizeConnectionsForNeuron(layers, neuronset1, neuronset2, slayer,
                                                         connections[:(slayer-1):-1],
                                                         distances[:(slayer-1):-1],
                                                         layers[-1].particle_systems[neuronset2].particles[int(i)].location)    
-        visualizePath(pre_p3d + post_p3d[::-1])
+        if synapses == None:                                                        
+            visualizePath(pre_p3d + post_p3d[::-1])
         
     
 def visualizeClean():

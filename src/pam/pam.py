@@ -207,8 +207,6 @@ def connfunc_gauss_pre(u, v, *args):
     sv = args[0][3]
 
     return [random.gauss(0, vu) + su, random.gauss(0, vv) + sv]
-
-
    
 def connfunc_unity(u, v, *args):
     return 1
@@ -460,6 +458,9 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
     # distance matrix
     dist = np.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
     
+    # synapse mattrx (matrix, with the uv-coordinates of the synapses)
+    syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
+    
     grid = helper.UVGrid(layers[slayer])
     grid.kernel = func_post
     
@@ -476,6 +477,9 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
                                                     connections[:(slayer-1):-1],
                                                     distances[:(slayer-1):-1],
                                                     layers[-1].particle_systems[neuronset2].particles[i].location)
+        if (post_p3d == None):
+            continue
+        
         grid.compute_kernel(i, post_d, post_p2d, args_post )
     
     
@@ -492,22 +496,23 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
         for j in range(0, no_synapses):
             cell_uv = pre_p2d + Vector(func_pre(pre_p2d[0], pre_p2d[1], args_pre))
             post_neuron = grid.select_random(cell_uv[0], cell_uv[1], 1)
-            #            trial = 0
-            #            while (len(post_neuron)==0) & (trial < DEFAULT_MAXTRIALS):
-            #                cell_uv = pre_p2d + Vector(func_pre(pre_p2d[0], pre_p2d[1], args_pre))
-            #                post_neuron = grid.select_random(cell_uv[0], cell_uv[1], 1)
-            #                trial += 1
+            trial = 0
+            while (len(post_neuron)==0) & (trial < DEFAULT_MAXTRIALS):
+                cell_uv = pre_p2d + Vector(func_pre(pre_p2d[0], pre_p2d[1], args_pre))
+                post_neuron = grid.select_random(cell_uv[0], cell_uv[1], 1)
+                trial += 1
                 
             if (len(post_neuron) > 0):
                 conn[i, j] = post_neuron[0][0]      # the index of the post-neuron
                 dist[i, j] = pre_d + post_neuron[0][2]      # the distance of the post-neuron
+                syn[i][j] = cell_uv
             else:
                 conn[i, j] = -1
             
             # TODO (MP): add exact distance calculation here, taking into account
             #            the UV-coordinates of the synapse
         
-    return conn, dist, grid
+    return conn, dist, syn, grid
 
 
 def initialize3D():
@@ -563,22 +568,29 @@ def test():
     pv.visualizeClean()
     initialize3D()
 
-    ca3_params_post = [0.5, 0.5, 0.0, 0.00]
-    ca3_params_pre = [0.5, 0.5, 0.0, 0.00]
+    ca3_params_post = [0.2, 0.2, 0.0, 0.00]
+    ca3_params_pre = [1.5, 0.5, 0.0, 0.00]
 
-    c_ca3_ca3, d_ca3_ca3, grid = computeConnectivity([ca3, al_ca3, ca3],                      # layers involved in the connection
+    c_ca3_ca3, d_ca3_ca3, s_ca3_ca3, grid = computeConnectivity([ca3, al_ca3, ca3],                      # layers involved in the connection
                                                'CA3_Pyramidal', 'CA3_Pyramidal',       # neuronsets involved
                                                1,                                      # synaptic layer
-                                               [cfg.MAP_top, cfg.MAP_euclid],                                 # connection mapping
+                                               [cfg.MAP_normal, cfg.MAP_normal],                                 # connection mapping
                                                [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
                                                connfunc_gauss_pre, ca3_params_pre, connfunc_gauss_post, ca3_params_post,   # kernel function plus parameters
                                                int(s_ca3_ca3 * f))                      # number of synapses for each  pre-synaptic neuron
                                                
-    particle = 40
+    particle = 43
         
     pv.setCursor(ca3.particle_systems[ca3_neurons].particles[particle].location)
         
     pv.visualizePostNeurons(ca3, ca3_neurons, c_ca3_ca3[particle])
+    pv.visualizeConnectionsForNeuron([ca3, al_ca3, ca3],                      # layers involved in the connection
+                                     'CA3_Pyramidal', 'CA3_Pyramidal',       # neuronsets involved
+                                     1,                                      # synaptic layer
+                                     [cfg.MAP_normal, cfg.MAP_normal],                                 # connection mapping
+                                     [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
+                                     particle,
+                                     c_ca3_ca3[particle])    
 
     print(c_ca3_ca3[particle])
     

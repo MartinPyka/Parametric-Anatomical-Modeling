@@ -5,6 +5,7 @@ import mathutils
 import math
 import numpy as np
 import random
+import export
 
 # import module for visualization
 import pam_vis as pv
@@ -171,10 +172,9 @@ def map3dPointTo3d(o1, o2, point, normal=None):
     return p_new
 
 
-def connfunc_gauss_post(n_uv, guv, *args):
+def connfunc_gauss_post(uv, guv, *args):
     """Gauss-function for 2d
-    n_uv    : neuron position
-    p_uv    : uv of point on surface
+    u, v    : coordinates, to determine the function value
     vu, vv  : variance for both dimensions
     su, sv  : shift in u and v direction
     """
@@ -184,10 +184,10 @@ def connfunc_gauss_post(n_uv, guv, *args):
     su = args[0][2]
     sv = args[0][3]
     
-    r_uv = p_uv - n_uv;  # compute relative position
+    ruv = guv - uv;  # compute relative position
 
-    return math.exp(-((r_uv[0] + su) ** 2 / (2 * vu ** 2) +
-                    (r_uv[1] + sv) ** 2 / (2 * vv ** 2)))
+    return math.exp(-((ruv[0] + su) ** 2 / (2 * vu ** 2) +
+                    (ruv[1] + sv) ** 2 / (2 * vv ** 2)))
 
     # TODO(MP): Kernel definition must be equal across code fragments
     # TODO(MP): Kernel functions can moved to separate module
@@ -453,7 +453,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
     no_synapses         : number of synapses for each pre-synaptic neuron
     '''
     # connection matrix
-    conn = np.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
+    conn = np.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses)).astype(int)
 
     # distance matrix
     dist = np.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
@@ -651,7 +651,9 @@ def connectiontest():
                                            [cfg.MAP_top, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top, cfg.MAP_top], 
                                            [cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid, cfg.DIS_euclid],                                 # distance calculation
                                            connfunc_gauss_pre, params, connfunc_gauss_post, params,
-                                           40)   # kernel function plus parameters                                               
+                                           30)   # kernel function plus parameters                                               
+    
+    export.export_zip('test.zip', [conn], [dist])
     
     pv.visualizeConnectionsForNeuron([t1, t2, t201, t3, t4, t5],                      # layers involved in the connection
                                      'ParticleSystem', 'ParticleSystem',       # neuronsets involved

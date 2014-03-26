@@ -17,8 +17,7 @@ DEFAULT_LOCATION = mathutils.Vector((0.0, 0.0, 0.0))
 DEFAULT_SCALE = mathutils.Vector((1.0, 1.0, 1.0))
 DEFAULT_ROTATION = mathutils.Euler((0.0, 0.0, 0.0), "XYZ")
 
-KERNEL_THRESHOLD = 0.5
-
+KERNEL_THRESHOLD = 0.1
 
 class PAMTestOperator(bpy.types.Operator):
     """Test Operator"""
@@ -40,13 +39,6 @@ class PAMTestOperator(bpy.types.Operator):
 
         return {'FINISHED'}
 
-def sum(items):
-    """ Computes the sum for a given list of numbers """
-    total = 0
-    for item in items:
-        total += item
-    return total
-
 
 def accumulate(items):
     """Generator function for cumulative sum"""
@@ -63,18 +55,17 @@ def random_select_indices(items, quantity):
         raise Exception("Quantity must not be smaller than zero")
 
     sum_items = sum(items)
-    cumsum = accumulate(items)
-
     indices = []
 
     while quantity:
         limiter = random.random() * sum_items
         index = 0
 
+        cumsum = accumulate(items) 
         for i in cumsum:
             if i > limiter:
                 break
-            index =+ 1
+            index += 1
 
         indices.append(index)
         quantity -= 1
@@ -175,7 +166,7 @@ class UVGrid(object):
     _weights = None
     _uvcoords = None
 
-    def __init__(self, obj, res=0.01):
+    def __init__(self, obj, res=0.05):
         self._obj = obj
         self._scaling = obj['uv_scaling']
         self._res = res
@@ -276,7 +267,7 @@ class UVGrid(object):
         weights = [item[1] for item in cell]
 
         indices = random_select_indices(weights, quantity)
-        selected = [int(cell[index]) for index in indices]
+        selected = [cell[index] for index in indices]
 
         return selected
 
@@ -284,8 +275,10 @@ class UVGrid(object):
     def _uv_to_cell_index(self, u, v):
         """Returns cell index for a uv coordinate"""
         if u >= self._u or v >= self._v or u < 0.0 or v < 0.0:
-            logger.error("uv coordinate out of bounds (%f, %f)", u, v)
-            return -1, -1
+            #logger.error("uv coordinate out of bounds (%f, %f)", u, v)
+            #return -1, -1
+            u = min(self._u, max(0., u))
+            v = min(self._v, max(0., v))
 
         row = math.floor(u / self._res)
         col = math.floor(v / self._res)

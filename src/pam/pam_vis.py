@@ -26,13 +26,12 @@ def visualizePostNeurons(layer, neuronset, connectivity):
     
     global vis_objects
     
-    for i in range(0, len(connectivity)):
-        if connectivity[i] > 0.7:
-             bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location=layer.particle_systems[neuronset].particles[i].location, layers=(True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
-             bpy.ops.transform.resize(value=(0.05, 0.05, 0.05))
-             bpy.context.selected_objects[0].name = "visualization.%03d" % vis_objects
-             vis_objects = vis_objects + 1
-             
+    for i in connectivity):
+         bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location=layer.particle_systems[neuronset].particles[i].location, layers=(True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+         bpy.ops.transform.resize(value=(0.05, 0.05, 0.05))
+         bpy.context.selected_objects[0].name = "visualization.%03d" % vis_objects
+         vis_objects = vis_objects + 1
+         
 def visualizePoint(point):
     """ visualizes a point in 3d by creating a small sphere """
     global vis_objects    

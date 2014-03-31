@@ -260,16 +260,20 @@ class UVGrid(object):
         """Returns a number of randomly selected items from uv coordinate
         corresponding cell
         """
+        if u >= self._u or v >= self._v or u < 0.0 or v < 0.0:
+            u = min(self._u, max(0., u))
+            v = min(self._v, max(0., v))
+            
         cell = self.cell(u, v)
         if (len(cell) == 0):
-            return []
+            return [], []
         
         weights = [item[1] for item in cell]
 
         indices = random_select_indices(weights, quantity)
         selected = [cell[index] for index in indices]
 
-        return selected
+        return selected, Vector((u, v))
 
 
     def _uv_to_cell_index(self, u, v):

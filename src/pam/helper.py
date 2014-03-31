@@ -55,13 +55,13 @@ def random_select_indices(items, quantity):
         raise Exception("Quantity must not be smaller than zero")
 
     sum_items = sum(items)
+    cumsum = [accumulate(items)]
     indices = []
 
     while quantity:
         limiter = random.random() * sum_items
         index = 0
 
-        cumsum = accumulate(items) 
         for i in cumsum:
             if i > limiter:
                 break
@@ -163,8 +163,9 @@ def gaussian_kernel(x, y, origin_x, origin_y, var_x, var_y):
 
 class UVGrid(object):
     """Convenience class to raster and project on uv mesh"""
-    _weights = None
+    _mask = None
     _uvcoords = None
+    _weights = None
 
     def __init__(self, obj, res=0.05):
         self._obj = obj
@@ -178,10 +179,11 @@ class UVGrid(object):
         self._row = row
         self._col = col
 
-        self._weights = [[[] for j in range(col)] for i in range(row)]
         self._uvcoords = [[[] for j in range(col)] for i in range(row)]
+        self._weights = [[[] for j in range(col)] for i in range(row)]
 
         self._kernel = None
+        self._kernel_args = None
 
         self._compute_uvcoords()
 
@@ -226,22 +228,36 @@ class UVGrid(object):
 
         self._kernel = func
 
-    def compute_kernel(self, index, d, uv, *args):
-        """Computes weights with current registered kernel across the grid"""
-        #self._reset_weights()
-        for row in range(self._row):
-            for col in range(self._col):
-                guv = self._uvcoords[row][col]
-                weight = self._kernel(uv, guv, *args)
+    @property
+    def kernel_args(self):
+        return self._kernel_args
 
-                logger.debug(
-                    "%s(%s) at cell [%d][%d] with weight (%f)",
-                    self._kernel.__name__, args, row, col, weight
-                )
+    @kernel.setter
+    def kernel_args(self, *args):
+        self._kernel = args
+
+    # def compute_kernel(self, index, d, uv, *args):
+    #     """Computes weights with current registered kernel across the grid"""
+    #     #self._reset_weights()
+    #     for row in range(self._row):
+    #         for col in range(self._col):
+    #             guv = self._uvcoords[row][col]
+    #             weight = self._kernel(uv, guv, *args)
+
+    #             logger.debug(
+    #                 "%s(%s) at cell [%d][%d] with weight (%f)",
+    #                 self._kernel.__name__, args, row, col, weight
+    #             )
                 
-                if weight > KERNEL_THRESHOLD:
-                    distance = d + (guv-uv).length * self._scaling
-                    self._weights[row][col].append((index, weight, distance))
+    #             if weight > KERNEL_THRESHOLD:
+    #                 distance = d + (guv-uv).length * self._scaling
+    #                 self._weights[row][col].append((index, weight, distance))
+
+    def compute_kernel(self):
+        pass
+
+    def insert(self, index, uv):
+        pass
 
     def cell(self, u, v):
         """Returns cell for uv coordinate"""

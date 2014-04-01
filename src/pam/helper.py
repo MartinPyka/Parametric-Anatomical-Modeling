@@ -16,6 +16,7 @@ DEFAULT_ROTATION = mathutils.Euler((0.0, 0.0, 0.0), "XYZ")
 
 KERNEL_THRESHOLD = 0.1
 
+
 class PAMTestOperator(bpy.types.Operator):
     """Test Operator"""
 
@@ -58,7 +59,7 @@ def random_select_indices(items, quantity):
         limiter = random.random() * sum_items
         index = 0
 
-        cumsum = accumulate(items) 
+        cumsum = accumulate(items)
         for i in cumsum:
             if i > limiter:
                 break
@@ -225,7 +226,7 @@ class UVGrid(object):
 
     def compute_kernel(self, index, d, uv, *args):
         """Computes weights with current registered kernel across the grid"""
-        #self._reset_weights()
+        # self._reset_weights()
         for row in range(self._row):
             for col in range(self._col):
                 guv = self._uvcoords[row][col]
@@ -235,7 +236,7 @@ class UVGrid(object):
                     "%s(%s) at cell [%d][%d] with weight (%f)",
                     self._kernel.__name__, args, row, col, weight
                 )
-                
+
                 if weight > KERNEL_THRESHOLD:
                     distance = d + (guv-uv).length * self._scaling
                     self._weights[row][col].append((index, weight, distance))
@@ -245,13 +246,12 @@ class UVGrid(object):
         row, col = self._uv_to_cell_index(u, v)
         if row == -1:
             return []
-        
+
         cell = self._weights[row][col]
 
         logger.debug("cell at index [%d][%d]", row, col)
 
         return cell
-
 
     def select_random(self, u, v, quantity):
         """Returns a number of randomly selected items from uv coordinate
@@ -260,11 +260,11 @@ class UVGrid(object):
         if u >= self._u or v >= self._v or u < 0.0 or v < 0.0:
             u = min(self._u, max(0., u))
             v = min(self._v, max(0., v))
-            
+
         cell = self.cell(u, v)
         if (len(cell) == 0):
             return [], []
-        
+
         weights = [item[1] for item in cell]
 
         indices = random_select_indices(weights, quantity)
@@ -272,12 +272,11 @@ class UVGrid(object):
 
         return selected, mathutils.Vector((u, v))
 
-
     def _uv_to_cell_index(self, u, v):
         """Returns cell index for a uv coordinate"""
         if u >= self._u or v >= self._v or u < 0.0 or v < 0.0:
-            #logger.error("uv coordinate out of bounds (%f, %f)", u, v)
-            #return -1, -1
+            # logger.error("uv coordinate out of bounds (%f, %f)", u, v)
+            # return -1, -1
             u = min(self._u, max(0., u))
             v = min(self._v, max(0., v))
 

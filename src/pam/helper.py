@@ -7,8 +7,6 @@ import types
 
 import bpy
 import mathutils
-from mathutils import Vector
-
 
 logger = logging.getLogger(__package__)
 
@@ -272,7 +270,7 @@ class UVGrid(object):
         indices = random_select_indices(weights, quantity)
         selected = [cell[index] for index in indices]
 
-        return selected, Vector((u, v))
+        return selected, mathutils.Vector((u, v))
 
 
     def _uv_to_cell_index(self, u, v):
@@ -308,7 +306,7 @@ class UVGrid(object):
         for row in range(self._row):
             for col in range(self._col):
                 u, v = self._cell_index_to_uv(row, col)
-                self._uvcoords[row][col] = Vector((u, v))
+                self._uvcoords[row][col] = mathutils.Vector((u, v))
 
     def _reset_weights(self):
         """Resets weights across the grid"""

@@ -9,7 +9,6 @@ import bpy
 import mathutils
 from mathutils import Vector
 
-import utils
 
 logger = logging.getLogger(__package__)
 

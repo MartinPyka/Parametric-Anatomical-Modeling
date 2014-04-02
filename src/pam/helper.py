@@ -201,7 +201,7 @@ class UVGrid(object):
         return any([len(c) for r in self._weights for c in r if any(c)])
 
     @property
-    def dimensions(self):
+    def dimension(self):
         return self._row, self._col
 
     @property

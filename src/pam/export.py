@@ -10,8 +10,8 @@ logger = logging.getLogger(__package__)
 
 def export_zip(filepath, cmatrices, dmatrices):
     with zipfile.ZipFile(filepath, 'w', zipfile.ZIP_DEFLATED) as file:
-       csv_write_matrices(file, "c", cmatrices)
-       csv_write_matrices(file, "d", dmatrices)
+        csv_write_matrices(file, "c", cmatrices)
+        csv_write_matrices(file, "d", dmatrices)
 
 
 def csv_write_matrices(file, suffix, matrices):

@@ -61,20 +61,22 @@ class PAMToolsPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "PAM Tools"
+    bl_label = "Base"
+    bl_category = "PAM"
 
     def draw(self, context):
         layout = self.layout
         col = layout.column()
 
 
-class PAMMeasurementToolsPanel(bpy.types.Panel):
+class PAMMeasureToolsPanel(bpy.types.Panel):
     """A tools panel inheriting all measurment operations"""
 
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "PAM Measurement Tools"
+    bl_label = "Measure"
+    bl_category = "PAM"
 
     def draw(self, context):
         active_obj = context.active_object
@@ -99,13 +101,14 @@ class PAMMeasurementToolsPanel(bpy.types.Panel):
         col.label("%d" % context.scene.pam_measure.neurons)
 
 
-class PAMVisualizeToolsPanel(bpy.types.Panel):
+class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
     """A tools panel for visualization of kernel function """
 
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "PAM Visualization Tools"
+    bl_label = "Visualize kernel"
+    bl_category = "PAM"
 
     def draw(self, context):
         active_obj = context.active_object
@@ -117,7 +120,8 @@ class PAMTestPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "PAM Testing Tools"
+    bl_label = "Testing"
+    bl_category = "PAM"
 
     def draw(self, context):
         layout = self.layout

@@ -7,7 +7,6 @@ import numpy as np
 import random
 import copy
 
-
 import export
 # import module for visualization
 import pam_vis as pv
@@ -124,6 +123,9 @@ def mapUVPointTo3d(object_uv, uv):
     if normal is not None, the normal is used to detect the point on object, otherwise
     the closest_point_on_mesh operation is used
     """ 
+    
+    if (len(uv) == 0):
+        return None
     result = 0
     for p in object_uv.data.polygons:
         uvs = [object_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
@@ -674,29 +676,29 @@ def test():
                                                int(s_ca3_ca1 * f))                      # number of synapses for each  pre-synaptic neuron        
         
                                                
-    particle = 45
+    particle = 40
         
     pv.setCursor(ca3.particle_systems[ca3_neurons].particles[particle].location)
         
     pv.visualizePostNeurons(ca3, ca3_neurons, c_ca3_ca3[particle])
     pv.visualizePostNeurons(ca1, ca1_neurons, c_ca3_ca1[particle])
     
-#    pv.visualizeConnectionsForNeuron([ca3, al_ca3, ca3],                      # layers involved in the connection
-#                                     ca3_neurons, ca3_neurons,      # neuronsets involved
-#                                     1,                                      # synaptic layer
-#                                     [cfg.MAP_normal, cfg.MAP_normal],                                 # connection mapping
-#                                     [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
-#                                     particle,
-#                                     c_ca3_ca3[particle], s_ca3_ca3[particle])
-#
-#    pv.visualizeConnectionsForNeuron([ca3, al_ca3, ca1],                      # layers involved in the connection
-#                                     ca3_neurons, ca1_neurons,       # neuronsets involved
-#                                     1,                                      # synaptic layer
-#                                     [cfg.MAP_normal, cfg.MAP_normal],                                 # connection mapping
-#                                     [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
-#                                     particle,
-#                                     c_ca3_ca1[particle],
-#                                     s_ca3_ca1[particle])    
+    pv.visualizeConnectionsForNeuron([ca3, al_ca3, ca3],                      # layers involved in the connection
+                                     ca3_neurons, ca3_neurons,      # neuronsets involved
+                                     1,                                      # synaptic layer
+                                     [cfg.MAP_normal, cfg.MAP_normal],                                 # connection mapping
+                                     [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
+                                     particle,
+                                     c_ca3_ca3[particle], s_ca3_ca3[particle])
+
+    pv.visualizeConnectionsForNeuron([ca3, al_ca3, ca1],                      # layers involved in the connection
+                                     ca3_neurons, ca1_neurons,       # neuronsets involved
+                                     1,                                      # synaptic layer
+                                     [cfg.MAP_normal, cfg.MAP_normal],                                 # connection mapping
+                                     [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
+                                     particle,
+                                     c_ca3_ca1[particle],
+                                     s_ca3_ca1[particle])    
     
     return grid, c_ca3_ca3, d_ca3_ca3, s_ca3_ca3, c_ca3_ca1, d_ca3_ca1, s_ca3_ca1
     

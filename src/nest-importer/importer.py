@@ -56,4 +56,5 @@ SUPPORTED_SUFFIXES = {
 
 
 if __name__ == "__main__":
-    print import_zip("./test.zip")
+    print("Hello World")
+    #print import_zip("./test.zip")

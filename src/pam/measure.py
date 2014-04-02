@@ -28,9 +28,11 @@ class PAMMeasureLayer(bpy.types.Operator):
     def execute(self, context):
         active_obj = context.active_object
 
-        quantity = context.scene.pam_quantity
-        area = context.scene.pam_area
         surface = surface_area(active_obj)
+
+        measure = context.scene.pam_measure
+        area = measure.area
+        quantity = measure.quantity
 
         neurons = math.ceil(surface * (float(quantity) / area))
 
@@ -43,13 +45,14 @@ class PAMMeasureLayer(bpy.types.Operator):
             neurons
         )
 
-        context.scene.pam_neurons = neurons
+        context.scene.pam_measure.neurons = neurons
 
         return {'FINISHED'}
 
     def invoke(self, context, event):
-        quantity = context.scene.pam_quantity
-        area = context.scene.pam_area
+        measure = context.scene.pam_measure
+        quantity = measure.quantity
+        area = measure.area
 
         if not quantity > 0 or not area > 0.0:
             logger.warn("quantiy/area can not be zero or smaller")
@@ -62,14 +65,14 @@ class PAMMeasureLayer(bpy.types.Operator):
         return self.execute(context)
 
 
-def register():
-    bpy.types.Scene.pam_area = bpy.props.FloatProperty(
+class MeasureProperties(bpy.types.PropertyGroup):
+    area = bpy.props.FloatProperty(
         name="Area",
         default=1.0,
         min=0.0,
         unit="AREA"
     )
-    bpy.types.Scene.pam_quantity = bpy.props.IntProperty(
+    quantity = bpy.props.IntProperty(
         name="Quantity",
         default=1,
         min=1,
@@ -77,16 +80,22 @@ def register():
         soft_max=10000000,
         subtype="UNSIGNED"
     )
-    bpy.types.Scene.pam_neurons = bpy.props.IntProperty(
+    neurons = bpy.props.IntProperty(
         name="Neurons",
         default=0,
         subtype="UNSIGNED"
     )
 
 
+def register():
+    bpy.utils.register_class(MeasureProperties)
+    bpy.types.Scene.pam_measure = bpy.props.PointerProperty(
+        type=MeasureProperties
+    )
+
+
 def unregister():
-    del bpy.types.Scene.pam_density
-    del bpy.types.Scene.pam_quantity
+    del bpy.types.Scene.pam_measure
 
 
 @utils.profiling

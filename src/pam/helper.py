@@ -205,7 +205,7 @@ class UVGrid(object):
 
     @property
     def dimension(self):
-        return self._row, self._col
+        return mathutils.Vector((self._row, self._col))
 
     @property
     def resolution(self):

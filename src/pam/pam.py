@@ -8,7 +8,7 @@ import random
 import copy
 
 
-import export
+import exporter
 # import module for visualization
 import pam_vis as pv
 # model with some hard-coded constants
@@ -805,7 +805,7 @@ def connectiontest():
                                            connfunc_gauss_pre, params, connfunc_gauss_post, params,
                                            30)   # kernel function plus parameters                                               
     
-    export.export_zip('test.zip', [conn], [dist])
+    exporter.export_zip('test.zip', [conn], [dist])
     
     pv.visualizeConnectionsForNeuron([t1, t2, t201, t3, t4, t5],                      # layers involved in the connection
                                      'ParticleSystem', 'ParticleSystem',       # neuronsets involved

@@ -81,13 +81,10 @@ class PAMMeasureToolsPanel(bpy.types.Panel):
     def draw(self, context):
         active_obj = context.active_object
 
-        name = ""
-        if active_obj is not None:
-            if active_obj.type == "MESH":
-                name = active_obj.name
+        name = mesh_object_name(active_obj)
 
         layout = self.layout
-        layout.label("Active Object: %s" % name)
+        layout.label("Active object: %s" % name)
 
         row = layout.row()
         col = row.column()
@@ -113,6 +110,42 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
     def draw(self, context):
         active_obj = context.active_object
 
+        name = mesh_object_name(active_obj) 
+        customs = context.scene.pam_visualize.customs
+
+        layout = self.layout
+        layout.label("Active object: %s" % name)
+
+        row = layout.row()
+        row.prop(context.scene.pam_visualize, "kernel", text="Kernel")
+
+        row = layout.row()
+        col = row.column(align=True)
+        col.prop(context.scene.pam_visualize, "name", text="")
+        col.prop(context.scene.pam_visualize, "value", text="Value")
+
+        row = layout.row()
+        op = row.operator("pam.add_param", "Add parameter")
+
+        row = layout.row()
+        row.prop(context.scene.pam_visualize, "customs")
+
+        row = layout.row()
+        row.template_list(
+            listtype_name="UI_UL_list",
+            dataptr=context.scene.pam_visualize,
+            propname="customs",
+            active_dataptr=context.scene.pam_visualize,
+            active_propname="index",
+            type="DEFAULT"
+        )
+
+        row = layout.row()
+        op = row.operator("pam.visualize_kernel", "Visualize")
+
+        row = layout.row()
+        op = row.operator("pam.visualize_kernel_reset", "Reset")
+
 
 class PAMTestPanel(bpy.types.Panel):
     """Test Panel"""
@@ -129,3 +162,17 @@ class PAMTestPanel(bpy.types.Panel):
         col.operator(
             "pam.test_operator",
         )
+
+# TODO(SK): missing docstring
+class CustomPropList(bpy.types.UIList):
+    def draw_item(self, context, layout, data item, icon, active_data,
+                  active_propname, index):
+        pass
+
+def mesh_object_name(obj):
+    name = ""
+    if obj is not None:
+        if obj.type == "MESH":
+            name = obj.name
+
+    return name

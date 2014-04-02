@@ -1,9 +1,12 @@
 import bpy
 import pam
+import config as cfg
 
 
+INTERPOLATION_QUALITY = 15
 
 vis_objects = 0
+
 
 def setCursor(loc):
     """Just a more convenient way to set the location of the cursor"""
@@ -26,12 +29,13 @@ def visualizePostNeurons(layer, neuronset, connectivity):
     
     global vis_objects
     
-    for i in connectivity):
-         bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location=layer.particle_systems[neuronset].particles[i].location, layers=(True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
-         bpy.ops.transform.resize(value=(0.05, 0.05, 0.05))
-         bpy.context.selected_objects[0].name = "visualization.%03d" % vis_objects
-         vis_objects = vis_objects + 1
-         
+    for i in connectivity:
+         if (i >= 0):
+             bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location=layer.particle_systems[neuronset].particles[i].location, layers=(True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+             bpy.ops.transform.resize(value=(0.05, 0.05, 0.05))
+             bpy.context.selected_objects[0].name = "visualization.%03d" % vis_objects
+             vis_objects = vis_objects + 1
+             
 def visualizePoint(point):
     """ visualizes a point in 3d by creating a small sphere """
     global vis_objects    
@@ -77,7 +81,7 @@ def visualizePath(pointlist):
     vis_objects = vis_objects + 1
 
 def visualizeConnectionsForNeuron(layers, neuronset1, neuronset2, slayer, 
-                                  connections, distances, pre_index, post_indices):
+                                  connections, distances, pre_index, post_indices, synapses = None):
     """ Visualizes all connections between a given pre-synaptic neuron and its connections
     to all post-synaptic neurons 
     layers              : list of layers connecting a pre- with a post-synaptic layer
@@ -88,6 +92,7 @@ def visualizeConnectionsForNeuron(layers, neuronset1, neuronset2, slayer,
     distances           : list of values determining the calculation of the distances between layers
     pre_index           : index of pre-synaptic neuron
     post_indices        : index-list of post-synaptic neurons
+    synapses            : optional list of coordinates for synapses
     """
 
     # path of the presynaptic neuron to the synaptic layer    
@@ -96,14 +101,72 @@ def visualizeConnectionsForNeuron(layers, neuronset1, neuronset2, slayer,
                                                  distances[0:slayer],
                                                  layers[0].particle_systems[neuronset1].particles[pre_index].location)
 
-    for i in post_indices:
+    for i in range(0,len(post_indices)):
         post_p3d, post_p2d, post_d = pam.computeMapping(layers[:(slayer-1):-1],
                                                         connections[:(slayer-1):-1],
                                                         distances[:(slayer-1):-1],
-                                                        layers[-1].particle_systems[neuronset2].particles[int(i)].location)    
+                                                        layers[-1].particle_systems[neuronset2].particles[int(post_indices[i])].location)    
+        if synapses == None:                                                        
+            visualizePath(pre_p3d + post_p3d[::-1])
+        else:
+            synapse_layer = []
+            if (distances[slayer-1] == cfg.DIS_normalUV) & (len(synapses[i]) > 0):
+                for interp in range(1,INTERPOLATION_QUALITY):
+                    ip = interp / INTERPOLATION_QUALITY
+                    uv_p = pre_p2d * (1-ip) + synapses[i] * ip
+                    s_3d = pam.mapUVPointTo3d(layers[slayer], uv_p)    
+                    if s_3d != None:
+                        synapse_layer.append(s_3d)
+                       
+            s_3d = pam.mapUVPointTo3d(layers[slayer], synapses[i])
+            if s_3d != None:
+                synapse_layer.append(s_3d)            
+            visualizePath(pre_p3d + synapse_layer + post_p3d[::-1])
+            
+def visualizeOneConnection(layers, neuronset1, neuronset2, slayer, 
+                           connections, distances, pre_index, post_index, post_list_index, synapses = None):
+    """ Visualizes all connections between a given pre-synaptic neuron and its connections
+    to all post-synaptic neurons 
+    layers              : list of layers connecting a pre- with a post-synaptic layer
+    neuronset1,
+    neuronset2          : name of the neuronset (particle system) of the pre- and post-synaptic layer
+    slayer              : index in layers for the synaptic layer
+    connections         : list of values determining the type of layer-mapping
+    distances           : list of values determining the calculation of the distances between layers
+    pre_index           : index of pre-synaptic neuron
+    post_index          : index of post-synaptic neuron
+    post_list_index     : index to be used in c[pre_index][post_list_index] to address post_index
+    synapses            : optional list of coordinates for synapses
+    """
+
+    # path of the presynaptic neuron to the synaptic layer    
+    pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer+1)],
+                                                 connections[0:slayer],
+                                                 distances[0:slayer],
+                                                 layers[0].particle_systems[neuronset1].particles[pre_index].location)
+
+
+    post_p3d, post_p2d, post_d = pam.computeMapping(layers[:(slayer-1):-1],
+                                                    connections[:(slayer-1):-1],
+                                                    distances[:(slayer-1):-1],
+                                                    layers[-1].particle_systems[neuronset2].particles[post_index].location)    
+    if synapses == None:                                                        
         visualizePath(pre_p3d + post_p3d[::-1])
-        
-    
+    else:
+        synapse_layer = []
+        if (distances[slayer-1] == cfg.DIS_normalUV) & (len(synapses[post_list_index]) > 0):
+            for interp in range(1,INTERPOLATION_QUALITY):
+                ip = interp / INTERPOLATION_QUALITY
+                uv_p = pre_p2d * (1-ip) + synapses[post_list_index] * ip
+                s_3d = pam.mapUVPointTo3d(layers[slayer], uv_p)    
+                if s_3d != None:
+                    synapse_layer.append(s_3d)
+                   
+        s_3d = pam.mapUVPointTo3d(layers[slayer], synapses[post_list_index])
+        if s_3d != None:
+            synapse_layer.append(s_3d)            
+        visualizePath(pre_p3d + synapse_layer + post_p3d[::-1])            
+
 def visualizeClean():
     """delete all visualization objects"""
 

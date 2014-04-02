@@ -5,8 +5,10 @@ import mathutils
 import math
 import numpy as np
 import random
-import export
+import copy
 
+
+import export
 # import module for visualization
 import pam_vis as pv
 # model with some hard-coded constants
@@ -115,6 +117,50 @@ def map3dPointToUV(object, object_uv, point, normal=None):
     return p_uv.to_2d()
 
 
+# TODO(SK): Quads into triangles (indices)
+def mapUVPointTo3d(object_uv, uv):
+    """Converts a given UV-coordinate into a 3d point,
+    object for the 3d point and object_uv must have the same topology
+    if normal is not None, the normal is used to detect the point on object, otherwise
+    the closest_point_on_mesh operation is used
+    """ 
+    result = 0
+    for p in object_uv.data.polygons:
+        uvs = [object_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
+        result = mug.intersect_point_tri_2d(uv, 
+                                            uvs[0].uv, 
+                                            uvs[1].uv,
+                                            uvs[2].uv)
+        if result == 1:
+            U = uvs[0].uv.to_3d()
+            V = uvs[1].uv.to_3d()
+            W = uvs[2].uv.to_3d()
+            A = object_uv.data.vertices[p.vertices[0]].co
+            B = object_uv.data.vertices[p.vertices[1]].co
+            C = object_uv.data.vertices[p.vertices[2]].co
+            break
+        else:
+            result = mug.intersect_point_tri_2d(uv, 
+                                                uvs[0].uv, 
+                                                uvs[2].uv,
+                                                uvs[3].uv)
+            if result == 1:
+                U = uvs[0].uv.to_3d()
+                V = uvs[2].uv.to_3d()
+                W = uvs[3].uv.to_3d()
+                A = object_uv.data.vertices[p.vertices[0]].co
+                B = object_uv.data.vertices[p.vertices[2]].co
+                C = object_uv.data.vertices[p.vertices[3]].co
+                break                                          
+
+    if result == 1:
+        p_3d = mug.barycentric_transform(uv.to_3d(), U, V, W, A, B, C)
+        return p_3d
+
+    return None
+
+
+
 def map3dPointTo3d(o1, o2, point, normal=None):
     """maps a 3d-point on a given object on another object. Both objects must have the
     same topology
@@ -207,8 +253,6 @@ def connfunc_gauss_pre(u, v, *args):
     sv = args[0][3]
 
     return [random.gauss(0, vu) + su, random.gauss(0, vv) + sv]
-
-
    
 def connfunc_unity(u, v, *args):
     return 1
@@ -277,8 +321,8 @@ def computeMapping(layers, connections, distances, point):
             if (i < (len(connections)-1)):
                 d = d + (p3d[-1] - p3d_n).length 
             else:
-                #if distances[i] == cfg.DIS_euclid:
-                #    p3d_n = p3d[-1]
+                if distances[i] == cfg.DIS_euclid:
+                    p3d_n = p3d[-1]
                 if (distances[i] == cfg.DIS_normalUV) | (distances[i] == cfg.DIS_euclidUV):
                     d = d + (p3d[-1] - p3d_n).length 
                     
@@ -372,7 +416,14 @@ def computeMapping(layers, connections, distances, point):
 
         # for the synaptic layer, compute the uv-coordinates
         if (i == (len(connections)-1)):
-            p2d = map3dPointToUV(layers[i+1], layers[i+1], p3d_n)
+            if (connections[i] == cfg.MAP_normal):
+                # compute normal on layer for the last point
+                p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
+                # determine new point
+                p3d_t = map3dPointTo3d(layers[i+1], layers[i+1], p3d[-1], n)
+                p2d = map3dPointToUV(layers[i+1], layers[i+1], p3d_t)
+            else:
+                p2d = map3dPointToUV(layers[i+1], layers[i+1], p3d_n)
 
         p3d.append(p3d_n)
 
@@ -460,6 +511,9 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
     # distance matrix
     dist = np.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
     
+    # synapse mattrx (matrix, with the uv-coordinates of the synapses)
+    syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
+    
     grid = helper.UVGrid(layers[slayer])
     grid.kernel = func_post
     
@@ -476,6 +530,9 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
                                                     connections[:(slayer-1):-1],
                                                     distances[:(slayer-1):-1],
                                                     layers[-1].particle_systems[neuronset2].particles[i].location)
+        if (post_p3d == None):
+            continue
+        
         grid.compute_kernel(i, post_d, post_p2d, args_post )
     
     
@@ -490,25 +547,57 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
             continue
         
         for j in range(0, no_synapses):
-            cell_uv = pre_p2d + Vector(func_pre(pre_p2d[0], pre_p2d[1], args_pre))
-            post_neuron = grid.select_random(cell_uv[0], cell_uv[1], 1)
-            #            trial = 0
-            #            while (len(post_neuron)==0) & (trial < DEFAULT_MAXTRIALS):
-            #                cell_uv = pre_p2d + Vector(func_pre(pre_p2d[0], pre_p2d[1], args_pre))
-            #                post_neuron = grid.select_random(cell_uv[0], cell_uv[1], 1)
-            #                trial += 1
+            shift = Vector(func_pre(pre_p2d[0], pre_p2d[1], args_pre))
+            cell_uv = pre_p2d + shift
+            post_neuron, uv = grid.select_random(cell_uv[0], cell_uv[1], 1)
+            trial = 0
+            while (len(post_neuron)==0) & (trial < DEFAULT_MAXTRIALS):
+                shift = Vector(func_pre(pre_p2d[0], pre_p2d[1], args_pre))
+                cell_uv = pre_p2d + shift
+                post_neuron, uv = grid.select_random(cell_uv[0], cell_uv[1], 1)
+                trial += 1
                 
             if (len(post_neuron) > 0):
                 conn[i, j] = post_neuron[0][0]      # the index of the post-neuron
-                dist[i, j] = pre_d + post_neuron[0][2]      # the distance of the post-neuron
+                dist[i, j] = pre_d + (pre_p2d-uv).length * layers[slayer]['uv_scaling'] + post_neuron[0][2]      # the distance of the post-neuron
+                syn[i][j] = uv
             else:
                 conn[i, j] = -1
             
             # TODO (MP): add exact distance calculation here, taking into account
             #            the UV-coordinates of the synapse
         
-    return conn, dist, grid
+    return conn, dist, syn, grid
 
+def computeDistance(layer1, layer2, neuronset1, neuronset2, commonl, conn_matrix):
+    """ measures the distance between neurons on the same layer according to the connectivity 
+    matrix
+    layer1
+    layer2      : layer of pre- and post-synaptic neurons
+    neuronset1,
+    neuronset2  : name of the neuronset (particlesystem) 
+    commonl     : layer, on which the distances should be measured
+    conn_matrix : connectivity matrix that determines, which distances should be measured
+    
+    result      : matrix of the same structure, like conn_matrix, but with distances
+    """
+    positions1 = []     # list of uv-positions for the first group
+    positions2 = []     # list of uv-positions for the second group
+    for p in layer1.particle_systems[neuronset1].particles:
+        p2d = map3dPointToUV(commonl, commonl, p.location)
+        positions1.append(p2d)
+        
+    for p in layer2.particle_systems[neuronset2].particles:
+        p2d = map3dPointToUV(commonl, commonl, p.location)
+        print(p2d)
+        positions2.append(p2d)
+        
+    result = np.zeros(conn_matrix.shape)
+    for i in range(0, len(conn_matrix)):
+        for j in range(0, len(conn_matrix[i])):
+            result[i,j] = (positions2[conn_matrix[i][j]] - positions1[i]).length * commonl['uv_scaling']
+    
+    return result
 
 def initialize3D():
     """prepares all necessary steps for the computation of connections"""
@@ -554,35 +643,62 @@ def test():
 
     # number of outgoing connectionso
     s_ca3_ca3 = 60000
+    s_ca3_ca1 = 85800
 
     f = 0.001     # factor for the neuron numbers
-
     # adjust the number of neurons per layer
     ca3.particle_systems[ca3_neurons].settings.count = int(n_ca3 * f)
+    ca1.particle_systems[ca1_neurons].settings.count = int(n_ca3 * f)    
 
     pv.visualizeClean()
     initialize3D()
 
-    ca3_params_post = [0.5, 0.5, 0.0, 0.00]
-    ca3_params_pre = [0.5, 0.5, 0.0, 0.00]
+    ca3_params_post = [0.05, 0.05, 0.0, 0.00]
+    ca3_params_pre = [1.5, 0.2, 0.0, 0.00]
+    ca1_params_post = ca3_params_post
 
-    c_ca3_ca3, d_ca3_ca3, grid = computeConnectivity([ca3, al_ca3, ca3],                      # layers involved in the connection
-                                               'CA3_Pyramidal', 'CA3_Pyramidal',       # neuronsets involved
+    c_ca3_ca3, d_ca3_ca3, s_ca3_ca3, grid = computeConnectivity([ca3, al_ca3, ca3],                      # layers involved in the connection
+                                               ca3_neurons, ca3_neurons,       # neuronsets involved
                                                1,                                      # synaptic layer
-                                               [cfg.MAP_top, cfg.MAP_euclid],                                 # connection mapping
+                                               [cfg.MAP_normal, cfg.MAP_normal],                                 # connection mapping
                                                [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
                                                connfunc_gauss_pre, ca3_params_pre, connfunc_gauss_post, ca3_params_post,   # kernel function plus parameters
                                                int(s_ca3_ca3 * f))                      # number of synapses for each  pre-synaptic neuron
+
+    c_ca3_ca1, d_ca3_ca1, s_ca3_ca1, grid = computeConnectivity([ca3, al_ca3, ca1],                      # layers involved in the connection
+                                               ca3_neurons, ca1_neurons,      # neuronsets involved
+                                               1,                                      # synaptic layer
+                                               [cfg.MAP_normal, cfg.MAP_normal],                                 # connection mapping
+                                               [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
+                                               connfunc_gauss_pre, ca3_params_pre, connfunc_gauss_post, ca1_params_post,   # kernel function plus parameters
+                                               int(s_ca3_ca1 * f))                      # number of synapses for each  pre-synaptic neuron        
+        
                                                
-    particle = 40
+    particle = 45
         
     pv.setCursor(ca3.particle_systems[ca3_neurons].particles[particle].location)
         
     pv.visualizePostNeurons(ca3, ca3_neurons, c_ca3_ca3[particle])
-
-    print(c_ca3_ca3[particle])
+    pv.visualizePostNeurons(ca1, ca1_neurons, c_ca3_ca1[particle])
     
-    return grid, c_ca3_ca3, d_ca3_ca3
+#    pv.visualizeConnectionsForNeuron([ca3, al_ca3, ca3],                      # layers involved in the connection
+#                                     ca3_neurons, ca3_neurons,      # neuronsets involved
+#                                     1,                                      # synaptic layer
+#                                     [cfg.MAP_normal, cfg.MAP_normal],                                 # connection mapping
+#                                     [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
+#                                     particle,
+#                                     c_ca3_ca3[particle], s_ca3_ca3[particle])
+#
+#    pv.visualizeConnectionsForNeuron([ca3, al_ca3, ca1],                      # layers involved in the connection
+#                                     ca3_neurons, ca1_neurons,       # neuronsets involved
+#                                     1,                                      # synaptic layer
+#                                     [cfg.MAP_normal, cfg.MAP_normal],                                 # connection mapping
+#                                     [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
+#                                     particle,
+#                                     c_ca3_ca1[particle],
+#                                     s_ca3_ca1[particle])    
+    
+    return grid, c_ca3_ca3, d_ca3_ca3, s_ca3_ca3, c_ca3_ca1, d_ca3_ca1, s_ca3_ca1
     
     
 def hippotest():

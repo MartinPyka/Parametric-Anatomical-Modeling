@@ -117,17 +117,21 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         layout = self.layout
 
         row = layout.row()
+        row.label("Active: %s" % name)
+
+        row = layout.row()
         row.prop(context.scene.pam_visualize, "view_mode", expand=True)
 
         row = layout.row()
-        row.label("Active: %s" % name)
+        row.prop(context.scene.pam_visualize, "kernel", text="")
 
         col = layout.column(align=True)
+        col.label("Kernel origin:")
         col.prop(context.scene.pam_visualize, "u")
         col.prop(context.scene.pam_visualize, "v")
 
         row = layout.row()
-        row.prop(context.scene.pam_visualize, "kernel", text="")
+        row.label("Parameter:")
 
         row = layout.row()
         row.template_list(

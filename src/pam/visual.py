@@ -8,8 +8,8 @@ logger = logging.getLogger(__package__)
 
 
 KERNEL_LIST = [
-    ("GAUSSIAN", "Gaussian", "", 1 ),
-    ("UNI", "Uni", "", 2 )
+    ("GAUSSIAN", "Gaussian", "", 1),
+    ("UNI", "Uni", "", 2)
 ]
 
 
@@ -18,6 +18,7 @@ class PAMVisualizeKernel(bpy.types.Operator):
     bl_idname = "pam.visualize_kernel"
     bl_label = "Visualize kernel"
     bl_description = "Visualize kernel function on object"
+    bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -26,6 +27,16 @@ class PAMVisualizeKernel(bpy.types.Operator):
             return active_obj.type == "MESH"
         else:
             return False
+
+    def execute(self, context):
+        return {'FINISHED'}
+
+
+class PamVisualizeKernelReset(bpy.types.Operator):
+    bl_idname = "pam.visualize_kernel_reset"
+    bl_label = "Reset object"
+    bl_description = "Reset object visualization"
+    bl_options = {'UNDO'}
 
     def execute(self, context):
         return {'FINISHED'}
@@ -50,27 +61,20 @@ class PamVisualizeKernelRemoveCustomParam(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     def execute(self, context):
-        return {'FINISHED'}
+        active_index = context.scene.pam_visualize.active_index
+        context.scene.pam_visualize.customs.remove(active_index)
 
-
-class PamVisualizeKernelReset(bpy.types.Operator):
-    bl_idname = "pam.visualize_kernel_reset"
-    bl_label = "Reset object"
-    bl_description = "Reset object visualization"
-    bl_options = {'UNDO'}
-
-    def execute(self, context):
         return {'FINISHED'}
 
 
 class PamVisualizeKernelFloatProperties(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(
         name="Param name",
-        default=""
+        default="param"
     )
     value = bpy.props.FloatProperty(
         name="Float value",
-        default=1.0
+        default=0.0
     )
 
 
@@ -92,14 +96,9 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
         min=0.0,
         max=1.0,
     )
-    index = bpy.props.IntProperty()
-    name = bpy.props.StringProperty(
-        name="Param name",
-        default="Parameter name"
-    )
-    value = bpy.props.FloatProperty(
-        name="Float value",
-        default=1.0
+    active_index = bpy.props.IntProperty()
+    field = bpy.props.PointerProperty(
+        type=PamVisualizeKernelFloatProperties
     )
     customs = bpy.props.CollectionProperty(
         type=PamVisualizeKernelFloatProperties

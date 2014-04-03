@@ -21,8 +21,8 @@ class PAMTestOperator(bpy.types.Operator):
     """Test Operator"""
 
     bl_idname = "pam.test_operator"
-    bl_label = "Rasterize uv"
-    bl_description = "Testing"
+    bl_label = "Test operator"
+    bl_description = "Test operator"
     bl_options = {'UNDO'}
 
     @classmethod

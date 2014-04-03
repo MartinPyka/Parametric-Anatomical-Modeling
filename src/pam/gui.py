@@ -84,17 +84,17 @@ class PAMMeasureToolsPanel(bpy.types.Panel):
         name = mesh_object_name(active_obj)
 
         layout = self.layout
-        layout.label("Active object: %s" % name)
+        layout.label("Active: %s" % name)
 
         row = layout.row()
-        col = row.column()
+        col = row.column(align=True)
         col.prop(context.scene.pam_measure, "quantity", text="Neurons")
         col.prop(context.scene.pam_measure, "area", text="Area")
 
         row = layout.row()
         col = row.column()
         op = col.operator("pam.measure_layer", "Calculate")
-        col.label("Total number of neurons:")
+        col.label("Total neurons:")
         col.label("%d" % context.scene.pam_measure.neurons)
 
 
@@ -110,40 +110,35 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
     def draw(self, context):
         active_obj = context.active_object
 
-        name = mesh_object_name(active_obj) 
+        name = mesh_object_name(active_obj)
         customs = context.scene.pam_visualize.customs
 
         layout = self.layout
-        layout.label("Active object: %s" % name)
+        layout.label("Active: %s" % name)
+
+        col = layout.column(align=True)
+        col.prop(context.scene.pam_visualize, "u")
+        col.prop(context.scene.pam_visualize, "v")
 
         row = layout.row()
-        row.prop(context.scene.pam_visualize, "kernel", text="Kernel")
-
-        row = layout.row()
-        col = row.column(align=True)
-        col.prop(context.scene.pam_visualize, "name", text="")
-        col.prop(context.scene.pam_visualize, "value", text="Value")
-
-        row = layout.row()
-        op = row.operator("pam.add_param", "Add parameter")
-
-        row = layout.row()
-        row.prop(context.scene.pam_visualize, "customs")
+        row.prop(context.scene.pam_visualize, "kernel", text="")
 
         row = layout.row()
         row.template_list(
-            listtype_name="UI_UL_list",
+            listtype_name="CustomPropList",
             dataptr=context.scene.pam_visualize,
             propname="customs",
             active_dataptr=context.scene.pam_visualize,
-            active_propname="index",
-            type="DEFAULT"
+            active_propname="active_index",
+            type="DEFAULT",
+            rows=1,
         )
+        col = row.column(align=True)
+        col.operator("pam.add_param", icon="ZOOMIN", text="")
+        col.operator("pam.remove_param", icon="ZOOMOUT", text="")
 
-        row = layout.row()
-        op = row.operator("pam.visualize_kernel", "Visualize")
-
-        row = layout.row()
+        row = layout.row(align=True)
+        op = row.operator("pam.visualize_kernel", "Apply")
         op = row.operator("pam.visualize_kernel_reset", "Reset")
 
 
@@ -153,7 +148,7 @@ class PAMTestPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "Testing"
+    bl_label = "Test"
     bl_category = "PAM"
 
     def draw(self, context):
@@ -163,11 +158,14 @@ class PAMTestPanel(bpy.types.Panel):
             "pam.test_operator",
         )
 
+
 # TODO(SK): missing docstring
 class CustomPropList(bpy.types.UIList):
-    def draw_item(self, context, layout, data item, icon, active_data,
+    def draw_item(self, context, layout, data, item, icon, active_data,
                   active_propname, index):
-        pass
+        layout.prop(item, "name", text="", emboss=False)
+        layout.prop(item, "value", text="", emboss=False, slider=False)
+
 
 def mesh_object_name(obj):
     name = ""

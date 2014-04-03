@@ -74,7 +74,6 @@ class PamVisualizeKernelRemoveCustomParam(bpy.types.Operator):
 
 def toggle_mode(self, context):
     textured_solid = False
-    print(self.view_mode)
     if self.view_mode == "MAPPED":
         textured_solid = True
 

@@ -7,6 +7,11 @@ import bpy
 logger = logging.getLogger(__package__)
 
 
+VIEW_LIST = [
+    ("NORMAL", "Normal", "", 1),
+    ("MAPPED", "Mapped", "", 2)
+]
+
 KERNEL_LIST = [
     ("GAUSSIAN", "Gaussian", "", 1),
     ("UNI", "Uni", "", 2)
@@ -67,6 +72,15 @@ class PamVisualizeKernelRemoveCustomParam(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def toggle_mode(self, context):
+    textured_solid = False
+    print(self.view_mode)
+    if self.view_mode == "MAPPED":
+        textured_solid = True
+
+    context.space_data.show_textured_solid = textured_solid
+
+
 class PamVisualizeKernelFloatProperties(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(
         name="Param name",
@@ -79,6 +93,12 @@ class PamVisualizeKernelFloatProperties(bpy.types.PropertyGroup):
 
 
 class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
+    view_mode = bpy.props.EnumProperty(
+        name="View mode",
+        default="NORMAL",
+        items=VIEW_LIST,
+        update=toggle_mode
+    )
     kernel = bpy.props.EnumProperty(
         name="Kernel function",
         default="GAUSSIAN",

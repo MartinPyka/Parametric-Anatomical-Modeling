@@ -112,9 +112,13 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
 
         name = mesh_object_name(active_obj)
         customs = context.scene.pam_visualize.customs
-
         layout = self.layout
-        layout.label("Active: %s" % name)
+
+        row = layout.row()
+        row.prop(context.scene.pam_visualize, "view_mode", expand=True)
+
+        row = layout.row()
+        row.label("Active: %s" % name)
 
         col = layout.column(align=True)
         col.prop(context.scene.pam_visualize, "u")

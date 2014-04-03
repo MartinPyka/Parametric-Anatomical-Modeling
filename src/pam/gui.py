@@ -77,6 +77,7 @@ class PAMMeasureToolsPanel(bpy.types.Panel):
     bl_context = "objectmode"
     bl_label = "Measure"
     bl_category = "PAM"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         active_obj = context.active_object
@@ -106,6 +107,7 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
     bl_context = "objectmode"
     bl_label = "Visualize kernel"
     bl_category = "PAM"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         active_obj = context.active_object
@@ -154,6 +156,7 @@ class PAMTestPanel(bpy.types.Panel):
     bl_context = "objectmode"
     bl_label = "Test"
     bl_category = "PAM"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout

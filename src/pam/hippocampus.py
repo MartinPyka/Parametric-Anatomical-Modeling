@@ -1,4 +1,5 @@
 import bpy
+import sys
 
 import pam
 import pam_vis as pv
@@ -8,7 +9,7 @@ import export
 import code
 
 
-EXPORT_PATH = '/home/martin/Dropbox/Work/Hippocampus3D/PAM/models/'
+EXPORT_PATH = '/home/martin/Dropbox/Work/Hippocampus3D/PAM/results/'
 
 
 # get all important layers
@@ -45,6 +46,14 @@ dg_params = [2., 0.5, 0., 0.]
 ca3_params_dendrites = [0.2, 0.2, 0., 0.0]
 ca3_params = [10., 0.5, -5., 0.00]
 
+
+###################################################
+## measure ration between real and UV-distances
+###################################################
+uv_data, layer_names = pam.measureUVs([al_dg, al_ca3])
+export.export_UVfactors(EXPORT_PATH + 'UVscaling.zip', uv_data, layer_names)
+
+3 / 0 
 #namespace = globals().copy()
 #namespace.update(locals())
 #code.interact(local=namespace)

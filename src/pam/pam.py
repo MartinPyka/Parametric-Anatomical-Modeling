@@ -67,8 +67,8 @@ def computeUVScalingFactor(object):
         mdist = (uvs[0].uv - uvs[1].uv).length
         result.append(rdist/mdist)
 
-    return np.mean(result)
-    
+    # TODO (MP): compute scaling factor on the basis of all edges
+    return np.mean(result), result
 
 
 # TODO(SK): Quads into triangles (indices)
@@ -617,12 +617,33 @@ def computeDistance(layer1, layer2, neuronset1, neuronset2, commonl, conn_matrix
     return result
 
 
+def measureUVs(objects):
+    """ Returns the ratio between real and UV-distance for all edges for all objects in
+    objects
+    
+    objects             : list of objects to compute uv-data for
+    
+    Returns:
+        uv_data         : list of ratio-vectors
+        layer_names     : name of the object
+    """
+    uv_data = []
+    layer_names = []
+    for o in objects:
+        if o.type == 'MESH':
+            if len(o.data.uv_layers) > 0:
+                uv_data.append(computeUVScalingFactor(o)[1])
+                layer_names.append(o.name)
+                
+    return uv_data, layer_names                
+    
+
 def initializeUVs():
-    # compute the UV scaling factor for all layers that have UV-maps
+    """ compute the UV scaling factor for all layers that have UV-maps """
     for o in bpy.data.objects:
         if o.type == 'MESH':
             if len(o.data.uv_layers) > 0:
-                o['uv_scaling'] = computeUVScalingFactor(o)
+                o['uv_scaling'] = computeUVScalingFactor(o)[0]
                 
             ''' area size of each polygon '''
             p_areas = []

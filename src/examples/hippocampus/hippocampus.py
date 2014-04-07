@@ -6,22 +6,59 @@ Created on Wed Apr  2 15:32:35 2014
 """
 
 import pam2nest as pn
+import matplotlib.pyplot as mp
 
 from nest import *
 import nest.voltage_trace
 import nest.raster_plot
+import numpy as np
+
+import nest_vis
 
 # TODO (MP): merge importer and pam2nest
 
-EXPORT_PATH = '/home/martin/Dropbox/Work/Hippocampus3D/PAM/models/'
+EXPORT_PATH = '/home/martin/Dropbox/Work/Hippocampus3D/PAM/results/'
 DELAY_FACTOR = 4.0
 
 if __name__ == "__main__":
-    m = pn.import_zip(EXPORT_PATH + 'hippocampus.zip')
+
+    data, names = pn.import_UVfactors(EXPORT_PATH + "UVscaling.zip")    
+    x_data = []
+    y_data = []
+
+    print(names)
+    for i, d in enumerate(data):
+        x_data = np.concatenate((x_data, np.ones(len(d[0]))*(i+1)))
+        y_data = y_data + d[0]
+        
+    mp.figure()
+    mp.plot(x_data, y_data, '*')
     
-    ngs = pn.CreateNetwork(m, 'iaf_neuron', 20.0, DELAY_FACTOR)
+#    mp.figure()
+#    mp.hist(data[0][0])
+#    mp.figure()
+#    mp.hist(data[1][0])
     
-    conn = FindConnections([ngs[3][0]])
+    
+    print(np.var(data[0][0]))
+    print(np.var(data[1][0]))
+    
+    
+    m = pn.import_connections(EXPORT_PATH + 'hippocampus.zip')
+    
+    for i, c in enumerate(m['c']):
+        print(m['neurongroups'][0][m['connections'][0][i][1]][0] + ' - ' +
+              m['neurongroups'][0][m['connections'][0][i][2]][0])
+        matrix = nest_vis.connectivityMatrix(c, 
+                                             m['neurongroups'][0][m['connections'][0][i][1]][2],
+                                             m['neurongroups'][0][m['connections'][0][i][2]][2])
+        mp.figure()
+        mp.imshow(matrix)
+    
+    mp.show()
+    # ngs = pn.CreateNetwork(m, 'iaf_neuron', 20.0, DELAY_FACTOR)
+    
+    # conn = FindConnections([ngs[3][0]])
     
     
 #    noise         = Create("poisson_generator", 1)

@@ -59,7 +59,6 @@ def CreateNetwork(data, neuron_type, weight, delay_factor):
         
     # create connections between neuron groups
     for conn in data['connections'][0]:
-        print(conn)
         Connect(neurongroups[conn[1]], neurongroups[conn[2]], 
                 data['c'][conn[0]], data['d'][conn[0]], 
                 weight, delay_factor)
@@ -70,7 +69,7 @@ def CreateNetwork(data, neuron_type, weight, delay_factor):
 #    """ converts a given list of neuron groups to a dictionary """
 
 
-def import_zip(filepath):
+def import_connections(filepath):
     matrices = copy.deepcopy(SUPPORTED_SUFFIXES)
 
     with zipfile.ZipFile(filepath, "r", zipfile.ZIP_DEFLATED) as file:
@@ -104,6 +103,22 @@ def import_zip(filepath):
 
     return matrices
 
+
+def import_UVfactors(filepath):
+    result = []
+    names = []
+    with zipfile.ZipFile(filepath, "r", zipfile.ZIP_DEFLATED) as file:
+        for filename in file.namelist():
+            filename_split = os.path.splitext(filename)  
+            filename_extension = filename_split[-1]
+            
+            data = io.StringIO(unicode(file.read(filename)))
+            func = SUPPORTED_FILETYPES[filename_extension]
+            matrix = func(data)
+            result.append(matrix)
+            names.append(filename_split[0])
+    return result, names
+            
 
 def convertToIntFull(matrix):
     return [[int(i) for i in row] for row in matrix]

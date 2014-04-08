@@ -20,7 +20,7 @@ def flatten(x):
 def loadDistanceData(filename):
     """ Loads a file with distance data
     filename        : name of the file to be loaded
-    
+
     Return:
         data        : data[0], connection distance
                       data[1], surface distance
@@ -28,12 +28,12 @@ def loadDistanceData(filename):
     f = open(filename, 'rb')
     data = pickle.load(f)
     f.close()
-    
+
     d = data[0]
     rd = data[1]
-    
+
     d = np.array(d)
     rd = np.array(rd)
-    
+
     return d, rd
-    
+

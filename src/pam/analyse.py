@@ -36,4 +36,3 @@ def loadDistanceData(filename):
     rd = np.array(rd)
 
     return d, rd
-

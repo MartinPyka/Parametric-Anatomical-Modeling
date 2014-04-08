@@ -107,7 +107,7 @@ def uv_pixel_values(image, u, v):
     y = int(math.floor(v * height))
 
     index = (x + y * width) * 4
-    r, g, b, a = image.pixels[index:index+4]
+    r, g, b, a = image.pixels[index:index + 4]
 
     logger.debug(
         "uv (%f,%f) to img xy (%d, %d) at index %d with rgba (%f, %f, %f, %f)",

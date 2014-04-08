@@ -22,7 +22,7 @@ class PAMPreferencesPane(bpy.types.AddonPreferences):
         ("INFO", "(3) INFO", "", 3),
         ("WARNING", "(2) WARNING", "", 2),
         ("ERROR", "(1) ERROR", "", 1),
-        ]
+    ]
     data_location = bpy.utils.user_resource(
         "DATAFILES",
         path=__package__,

@@ -21,7 +21,7 @@ bl_info = {
     # TODO(SK): Description missing
     "description": "",
     "category": "Object"
-    }
+}
 
 __author__ = bl_info['author']
 __license__ = bl_info['license']

@@ -8,7 +8,9 @@ import bpy
 
 logger = logging.getLogger(__package__)
 
-def export_connections(filepath, cmatrices, dmatrices, ng_list, connection_list):
+
+def export_connections(filepath, cmatrices, dmatrices, ng_list,
+                       connection_list):
     """ export connection and distance-informations
     cmatrices           : list of connection matrices
     dmatrices           : list of distance matrices
@@ -16,23 +18,25 @@ def export_connections(filepath, cmatrices, dmatrices, ng_list, connection_list)
     connection_list     : list of layer-based connections
     """
     with zipfile.ZipFile(filepath, 'w', zipfile.ZIP_DEFLATED) as file:
-       csv_write_matrices(file, "c", cmatrices)
-       csv_write_matrices(file, "d", dmatrices)
-       csv_write_matrix(file, "connections", connection_list)
-       csv_write_matrix(file, "neurongroups", ng_list)
+        csv_write_matrices(file, "c", cmatrices)
+        csv_write_matrices(file, "d", dmatrices)
+        csv_write_matrix(file, "connections", connection_list)
+        csv_write_matrix(file, "neurongroups", ng_list)
 
 
 def export_UVfactors(filepath, uv_matrices, layer_names):
-    """ list of UV-matrices, including the length of a real edge an its UV-distance
+    """ list of UV-matrices, including the length of a real edge an its
+    UV-distance
+
     uv_matrices         : list of uv-matrices
-    layer_names         : list of layer-names, the order corresponds to the list-order
-                          in uv_matrices
+    layer_names         : list of layer-names, the order corresponds to the
+                          list-order in uv_matrices
     """
     with zipfile.ZipFile(filepath, 'w', zipfile.ZIP_DEFLATED) as file:
         for i, matrix in enumerate(uv_matrices):
             csv_write_matrix(file, layer_names[i], [matrix])
-    
-    
+
+
 def csv_write_matrix(file, name, matrix):
     output = io.StringIO()
     writer = csv.writer(
@@ -44,7 +48,6 @@ def csv_write_matrix(file, name, matrix):
         writer.writerow(row)
     file.writestr("%s.csv" % (name), output.getvalue())
 
-    
 
 def csv_write_matrices(file, suffix, matrices):
     for i, matrix in enumerate(matrices):

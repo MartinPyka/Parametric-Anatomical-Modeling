@@ -1,6 +1,5 @@
-#filename = "/home/martin/ownCloud/work/Projekte/parametric-anatomical-modeling/src/pam/pam.py"
-#exec(compile(open(filename).read(), filename, 'exec'))
-
+# filename = "/home/martin/ownCloud/work/Projekte/parametric-anatomical-modeling/src/pam/pam.py"
+# exec(compile(open(filename).read(), filename, 'exec'))
 
 import bpy
 from mathutils import *
@@ -9,7 +8,6 @@ import config as cfg
 import pam
 import numpy as np
 import pickle
-        
 
 # get all important layers
 dg = bpy.data.objects['DG_sg']
@@ -18,7 +16,6 @@ ca1 = bpy.data.objects['CA1_sp']
 al_dg = bpy.data.objects['DG_sg_axons_all']
 al_ca3 = bpy.data.objects['CA3_sp_axons_all']
 ca = bpy.data.objects['CA']
-
 
 # get all important neuron groups
 ca3_neurons = 'CA3_Pyramidal'
@@ -38,12 +35,12 @@ print('Distance: ', (p2[c1[a[0][0], a[1][0]]] - p1[a[0][0]]).length)
 pv.visualizeClean()
 
 pv.setCursor(ca3.particle_systems[ca3_neurons].particles[a[0][0]].location)
-pv.visualizePoint(ca3.particle_systems[ca3_neurons].particles[c1[a[0][0],a[1][0]]].location)
+pv.visualizePoint(ca3.particle_systems[ca3_neurons].particles[c1[a[0][0], a[1][0]]].location)
 print(s1[a[0][0]][a[1][0]])
-#print(pam.mapUVPointTo3d(al_ca3, s1[a[0][0]][a[1][0]]))
+# print(pam.mapUVPointTo3d(al_ca3, s1[a[0][0]][a[1][0]]))
 pv.visualizePoint(pam.mapUVPointTo3d(ca3, p1[a[0][0]]))
 pv.visualizePoint(pam.mapUVPointTo3d(ca3, p2[c1[a[0][0], a[1][0]]]))
-#pv.visualizePoint(pam.mapUVPointTo3d(al_ca3, s1[a[0][0]][a[1][0]]))
+# pv.visualizePoint(pam.mapUVPointTo3d(al_ca3, s1[a[0][0]][a[1][0]]))
 
 pv.visualizeOneConnection([ca3, al_ca3, ca3],                      # layers involved in the connection
                           ca3_neurons, ca3_neurons,       # neuronsets involved
@@ -53,71 +50,71 @@ pv.visualizeOneConnection([ca3, al_ca3, ca3],                      # layers invo
                           a[0][0],
                           c1[a[0][0], a[1][0]], a[1][0], s1[a[0][0]])
 
-#for i in range(0, len(a[0])):
-#    pv.visualizeOneConnection([ca3, al_ca3, ca3],                      # layers involved in the connection
-#                              ca3_neurons, ca3_neurons,       # neuronsets involved
-#                              1,                                      # synaptic layer
-#                              [cfg.MAP_normal, cfg.MAP_normal],                                 # connection mapping
-#                              [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
-#                              a[0][i],
-#                              c1[a[0][i], a[1][i]], a[1][i], s1[a[0][i]])
-                              
+# for i in range(0, len(a[0])):
+#     pv.visualizeOneConnection([ca3, al_ca3, ca3],                      # layers involved in the connection
+#                               ca3_neurons, ca3_neurons,       # neuronsets involved
+#                               1,                                      # synaptic layer
+#                               [cfg.MAP_normal, cfg.MAP_normal],                                 # connection mapping
+#                               [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
+#                               a[0][i],
+#                               c1[a[0][i], a[1][i]], a[1][i], s1[a[0][i]])
+
 data = [d1.tolist(), rd1.tolist()]
 f = open('/home/martin/data.bin', 'wb')
-pickle.dump(data, f, protocol = 2)
+pickle.dump(data, f, protocol=2)
 f.close()
-         
+
 data = [d2.tolist(), rd2.tolist()]
 f = open('/home/martin/data2.bin', 'wb')
-pickle.dump(data, f, protocol = 2)
-f.close()                          
+pickle.dump(data, f, protocol=2)
+f.close()
 
-#particle = 45
-#                          
-#a = np.where(rd1[particle] == np.max(rd1[particle]))
-#i = a[0][0]
+# particle = 45
 #
-#print(rd1[particle][i])
-#print(d1[particle][i])
-#print(i)
+# a = np.where(rd1[particle] == np.max(rd1[particle]))
+# i = a[0][0]
 #
-#pv.visualizeClean()
-#pv.visualizeOneConnection([ca3, al_ca3, ca3],                      # layers involved in the connection
-#                                 ca3_neurons, ca3_neurons,      # neuronsets involved
-#                                 1,                                      # synaptic layer
-#                                 [cfg.MAP_normal, cfg.MAP_normal],                                 # connection mapping
-#                                 [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
-#                                 particle,
-#                                 c1[particle, i], i, s1[particle])
+# print(rd1[particle][i])
+# print(d1[particle][i])
+# print(i)
 #
-#p3d, p2d, d = pam.computeMapping([ca3, al_ca3], [cfg.MAP_normal], [cfg.DIS_normalUV], ca3.particle_systems[0].particles[45].location)
-#print(d)
-#print("  ")
-#print(s1[particle][i])
+# pv.visualizeClean()
+# pv.visualizeOneConnection([ca3, al_ca3, ca3],                      # layers involved in the connection
+#                                  ca3_neurons, ca3_neurons,      # neuronsets involved
+#                                  1,                                      # synaptic layer
+#                                  [cfg.MAP_normal, cfg.MAP_normal],                                 # connection mapping
+#                                  [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
+#                                  particle,
+#                                  c1[particle, i], i, s1[particle])
 #
-#p = pam.mapUVPointTo3d(al_ca3, s1[particle][i])
-#print(p)
-#if (p != None):
-#    pv.visualizePoint(p)
+# p3d, p2d, d = pam.computeMapping([ca3, al_ca3], [cfg.MAP_normal], [cfg.DIS_normalUV], ca3.particle_systems[0].particles[45].location)
+# print(d)
+# print("  ")
+# print(s1[particle][i])
 #
-#print("  ")
-#         
-#a = np.where(d2[45] == np.max(d2[45]))
-#i = a[0][0]
-#print(i)                
+# p = pam.mapUVPointTo3d(al_ca3, s1[particle][i])
+# print(p)
+# if (p != None):
+#     pv.visualizePoint(p)
 #
-#pv.visualizeOneConnection([ca3, al_ca3, ca3],                      # layers involved in the connection
-#                                 ca3_neurons, ca3_neurons,       # neuronsets involved
-#                                 1,                                      # synaptic layer
-#                                 [cfg.MAP_normal, cfg.MAP_normal],                                 # connection mapping
-#                                 [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
-#                                 particle,
-#                                 c1[particle, i], i, s1[particle])   
-#                                 
-#print("  ")                                         
-#print(s2[particle][i])
+# print("  ")
 #
-#p = pam.mapUVPointTo3d(al_ca3, s2[particle][i])
-#print(p)
-#if (p != None):
-#    pv.visualizePoint(p)
+# a = np.where(d2[45] == np.max(d2[45]))
+# i = a[0][0]
+# print(i)
+#
+# pv.visualizeOneConnection([ca3, al_ca3, ca3],                      # layers involved in the connection
+#                                  ca3_neurons, ca3_neurons,       # neuronsets involved
+#                                  1,                                      # synaptic layer
+#                                  [cfg.MAP_normal, cfg.MAP_normal],                                 # connection mapping
+#                                  [cfg.DIS_normalUV, cfg.DIS_euclid],                                 # distance calculation
+#                                  particle,
+#                                  c1[particle, i], i, s1[particle])
+#
+# print("  ")
+# print(s2[particle][i])
+#
+# p = pam.mapUVPointTo3d(al_ca3, s2[particle][i])
+# print(p)
+# if (p != None):
+#     pv.visualizePoint(p)

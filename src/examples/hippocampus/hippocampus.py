@@ -5,7 +5,7 @@ Created on Wed Apr  2 15:32:35 2014
 @author: martin
 """
 
-import pam2nest as pn
+import pam2nest
 import matplotlib.pyplot as mp
 
 from nest import *
@@ -20,9 +20,22 @@ import nest_vis
 EXPORT_PATH = '/home/martin/Dropbox/Work/Hippocampus3D/PAM/results/'
 DELAY_FACTOR = 4.0
 
+
+def plotDelayHistograms(m):
+    
+    for d in m['d']:
+        mp.figure()
+        c = np.array(d)
+        c = c.flatten()
+        print(c.var())
+        mp.hist(c[c>0], 20)
+    
+    mp.title('connection histogram')
+    
+    
 if __name__ == "__main__":
 
-    data, names = pn.import_UVfactors(EXPORT_PATH + "UVscaling.zip")    
+    data, names = pam2nest.import_UVfactors(EXPORT_PATH + "UVscaling.zip")    
     x_data = []
     y_data = []
 
@@ -39,22 +52,26 @@ if __name__ == "__main__":
 #    mp.figure()
 #    mp.hist(data[1][0])
     
+    print('var: ', np.var(data[0][0]))
+    print('var: ', np.var(data[1][0]))
     
-    print(np.var(data[0][0]))
-    print(np.var(data[1][0]))
     
+    m = pam2nest.import_connections(EXPORT_PATH + 'hippocampus.zip')
     
-    m = pn.import_connections(EXPORT_PATH + 'hippocampus.zip')
+    plotDelayHistograms(m)
     
     for i, c in enumerate(m['c']):
         print(m['neurongroups'][0][m['connections'][0][i][1]][0] + ' - ' +
               m['neurongroups'][0][m['connections'][0][i][2]][0])
-        matrix = nest_vis.connectivityMatrix(c, 
-                                             m['neurongroups'][0][m['connections'][0][i][1]][2],
-                                             m['neurongroups'][0][m['connections'][0][i][2]][2])
-        mp.figure()
-        mp.imshow(matrix)
+        matrix = nest_vis.connectivityMatrix(
+            c, 
+            m['neurongroups'][0][m['connections'][0][i][1]][2],
+            m['neurongroups'][0][m['connections'][0][i][2]][2])
+            
+        # mp.figure()
+        # mp.imshow(matrix)
     
+        
     mp.show()
     # ngs = pn.CreateNetwork(m, 'iaf_neuron', 20.0, DELAY_FACTOR)
     

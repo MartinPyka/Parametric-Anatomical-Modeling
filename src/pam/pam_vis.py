@@ -1,6 +1,11 @@
 import bpy
+import imp
+
 import pam
-import config as cfg
+import config
+
+imp.reload(pam)
+imp.reload(config)
 
 INTERPOLATION_QUALITY = 15
 
@@ -111,7 +116,7 @@ def visualizeConnectionsForNeuron(layers, neuronset1, neuronset2, slayer,
             visualizePath(pre_p3d + post_p3d[::-1])
         else:
             synapse_layer = []
-            if ((distances[slayer - 1] == cfg.DIS_normalUV) | (distances[slayer - 1] == cfg.DIS_euclidUV)) & (len(synapses[i]) > 0):
+            if ((distances[slayer - 1] == config.DIS_normalUV) | (distances[slayer - 1] == config.DIS_euclidUV)) & (len(synapses[i]) > 0):
                 for interp in range(1, INTERPOLATION_QUALITY):
                     ip = interp / INTERPOLATION_QUALITY
                     uv_p = pre_p2d * (1 - ip) + synapses[i] * ip
@@ -155,7 +160,7 @@ def visualizeOneConnection(layers, neuronset1, neuronset2, slayer,
         visualizePath(pre_p3d + post_p3d[::-1])
     else:
         synapse_layer = []
-        if (distances[slayer - 1] == cfg.DIS_normalUV) & (len(synapses[post_list_index]) > 0):
+        if ((distances[slayer - 1] == config.DIS_normalUV) | (distances[slayer - 1] == config.DIS_euclidUV)) & (len(synapses[post_list_index]) > 0):
             for interp in range(1, INTERPOLATION_QUALITY):
                 ip = interp / INTERPOLATION_QUALITY
                 uv_p = pre_p2d * (1 - ip) + synapses[post_list_index] * ip

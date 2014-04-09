@@ -15,4 +15,4 @@ DIS_UVnormal = 3
 # length of a ray along a normal-vector.
 # This is used for pam.map3dPointToUV() and
 # pam.map3dPointTo3d() to map points along the normal between two layers
-ray_fac = 1.02
+ray_fac = 0.3

@@ -65,8 +65,8 @@ def visualizePath(pointlist):
     tracer.resolution_u = 8
     tracer.bevel_resolution = 8  # Set bevel resolution from Panel options
     tracer.fill_mode = 'FULL'
-    tracer.bevel_depth = 0.01  # Set bevel depth from Panel options
-
+    tracer.bevel_depth = 0.005 # Set bevel depth from Panel options
+    
     # move nodes to objects
     for i in range(0, len(pointlist)):
         p = spline.bezier_points[i]
@@ -111,7 +111,7 @@ def visualizeConnectionsForNeuron(layers, neuronset1, neuronset2, slayer,
             visualizePath(pre_p3d + post_p3d[::-1])
         else:
             synapse_layer = []
-            if (distances[slayer - 1] == cfg.DIS_normalUV) & (len(synapses[i]) > 0):
+            if ((distances[slayer - 1] == cfg.DIS_normalUV) | (distances[slayer - 1] == cfg.DIS_euclidUV)) & (len(synapses[i]) > 0):
                 for interp in range(1, INTERPOLATION_QUALITY):
                     ip = interp / INTERPOLATION_QUALITY
                     uv_p = pre_p2d * (1 - ip) + synapses[i] * ip

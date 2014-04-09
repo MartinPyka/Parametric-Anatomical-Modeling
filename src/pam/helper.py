@@ -4,6 +4,7 @@ import logging
 import math
 import random
 import types
+import code
 
 import bpy
 import mathutils
@@ -14,7 +15,9 @@ DEFAULT_LOCATION = mathutils.Vector((0.0, 0.0, 0.0))
 DEFAULT_SCALE = mathutils.Vector((1.0, 1.0, 1.0))
 DEFAULT_ROTATION = mathutils.Euler((0.0, 0.0, 0.0), "XYZ")
 
-KERNEL_THRESHOLD = 0.1
+DEFAULT_RESOLUTION = 0.05
+
+KERNEL_THRESHOLD = 0.05
 
 
 class PAMTestOperator(bpy.types.Operator):
@@ -164,7 +167,7 @@ class UVGrid(object):
     _weights = None
     _uvcoords = None
 
-    def __init__(self, obj, res=0.05):
+    def __init__(self, obj, res=DEFAULT_RESOLUTION):
         self._obj = obj
         self._scaling = obj['uv_scaling']
         self._res = res
@@ -258,8 +261,9 @@ class UVGrid(object):
         corresponding cell
         """
         if u >= self._u or v >= self._v or u < 0.0 or v < 0.0:
-            u = min(self._u, max(0., u))
-            v = min(self._v, max(0., v))
+            #u = min(self._u, max(0., u))
+            #v = min(self._v, max(0., v))
+            return [], []
 
         cell = self.cell(u, v)
         if (len(cell) == 0):

@@ -3,6 +3,7 @@ import imp
 
 import pam
 import config
+import code
 
 imp.reload(pam)
 imp.reload(config)
@@ -24,14 +25,18 @@ def getCursor():
     return bpy.data.screens['Default'].scene.cursor_location
 
 
-def visualizePostNeurons(layer, neuronset, connectivity):
+def visualizePostNeurons(no_connection, pre_neuron):
     """visualizes the post-synaptic neurons that are connected with a given
     neuron from the presynaptic layer
-    layer       : post-synaptic layer
-    neuronset   : name of the particlesystem
-    connectivity: connectivity-vector """
+    no_connection : connection index
+    pre_neuron    : index of pre-synaptic neuron 
+    """
 
     global vis_objects
+
+    layer = pam.pam_connections[no_connection][0][-1] # get last layer of connection
+    neuronset = pam.pam_connections[no_connection][2] # neuronset 2
+    connectivity = pam.pam_connection_results[no_connection]['c'][pre_neuron]
 
     for i in connectivity:
         if (i >= 0):
@@ -86,8 +91,7 @@ def visualizePath(pointlist):
     vis_objects = vis_objects + 1
 
 
-def visualizeConnectionsForNeuron(layers, neuronset1, neuronset2, slayer,
-                                  connections, distances, pre_index, post_indices, synapses=None):
+def visualizeConnectionsForNeuron(no_connection, pre_index):
     """ Visualizes all connections between a given pre-synaptic neuron and its connections
     to all post-synaptic neurons
     layers              : list of layers connecting a pre- with a post-synaptic layer
@@ -100,6 +104,17 @@ def visualizeConnectionsForNeuron(layers, neuronset1, neuronset2, slayer,
     post_indices        : index-list of post-synaptic neurons
     synapses            : optional list of coordinates for synapses
     """
+
+    layers = pam.pam_connections[no_connection][0]  
+    neuronset1 = pam.pam_connections[no_connection][1]
+    neuronset2 = pam.pam_connections[no_connection][2]
+    slayer = pam.pam_connections[no_connection][3]
+    connections = pam.pam_connections[no_connection][4]
+    distances = pam.pam_connections[no_connection][5]
+
+    post_indices = pam.pam_connection_results[no_connection]['c'][pre_index]
+    synapses = pam.pam_connection_results[no_connection]['s'][pre_index]
+
 
     # path of the presynaptic neuron to the synaptic layer
     pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer + 1)],

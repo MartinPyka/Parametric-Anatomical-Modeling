@@ -16,7 +16,7 @@ import pam_vis
 import imp
 
 imp.reload(helper)
-imp.reload(cfg)
+imp.reload(config)
 
 DEBUG_LEVEL = 0
 DEFAULT_MAXTRIALS = 50
@@ -24,7 +24,9 @@ DEFAULT_MAXTRIALS = 50
 pam_ng_list = []                # ng = neurongroup
 pam_ng_dict = {}
 pam_connection_counter = 0
+pam_connection_indices = []
 pam_connections = []
+pam_connection_results = []
 
 
 def computePoint(v1, v2, v3, v4, x1, x2):
@@ -39,7 +41,8 @@ def computePoint(v1, v2, v3, v4, x1, x2):
 def selectRandomPoint(object):
         # select a random polygon
         p_select = random.random() * object['area_sum']
-        polygon = object.data.polygons[np.nonzero(np.array(object['area_cumsum']) > p_select)[0][0]]
+        polygon = object.data.polygons[
+            np.nonzero(np.array(object['area_cumsum']) > p_select)[0][0]]
 
         # define position on the polygon
         vert_inds = polygon.vertices[:]
@@ -310,7 +313,7 @@ def computeMapping(layers, connections, distances, point):
                     # p3d_n = p3d[-1]
                     p3d_n = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
                 # for normal-uv or euclidean-uv mapping
-                elif (distances[i] == cfg.DIS_normalUV) | (distances[i] == cfg.DIS_euclidUV):
+                elif (distances[i] == config.DIS_normalUV) | (distances[i] == config.DIS_euclidUV):
                     p3d_n = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
                     d = d + (p3d[-1] - p3d_n).length
 
@@ -326,9 +329,9 @@ def computeMapping(layers, connections, distances, point):
             if i < (len(connections) - 1):
                 d = d + (p3d[-1] - p3d_n).length
             else:
-                if distances[i] == cfg.DIS_euclid:
+                if distances[i] == config.DIS_euclid:
                     p3d_n = p3d[-1]
-                if (distances[i] == cfg.DIS_normalUV) | (distances[i] == cfg.DIS_euclidUV):
+                if (distances[i] == config.DIS_normalUV) | (distances[i] == config.DIS_euclidUV):
                     d = d + (p3d[-1] - p3d_n).length
 
         # if random mapping should be used
@@ -486,6 +489,38 @@ def computeConnectivityAll(layers, neuronset1, neuronset2, slayer, connections, 
     return conn, dist
 
 
+def addConnection(*args):
+    global pam_connections
+    
+    pam_connections.append(args)
+    
+#    pam_connections.append(
+#    {'layers': args[0],
+#     'neuronset1': args[1],
+#     'neuronset2': args[2],
+#     'slayer': args[3],
+#     'connections': args[4],
+#     'distances': args[5],
+#     'func_pre': args[6],
+#     'args_pre': args[7],
+#     'func_post': args[8],
+#     'args_post': args[9],
+#     'no_synapses': args[10] )
+#     }
+    
+def computeAllConnections():
+    global pam_connections
+    global pam_connection_results
+    
+    for c in pam_connections:
+        result = computeConnectivity(*c)
+        pam_connection_results.append(
+            {'c': result[0],
+             'd': result[1],
+             's': result[2]
+             }
+             )
+
 def computeConnectivity(layers, neuronset1, neuronset2, slayer,
                         connections, distances,
                         func_pre, args_pre, func_post, args_post,
@@ -509,7 +544,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
     global pam_ng_list
     global pam_ng_dict
     global pam_connection_counter
-    global pam_connections
+    global pam_connection_indices
 
     # connection matrix
     conn = np.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses)).astype(int)
@@ -539,12 +574,10 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
             continue
 
         grid.compute_kernel(i, post_d, post_p2d, args_post)
-        
-        
+                
 #    namespace = globals().copy()
 #    namespace.update(locals())
 #    code.interact(local=namespace)        
-
     print("Compute Pre-Mapping")
     for i in range(0, len(layers[0].particle_systems[neuronset1].particles)):
         pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer + 1)],
@@ -576,7 +609,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
             # TODO(MP): add exact distance calculation here, taking into account
             # TODO(MP): the UV-coordinates of the synapse
 
-    pam_connections.append([pam_connection_counter,
+    pam_connection_indices.append([pam_connection_counter,
                             pam_ng_dict[layers[0].name][neuronset1],
                             pam_ng_dict[layers[-1].name][neuronset2]])
     pam_connection_counter += 1
@@ -680,7 +713,7 @@ def initialize3D():
     global pam_ng_list
     global pam_ng_dict
     global pam_connection_counter
-    global pam_connections
+    global pam_connection_indices
 
     print("Initialize 3D settings")
     print("- Compute UV-scaling factor")
@@ -690,7 +723,7 @@ def initialize3D():
     pam_ng_list, pam_ng_dict = returnNeuronGroups()
 
     pam_connection_counter = 0
-    pam_connections = []
+    pam_connection_indices = []
 
     print("End of Initialization")
     print("============================")
@@ -699,8 +732,13 @@ def initialize3D():
 def Reset():
     """ Resets the most important variables without calculating everything from
     scratch """
+    
+    pam_ng_list = []                # ng = neurongroup
+    pam_ng_dict = {}
     pam_connection_counter = 0
+    pam_connection_indices = []
     pam_connections = []
+    pam_connection_results = []
 
 
 def test():

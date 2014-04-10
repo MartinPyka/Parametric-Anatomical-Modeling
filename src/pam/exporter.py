@@ -5,23 +5,30 @@ import io
 import logging
 import zipfile
 import bpy
+import pam
 
 logger = logging.getLogger(__package__)
 
 
-def export_connections(filepath, cmatrices, dmatrices, ng_list,
-                       connection_list):
+def export_connections(filepath):
     """ export connection and distance-informations
     cmatrices           : list of connection matrices
     dmatrices           : list of distance matrices
     nglist              : list of neural groups
     connection_list     : list of layer-based connections
     """
+    
+    cmatrices = []
+    dmatrices = []
+    for c in pam.pam_connection_results:
+        cmatrices.append(c['c'])
+        dmatrices.append(c['d'])
+    
     with zipfile.ZipFile(filepath, 'w', zipfile.ZIP_DEFLATED) as file:
         csv_write_matrices(file, "c", cmatrices)
         csv_write_matrices(file, "d", dmatrices)
-        csv_write_matrix(file, "connections", connection_list)
-        csv_write_matrix(file, "neurongroups", ng_list)
+        csv_write_matrix(file, "connections", pam.pam_connection_indices)
+        csv_write_matrix(file, "neurongroups", pam.pam_ng_list)
 
 
 def export_UVfactors(filepath, uv_matrices, layer_names):

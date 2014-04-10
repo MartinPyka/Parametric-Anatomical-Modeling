@@ -66,6 +66,7 @@ ca3_params_dendrites = [0.4, 0.4, 0., 0.0]
 ca3_params = [10., 0.1, -7., 0.00]
 
 ca1_params_dendrites = ca3_params_dendrites
+sub_params_dendrites = ca1_params_dendrites
 
 ###################################################
 ## measure ratio between real and UV-distances
@@ -76,41 +77,54 @@ exporter.export_UVfactors(EXPORT_PATH + 'UVscaling.zip', uv_data, layer_names)
 #3 / 0 
 
 
-c_dg_ca3, d_dg_ca3, s_dg_ca3, grid = pam.computeConnectivity([dg, al_dg, ca3],                      # layers involved in the connection
-                                           dg_neurons, ca3_neurons,       # neuronsets involved
-                                           1,                                      # synaptic layer
-                                           [config.MAP_euclid, config.MAP_euclid],                                 # connection mapping
-                                           [config.DIS_euclidUV, config.DIS_euclid],                                 # distance calculation
-                                           pam.connfunc_gauss_pre, dg_params, pam.connfunc_gauss_post, ca3_params_dendrites,   # kernel function plus parameters
-                                           int(s_dg_ca3))                      # number of synapses for each  pre-synaptic neuron
+pam.addConnection([dg, al_dg, ca3],                      # layers involved in the connection
+   dg_neurons, ca3_neurons,       # neuronsets involved
+   1,                                      # synaptic layer
+   [config.MAP_euclid, config.MAP_euclid],                                 # connection mapping
+   [config.DIS_euclidUV, config.DIS_euclid],                                 # distance calculation
+   pam.connfunc_gauss_pre, dg_params, pam.connfunc_gauss_post, ca3_params_dendrites,   # kernel function plus parameters
+   int(s_dg_ca3))                      # number of synapses for each  pre-synaptic neuron
 
 
 
 if True:
-    c_ca3_ca3, d_ca3_ca3, s_ca3_ca3, grid = pam.computeConnectivity([ca3, al_ca3, ca3],                      # layers involved in the connection
-                                               ca3_neurons, ca3_neurons,       # neuronsets involved
-                                               1,                                      # synaptic layer
-                                               [config.MAP_normal, config.MAP_normal],                                 # connection mapping
-                                               [config.DIS_normalUV, config.DIS_euclid],                                 # distance calculation
-                                               pam.connfunc_gauss_pre, ca3_params, pam.connfunc_gauss_post, ca3_params_dendrites,   # kernel function plus parameters
-                                               int(s_ca3_ca3 * 0.01))                      # number of synapses for each  pre-synaptic neuron
+    pam.addConnection([ca3, al_ca3, ca3],                      # layers involved in the connection
+       ca3_neurons, ca3_neurons,       # neuronsets involved
+       1,                                      # synaptic layer
+       [config.MAP_normal, config.MAP_normal],                                 # connection mapping
+       [config.DIS_normalUV, config.DIS_euclid],                                 # distance calculation
+       pam.connfunc_gauss_pre, ca3_params, pam.connfunc_gauss_post, ca3_params_dendrites,   # kernel function plus parameters
+       int(s_ca3_ca3 * 0.01))                      # number of synapses for each  pre-synaptic neuron
 
 if True:
-    c_ca3_ca1, d_ca3_ca1, s_ca3_ca1, grid = pam.computeConnectivity(
-        layers=[ca3, al_ca3, ca1],
-        neuronset1=ca3_neurons,
-        neuronset2=ca1_neurons,
-        slayer=1,
-        connections=[config.MAP_normal, config.MAP_normal],
-        distances=[config.DIS_normalUV, config.DIS_euclid],
-        func_pre=pam.connfunc_gauss_pre,
-        args_pre=ca3_params,
-        func_post=pam.connfunc_gauss_post,
-        args_post=ca1_params_dendrites,
-        no_synapses=int(s_ca3_ca1 * 0.01)
-        )
+    pam.addConnection(
+        [ca3, al_ca3, ca1],
+        ca3_neurons,
+        ca1_neurons,
+        1,
+        [config.MAP_normal, config.MAP_normal],
+        [config.DIS_normalUV, config.DIS_euclid],
+        pam.connfunc_gauss_pre,
+        ca3_params,
+        pam.connfunc_gauss_post,
+        ca1_params_dendrites,
+        int(s_ca3_ca1 * 0.01)
+        )    
+#    pam.addConnection(
+#        layers=[ca3, al_ca3, ca1],
+#        neuronset1=ca3_neurons,
+#        neuronset2=ca1_neurons,
+#        slayer=1,
+#        connections=[config.MAP_normal, config.MAP_normal],
+#        distances=[config.DIS_normalUV, config.DIS_euclid],
+#        func_pre=pam.connfunc_gauss_pre,
+#        args_pre=ca3_params,
+#        func_post=pam.connfunc_gauss_post,
+#        args_post=ca1_params_dendrites,
+#        no_synapses=int(s_ca3_ca1 * 0.01)
+#        )
                                                
-                                               
+pam.computeAllConnections()                                               
                                                
 #print(pam.pam_connection_counter)
 #print(pam.pam_connections)
@@ -131,46 +145,18 @@ pam_vis.visualizePoint(pam.map3dPointTo3d(
     
 
 pam_vis.setCursor(ca3.particle_systems[ca3_neurons].particles[particle].location)    
-pam_vis.visualizePostNeurons(ca3, ca3_neurons, c_ca3_ca3[particle])
-pam_vis.visualizeConnectionsForNeuron([ca3, al_ca3, ca3],                      # layers involved in the connection
-                       ca3_neurons, ca3_neurons,       # neuronsets involved
-                       1,                                      # synaptic layer
-                       [config.MAP_normal, config.MAP_normal],                                 # connection mapping
-                       [config.DIS_normalUV, config.DIS_euclid],                                 # distance calculation
-                       particle, c_ca3_ca3[particle], s_ca3_ca3[particle])
+pam_vis.visualizePostNeurons(1, particle)
+pam_vis.visualizeConnectionsForNeuron(1, particle)
 
-pam_vis.visualizePostNeurons(ca1, ca1_neurons, c_ca3_ca1[particle])
-pam_vis.visualizeConnectionsForNeuron(
-    layers=[ca3, al_ca3, ca1],
-    neuronset1=ca3_neurons,
-    neuronset2=ca1_neurons,
-    slayer=1,
-    connections=[config.MAP_normal, config.MAP_normal],
-    distances=[config.DIS_normalUV, config.DIS_euclid],
-    pre_index=particle,
-    post_indices=c_ca3_ca1[particle],
-    synapses=s_ca3_ca1[particle]
-    )
-
-
-
+pam_vis.visualizePostNeurons(2, particle)
+pam_vis.visualizeConnectionsForNeuron(2, particle)
 
 particle = 22
 #pam_vis.setCursor(dg.particle_systems[dg_neurons].particles[particle].location)
 
-pam_vis.visualizePostNeurons(ca3, ca3_neurons, c_dg_ca3[particle])
-pam_vis.visualizeConnectionsForNeuron([dg, al_dg, ca3],                      # layers involved in the connection
-                       dg_neurons, ca3_neurons,       # neuronsets involved
-                       1,                                      # synaptic layer
-                       [config.MAP_euclid, config.MAP_euclid],                                 # connection mapping
-                       [config.DIS_euclidUV, config.DIS_euclid],                                 # distance calculation
-                       particle, c_dg_ca3[particle], s_dg_ca3[particle])
+pam_vis.visualizePostNeurons(0, particle)
+pam_vis.visualizeConnectionsForNeuron(0, particle)
 
 #print(c_dg_ca3[particle])
 
-exporter.export_connections(
-    EXPORT_PATH + 'hippocampus.zip', 
-    [c_dg_ca3, c_ca3_ca3, c_ca3_ca1], 
-    [d_dg_ca3, d_ca3_ca3, d_ca3_ca1], 
-    pam.pam_ng_list, 
-    pam.pam_connections)
+exporter.export_connections(EXPORT_PATH + 'hippocampus.zip')

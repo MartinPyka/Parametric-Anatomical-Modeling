@@ -8,6 +8,40 @@ Visualized data, imported from PAM for NEST
 """
 
 import numpy as np
+import matplotlib.pyplot as mp
+
+
+def plotDelayHistograms(m):
+    
+    for i, d in enumerate(m['d']):
+        mp.figure()
+        c = np.array(d)
+        c = c.flatten()
+        print(c.var())
+        mp.hist(c[c>0], 20)    
+        mp.title(m['neurongroups'][0][m['connections'][0][i][1]][0] + ' - ' +
+                 m['neurongroups'][0][m['connections'][0][i][2]][0])
+
+def printConnections(m):
+    """ Print all connection pairs in m """
+    for i, c in enumerate(m['c']):
+        print(m['neurongroups'][0][m['connections'][0][i][1]][0] + ' - ' +
+              m['neurongroups'][0][m['connections'][0][i][2]][0])
+              
+def printNeuronGroups(m):
+    """ Print all neurongroups """
+    for ng in m['neurongroups'][0]:
+        print(ng)
+              
+def getConnectionMatrix(m, c_index):
+    """ Returns the full pre x post-neuron matrix for the connection
+        with index c_index """
+        
+    matrix = connectivityMatrix(
+        m['c'][c_index],
+        m['neurongroups'][0][m['connections'][0][c_index][1]][2],
+        m['neurongroups'][0][m['connections'][0][c_index][2]][2])
+    return matrix
 
 def connectivityMatrix(connections, pre_num, post_num):
     """ Creates a pre_num x post_num connection matrix for the given 

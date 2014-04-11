@@ -8,6 +8,8 @@ import types
 import bpy
 import mathutils
 
+from . import visual
+
 logger = logging.getLogger(__package__)
 
 DEFAULT_LOCATION = mathutils.Vector((0.0, 0.0, 0.0))
@@ -32,8 +34,24 @@ class PAMTestOperator(bpy.types.Operator):
     def execute(self, context):
         active_obj = context.active_object
 
-        # raster = UVGrid(active_obj)
-        print(transformed_objects())
+        texture = bpy.data.textures.new(
+            name="test_texture",
+            type="IMAGE"
+        )
+
+        image = bpy.data.images.new(
+            name="test_image",
+            width=10,
+            height=10,
+            alpha=True
+        )
+
+        texture.image = image
+
+        logger.debug("type: %s", texture)
+        logger.debug("type: %s", image)
+
+        visual.kernel_image(texture.image, gaussian_kernel, 0.5, 0.5, 0.5, 0.5)
 
         return {'FINISHED'}
 

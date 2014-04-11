@@ -126,7 +126,11 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         row.prop(context.scene.pam_visualize, "kernel", text="")
 
         col = layout.column(align=True)
-        col.label("Kernel origin:")
+        col.label("Resolution:")
+        col.prop(context.scene.pam_visualize, "resolution", text="r")
+
+        col = layout.column(align=True)
+        col.label("Origin:")
         col.prop(context.scene.pam_visualize, "u")
         col.prop(context.scene.pam_visualize, "v")
 
@@ -141,11 +145,13 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
             active_dataptr=context.scene.pam_visualize,
             active_propname="active_index",
             type="DEFAULT",
-            rows=1,
+            rows=3,
         )
         col = row.column(align=True)
         col.operator("pam.add_param", icon="ZOOMIN", text="")
         col.operator("pam.remove_param", icon="ZOOMOUT", text="")
+
+        layout.separator()
 
         row = layout.row(align=True)
         op = row.operator("pam.visualize_kernel", "Apply")
@@ -168,6 +174,10 @@ class PAMTestPanel(bpy.types.Panel):
         col.operator(
             "pam.test_operator",
         )
+
+        if "test_texture" in bpy.data.textures:
+            texture = bpy.data.textures["test_texture"]
+            col.template_preview(texture)
 
 
 # TODO(SK): missing docstring

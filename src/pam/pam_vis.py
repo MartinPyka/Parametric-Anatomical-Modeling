@@ -5,10 +5,9 @@ import pam
 import config
 import code
 
-imp.reload(pam)
+#imp.reload(pam)
 imp.reload(config)
-
-INTERPOLATION_QUALITY = 15
+imp.reload(pam)
 
 vis_objects = 0
 
@@ -105,7 +104,7 @@ def visualizeConnectionsForNeuron(no_connection, pre_index):
     synapses            : optional list of coordinates for synapses
     """
 
-    layers = pam.pam_connections[no_connection][0]  
+    layers = pam.pam_connections[no_connection][0]
     neuronset1 = pam.pam_connections[no_connection][1]
     neuronset2 = pam.pam_connections[no_connection][2]
     slayer = pam.pam_connections[no_connection][3]
@@ -130,19 +129,20 @@ def visualizeConnectionsForNeuron(no_connection, pre_index):
         if synapses is None:
             visualizePath(pre_p3d + post_p3d[::-1])
         else:
-            synapse_layer = []
-            if ((distances[slayer - 1] == config.DIS_normalUV) | (distances[slayer - 1] == config.DIS_euclidUV)) & (len(synapses[i]) > 0):
-                for interp in range(1, INTERPOLATION_QUALITY):
-                    ip = interp / INTERPOLATION_QUALITY
-                    uv_p = pre_p2d * (1 - ip) + synapses[i] * ip
-                    s_3d = pam.mapUVPointTo3d(layers[slayer], uv_p)
-                    if s_3d is not None:
-                        synapse_layer.append(s_3d)
+            if (len(synapses[i]) > 0):
+                distances_pre, pre_path = pam.computeDistanceToSynapse(
+                    layers[slayer-1], layers[slayer], pre_p3d[-1], synapses[i], distances[slayer-1])
+                if distances_pre >= 0:
+                    distances_post, post_path = pam.computeDistanceToSynapse(
+                        layers[slayer+1], layers[slayer], post_p3d[-1], synapses[i], distances[slayer])   
+                    if distances_post >= 0:
+                        visualizePath(pre_p3d + pre_path + post_path + post_p3d[::-1])
+                        visualizePath(pre_p3d)
+                        visualizePath(pre_path)
+                        visualizePath(post_path)
+                        visualizePath(post_p3d[::-1])
+                
 
-            s_3d = pam.mapUVPointTo3d(layers[slayer], synapses[i])
-            if s_3d is not None:
-                synapse_layer.append(s_3d)
-            visualizePath(pre_p3d + synapse_layer + post_p3d[::-1])
 
 
 def visualizeOneConnection(layers, neuronset1, neuronset2, slayer,
@@ -174,19 +174,14 @@ def visualizeOneConnection(layers, neuronset1, neuronset2, slayer,
     if synapses is None:
         visualizePath(pre_p3d + post_p3d[::-1])
     else:
-        synapse_layer = []
-        if ((distances[slayer - 1] == config.DIS_normalUV) | (distances[slayer - 1] == config.DIS_euclidUV)) & (len(synapses[post_list_index]) > 0):
-            for interp in range(1, INTERPOLATION_QUALITY):
-                ip = interp / INTERPOLATION_QUALITY
-                uv_p = pre_p2d * (1 - ip) + synapses[post_list_index] * ip
-                s_3d = pam.mapUVPointTo3d(layers[slayer], uv_p)
-                if s_3d is not None:
-                    synapse_layer.append(s_3d)
-
-        s_3d = pam.mapUVPointTo3d(layers[slayer], synapses[post_list_index])
-        if s_3d is not None:
-            synapse_layer.append(s_3d)
-        visualizePath(pre_p3d + synapse_layer + post_p3d[::-1])
+        _, pre_path = computeDistanceToSynapse(
+            layers[slayer-1], layers[slayer], pre_p3d[-1], synapses[i], distances[slayer-1])
+        if distances_pre >= 0:
+            _, post_path = computeDistanceToSynapse(
+                layers[slayer+1], layers[slayer], post_p3d[-1], synapses[i], distances[slayer])   
+            if distances_post >= 0:
+                visualizePath(pre_p3d + pre_path + post_path + post_p3d[::-1])
+  
 
 
 def visualizeClean():

@@ -42,12 +42,12 @@ def analyseUVdata():
     
     print('var: ', np.var(data[0][0]))
     print('var: ', np.var(data[1][0]))
-    
+    mp.show()
     
 def analyseNetwork():
     m = pam2nest.import_connections(EXPORT_PATH + 'hippocampus.zip')
     
-    nest_vis.plotDelayHistograms(m)
+    #nest_vis.plotDelayHistograms(m)
     nest_vis.printNeuronGroups(m)
     nest_vis.printConnections(m)
 
@@ -57,7 +57,7 @@ def analyseNetwork():
     
         
     #mp.show()
-    weights = [4.0, 2.5, 3.0, 4.0]
+    weights = [5.0, 2.5, 12.0, 10.0]
     ngs = pam2nest.CreateNetwork(m, 'izhikevich', weights, DELAY_FACTOR)
     
     # conn = FindConnections([ngs[3][0]])

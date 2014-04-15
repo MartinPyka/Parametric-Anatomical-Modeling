@@ -41,8 +41,8 @@ class PAMTestOperator(bpy.types.Operator):
 
         image = bpy.data.images.new(
             name="test_image",
-            width=10,
-            height=10,
+            width=80,
+            height=80,
             alpha=True
         )
 
@@ -51,7 +51,7 @@ class PAMTestOperator(bpy.types.Operator):
         logger.debug("type: %s", texture)
         logger.debug("type: %s", image)
 
-        visual.kernel_image(texture.image, gaussian_kernel, 0.5, 0.5, 0.5, 0.5)
+        visual.kernel_image(texture.image, gaussian_kernel, 0.1, 0.3, 0.1, 0.3)
 
         return {'FINISHED'}
 

@@ -21,6 +21,70 @@ KERNEL_LIST = [
 ]
 
 
+def gaussian_kernel(x, y, origin_x, origin_y, var_x, var_y):
+    """Computes distribution value in two dimensional gaussian kernel"""
+    return math.exp(-((x - origin_x) ** 2 / (2 * var_x ** 2) +
+                      (y - origin_y) ** 2 / (2 * var_y ** 2)))
+
+
+# TODO(SK): missing docstring
+class PAMVisualizeKernelGenerateImage(bpy.types.Operator):
+    bl_idname = "pam.generate_image"
+    bl_label = "Generate kernel image"
+    bl_description = "Generate kernel image"
+
+    # TODO(SK): will always return true
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def check(self, context):
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="custom")
+        layout.template_preview(context.blend_data.textures.get("pam.temp_texture"))
+
+    def execute(self, context):
+        pam_visualize = context.scene.pam_visualize
+
+        if "pam.temp_texture" in context.blend_data.textures:
+            temp_texture = context.blend_data.textures["pam.temp_texture"]
+            context.blend_data.textures.remove(temp_texture)
+
+        if "pam.temp_image" in context.blend_data.images:
+            temp_image = context.blend_data.images["pam.temp_image"]
+            context.blend_data.images.remove(temp_image)
+
+        temp_texture = context.blend_data.textures.new(
+            name="pam.temp_texture",
+            type="IMAGE"
+        )
+
+        temp_image = context.blend_data.images.new(
+            name="pam.temp_image",
+            width=pam_visualize.resolution,
+            height=pam_visualize.resolution,
+            alpha=True
+        )
+
+        u = pam_visualize.u
+        v = pam_visualize.v
+
+        args = []
+        for custom in pam_visualize.customs:
+            args.append(custom.value)
+
+        kernel_image(temp_image, gaussian_kernel, u, v, *args)
+
+        context.blend_data.textures["pam.temp_texture"].image = temp_image
+
+        context.scene.update()
+
+        return {'FINISHED'}
+
+
 # TODO(SK): missing docstring
 class PAMVisualizeKernel(bpy.types.Operator):
     bl_idname = "pam.visualize_kernel"
@@ -115,9 +179,10 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
     )
     resolution = bpy.props.IntProperty(
         name="Kernel image resolution",
-        default=1024,
-        min=32,
-        max=10240,
+        default=128,
+        min=2,
+        soft_min=8,
+        soft_max=4096,
         subtype="PIXEL"
     )
     u = bpy.props.FloatProperty(
@@ -133,9 +198,6 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
         max=1.0,
     )
     active_index = bpy.props.IntProperty()
-    field = bpy.props.PointerProperty(
-        type=PamVisualizeKernelFloatProperties
-    )
     customs = bpy.props.CollectionProperty(
         type=PamVisualizeKernelFloatProperties
     )
@@ -144,57 +206,24 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
 # TODO(SK): missing docstring
 def kernel_image(image, func, u, v, *args):
     width, height = image.size
-    x_res = 1.0 / width
-    y_res = 1.0 / height
-
-    rgba = (1, 1, 1, 1)
-
-    values = []
+    x_resolution = 1.0 / width
+    y_resolution = 1.0 / height
 
     for x in range(width):
         for y in range(height):
-            x_in_uv = x * x_res
-            y_in_uv = y * y_res
+            x_in_uv = x * x_resolution
+            y_in_uv = (height - y) * y_resolution
 
             value = func(x_in_uv, y_in_uv, u, v, *args)
-            values.append(value)
 
-    value_min = min(values)
-    value_max = max(values)
+            logger.debug("x: %f y: %f value: %f", x_in_uv, y_in_uv, value)
 
-    logger.debug("min: %f", value_min)
-    logger.debug("max: %f", value_max)
+            pixel_index = (x + y * width) * 4
+            color_index = 255 - math.floor(value * 255.0)
 
-    shift_upper = value_max - value_min
-    shift_factor = 255.0 / shift_upper
+            color = colorscheme.schemes["classic"][color_index]
 
-    logger.debug("shift upper: %f", shift_upper)
-    logger.debug("shift factor: %f", shift_factor)
-
-    for x in range(width):
-        for y in range(height):
-            index_image = (x + y * width) * 4
-            index_values = x * y
-
-            value = values[index_values]
-            # index_color = math.floor((value - value_min) * shift_factor)
-            # color = colorscheme.schemes["classic"][index_color]
-
-            for i in range(3):
-                image.pixels[index_image + i] = value
-
-
-# TODO(SK): duplicate
-# TODO(SK): missing docstring
-def pixel(image, x, y, rgba):
-    width, height = image.size
-    index = (x + y * width) * 4
-
-    for i in range(4):
-        logger.debug("[%i,%i] index: %i", x, y, index)
-        image.pixels[index + i] = rgba[i]
-
-    return image
+            image.pixels[pixel_index:pixel_index + 3] = map(lambda x: x / 255.0, color)
 
 
 # TODO(SK): missing docstring

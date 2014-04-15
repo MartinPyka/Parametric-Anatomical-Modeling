@@ -110,6 +110,9 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
+
+        # logger.debug("%s", context.blend_data)
+
         active_obj = context.active_object
 
         name = mesh_object_name(active_obj)
@@ -151,11 +154,15 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         col.operator("pam.add_param", icon="ZOOMIN", text="")
         col.operator("pam.remove_param", icon="ZOOMOUT", text="")
 
-        layout.separator()
+        # row = layout.row(align=True)
+        # row.template_preview(context.blend_data.textures.get("pam.temp_texture"))
 
         row = layout.row(align=True)
-        op = row.operator("pam.visualize_kernel", "Apply")
-        op = row.operator("pam.visualize_kernel_reset", "Reset")
+        op = row.operator("pam.generate_image", text="Generate")
+
+        row = layout.row(align=True)
+        op = row.operator("pam.visualize_kernel", text="Apply")
+        op = row.operator("pam.visualize_kernel_reset", text="Reset")
 
 
 class PAMTestPanel(bpy.types.Panel):

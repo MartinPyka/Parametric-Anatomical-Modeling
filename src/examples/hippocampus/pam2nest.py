@@ -53,7 +53,6 @@ def CreateNetwork(data, neuron_type, weights, delay_factor):
     """
     
     if (len(weights) > 1) & (len(weights) < len(data['connections'][0])):
-        print("hier")
         raise Exception("length of weight-vector does not match length of " +
             "connection list")
             
@@ -87,8 +86,6 @@ def import_connections(filepath):
             filename_split = os.path.splitext(filename)
             filename_suffix = ''.join(filename_split[:-1]).rsplit("_", 1)[-1]
             filename_extension = filename_split[-1]
-
-            print filename_suffix
 
             if filename_extension not in SUPPORTED_FILETYPES.keys():
                 logger.error("filetype not supported")

@@ -44,12 +44,15 @@ def analyseUVdata():
     print('var: ', np.var(data[1][0]))
     mp.show()
     
+    
 def analyseNetwork():
     m = pam2nest.import_connections(EXPORT_PATH + 'hippocampus.zip')
     
-    #nest_vis.plotDelayHistograms(m)
+    nest_vis.plotDelayHistograms(m)
     nest_vis.printNeuronGroups(m)
     nest_vis.printConnections(m)
+    
+    # nest_vis.plotConnectionDelayHistogram(m['connections'][0][0:4], m, range(0, 200))
 
     #matrix = nest_vis.getConnectionMatrix(m, 2)
     #mp.figure()
@@ -57,19 +60,24 @@ def analyseNetwork():
     
         
     #mp.show()
-    weights = [5.0, 2.5, 12.0, 10.0]
+    weights = [1., 10.0, 2.5, 12.0, 5.0]
     ngs = pam2nest.CreateNetwork(m, 'izhikevich', weights, DELAY_FACTOR)
     
     # conn = FindConnections([ngs[3][0]])
     
     
-    noise         = Create("poisson_generator", 1)
-    voltmeter     = Create("voltmeter", 2)
-    espikes       = Create("spike_detector")
+    noise         = Create("poisson_generator", 50)
+    dc_1            = nest.Create('dc_generator')
     
-    SetStatus(noise, [{"rate": 800.0}])
+    voltmeter       = Create("voltmeter", 2)
+    espikes         = Create("spike_detector")
+    
+    SetStatus(noise, [{'start': 0., 'stop': 10., 'rate': 800.0}])
+    #SetStatus(dc_1, {'start': 0., 'stop': 10., 'amplitude': 100.})
 
-    DivergentConnect(noise, ngs[2], weight=[2.], delay=[1.])
+    #DivergentConnect(dc_1, ngs[2][:50], weight=[2.], delay=[1.])
+    #DivergentConnect(noise, ngs[2], weight=[2.], delay=[1.])
+    Connect(noise, ngs[2][:50], params={'weight': 20., 'delay': 1.})
 #    Connect([voltmeter[0]], [g1[0]])
 #    Connect([voltmeter[1]], [g2[int(m['c'][0][0][0])]])
 #  

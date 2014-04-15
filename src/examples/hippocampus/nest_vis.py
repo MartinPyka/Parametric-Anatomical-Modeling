@@ -21,6 +21,44 @@ def plotDelayHistograms(m):
         mp.hist(c[c>0], 20)    
         mp.title(m['neurongroups'][0][m['connections'][0][i][1]][0] + ' - ' +
                  m['neurongroups'][0][m['connections'][0][i][2]][0])
+                 
+
+def plotConnectionDelayHistogram(connections, m, neurons):
+    """ computes delay-histogram for a given connection-chain
+    
+    connections :    list of connections
+    m           :    model-variable of the whole network
+    """
+    result = []
+    for i in neurons:
+        print(i)
+        result = result + recursivelyComputeDelays(connections, m, i)
+    
+    mp.figure()
+    mp.hist(result,100)
+    mp.title("Connection delays")        
+    return result
+    
+    
+def recursivelyComputeDelays(connections, m, neuron_number):
+    """ computes recursively connectoin delays for all connections
+    in the connections-list """
+    result = []
+    if (len(connections) == 1):
+        for delay in m['d'][ connections[0][0] ][neuron_number]:
+            result.append(delay)
+        return result
+    else:
+        for i, delay in enumerate(m['d'][ connections[0][0] ][neuron_number]):
+            post_neurons = recursivelyComputeDelays(
+                connections[1::], 
+                m, 
+                m['c'][ connections[0][0] ][neuron_number][i])
+            for post_neuron in post_neurons:
+                result.append(delay + post_neuron)
+                                
+    return result
+                 
 
 def printConnections(m):
     """ Print all connection pairs in m """
@@ -42,7 +80,8 @@ def getConnectionMatrix(m, c_index):
         m['neurongroups'][0][m['connections'][0][c_index][1]][2],
         m['neurongroups'][0][m['connections'][0][c_index][2]][2])
     return matrix
-
+    
+    
 def connectivityMatrix(connections, pre_num, post_num):
     """ Creates a pre_num x post_num connection matrix for the given 
     connetions array, which is pre_num x synapse_numbers

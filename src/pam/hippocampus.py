@@ -7,6 +7,7 @@ import config
 import exporter
 
 import code
+import profile
 
 import imp
 
@@ -14,6 +15,7 @@ imp.reload(pam)
 imp.reload(pam_vis)
 imp.reload(config)
 imp.reload(exporter)
+
 
 EXPORT_PATH = '/home/martin/Dropbox/Work/Hippocampus3D/PAM/results/'
 
@@ -76,7 +78,7 @@ pam.initialize3D()
 
 dg_params = [2., 0.5, 0., 0.]
 ca3_params_dendrites = [0.1, 0.1, 0., 0.0]
-ca3_params = [10., 0.1, -7., 0.00]
+ca3_params = [10., 0.2, -7., 0.00]
 
 ca1_params = [0.08, 0.08, 0.0, 0.0]
 ca1_params_dendrites = ca3_params_dendrites
@@ -100,7 +102,7 @@ if False:
 
 
 if True:
-    pam.addConnection([ca3, al_ca3, ca3],                      # layers involved in the connection
+    id_ca3_ca3 = pam.addConnection([ca3, al_ca3, ca3],                      # layers involved in the connection
        ca3_neurons, ca3_neurons,       # neuronsets involved
        1,                                      # synaptic layer
        [config.MAP_normal, config.MAP_normal],                                 # connection mapping
@@ -108,7 +110,7 @@ if True:
        pam.connfunc_gauss_pre, ca3_params, pam.connfunc_gauss_post, ca3_params_dendrites,   # kernel function plus parameters
        int(s_ca3_ca3))                      # number of synapses for each  pre-synaptic neuron
 
-if True:
+if False:
     pam.addConnection(
         [ca3, al_ca3, ca1],
         ca3_neurons,
@@ -151,8 +153,9 @@ if False:
 #        no_synapses=int(s_ca3_ca1 * 0.01)
 #        )
 
-pam.computeAllConnections()                                               
-pam.printConnections()                                               
+pam.computeAllConnections()
+#profile.run("pam.computeAllConnections()")
+pam.printConnections()
                                                
 #print(pam.pam_connection_counter)
 #print(pam.pam_connections)
@@ -164,8 +167,8 @@ print("Visualization")
 particle = 22
 
 p, n, f = ca3.closest_point_on_mesh(ca3.particle_systems[ca3_neurons].particles[particle].location)
-pam_vis.visualizePoint(pam.map3dPointTo3d(
-    al_ca3, al_ca3, p, n))
+#pam_vis.visualizePoint(pam.map3dPointTo3d(
+#    al_ca3, al_ca3, p, n))
 
 #namespace = globals().copy()
 #namespace.update(locals())
@@ -173,30 +176,31 @@ pam_vis.visualizePoint(pam.map3dPointTo3d(
     
 
 pam_vis.setCursor(ca3.particle_systems[ca3_neurons].particles[particle].location)
-pam_vis.visualizePostNeurons(1, particle)
-pam_vis.visualizeConnectionsForNeuron(1, particle)
+#pam_vis.visualizePostNeurons(id_ca3_ca3, particle)
+pam_vis.visualizeConnectionsForNeuron(id_ca3_ca3, particle)
 
-pam_vis.visualizePostNeurons(2, particle)
-pam_vis.visualizeConnectionsForNeuron(2, particle)
+#pam_vis.visualizePostNeurons(id_ca3_ca3, particle)
+#pam_vis.visualizeConnectionsForNeuron(id_ca3_ca3, particle)
 
-particle = 22
-pam_vis.setCursor(dg.particle_systems[dg_neurons].particles[particle].location)
-
-pam_vis.visualizePostNeurons(0, particle)
-pam_vis.visualizeConnectionsForNeuron(0, particle)
-
-particle = 29
-pam_vis.visualizePoint(ca1.particle_systems[ca1_neurons].particles[particle].location)
-pam_vis.visualizeConnectionsForNeuron(id_ca1_sub, particle)
-
-particle = 24
-pam_vis.visualizePoint(ca1.particle_systems[ca1_neurons].particles[particle].location)
-pam_vis.visualizeConnectionsForNeuron(id_ca1_sub, particle)
-
-d, p = pam.computeDistance_PreToSynapse(id_ca1_sub, particle)
-print(d)
-pam_vis.visualizePath(p)
-
-#print(c_dg_ca3[particle])
-
-exporter.export_connections(EXPORT_PATH + 'hippocampus.zip')
+#
+#particle = 22
+#pam_vis.setCursor(dg.particle_systems[dg_neurons].particles[particle].location)
+#
+#pam_vis.visualizePostNeurons(0, particle)
+#pam_vis.visualizeConnectionsForNeuron(0, particle)
+#
+#particle = 29
+#pam_vis.visualizePoint(ca1.particle_systems[ca1_neurons].particles[particle].location)
+#pam_vis.visualizeConnectionsForNeuron(id_ca1_sub, particle)
+#
+#particle = 24
+#pam_vis.visualizePoint(ca1.particle_systems[ca1_neurons].particles[particle].location)
+#pam_vis.visualizeConnectionsForNeuron(id_ca1_sub, particle)
+#
+#d, p = pam.computeDistance_PreToSynapse(id_ca1_sub, particle)
+#print(d)
+#pam_vis.visualizePath(p)
+#
+##print(c_dg_ca3[particle])
+#
+#exporter.export_connections(EXPORT_PATH + 'hippocampus.zip')

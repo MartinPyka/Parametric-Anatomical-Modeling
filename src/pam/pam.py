@@ -29,7 +29,6 @@ pam_connection_indices = []
 pam_connections = []
 pam_connection_results = []
 
-
 def computePoint(v1, v2, v3, v4, x1, x2):
     # computes an average point on the polygon depending on x1 and x2
     mv12_co = v1.co * x1 + v2.co * (1 - x1)
@@ -127,49 +126,91 @@ def map3dPointToUV(object, object_uv, point, normal=None):
 
 
 # TODO(SK): Quads into triangles (indices)
-def mapUVPointTo3d(object_uv, uv):
+def mapUVPointTo3d(object_uv, uv_list):
     """Converts a given UV-coordinate into a 3d point,
     object for the 3d point and object_uv must have the same topology
     if normal is not None, the normal is used to detect the point on object, otherwise
     the closest_point_on_mesh operation is used
     """
 
-    if (len(uv) == 0):
-        return None
-    result = 0
-    for p in object_uv.data.polygons:
+    uv_polygons = []
+    
+    points_3d = [[] for j in range(len(uv_list))]
+    to_find = [i for i in range(len(uv_list))]
+
+    for p in uv_polygons:
         uvs = [object_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
-        result = mug.intersect_point_tri_2d(uv,
-                                            uvs[0].uv,
-                                            uvs[1].uv,
-                                            uvs[2].uv)
-        if result == 1:
-            U = uvs[0].uv.to_3d()
-            V = uvs[1].uv.to_3d()
-            W = uvs[2].uv.to_3d()
-            A = object_uv.data.vertices[p.vertices[0]].co
-            B = object_uv.data.vertices[p.vertices[1]].co
-            C = object_uv.data.vertices[p.vertices[2]].co
-            break
-        else:
-            result = mug.intersect_point_tri_2d(uv,
+        for i in to_find:
+            result = mug.intersect_point_tri_2d(uv_list[i],
                                                 uvs[0].uv,
-                                                uvs[2].uv,
-                                                uvs[3].uv)
+                                                uvs[1].uv,
+                                                uvs[2].uv)
             if result == 1:
                 U = uvs[0].uv.to_3d()
-                V = uvs[2].uv.to_3d()
-                W = uvs[3].uv.to_3d()
+                V = uvs[1].uv.to_3d()
+                W = uvs[2].uv.to_3d()
                 A = object_uv.data.vertices[p.vertices[0]].co
-                B = object_uv.data.vertices[p.vertices[2]].co
-                C = object_uv.data.vertices[p.vertices[3]].co
-                break
-
-    if result == 1:
-        p_3d = mug.barycentric_transform(uv.to_3d(), U, V, W, A, B, C)
-        return p_3d
-
-    return None
+                B = object_uv.data.vertices[p.vertices[1]].co
+                C = object_uv.data.vertices[p.vertices[2]].co
+                points_3d[i] = mug.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
+                to_find.remove(i)
+            else:
+                result = mug.intersect_point_tri_2d(uv_list[i],
+                                                    uvs[0].uv,
+                                                    uvs[2].uv,
+                                                    uvs[3].uv)
+                if result == 1:
+                    U = uvs[0].uv.to_3d()
+                    V = uvs[2].uv.to_3d()
+                    W = uvs[3].uv.to_3d()
+                    A = object_uv.data.vertices[p.vertices[0]].co
+                    B = object_uv.data.vertices[p.vertices[2]].co
+                    C = object_uv.data.vertices[p.vertices[3]].co
+                    points_3d[i] = mug.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
+                    to_find.remove(i)
+            if len(to_find) == 0:
+                return points_3d
+            
+                
+    
+    for p in object_uv.data.polygons:
+        uvs = [object_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
+        for i in to_find:
+            result = mug.intersect_point_tri_2d(uv_list[i],
+                                                uvs[0].uv,
+                                                uvs[1].uv,
+                                                uvs[2].uv)
+            if result == 1:
+                U = uvs[0].uv.to_3d()
+                V = uvs[1].uv.to_3d()
+                W = uvs[2].uv.to_3d()
+                A = object_uv.data.vertices[p.vertices[0]].co
+                B = object_uv.data.vertices[p.vertices[1]].co
+                C = object_uv.data.vertices[p.vertices[2]].co
+                points_3d[i] = mug.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
+                to_find.remove(i)
+                uv_polygons.append(p)
+            else:
+                result = mug.intersect_point_tri_2d(uv_list[i],
+                                                    uvs[0].uv,
+                                                    uvs[2].uv,
+                                                    uvs[3].uv)
+                if result == 1:
+                    U = uvs[0].uv.to_3d()
+                    V = uvs[2].uv.to_3d()
+                    W = uvs[3].uv.to_3d()
+                    A = object_uv.data.vertices[p.vertices[0]].co
+                    B = object_uv.data.vertices[p.vertices[2]].co
+                    C = object_uv.data.vertices[p.vertices[3]].co
+                    points_3d[i] = mug.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
+                    to_find.remove(i)
+                    uv_polygons.append(p)
+            if len(to_find) == 0:
+                return points_3d
+            
+    points_3d = [p for p in points_3d if p != []]
+     
+    return points_3d
 
 
 # TODO(MP): triangle check could be made more efficient
@@ -273,19 +314,19 @@ def computeConnectivityProbability(uv1, uv2, func, args):
 
 def interpolateUVTrackIn3D(p1_3d, p2_3d, layer):
     """ Creates a 3D-path along given 3d-coordinates p1_3d and p2_3d on layer """
-    result_3d = []
-    
     # get 2d-coordinates
     p1_2d = map3dPointToUV(layer, layer, p1_3d)
     p2_2d = map3dPointToUV(layer, layer, p2_3d)
     
+    uv_p_2d = []
+    
     for interp in range(1, config.INTERPOLATION_QUALITY):
         ip = interp / config.INTERPOLATION_QUALITY
-        uv_p_2d = p1_2d * ip + p2_2d * (1 - ip)
-        i_3d = mapUVPointTo3d(layer, uv_p_2d)
-        if i_3d is not None:
-            result_3d.append(i_3d)
-    return result_3d
+        uv_p_2d.append(p2_2d * ip + p1_2d * (1 - ip))
+
+    i_3d = mapUVPointTo3d(layer, uv_p_2d)
+
+    return i_3d
 
 def computeDistance_PreToSynapse(no_connection, pre_index):
     """ computes distance for a pre-synaptic neuron and a certain
@@ -521,46 +562,46 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
     """
 
     if dis == config.DIS_euclid:
-        i_3d = mapUVPointTo3d(slayer, s_2d)
+        i_3d = mapUVPointTo3d(slayer, [s_2d])
         if i_3d is None:
             print("Need to exclude one connection")
             return -1, -1
         else:
-            return (p_3d - i_3d).length, [i_3d]
+            return (p_3d - i_3d).length, i_3d
 
     elif dis == config.DIS_euclidUV:
-        s_3d = mapUVPointTo3d(slayer, s_2d)
+        s_3d = mapUVPointTo3d(slayer, [s_2d])
         if s_3d is None:
             print("Need to exclude one connection")
             return -1, -1
         path = [p_3d]
-        path = path + interpolateUVTrackIn3D(p_3d, s_3d, slayer)
-        path.append(s_3d)
+        path = path + interpolateUVTrackIn3D(p_3d, s_3d[0], slayer)
+        path.append(s_3d[0])
         return computePathLength(path), path
         
     elif dis == config.DIS_normalUV:
-        s_3d = mapUVPointTo3d(slayer, s_2d)
+        s_3d = mapUVPointTo3d(slayer, [s_2d])
         if s_3d is None:
             print("Need to exclude one connection")
             return -1, -1
         path = [p_3d]
-        path = path + interpolateUVTrackIn3D(p_3d, s_3d, slayer)
-        path.append(s_3d)
+        path = path + interpolateUVTrackIn3D(p_3d, s_3d[0], slayer)
+        path.append(s_3d[0])
         return computePathLength(path), path
 
     elif dis == config.DIS_UVnormal:
-        s_3d = mapUVPointTo3d(slayer, s_2d)
+        s_3d = mapUVPointTo3d(slayer, [s_2d])
         if s_3d is None:
             print("Need to exclude one connection")
             return -1, -1 
-        p, n, f = slayers.closest_point_on_mesh(s_3d)
+        p, n, f = slayers.closest_point_on_mesh(s_3d[0])
         t_3d = map3dPointTo3d(ilayers, ilayers, p, n)
         if t_3d is None:
             return -1, -1
         path = [p_3d]
         path = path + interpolateUVTrackIn3D(p_3d, t_3d, ilayers)
         path.append(t_3d)
-        path.append(s_3d)
+        path.append(s_3d[0])
         return computePathLength(path), path
 
 def addConnection(*args):
@@ -705,8 +746,6 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
                 
         for rest in range(j+1, no_synapses):
             conn[i, j] = -1
-
-        print("Completed")      
 
     pam_connection_indices.append([pam_connection_counter,
                             pam_ng_dict[layers[0].name][neuronset1],

@@ -9,6 +9,7 @@ import config
 import pam
 import numpy as np
 import pickle
+import profile
 import helper
 
 import imp
@@ -61,9 +62,9 @@ def gridTest():
     g.compute_postMask()
     print(g._gridmask)
     
-    
 
 connectiontest()
+#profile.run("connectiontest()")
 #gridTest()       
 
 ## get all important layers

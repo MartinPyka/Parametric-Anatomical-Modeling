@@ -121,7 +121,7 @@ def visualizeConnectionsForNeuron(no_connection, pre_index):
                                                  distances[0:slayer],
                                                  layers[0].particle_systems[neuronset1].particles[pre_index].location)
 
-    for i in range(0, len(post_indices)):
+    for i in range(0,  len(post_indices)):
         post_p3d, post_p2d, post_d = pam.computeMapping(layers[:(slayer - 1):-1],
                                                         connections[:(slayer - 1):-1],
                                                         distances[:(slayer - 1):-1],
@@ -136,11 +136,11 @@ def visualizeConnectionsForNeuron(no_connection, pre_index):
                     distances_post, post_path = pam.computeDistanceToSynapse(
                         layers[slayer+1], layers[slayer], post_p3d[-1], synapses[i], distances[slayer])   
                     if distances_post >= 0:
-                        visualizePath(pre_p3d + pre_path + post_path + post_p3d[::-1])
-                        visualizePath(pre_p3d)
-                        visualizePath(pre_path)
-                        visualizePath(post_path)
-                        visualizePath(post_p3d[::-1])
+                        visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1])
+                        #visualizePath(pre_p3d)
+                        #visualizePath(pre_path)
+                        #visualizePath(post_path[::-1])
+                        #visualizePath(post_p3d[::-1])
                 
 
 

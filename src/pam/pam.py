@@ -467,9 +467,9 @@ def computeMapping(layers, connections, distances, point):
                     p3d.append(p3d_t)
                     p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
                     p3d.append(p3d_n)
-                elif distances[i] == config.normalUV:
+                elif distances[i] == config.DIS_normalUV:
                     p3d.append(p3d_n)
-                elif distances[i] == config.UVnormal:
+                elif distances[i] == config.DIS_UVnormal:
                     p3d.append(p3d_n)
             else:
                 # if distances[i] == config.DIS_euclid:
@@ -499,13 +499,13 @@ def computeMapping(layers, connections, distances, point):
                     p3d.append(p3d_t)
                     p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
                     p3d.append(p3d_n)
-                elif distances[i] == config.normalUV:
+                elif distances[i] == config.DIS_normalUV:
                     p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
                     p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
                     p3d.append(p3d_t)
                     p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
                     p3d.append(p3d_n)
-                elif distances[i] == config.UVnormal:
+                elif distances[i] == config.DIS_UVnormal:
                     p, n, f = layers[i + 1].closest_point_on_mesh(p3d_n)
                     p3d_t = map3dPointTo3d(layers[i], layers[i], p, n)
                     if p3d_t is None:
@@ -546,13 +546,13 @@ def computeMapping(layers, connections, distances, point):
                     p3d.append(p3d_t)
                     p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
                     p3d.append(p3d_n)
-                elif distances[i] == config.normalUV:
+                elif distances[i] == config.DIS_normalUV:
                     p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
                     p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
                     p3d.append(p3d_t)
                     p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
                     p3d.append(p3d_n)
-                elif distances[i] == config.UVnormal:
+                elif distances[i] == config.DIS_UVnormal:
                     p, n, f = layers[i + 1].closest_point_on_mesh(p3d_n)
                     p3d_t = map3dPointTo3d(layers[i], layers[i], p, n)
                     if p3d_t is None:

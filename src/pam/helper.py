@@ -1,16 +1,14 @@
 """Temporary Helper Module"""
 
+import code
 import logging
 import math
 import random
 import types
-import code
 
 import bpy
 import mathutils
-import mathutils.geometry
 
-import code
 
 logger = logging.getLogger(__package__)
 

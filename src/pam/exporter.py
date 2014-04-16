@@ -4,8 +4,10 @@ import csv
 import io
 import logging
 import zipfile
+
 import bpy
-import pam
+
+from . import pam
 
 logger = logging.getLogger(__package__)
 

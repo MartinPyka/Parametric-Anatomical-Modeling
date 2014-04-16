@@ -299,21 +299,6 @@ def connfunc_gauss_post(uv, guv, *args):
                     (ruv[1] + sv) ** 2 / (2 * vv ** 2)))
 
 
-def connfunc_gauss_pre(u, v, *args):
-    """Gauss-function for 2d
-    u, v    : coordinates, to determine the function value
-    vu, vv  : variance for both dimensions
-    su, sv  : shift in u and v direction
-    """
-
-    vu = args[0][0]
-    vv = args[0][1]
-    su = args[0][2]
-    sv = args[0][3]
-
-    return [random.gauss(0, vu) + su, random.gauss(0, vv) + sv]
-
-
 # TODO(SK): missing docstring
 def connfunc_unity(u, v, *args):
     return 1

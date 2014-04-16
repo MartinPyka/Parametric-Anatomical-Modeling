@@ -3,9 +3,7 @@
 import math
 
 
-# TODO(MP): Kernel definition must be equal across code fragments
-# TODO(MP): Kernel functions can moved to separate module
-def post(uv, guv, *args):
+def gauss(uv, guv, *args):
     """Gauss-function for 2d
     u, v    : coordinates, to determine the function value
     vu, vv  : variance for both dimensionsj
@@ -23,5 +21,5 @@ def post(uv, guv, *args):
 
 
 # TODO(SK): missing docstring
-def unity(u, v, *args):
+def unity(uv, guv, *args):
     return 1

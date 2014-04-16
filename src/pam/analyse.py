@@ -1,13 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Mar 31 14:54:53 2014
-
-@author: martin
-"""
-
 import collections
-import numpy as np
 import pickle
+
+import numpy as np
 
 
 def flatten(x):

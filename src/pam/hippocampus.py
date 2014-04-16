@@ -5,6 +5,7 @@ import pam
 import pam_vis
 import config
 import export
+import kernel
 
 import code
 import profile
@@ -118,9 +119,9 @@ if False:
         5,
         [config.MAP_normal, config.MAP_top, config.MAP_normal, config.MAP_top, config.MAP_euclid, config.MAP_normal],
         [config.DIS_euclid, config.DIS_euclid, config.DIS_euclid, config.DIS_jumpUV, config.DIS_jumpUV, config.DIS_normalUV],
-        pam.connfunc_gauss_post,
+        kernel.gauss_2d.post,
         ec2_params,
-        pam.connfunc_gauss_post,
+        kernel.gauss_2d.post,
         dg_params_dendrites,
         s_ec21_dg
         )
@@ -132,9 +133,9 @@ if False:
         4,
         [config.MAP_normal, config.MAP_top, config.MAP_top, config.MAP_euclid, config.MAP_normal],
         [config.DIS_euclid, config.DIS_euclid, config.DIS_jumpUV, config.DIS_jumpUV, config.DIS_normalUV],
-        pam.connfunc_gauss_post,
+        kernel.gauss_2d.post,
         ec2_params,
-        pam.connfunc_gauss_post,
+        kernel.gauss_2d.post,
         dg_params_dendrites,
         s_ec21_dg
         )        
@@ -146,9 +147,9 @@ if False:
         4,
         [config.MAP_normal, config.MAP_top, config.MAP_top, config.MAP_euclid, config.MAP_normal],
         [config.DIS_euclid, config.DIS_euclid, config.DIS_jumpUV, config.DIS_jumpUV, config.DIS_normalUV],
-        pam.connfunc_gauss_post,
+        kernel.gauss_2d.post,
         ec2_params,
-        pam.connfunc_gauss_post,
+        kernel.gauss_2d.post,
         dg_params_dendrites,
         s_ec21_dg
         )
@@ -160,9 +161,9 @@ if True:
         3,
         [config.MAP_normal, config.MAP_top, config.MAP_top, config.MAP_euclid],
         [config.DIS_euclid, config.DIS_UVnormal, config.DIS_normalUV, config.MAP_euclid],
-        pam.connfunc_gauss_post,
+        kernel.gauss_2d.post,
         sub_params,
-        pam.connfunc_gauss_post,
+        kernel.gauss_2d.post,
         ec5_params_dendrites,
         s_sub_ec5
         )
@@ -173,7 +174,7 @@ if False:
        1,                                      # synaptic layer
        [config.MAP_euclid, config.MAP_euclid],                                 # connection mapping
        [config.DIS_euclidUV, config.DIS_euclid],                                 # distance calculation
-       pam.connfunc_gauss_pre, dg_params, pam.connfunc_gauss_post, ca3_params_dendrites,   # kernel function plus parameters
+       pam.connfunc_gauss_pre, dg_params, kernel.gauss_2d.post, ca3_params_dendrites,   # kernel function plus parameters
        int(s_dg_ca3))                      # number of synapses for each  pre-synaptic neuron
 
 if False:
@@ -182,7 +183,7 @@ if False:
        1,                                      # synaptic layer
        [config.MAP_normal, config.MAP_normal],                                 # connection mapping
        [config.DIS_normalUV, config.DIS_normalUV],                                 # distance calculation
-       pam.connfunc_gauss_pre, ca3_params, pam.connfunc_gauss_post, ca3_params_dendrites,   # kernel function plus parameters
+       pam.connfunc_gauss_pre, ca3_params, kernel.gauss_2d.post, ca3_params_dendrites,   # kernel function plus parameters
        int(s_ca3_ca3))                      # number of synapses for each  pre-synaptic neuron
 
 if False:
@@ -195,7 +196,7 @@ if False:
         [config.DIS_normalUV, config.DIS_euclid],
         pam.connfunc_gauss_pre,
         ca3_params,
-        pam.connfunc_gauss_post,
+        kernel.gauss_2d.post,
         ca1_params_dendrites,
         int(s_ca3_ca1)
         )
@@ -209,7 +210,7 @@ if False:
         [config.DIS_euclid, config.DIS_euclid, config.DIS_euclidUV],
         pam.connfunc_gauss_pre,
         ca1_params,
-        pam.connfunc_gauss_post,
+        kernel.gauss_2d.post,
         sub_params_dendrites,
         s_ca1_sub
         )
@@ -224,7 +225,7 @@ if False:
 #        distances=[config.DIS_normalUV, config.DIS_euclid],
 #        func_pre=pam.connfunc_gauss_pre,
 #        args_pre=ca3_params,
-#        func_post=pam.connfunc_gauss_post,
+#        func_post=kernel.gauss_2d.post,
 #        args_post=ca1_params_dendrites,
 #        no_synapses=int(s_ca3_ca1 * 0.01)
 #        )

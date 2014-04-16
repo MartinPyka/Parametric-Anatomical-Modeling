@@ -144,10 +144,12 @@ def mapUVPointTo3d(object_uv, uv_list):
     for p in uv_polygons:
         uvs = [object_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
         for i in to_find:
-            result = mathutils.geometry.intersect_point_tri_2d(uv_list[i],
-                                                uvs[0].uv,
-                                                uvs[1].uv,
-                                                uvs[2].uv)
+            result = mathutils.geometry.intersect_point_tri_2d(
+                uv_list[i],
+                uvs[0].uv,
+                uvs[1].uv,
+                uvs[2].uv
+            )
             if result == 1:
                 U = uvs[0].uv.to_3d()
                 V = uvs[1].uv.to_3d()
@@ -158,10 +160,12 @@ def mapUVPointTo3d(object_uv, uv_list):
                 points_3d[i] = mathutils.geometry.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
                 to_find.remove(i)
             else:
-                result = mathutils.geometry.intersect_point_tri_2d(uv_list[i],
-                                                    uvs[0].uv,
-                                                    uvs[2].uv,
-                                                    uvs[3].uv)
+                result = mathutils.geometry.intersect_point_tri_2d(
+                    uv_list[i],
+                    uvs[0].uv,
+                    uvs[2].uv,
+                    uvs[3].uv
+                )
                 if result == 1:
                     U = uvs[0].uv.to_3d()
                     V = uvs[2].uv.to_3d()
@@ -177,10 +181,12 @@ def mapUVPointTo3d(object_uv, uv_list):
     for p in object_uv.data.polygons:
         uvs = [object_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
         for i in to_find:
-            result = mathutils.geometry.intersect_point_tri_2d(uv_list[i],
-                                                uvs[0].uv,
-                                                uvs[1].uv,
-                                                uvs[2].uv)
+            result = mathutils.geometry.intersect_point_tri_2d(
+                uv_list[i],
+                uvs[0].uv,
+                uvs[1].uv,
+                uvs[2].uv
+            )
             if result == 1:
                 U = uvs[0].uv.to_3d()
                 V = uvs[1].uv.to_3d()
@@ -192,10 +198,12 @@ def mapUVPointTo3d(object_uv, uv_list):
                 to_find.remove(i)
                 uv_polygons.append(p)
             else:
-                result = mathutils.geometry.intersect_point_tri_2d(uv_list[i],
-                                                    uvs[0].uv,
-                                                    uvs[2].uv,
-                                                    uvs[3].uv)
+                result = mathutils.geometry.intersect_point_tri_2d(
+                    uv_list[i],
+                    uvs[0].uv,
+                    uvs[2].uv,
+                    uvs[3].uv
+                )
                 if result == 1:
                     U = uvs[0].uv.to_3d()
                     V = uvs[2].uv.to_3d()

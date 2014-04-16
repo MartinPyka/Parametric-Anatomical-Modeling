@@ -1,19 +1,18 @@
-import bpy
-import mathutils.geometry as mug
-from mathutils import Vector
-import mathutils
-import math
-import numpy as np
-import random
-import copy
 import code
-
-import exporter
-import config
-import helper
-import pam_vis
-
+import copy
 import imp
+import math
+import random
+
+import bpy
+import mathutils
+import numpy as np
+
+from . import exporter
+from . import config
+from . import helper
+from . import pam_vis
+
 
 imp.reload(helper)
 imp.reload(config)
@@ -108,11 +107,11 @@ def map3dPointToUV(object, object_uv, point, normal=None):
     W = uvs[2].uv.to_3d()
 
     # convert 3d-coordinates of point p to uv-coordinates
-    p_uv = mug.barycentric_transform(p, A, B, C, U, V, W)
+    p_uv = mathutils.geometry.barycentric_transform(p, A, B, C, U, V, W)
 
     # if the point is not within the first triangle, we have to repeat the calculation
     # for the second triangle
-    if mug.intersect_point_tri_2d(p_uv.to_2d(), uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0:
+    if mathutils.geometry.intersect_point_tri_2d(p_uv.to_2d(), uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0:
         A = object.data.vertices[object.data.polygons[f].vertices[0]].co
         B = object.data.vertices[object.data.polygons[f].vertices[2]].co
         C = object.data.vertices[object.data.polygons[f].vertices[3]].co
@@ -121,7 +120,7 @@ def map3dPointToUV(object, object_uv, point, normal=None):
         V = uvs[2].uv.to_3d()
         W = uvs[3].uv.to_3d()
 
-        p_uv = mug.barycentric_transform(p, A, B, C, U, V, W)
+        p_uv = mathutils.geometry.barycentric_transform(p, A, B, C, U, V, W)
 
     return p_uv.to_2d()
 
@@ -142,7 +141,7 @@ def mapUVPointTo3d(object_uv, uv_list):
     for p in uv_polygons:
         uvs = [object_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
         for i in to_find:
-            result = mug.intersect_point_tri_2d(uv_list[i],
+            result = mathutils.geometry.intersect_point_tri_2d(uv_list[i],
                                                 uvs[0].uv,
                                                 uvs[1].uv,
                                                 uvs[2].uv)
@@ -153,10 +152,10 @@ def mapUVPointTo3d(object_uv, uv_list):
                 A = object_uv.data.vertices[p.vertices[0]].co
                 B = object_uv.data.vertices[p.vertices[1]].co
                 C = object_uv.data.vertices[p.vertices[2]].co
-                points_3d[i] = mug.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
+                points_3d[i] = mathutils.geometry.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
                 to_find.remove(i)
             else:
-                result = mug.intersect_point_tri_2d(uv_list[i],
+                result = mathutils.geometry.intersect_point_tri_2d(uv_list[i],
                                                     uvs[0].uv,
                                                     uvs[2].uv,
                                                     uvs[3].uv)
@@ -167,7 +166,7 @@ def mapUVPointTo3d(object_uv, uv_list):
                     A = object_uv.data.vertices[p.vertices[0]].co
                     B = object_uv.data.vertices[p.vertices[2]].co
                     C = object_uv.data.vertices[p.vertices[3]].co
-                    points_3d[i] = mug.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
+                    points_3d[i] = mathutils.geometry.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
                     to_find.remove(i)
             if len(to_find) == 0:
                 return points_3d
@@ -175,7 +174,7 @@ def mapUVPointTo3d(object_uv, uv_list):
     for p in object_uv.data.polygons:
         uvs = [object_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
         for i in to_find:
-            result = mug.intersect_point_tri_2d(uv_list[i],
+            result = mathutils.geometry.intersect_point_tri_2d(uv_list[i],
                                                 uvs[0].uv,
                                                 uvs[1].uv,
                                                 uvs[2].uv)
@@ -186,11 +185,11 @@ def mapUVPointTo3d(object_uv, uv_list):
                 A = object_uv.data.vertices[p.vertices[0]].co
                 B = object_uv.data.vertices[p.vertices[1]].co
                 C = object_uv.data.vertices[p.vertices[2]].co
-                points_3d[i] = mug.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
+                points_3d[i] = mathutils.geometry.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
                 to_find.remove(i)
                 uv_polygons.append(p)
             else:
-                result = mug.intersect_point_tri_2d(uv_list[i],
+                result = mathutils.geometry.intersect_point_tri_2d(uv_list[i],
                                                     uvs[0].uv,
                                                     uvs[2].uv,
                                                     uvs[3].uv)
@@ -201,7 +200,7 @@ def mapUVPointTo3d(object_uv, uv_list):
                     A = object_uv.data.vertices[p.vertices[0]].co
                     B = object_uv.data.vertices[p.vertices[2]].co
                     C = object_uv.data.vertices[p.vertices[3]].co
-                    points_3d[i] = mug.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
+                    points_3d[i] = mathutils.geometry.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
                     to_find.remove(i)
                     uv_polygons.append(p)
             if len(to_find) == 0:
@@ -243,16 +242,16 @@ def map3dPointTo3d(o1, o2, point, normal=None):
     t2 = mathutils.Vector((1.0, 0.0, 0.0))
     t3 = mathutils.Vector((0.0, 1.0, 0.0))
 
-    p_test = mug.barycentric_transform(p, A1, B1, C1, t1, t2, t3)
+    p_test = mathutils.geometry.barycentric_transform(p, A1, B1, C1, t1, t2, t3)
 
     # if the point is on the 2d-triangle, proceed with the real barycentric_transform
-    if mug.intersect_point_tri_2d(p_test.to_2d(), t1.xy, t2.xy, t3.xy) == 1:
+    if mathutils.geometry.intersect_point_tri_2d(p_test.to_2d(), t1.xy, t2.xy, t3.xy) == 1:
         A2 = o2.data.vertices[o2.data.polygons[f].vertices[0]].co
         B2 = o2.data.vertices[o2.data.polygons[f].vertices[1]].co
         C2 = o2.data.vertices[o2.data.polygons[f].vertices[2]].co
 
         # convert 3d-coordinates of the point
-        p_new = mug.barycentric_transform(p, A1, B1, C1, A2, B2, C2)
+        p_new = mathutils.geometry.barycentric_transform(p, A1, B1, C1, A2, B2, C2)
 
     else:
         # use the other triangle
@@ -265,7 +264,7 @@ def map3dPointTo3d(o1, o2, point, normal=None):
         C2 = o2.data.vertices[o2.data.polygons[f].vertices[3]].co
 
         # convert 3d-coordinates of the point
-        p_new = mug.barycentric_transform(p, A1, B1, C1, A2, B2, C2)
+        p_new = mathutils.geometry.barycentric_transform(p, A1, B1, C1, A2, B2, C2)
 
     return p_new
 
@@ -1178,7 +1177,7 @@ if __name__ == "__main__":
     # t201 = bpy.data.objects['t2.001']
     # grid = helper.UVGrid(t201)
     # grid.kernel = connfunc_gauss_post
-    # grid.compute_kernel(0, 1, Vector((0.0, 0.0)), [0.1, 0.1, 0., 0.])
+    # grid.compute_kernel(0, 1, mathutils.Vector((0.0, 0.0)), [0.1, 0.1, 0., 0.])
     # print(grid._weights[0][0])
-    # grid.compute_kernel(1, 1, Vector((0.0, 0.0)), [0.1, 0.1, 0., 0.])
+    # grid.compute_kernel(1, 1, mathutils.Vector((0.0, 0.0)), [0.1, 0.1, 0., 0.])
     # print(grid._weights[0][0])

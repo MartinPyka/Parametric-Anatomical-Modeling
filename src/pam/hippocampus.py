@@ -4,7 +4,7 @@ import sys
 import pam
 import pam_vis
 import config
-import exporter
+import export
 
 import code
 import profile
@@ -14,7 +14,7 @@ import imp
 imp.reload(pam)
 imp.reload(pam_vis)
 imp.reload(config)
-imp.reload(exporter)
+imp.reload(export)
 
 EXPORT_PATH = '/home/martin/Dropbox/Work/Hippocampus3D/PAM/results/'
 
@@ -108,7 +108,7 @@ ec5_params_dendrites = [0.2, 0.2, 0.0, 0.0]
 ## measure ratio between real and UV-distances
 ###################################################
 uv_data, layer_names = pam.measureUVs([al_dg, al_ca3])
-#exporter.export_UVfactors(EXPORT_PATH + 'UVscaling.zip', uv_data, layer_names)
+#export.csv.export_UVfactors(EXPORT_PATH + 'UVscaling.zip', uv_data, layer_names)
 
 
 if False:
@@ -287,4 +287,4 @@ for i in range(0,20):
 #
 ##print(c_dg_ca3[particle])
 #
-exporter.export_connections(EXPORT_PATH + 'hippocampus.zip')
+export.csv.export_connections(EXPORT_PATH + 'hippocampus.zip')

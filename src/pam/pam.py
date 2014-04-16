@@ -10,7 +10,7 @@ import bpy
 import mathutils
 import numpy as np
 
-from . import exporter
+from . import export
 from . import config
 from . import helper
 from . import pam_vis

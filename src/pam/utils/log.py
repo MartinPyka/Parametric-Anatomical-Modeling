@@ -1,32 +1,29 @@
-"""Utils Module"""
+"""Log Module"""
 
 import logging
-import timeit
 
 import bpy
 
-logger = logging.getLogger(__package__)
+# TODO(SK): root module solution flaky
+ROOT_MODULE = "pam"
 
 
-def log_filepath():
+def filepath():
     """Returns root log filepath"""
 
-    prefs = bpy.context.user_preferences.addons[__package__].preferences
+    prefs = bpy.context.user_preferences.addons[ROOT_MODULE].preferences
     return "%s/%s" % (prefs.log_directory, prefs.log_filename)
 
 
-def log_level():
+def level():
     """Returns log level"""
 
-    prefs = bpy.context.user_preferences.addons[__package__].preferences
+    prefs = bpy.context.user_preferences.addons[ROOT_MODULE].preferences
     return getattr(logging, prefs.log_level)
 
 
-def log_initialize():
+def initialize():
     """Registering log handlers"""
-
-    filepath = log_filepath()
-    level = log_level()
 
     formatter = logging.Formatter(
         fmt="%(asctime)s [%(levelname)-8s] - "
@@ -37,7 +34,7 @@ def log_initialize():
     # Setting up loghandlers for stdout and file logging
     streamhandler = logging.StreamHandler()
     filehandler = logging.FileHandler(
-        filename=filepath,
+        filename=filepath(),
         mode="a",
         encoding="utf-8"
     )
@@ -45,30 +42,19 @@ def log_initialize():
     streamhandler.setFormatter(formatter)
     filehandler.setFormatter(formatter)
 
-    logger = logging.getLogger(__package__)
-    logger.setLevel(level)
+    logger = logging.getLogger(ROOT_MODULE)
+    logger.setLevel(level())
     logger.addHandler(streamhandler)
     logger.addHandler(filehandler)
 
 
-def log_callback_properties_changed(self, context):
+def callback_properties_changed(self, context):
     """A Callback for addapt to changed logging properties.
 
     Should be called whenever a logging property (filepath, level, filename)
     is changed.
     """
 
-    logger = logging.getLogger(__package__)
+    logger = logging.getLogger(ROOT_MODULE)
     logger.handlers = []
-    log_initialize()
-
-
-def profiling(func):
-    """Profiling functions in miliseconds"""
-    def wrapper(*args, **kwargs):
-        start_time = timeit.default_timer()
-        result = func(*args, **kwargs)
-        duration = (timeit.default_timer() - start_time) * 1000
-        logger.debug("%s in %d ms", func.__name__, duration)
-        return result
-    return wrapper
+    initialize()

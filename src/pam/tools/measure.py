@@ -5,8 +5,6 @@ import math
 
 import bpy
 
-from . import utils
-
 logger = logging.getLogger(__package__)
 
 
@@ -101,7 +99,6 @@ def unregister():
     del bpy.types.Scene.pam_measure
 
 
-@utils.profiling
 def surface_area(obj):
     """Returns surface area of a mesh
 

@@ -32,18 +32,18 @@ class PAMPreferencesPane(bpy.types.AddonPreferences):
         name="Log Directory",
         default=data_location,
         subtype="DIR_PATH",
-        update=utils.log_callback_properties_changed
+        update=utils.log.callback_properties_changed
     )
     log_filename = bpy.props.StringProperty(
         name="Log Filename",
         default="pam.log",
-        update=utils.log_callback_properties_changed
+        update=utils.log.callback_properties_changed
     )
     log_level = bpy.props.EnumProperty(
         name="Log Level",
         default="ERROR",
         items=log_level_items,
-        update=utils.log_callback_properties_changed
+        update=utils.log.callback_properties_changed
     )
 
     def draw(self, context):
@@ -163,28 +163,6 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         row = layout.row(align=True)
         op = row.operator("pam.visualize_kernel", text="Apply")
         op = row.operator("pam.visualize_kernel_reset", text="Reset")
-
-
-class PAMTestPanel(bpy.types.Panel):
-    """Test Panel"""
-
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS"
-    bl_context = "objectmode"
-    bl_label = "Test"
-    bl_category = "PAM"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    def draw(self, context):
-        layout = self.layout
-        col = layout.column()
-        col.operator(
-            "pam.test_operator",
-        )
-
-        if "test_texture" in bpy.data.textures:
-            texture = bpy.data.textures["test_texture"]
-            col.template_preview(texture)
 
 
 # TODO(SK): missing docstring

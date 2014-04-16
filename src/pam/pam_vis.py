@@ -1,9 +1,11 @@
-import bpy
+import code
 import imp
 
-import pam
-import config
-import code
+import bpy
+
+from . import config
+from . import pam
+
 
 # imp.reload(pam)
 imp.reload(config)

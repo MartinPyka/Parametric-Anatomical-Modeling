@@ -9,7 +9,6 @@ import types
 import bpy
 import mathutils
 
-
 logger = logging.getLogger(__package__)
 
 DEFAULT_LOCATION = mathutils.Vector((0.0, 0.0, 0.0))

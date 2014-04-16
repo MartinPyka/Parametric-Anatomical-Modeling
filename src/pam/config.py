@@ -1,3 +1,5 @@
+# TODO(SK): missing module docstring
+
 # config files with many hard-coded variables, used in
 # in other parts of PAM, primarily in pam.py
 
@@ -9,10 +11,13 @@ MAP_top = 3
 
 DIS_euclid = 0
 DIS_euclidUV = 1
-DIS_normalUV = 2
-DIS_UVnormal = 3
+DIS_jumpUV = 2
+DIS_normalUV = 3
+DIS_UVnormal = 4
 
 # length of a ray along a normal-vector.
-# This is used for pam.map3dPointToUV() and
+# This is used for 1pam.map3dPointToUV() and
 # pam.map3dPointTo3d() to map points along the normal between two layers
-ray_fac = 1.02
+ray_fac = 0.3
+
+INTERPOLATION_QUALITY = 10

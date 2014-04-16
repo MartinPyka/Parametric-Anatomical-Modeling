@@ -195,6 +195,7 @@ class CustomPropList(bpy.types.UIList):
         layout.prop(item, "value", text="", emboss=False, slider=False)
 
 
+# TODO(SK): missing docstring
 def mesh_object_name(obj):
     name = ""
     if obj is not None:

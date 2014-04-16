@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 bl_info = {
     "name": "Parametrical Anatomical Mapping",
     "author": "Sebastian Klatt, Dr. Martin Pyka",
-    "version": (0, 1, 0),
+    "version": (0, 2, 0),
     "blender": (2, 7, 0),
     "license": "GPL v2",
     # TODO(SK): Description missing

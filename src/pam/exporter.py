@@ -17,13 +17,13 @@ def export_connections(filepath):
     nglist              : list of neural groups
     connection_list     : list of layer-based connections
     """
-    
+
     cmatrices = []
     dmatrices = []
     for c in pam.pam_connection_results:
         cmatrices.append(c['c'])
         dmatrices.append(c['d'])
-    
+
     with zipfile.ZipFile(filepath, 'w', zipfile.ZIP_DEFLATED) as file:
         csv_write_matrices(file, "c", cmatrices)
         csv_write_matrices(file, "d", dmatrices)

@@ -1,3 +1,5 @@
+# TODO(SK): missing module docstring
+
 import code
 import copy
 import imp
@@ -28,6 +30,7 @@ pam_connections = []
 pam_connection_results = []
 
 
+# TODO(SK): missing docstring
 def computePoint(v1, v2, v3, v4, x1, x2):
     # computes an average point on the polygon depending on x1 and x2
     mv12_co = v1.co * x1 + v2.co * (1 - x1)
@@ -37,6 +40,7 @@ def computePoint(v1, v2, v3, v4, x1, x2):
     return mv_co
 
 
+# TODO(SK): missing docstring
 def selectRandomPoint(object):
         # select a random polygon
         p_select = random.random() * object['area_sum']
@@ -302,10 +306,12 @@ def connfunc_gauss_pre(u, v, *args):
     return [random.gauss(0, vu) + su, random.gauss(0, vv) + sv]
 
 
+# TODO(SK): missing docstring
 def connfunc_unity(u, v, *args):
     return 1
 
 
+# TODO(SK): missing docstring
 def computeConnectivityProbability(uv1, uv2, func, args):
     return func(uv1, uv2, args)
 
@@ -644,6 +650,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
         return computePathLength(path), path
 
 
+# TODO(SK): missing docstring
 def addConnection(*args):
     global pam_connections
 
@@ -669,6 +676,7 @@ def addConnection(*args):
 #     }
 
 
+# TODO(SK): missing docstring
 def computeAllConnections():
     global pam_connections
     global pam_connection_results
@@ -687,6 +695,7 @@ def computeAllConnections():
         print(" ")
 
 
+# TODO(SK): missing docstring
 def computeConnectivity(layers, neuronset1, neuronset2, slayer,
                         connections, distances,
                         func_pre, args_pre, func_post, args_post,
@@ -1137,6 +1146,7 @@ def hippotest():
 #        pam_vis.visualizePath(p3)
 
 
+# TODO(SK): missing docstring
 def subiculumtest():
     ca1 = bpy.data.objects['CA1_sp']
     al_ca1 = bpy.data.objects['CA1_sp_axons_all']

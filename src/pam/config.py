@@ -1,3 +1,5 @@
+# TODO(SK): missing module docstring
+
 # config files with many hard-coded variables, used in
 # in other parts of PAM, primarily in pam.py
 

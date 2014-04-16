@@ -262,6 +262,7 @@ class UVGrid(object):
     def post_kernel_args(self, args):
         self._post_kernel_args = args
 
+    # TODO(SK): missing docstring
     def compute_preMask(self):
         elems = range(int((2. / self._res) + 1))
         shift = int((len(elems) - 1) / 2)
@@ -276,6 +277,7 @@ class UVGrid(object):
                 if (v > KERNEL_THRESHOLD):
                     self._pre_mask.append((relativ_row, relativ_col, v))
 
+    # TODO(SK): missing docstring
     def compute_postMask(self):
         elems = range(int((2. / self._res) + 1))
         shift = int((len(elems) - 1) / 2)
@@ -359,6 +361,7 @@ class UVGrid(object):
 
         return selected
 
+    # TODO(SK): missing docstring
     def adjustUV(self, uv):
         if uv[0] >= self._u or vv[1] >= self._v or uv[0] < 0.0 or vv[0] < 0.0:
             uv[0] = min(self._u, max(0., uv[0]))

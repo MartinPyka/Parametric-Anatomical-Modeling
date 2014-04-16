@@ -65,6 +65,7 @@ class PAMMeasureLayer(bpy.types.Operator):
         return self.execute(context)
 
 
+# TODO(SK): missing docstring
 class MeasureProperties(bpy.types.PropertyGroup):
     area = bpy.props.FloatProperty(
         name="Area",
@@ -87,6 +88,7 @@ class MeasureProperties(bpy.types.PropertyGroup):
     )
 
 
+# TODO(SK): missing docstring
 def register():
     bpy.utils.register_class(MeasureProperties)
     bpy.types.Scene.pam_measure = bpy.props.PointerProperty(
@@ -94,6 +96,7 @@ def register():
     )
 
 
+# TODO(SK): missing docstring
 def unregister():
     del bpy.types.Scene.pam_measure
 

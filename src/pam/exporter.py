@@ -46,6 +46,7 @@ def export_UVfactors(filepath, uv_matrices, layer_names):
             csv_write_matrix(file, layer_names[i], [matrix])
 
 
+# TODO(SK): missing docstring
 def csv_write_matrix(file, name, matrix):
     output = io.StringIO()
     writer = csv.writer(
@@ -58,6 +59,7 @@ def csv_write_matrix(file, name, matrix):
     file.writestr("%s.csv" % (name), output.getvalue())
 
 
+# TODO(SK): missing docstring
 def csv_write_matrices(file, suffix, matrices):
     for i, matrix in enumerate(matrices):
         output = io.StringIO()

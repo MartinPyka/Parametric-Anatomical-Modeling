@@ -1171,22 +1171,3 @@ def subiculumtest():
     pam_vis.setCursor(ca1.particle_systems['CA1_Pyramidal'].particles[particle].location)
 
     pam_vis.visualizePostNeurons(ca1, 'CA1_Pyramidal', c_ca1_sub[particle])
-
-
-if __name__ == "__main__":
-    # -------------------------------------------------------------------------
-    # Main Code:
-    # Here the connectivity between two layers using an intermediate layer
-    # -------------------------------------------------------------------------
-
-    test()
-    # hippotest()
-    # subiculumtest()
-
-    # t201 = bpy.data.objects['t2.001']
-    # grid = helper.UVGrid(t201)
-    # grid.kernel = connfunc_gauss_post
-    # grid.compute_kernel(0, 1, mathutils.Vector((0.0, 0.0)), [0.1, 0.1, 0., 0.])
-    # print(grid._weights[0][0])
-    # grid.compute_kernel(1, 1, mathutils.Vector((0.0, 0.0)), [0.1, 0.1, 0., 0.])
-    # print(grid._weights[0][0])

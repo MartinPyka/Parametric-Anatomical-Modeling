@@ -9,8 +9,6 @@ import types
 import bpy
 import mathutils
 
-from . import visual
-
 logger = logging.getLogger(__package__)
 
 DEFAULT_LOCATION = mathutils.Vector((0.0, 0.0, 0.0))
@@ -20,43 +18,6 @@ DEFAULT_ROTATION = mathutils.Euler((0.0, 0.0, 0.0), "XYZ")
 DEFAULT_RESOLUTION = 0.05
 
 KERNEL_THRESHOLD = 0.05
-
-
-class PAMTestOperator(bpy.types.Operator):
-    """Test Operator"""
-
-    bl_idname = "pam.test_operator"
-    bl_label = "Test operator"
-    bl_description = "Test operator"
-    bl_options = {'UNDO'}
-
-    @classmethod
-    def poll(cls, context):
-        return True
-
-    def execute(self, context):
-        active_obj = context.active_object
-
-        texture = bpy.data.textures.new(
-            name="test_texture",
-            type="IMAGE"
-        )
-
-        image = bpy.data.images.new(
-            name="test_image",
-            width=80,
-            height=80,
-            alpha=True
-        )
-
-        texture.image = image
-
-        logger.debug("type: %s", texture)
-        logger.debug("type: %s", image)
-
-        visual.kernel_image(texture.image, gaussian_kernel, 0.1, 0.3, 0.1, 0.3)
-
-        return {'FINISHED'}
 
 
 def accumulate(items):

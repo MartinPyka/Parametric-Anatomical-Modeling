@@ -29,10 +29,7 @@ ca1 = bpy.data.objects['CA1_sp']
 sub = bpy.data.objects['Subiculum']
 
 al_dg = bpy.data.objects['DG_sg_axons_all']
-
 al_ca3 = bpy.data.objects['CA3_sp_axons_all']
-
-il_ca1 = bpy.data.objects['CA1_sp.002']
 al_ca1 = bpy.data.objects['CA1_sp_axons_all']
 
 ec2 = bpy.data.objects['EC_2']
@@ -124,7 +121,7 @@ ec5_params_dendrites = [0.3, 0.3, 0.0, 0.0]
 ## measure ratio between real and UV-distances
 ###################################################
 uv_data, layer_names = pam.measureUVs([al_dg, al_ca3])
-#exporter.export_UVfactors(EXPORT_PATH + 'UVscaling.zip', uv_data, layer_names)
+#export.csv.export_UVfactors(EXPORT_PATH + 'UVscaling.zip', uv_data, layer_names)
 
 
 if True:
@@ -132,23 +129,50 @@ if True:
         [ec2, ec2_1_i1, ec2_1_i2, ec2_1_i3, ec2_1_i4, ec2_1_synapses, dg],
         ec2_neurons, dg_neurons,
         5,
+<<<<<<< HEAD
         [pam.MAP_normal, pam.MAP_top, pam.MAP_normal, pam.MAP_top, pam.MAP_euclid, pam.MAP_normal],
         [pam.DIS_euclid, pam.DIS_euclid, pam.DIS_euclid, pam.DIS_jumpUV, pam.DIS_jumpUV, pam.DIS_normalUV],
+        pam.connfunc_gauss_post,
+=======
+        [config.MAP_normal, config.MAP_top, config.MAP_normal, config.MAP_top, config.MAP_euclid, config.MAP_normal],
+        [config.DIS_euclid, config.DIS_euclid, config.DIS_euclid, config.DIS_jumpUV, config.DIS_jumpUV, config.DIS_normalUV],
         kernel.gauss_2d.post,
+>>>>>>> 37b65494332b27a89da6d1f6cac517051e2f60a7
         ec2_params,
         kernel.gauss_2d.post,
         dg_params_dendrites,
         s_ec21_dg
         )
+
+if False: 
+    id_ec21_ca3 = pam.addConnection(
+        [ec2, ec2_1_i1, ec2_1_i2, ec2_1_i3, ec2_1_i4, ec2_1_i5, ec2_1_i6, ec2_ca3_synapse, ca3],
+        ec2_neurons, ca3_neurons,
+        7,
+        [pam.MAP_normal, pam.MAP_top, pam.MAP_normal, pam.MAP_top, pam.MAP_euclid, pam.MAP_euclid, pam.MAP_euclid, pam.MAP_normal],
+        [pam.DIS_euclid, pam.DIS_euclid, pam.DIS_euclid, pam.DIS_jumpUV, pam.DIS_jumpUV, pam.DIS_UVjump, pam.DIS_euclid, pam.DIS_euclid],
+        pam.connfunc_gauss_post,
+        ec2_params,
+        pam.connfunc_gauss_post,
+        ca3_params_dendrites,
+        s_ec21_dg
+        )            
         
-if False:
+        
+if True:
     id_ec22_dg = pam.addConnection(
         [ec2, ec2_2_i1, ec2_2_i2, ec2_2_i3, ec2_2_synapses, dg],
         ec2_neurons, dg_neurons,
         4,
+<<<<<<< HEAD
         [pam.MAP_normal, pam.MAP_top, pam.MAP_top, pam.MAP_euclid, pam.MAP_normal],
         [pam.DIS_euclid, pam.DIS_euclid, pam.DIS_jumpUV, pam.DIS_jumpUV, pam.DIS_normalUV],
+        pam.connfunc_gauss_post,
+=======
+        [config.MAP_normal, config.MAP_top, config.MAP_top, config.MAP_euclid, config.MAP_normal],
+        [config.DIS_euclid, config.DIS_euclid, config.DIS_jumpUV, config.DIS_jumpUV, config.DIS_normalUV],
         kernel.gauss_2d.post,
+>>>>>>> 37b65494332b27a89da6d1f6cac517051e2f60a7
         ec2_params,
         kernel.gauss_2d.post,
         dg_params_dendrites,
@@ -160,9 +184,15 @@ if True:
         [ec2, ec2_3_i1, ec2_3_i2, ec2_3_i3, ec2_3_synapses, dg],
         ec2_neurons, dg_neurons,
         4,
+<<<<<<< HEAD
         [pam.MAP_normal, pam.MAP_top, pam.MAP_top, pam.MAP_euclid, pam.MAP_normal],
         [pam.DIS_euclid, pam.DIS_euclid, pam.DIS_jumpUV, pam.DIS_jumpUV, pam.DIS_normalUV],
+        pam.connfunc_gauss_post,
+=======
+        [config.MAP_normal, config.MAP_top, config.MAP_top, config.MAP_euclid, config.MAP_normal],
+        [config.DIS_euclid, config.DIS_euclid, config.DIS_jumpUV, config.DIS_jumpUV, config.DIS_normalUV],
         kernel.gauss_2d.post,
+>>>>>>> 37b65494332b27a89da6d1f6cac517051e2f60a7
         ec2_params,
         kernel.gauss_2d.post,
         dg_params_dendrites,
@@ -170,15 +200,23 @@ if True:
         )
         
 if True:
+<<<<<<< HEAD
+    id_dg_ca3 = pam.addConnection([dg, al_dg, ca3],                      # layers involved in the connection
+       dg_neurons, ca3_neurons,       # neuronsets involved
+       1,                                      # synaptic layer
+       [pam.MAP_euclid, pam.MAP_euclid],                                 # connection mapping
+       [pam.DIS_euclidUV, pam.DIS_euclid],                                 # distance calculation
+       pam.connfunc_gauss_post, dg_params, pam.connfunc_gauss_post, ca3_params_dendrites,   # kernel function plus parameters
+=======
     id_sub_ec5 = pam.addConnection(
         [sub, sub_i1, sub_i2, sub_i3, ec5],
         sub_neurons, ec5_neurons,
         3,
         [config.MAP_normal, config.MAP_top, config.MAP_top, config.MAP_euclid],
         [config.DIS_euclid, config.DIS_UVnormal, config.DIS_normalUV, config.MAP_euclid],
-        pam.connfunc_gauss_post,
+        kernel.gauss_2d.post,
         sub_params,
-        pam.connfunc_gauss_post,
+        kernel.gauss_2d.post,
         ec5_params_dendrites,
         s_sub_ec5
         )
@@ -187,18 +225,25 @@ if False:
     id_dg_ca3 = pam.addConnection([dg, al_dg, ca3],                      # layers involved in the connection
        dg_neurons, ca3_neurons,       # neuronsets involved
        1,                                      # synaptic layer
-       [pam.MAP_euclid, pam.MAP_euclid],                                 # connection mapping
-       [pam.DIS_euclidUV, pam.DIS_euclid],                                 # distance calculation
-       pam.connfunc_gauss_post, dg_params, pam.connfunc_gauss_post, ca3_params_dendrites,   # kernel function plus parameters
+       [config.MAP_euclid, config.MAP_euclid],                                 # connection mapping
+       [config.DIS_euclidUV, config.DIS_euclid],                                 # distance calculation
+       pam.connfunc_gauss_pre, dg_params, kernel.gauss_2d.post, ca3_params_dendrites,   # kernel function plus parameters
+>>>>>>> 37b65494332b27a89da6d1f6cac517051e2f60a7
        int(s_dg_ca3))                      # number of synapses for each  pre-synaptic neuron
 
 if True:
     id_ca3_ca3 = pam.addConnection([ca3, al_ca3, ca3],                      # layers involved in the connection
        ca3_neurons, ca3_neurons,       # neuronsets involved
        1,                                      # synaptic layer
+<<<<<<< HEAD
        [pam.MAP_normal, pam.MAP_normal],                                 # connection mapping
        [pam.DIS_normalUV, pam.DIS_normalUV],                                 # distance calculation
        pam.connfunc_gauss_post, ca3_params, pam.connfunc_gauss_post, ca3_params_dendrites,   # kernel function plus parameters
+=======
+       [config.MAP_normal, config.MAP_normal],                                 # connection mapping
+       [config.DIS_normalUV, config.DIS_normalUV],                                 # distance calculation
+       pam.connfunc_gauss_pre, ca3_params, kernel.gauss_2d.post, ca3_params_dendrites,   # kernel function plus parameters
+>>>>>>> 37b65494332b27a89da6d1f6cac517051e2f60a7
        int(s_ca3_ca3))                      # number of synapses for each  pre-synaptic neuron
 
 if True:
@@ -209,7 +254,7 @@ if True:
         1,
         [pam.MAP_normal, pam.MAP_normal],
         [pam.DIS_normalUV, pam.DIS_euclid],
-        kernel.gauss_2d.post,
+        pam.connfunc_gauss_post,
         ca3_params,
         kernel.gauss_2d.post,
         ca1_params_dendrites,
@@ -223,7 +268,7 @@ if True:
         2,
         [pam.MAP_top, pam.MAP_top, pam.MAP_normal],
         [pam.DIS_euclid, pam.DIS_euclid, pam.DIS_euclidUV],
-        kernel.gauss_2d.post,
+        pam.connfunc_gauss_post,
         ca1_params,
         kernel.gauss_2d.post,
         sub_params_dendrites,
@@ -237,9 +282,9 @@ if True:
         4,
         [pam.MAP_normal, pam.MAP_top, pam.MAP_top, pam.MAP_top, pam.MAP_normal],
         [pam.DIS_euclid, pam.DIS_UVnormal, pam.DIS_euclid, pam.DIS_normalUV, pam.DIS_jumpUV],
-        kernel.gauss_2d.post,
+        pam.connfunc_gauss_post,
         ca1_params_ec5,
-        kernel.gauss_2d.post,
+        pam.connfunc_gauss_post,
         ec5_params_dendrites,
         s_ca1_ec5
         )
@@ -251,9 +296,9 @@ if True:
         4,
         [pam.MAP_normal, pam.MAP_top, pam.MAP_top, pam.MAP_top, pam.MAP_normal],
         [pam.DIS_euclid, pam.DIS_UVnormal, pam.DIS_euclid, pam.DIS_normalUV, pam.DIS_jumpUV],
-        kernel.gauss_2d.post,
+        pam.connfunc_gauss_post,
         sub_params,
-        kernel.gauss_2d.post,
+        pam.connfunc_gauss_post,
         ec5_params_dendrites,
         s_sub_ec5
         )        
@@ -281,8 +326,8 @@ pam.printConnections()
 #print(pam.pam_connections)
 #print(pam.pam_ng_list)
 
-   
-print("Visualization")    
+
+print("Visualization")
 
 particle = 22
 
@@ -302,3 +347,15 @@ for j in range(0, pam.pam_connection_counter):
     for i in range(0,3):
         print(i)
         pam_vis.visualizeConnectionsForNeuron(j, i)
+
+<<<<<<< HEAD
+=======
+#
+#d, p = pam.computeDistance_PreToSynapse(id_ca1_sub, particle)
+#print(d)
+#pam_vis.visualizePath(p)
+#
+##print(c_dg_ca3[particle])
+#
+export.csv.export_connections(EXPORT_PATH + 'hippocampus.zip')
+>>>>>>> 37b65494332b27a89da6d1f6cac517051e2f60a7

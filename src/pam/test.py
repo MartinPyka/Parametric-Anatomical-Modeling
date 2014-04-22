@@ -11,6 +11,7 @@ import numpy as np
 import pickle
 import profile
 import helper
+import kernel
 
 import imp
 
@@ -37,7 +38,7 @@ def connectiontest():
                                            2,                                      # synaptic layer
                                            [config.MAP_top, config.MAP_top, config.MAP_top, config.MAP_top, config.MAP_top],
                                            [config.DIS_euclid, config.DIS_euclid, config.DIS_euclidUV, config.DIS_euclid, config.DIS_euclid],                                 # distance calculation
-                                           pam.connfunc_gauss_pre, params, pam.connfunc_gauss_post, params,
+                                           pam.connfunc_gauss_pre, params, kernel.gauss_2d.post, params,
                                            30)   # kernel function plus parameters
 
     # export.export_zip('test.zip', [conn], [dist])
@@ -54,9 +55,9 @@ def gridTest():
     s = bpy.data.objects['CA3_sp_axons_all']
     g = helper.UVGrid(s)
 
-    g.pre_kernel = pam.connfunc_gauss_post
+    g.pre_kernel = kernel.gauss_2d.post
     g.pre_kernel_args = [0.1, 0.1, 0.0, 0.0]
-    g.post_kernel = pam.connfunc_gauss_post
+    g.post_kernel = kernel.gauss_2d.post
     g.post_kernel_args = [0.1, 0.1, 0.0, 0.0]
     g.compute_preMask()
     g.compute_postMask()

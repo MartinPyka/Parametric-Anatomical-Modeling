@@ -3,8 +3,9 @@ import imp
 
 import bpy
 
-import config
 import pam
+import pam.config as config
+
 
 # imp.reload(pam)
 imp.reload(config)

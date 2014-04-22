@@ -23,7 +23,7 @@ def plotDelayHistograms(m):
                  m['neurongroups'][0][m['connections'][0][i][2]][0])
                  
 
-def plotConnectionDelayHistogram(connections, m, neurons):
+def plotConnectionDelayHistogram(connections, m, neurons, bins):
     """ computes delay-histogram for a given connection-chain
     
     connections :    list of connections
@@ -35,7 +35,7 @@ def plotConnectionDelayHistogram(connections, m, neurons):
         result = result + recursivelyComputeDelays(connections, m, i)
     
     mp.figure()
-    mp.hist(result,100)
+    mp.hist(result,bins)
     mp.title("Connection delays")        
     return result
     
@@ -50,6 +50,9 @@ def recursivelyComputeDelays(connections, m, neuron_number):
         return result
     else:
         for i, delay in enumerate(m['d'][ connections[0][0] ][neuron_number]):
+            if m['c'][ connections[0][0] ][neuron_number][i] == -1:
+                continue
+            
             post_neurons = recursivelyComputeDelays(
                 connections[1::], 
                 m, 

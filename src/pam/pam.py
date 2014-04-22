@@ -10,10 +10,10 @@ import bpy
 import mathutils
 import numpy as np
 
-from . import exporter
-from . import config
-from . import helper
-from . import pam_vis
+import exporter
+import config
+import helper
+import pam_vis
 
 imp.reload(helper)
 imp.reload(config)
@@ -21,6 +21,19 @@ imp.reload(config)
 
 DEBUG_LEVEL = 0
 DEFAULT_MAXTRIALS = 50
+
+# some key-values for the mapping-procedure
+MAP_euclid = 0
+MAP_normal = 1
+MAP_random = 2
+MAP_top = 3
+
+DIS_euclid = 0
+DIS_euclidUV = 1
+DIS_jumpUV = 2
+DIS_UVjump = 3
+DIS_normalUV = 4
+DIS_UVnormal = 5
 
 pam_ng_list = []                # ng = neurongroup
 pam_ng_dict = {}
@@ -68,7 +81,6 @@ def computeUVScalingFactor(object):
     """
 
     result = []
-
     for i in range(0, len(object.data.polygons)):
         uvs = [object.data.uv_layers.active.data[li] for li in object.data.polygons[i].loop_indices]
 
@@ -144,12 +156,10 @@ def mapUVPointTo3d(object_uv, uv_list):
     for p in uv_polygons:
         uvs = [object_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
         for i in to_find:
-            result = mathutils.geometry.intersect_point_tri_2d(
-                uv_list[i],
-                uvs[0].uv,
-                uvs[1].uv,
-                uvs[2].uv
-            )
+            result = mathutils.geometry.intersect_point_tri_2d(uv_list[i],
+                                                uvs[0].uv,
+                                                uvs[1].uv,
+                                                uvs[2].uv)
             if result == 1:
                 U = uvs[0].uv.to_3d()
                 V = uvs[1].uv.to_3d()
@@ -160,12 +170,10 @@ def mapUVPointTo3d(object_uv, uv_list):
                 points_3d[i] = mathutils.geometry.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
                 to_find.remove(i)
             else:
-                result = mathutils.geometry.intersect_point_tri_2d(
-                    uv_list[i],
-                    uvs[0].uv,
-                    uvs[2].uv,
-                    uvs[3].uv
-                )
+                result = mathutils.geometry.intersect_point_tri_2d(uv_list[i],
+                                                    uvs[0].uv,
+                                                    uvs[2].uv,
+                                                    uvs[3].uv)
                 if result == 1:
                     U = uvs[0].uv.to_3d()
                     V = uvs[2].uv.to_3d()
@@ -181,12 +189,10 @@ def mapUVPointTo3d(object_uv, uv_list):
     for p in object_uv.data.polygons:
         uvs = [object_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
         for i in to_find:
-            result = mathutils.geometry.intersect_point_tri_2d(
-                uv_list[i],
-                uvs[0].uv,
-                uvs[1].uv,
-                uvs[2].uv
-            )
+            result = mathutils.geometry.intersect_point_tri_2d(uv_list[i],
+                                                uvs[0].uv,
+                                                uvs[1].uv,
+                                                uvs[2].uv)
             if result == 1:
                 U = uvs[0].uv.to_3d()
                 V = uvs[1].uv.to_3d()
@@ -198,12 +204,10 @@ def mapUVPointTo3d(object_uv, uv_list):
                 to_find.remove(i)
                 uv_polygons.append(p)
             else:
-                result = mathutils.geometry.intersect_point_tri_2d(
-                    uv_list[i],
-                    uvs[0].uv,
-                    uvs[2].uv,
-                    uvs[3].uv
-                )
+                result = mathutils.geometry.intersect_point_tri_2d(uv_list[i],
+                                                    uvs[0].uv,
+                                                    uvs[2].uv,
+                                                    uvs[3].uv)
                 if result == 1:
                     U = uvs[0].uv.to_3d()
                     V = uvs[2].uv.to_3d()
@@ -299,6 +303,21 @@ def connfunc_gauss_post(uv, guv, *args):
                     (ruv[1] + sv) ** 2 / (2 * vv ** 2)))
 
 
+def connfunc_gauss_pre(u, v, *args):
+    """Gauss-function for 2d
+    u, v    : coordinates, to determine the function value
+    vu, vv  : variance for both dimensions
+    su, sv  : shift in u and v direction
+    """
+
+    vu = args[0][0]
+    vv = args[0][1]
+    su = args[0][2]
+    sv = args[0][3]
+
+    return [random.gauss(0, vu) + su, random.gauss(0, vv) + sv]
+
+
 # TODO(SK): missing docstring
 def connfunc_unity(u, v, *args):
     return 1
@@ -358,6 +377,32 @@ def computePathLength(path):
     return length
 
 
+def sortNeuronsToUV(layer, neuronset, UorV):
+    """ Sorts particles according to their position on the u
+    or v axis and returns the permutation indices
+    layer       : the layers were the neurons are
+    neuronset   : name or number of the neuronset (particle system)
+    UorV        : 'u' means sort for u
+                  'v' means sort for v
+    """
+
+    if UorV is 'u':
+        index = 0
+    elif UorV is 'v':
+        index = 1
+    else:
+        raise Exception("UorV must be either 'u' or 'v' ")
+
+    # get all particle positions
+    p3d = [i.location for i in layer.particle_systems[neuronset].particles]
+    # convert them to 2d and select just the u or v coordinate
+    p2d = [map3dPointToUV(layer, layer, p)[index] for p in p3d]
+    
+    # return permutation of a sorted list (ascending)
+    return numpy.argsort(p2d)
+    
+
+
 def computeMapping(layers, connections, distances, point):
     """based on a list of layers, connections-properties and distance-properties,
     this function returns the 3d-point, the 2d-uv-point and the distance from a given
@@ -390,20 +435,22 @@ def computeMapping(layers, connections, distances, point):
     for i in range(0, len(connections)):
         # print(i)
         # if euclidean mapping should be computed
-        if connections[i] == config.MAP_euclid:
+        if connections[i] == MAP_euclid:
             # compute the point on the next intermediate layer
             p3d_n = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
 
             # we are not on the synapse layer
             if (i < (len(connections) - 1)):
 
-                if distances[i] == config.DIS_euclid:
+                if distances[i] == DIS_euclid:
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_euclidUV:
+                elif distances[i] == DIS_euclidUV:
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_jumpUV:
+                elif distances[i] == DIS_jumpUV:
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_normalUV:
+                elif distances[i] == DIS_UVjump:
+                    p3d.append(p3d_n)
+                elif distances[i] == DIS_normalUV:
                     p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
                     p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
                     if p3d_t is None:
@@ -411,7 +458,7 @@ def computeMapping(layers, connections, distances, point):
                     p3d.append(p3d_t)
                     p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_UVnormal:
+                elif distances[i] == DIS_UVnormal:
                     p, n, f = layers[i + 1].closest_point_on_mesh(p3d_n)
                     p3d_t = map3dPointTo3d(layers[i], layers[i], p, n)
                     if p3d_t is None:
@@ -423,24 +470,26 @@ def computeMapping(layers, connections, distances, point):
 
             # or the last point before the synaptic layer
             else:
-                # if distances[i] == config.DIS_euclid:
+                # if distances[i] == DIS_euclid:
                 #    do nothing
-                if distances[i] == config.DIS_euclidUV:
+                if distances[i] == DIS_euclidUV:
                     p3d.append(p3d_n)
-                # if distances[i] == config.DIS_jumpUV:
+                elif distances[i] == DIS_jumpUV:
+                    p3d.append(p3d_n)
+                #elif distances[i] = DIS_UVjump:
                 #    do nothing
-                elif distances[i] == config.DIS_normalUV:
+                elif distances[i] == DIS_normalUV:
                     p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
                     # determine new point
                     p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
                     if p3d_t is None:
                         return None, None, None
                     p3d.append(p3d_t)
-                # elif distances[i] == config.DIS_UVnormal:
+                # elif distances[i] == DIS_UVnormal:
                 #    do nothing
 
         # if normal mapping should be computed
-        elif connections[i] == config.MAP_normal:
+        elif connections[i] == MAP_normal:
             # compute normal on layer for the last point
             p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
             # determine new point
@@ -451,54 +500,64 @@ def computeMapping(layers, connections, distances, point):
 
             # we are not on the synapse layer
             if i < (len(connections) - 1):
-                if distances[i] == config.DIS_euclid:
+                if distances[i] == DIS_euclid:
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_euclidUV:
+                elif distances[i] == DIS_euclidUV:
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_jumpUV:
+                elif distances[i] == DIS_jumpUV:
                     p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
                     p3d.append(p3d_t)
                     p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_normalUV:
+                elif distances[i] == DIS_UVjump:
+                    p3d_t = map3dPointTo3d(layers[i], layers[i], p3d_n)
+                    p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
+                    p3d-append(p3d_n)
+                elif distances[i] == DIS_normalUV:
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_UVnormal:
+                elif distances[i] == DIS_UVnormal:
                     p3d.append(p3d_n)
             else:
-                # if distances[i] == config.DIS_euclid:
+                # if distances[i] == DIS_euclid:
                 #   do nothing
-                if distances[i] == config.DIS_euclidUV:
+                if distances[i] == DIS_euclidUV:
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_jumpUV:
+                elif distances[i] == DIS_jumpUV:
                     p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
                     p3d.append(p3d_t)
-                elif distances[i] == config.DIS_normalUV:
+                #elif distances[i] == DIS_UVjump:
+                #    do nothing
+                elif distances[i] == DIS_normalUV:
                     p3d.append(p3d_n)
-                # elif distances[i] == config.UVnormal:
+                # elif distances[i] == UVnormal:
                 #    do nothing
 
         # if random mapping should be used
-        elif connections[i] == config.MAP_random:
+        elif connections[i] == MAP_random:
             p3d_n, n, f = selectRandomPoint(layers[i + 1])
 
             # if this is not the synapse layer
             if (i < (len(connections) - 1)):
-                if distances[i] == config.DIS_euclid:
+                if distances[i] == DIS_euclid:
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_euclidUV:
+                elif distances[i] == DIS_euclidUV:
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_jumpUV:
+                elif distances[i] == DIS_jumpUV:
                     p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
                     p3d.append(p3d_t)
                     p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_normalUV:
+                elif distances[i] == DIS_UVjump:
+                    p3d_t = map3dPointTo3d(layers[i], layers[i], p3d_n)
+                    p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
+                    p3d-append(p3d_n)
+                elif distances[i] == DIS_normalUV:
                     p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
                     p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
                     p3d.append(p3d_t)
                     p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_UVnormal:
+                elif distances[i] == DIS_UVnormal:
                     p, n, f = layers[i + 1].closest_point_on_mesh(p3d_n)
                     p3d_t = map3dPointTo3d(layers[i], layers[i], p, n)
                     if p3d_t is None:
@@ -508,44 +567,53 @@ def computeMapping(layers, connections, distances, point):
                     p3d.append(p3d_t)
                     p3d.append(p3d_n)
             else:
-                # if distances[i] == config.DIS_euclid:
+                # if distances[i] == DIS_euclid:
                 #   do nothing
-                if distances[i] == config.DIS_euclidUV:
+                if distances[i] == DIS_euclidUV:
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_jumpUV:
+                elif distances[i] == DIS_jumpUV:
                     p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
                     p3d.append(p3d_t)
-                elif distances[i] == config.DIS_normalUV:
+                #elif distances[i] == DIS_UVjump:
+                #    do nothing
+                elif distances[i] == DIS_normalUV:
                     p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
                     # determine new point
                     p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
                     if p3d_t is None:
                         return None, None, None
                     p3d.append(p3d_t)
-                # elif distances[i] == config.UVnormal:
+                # elif distances[i] == UVnormal:
                 #    do nothing
 
         # if both layers are topologically identical
-        elif connections[i] == config.MAP_top:
+        elif connections[i] == MAP_top:
             p3d_n = map3dPointTo3d(layers[i], layers[i + 1], p3d[-1])
+
             # if this is not the last layer, compute the topological mapping
             if i < (len(connections) - 1):
-                if distances[i] == config.DIS_euclid:
+                if distances[i] == DIS_euclid:
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_euclidUV:
+                elif distances[i] == DIS_euclidUV:
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_jumpUV:
+                elif distances[i] == DIS_jumpUV:
                     p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
                     p3d.append(p3d_t)
                     p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_normalUV:
+                elif distances[i] == DIS_UVjump:
+                    p3d_t = map3dPointTo3d(layers[i], layers[i], p3d_n)
+                    p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
+                    p3d-append(p3d_n)                    
+                elif distances[i] == DIS_normalUV:
                     p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
                     p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
+                    if p3d_t is None:
+                        return None, None, None
                     p3d.append(p3d_t)
                     p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_UVnormal:
+                elif distances[i] == DIS_UVnormal:
                     p, n, f = layers[i + 1].closest_point_on_mesh(p3d_n)
                     p3d_t = map3dPointTo3d(layers[i], layers[i], p, n)
                     if p3d_t is None:
@@ -556,21 +624,23 @@ def computeMapping(layers, connections, distances, point):
                     p3d.append(p3d_n)
 
             else:
-                # if distances[i] == config.DIS_euclid:
+                # if distances[i] == DIS_euclid:
                 #   do nothing
-                if distances[i] == config.DIS_euclidUV:
+                if distances[i] == DIS_euclidUV:
                     p3d.append(p3d_n)
-                elif distances[i] == config.DIS_jumpUV:
+                elif distances[i] == DIS_jumpUV:
                     p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
                     p3d.append(p3d_t)
-                elif distances[i] == config.DIS_normalUV:
+                #elif distances[i] == DIS_UVjump:
+                #    do nothing
+                elif distances[i] == DIS_normalUV:
                     p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
                     # determine new point
                     p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
                     if p3d_t is None:
                         return None, None, None
                     p3d.append(p3d_t)
-                # elif distances[i] == config.UVnormal:
+                # elif distances[i] == UVnormal:
                 #    do nothing
 
         # for the synaptic layer, compute the uv-coordinates
@@ -588,50 +658,41 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
     s_2d        : uv-coordinates of the synapse
     dis         : distance calculation technique
     """
+    s_3d = mapUVPointTo3d(slayer, [s_2d])
+    if s_3d[0] == []:
+        print("Need to exclude one connection")
+        return -1, -1
 
-    if dis == config.DIS_euclid:
-        i_3d = mapUVPointTo3d(slayer, [s_2d])
-        if i_3d[0] == []:
-            print("Need to exclude one connection")
-            return -1, -1
-        else:
-            return (p_3d - i_3d[0]).length, i_3d
+    if dis == DIS_euclid:
+        return (p_3d - s_3d[0]).length, s_3d
 
-    elif dis == config.DIS_euclidUV:
-        s_3d = mapUVPointTo3d(slayer, [s_2d])
-        if s_3d is None:
-            print("Need to exclude one connection")
-            return -1, -1
+    elif dis == DIS_euclidUV:
         path = [p_3d]
         path = path + interpolateUVTrackIn3D(p_3d, s_3d[0], slayer)
         path.append(s_3d[0])
         return computePathLength(path), path
 
-    elif dis == config.DIS_jumpUV:
-        s_3d = mapUVPointTo3d(slayer, [s_2d])
-        if s_3d is None:
-            print("Need to exclude one connection")
-            return -1, -1
+    elif dis == DIS_jumpUV:
+        path = [p_3d]
+        path = path + interpolateUVTrackIn3D(p_3d, s_3d[0], slayer)
+        path.append(s_3d[0])
+        return computePathLength(path), path
+    
+    elif dis == DIS_UVjump:
+        i_3d = ilayer.closest_point_on_mesh(s_3d[0])
+        path = [p_3d]
+        path = path + interpolateUVTrackIn3D(p_3d, i_3d, ilayer)
+        path.append(i_3d)
+        path.append(s_3d[0])
+        return computePathLength(path), path
+
+    elif dis == DIS_normalUV:
         path = [p_3d]
         path = path + interpolateUVTrackIn3D(p_3d, s_3d[0], slayer)
         path.append(s_3d[0])
         return computePathLength(path), path
 
-    elif dis == config.DIS_normalUV:
-        s_3d = mapUVPointTo3d(slayer, [s_2d])
-        if s_3d is None:
-            print("Need to exclude one connection")
-            return -1, -1
-        path = [p_3d]
-        path = path + interpolateUVTrackIn3D(p_3d, s_3d[0], slayer)
-        path.append(s_3d[0])
-        return computePathLength(path), path
-
-    elif dis == config.DIS_UVnormal:
-        s_3d = mapUVPointTo3d(slayer, [s_2d])
-        if s_3d is None:
-            print("Need to exclude one connection")
-            return -1, -1
+    elif dis == DIS_UVnormal:
         p, n, f = slayers.closest_point_on_mesh(s_3d[0])
         t_3d = map3dPointTo3d(ilayers, ilayers, p, n)
         if t_3d is None:
@@ -731,7 +792,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
 
     print("Prepare Grid")
 
-    grid.pre_kernel = func_post
+    grid.pre_kernel = func_pre
     grid.pre_kernel_args = args_pre
     grid.compute_preMask()
 
@@ -765,14 +826,17 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
                                                  layers[0].particle_systems[neuronset1].particles[i].location)
 
         print(str(round((i / num_particles) * 10000) / 100) + '%')
+
         if pre_p3d is None:
+            for j in range(0, len(conn[i])):
+                conn[i, j] = -1
             continue
 
         post_neurons = grid.select_random(pre_p2d, no_synapses)
 
         if (len(post_neurons) == 0):
-            for c in conn[i]:
-                c = -1
+            for j in range(0, len(conn[i])):
+                conn[i, j] = -1
             continue
 
         for j, post_neuron in enumerate(post_neurons):
@@ -791,7 +855,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
                 conn[i, j] = -1
 
         for rest in range(j + 1, no_synapses):
-            conn[i, j] = -1
+            conn[i, rest] = -1
 
     pam_connection_indices.append(
         [
@@ -1028,8 +1092,8 @@ def test():
         [ca3, al_ca3, ca3],                      # layers involved in the connection
         ca3_neurons, ca3_neurons,       # neuronsets involved
         1,                                      # synaptic layer
-        [config.MAP_normal, config.MAP_normal],                                 # connection mapping
-        [config.DIS_normalUV, config.DIS_euclid],                                 # distance calculation
+        [MAP_normal, MAP_normal],                                 # connection mapping
+        [DIS_normalUV, DIS_euclid],                                 # distance calculation
         connfunc_gauss_pre, ca3_params_pre, connfunc_gauss_post, ca3_params_post,   # kernel function plus parameters
         int(s_ca3_ca3 * f)
     )                      # number of synapses for each  pre-synaptic neuron
@@ -1046,8 +1110,8 @@ def test():
 #        [ca3, al_ca3, ca1],                      # layers involved in the connection
 #        ca3_neurons, ca1_neurons,      # neuronsets involved
 #        1,                                      # synaptic layer
-#        [config.MAP_normal, config.MAP_normal],                                 # connection mapping
-#        [config.DIS_normalUV, config.DIS_euclid],                                 # distance calculation
+#        [MAP_normal, MAP_normal],                                 # connection mapping
+#        [DIS_normalUV, DIS_euclid],                                 # distance calculation
 #        connfunc_gauss_pre, ca3_params_pre, connfunc_gauss_post, ca1_params_post,   # kernel function plus parameters
 #        int(s_ca3_ca1 * f)
 #    )                      # number of synapses for each  pre-synaptic neuron
@@ -1063,8 +1127,8 @@ def test():
         [ca3, al_ca3, ca3],                      # layers involved in the connection
         ca3_neurons, ca3_neurons,      # neuronsets involved
         1,                                      # synaptic layer
-        [config.MAP_normal, config.MAP_normal],                                 # connection mapping
-        [config.DIS_normalUV, config.DIS_euclid],                                 # distance calculation
+        [MAP_normal, MAP_normal],                                 # connection mapping
+        [DIS_normalUV, DIS_euclid],                                 # distance calculation
         particle,
         c_ca3_ca3[particle], s_ca3_ca3[particle]
     )
@@ -1072,8 +1136,8 @@ def test():
 #    pam_vis.visualizeConnectionsForNeuron([ca3, al_ca3, ca1],                      # layers involved in the connection
 #                                     ca3_neurons, ca1_neurons,       # neuronsets involved
 #                                     1,                                      # synaptic layer
-#                                     [config.MAP_normal, config.MAP_normal],                                 # connection mapping
-#                                     [config.DIS_normalUV, config.DIS_euclid],                                 # distance calculation
+#                                     [MAP_normal, MAP_normal],                                 # connection mapping
+#                                     [DIS_normalUV, DIS_euclid],                                 # distance calculation
 #                                     particle,
 #                                     c_ca3_ca1[particle],
 #                                     s_ca3_ca1[particle])
@@ -1104,8 +1168,8 @@ def hippotest():
     c_ca3_ca3, d_ca3_ca3 = computeConnectivityAll([ca3, al_ca3, ca3],                      # layers involved in the connection
                                                   'CA3_Pyramidal', 'CA3_Pyramidal',       # neuronsets involved
                                                   1,                                      # synaptic layer
-                                                  [config.MAP_top, config.MAP_euclid],                                 # connection mapping
-                                                  [config.DIS_normalUV, config.DIS_euclid],                                 # distance calculation
+                                                  [MAP_top, MAP_euclid],                                 # connection mapping
+                                                  [DIS_normalUV, DIS_euclid],                                 # distance calculation
                                                   connfunc_gauss_post, params)   # kernel function plus parameters
 
     print('Compute Connectivity for ca3 to ca1')
@@ -1113,8 +1177,8 @@ def hippotest():
         [ca3, al_ca3, ca1],                      # layers involved in the connection
         'CA3_Pyramidal', 'CA1_Pyramidal',       # neuronsets involved
         1,                                      # synaptic layer
-        [config.MAP_top, config.MAP_euclid],                                 # connection mapping
-        [config.DIS_normalUV, config.DIS_euclid],                                 # distance calculation
+        [MAP_top, MAP_euclid],                                 # connection mapping
+        [DIS_normalUV, DIS_euclid],                                 # distance calculation
         connfunc_gauss_post, params
     )   # kernel function plus parameters
 
@@ -1131,8 +1195,8 @@ def hippotest():
     pam_vis.visualizePostNeurons(ca1, 'CA1_Pyramidal', c_ca3_ca1[particle])
 
 #    p3, p2, d = computeMapping([ca3, al_ca3],
-#                               [config.MAP_top],
-#                               [config.DIS_normalUV],
+#                               [MAP_top],
+#                               [DIS_normalUV],
 #                               ca3.particle_systems['CA3_Pyramidal'].particles[particle].location)
 #    print(p3)
 #    if (p3 != None):

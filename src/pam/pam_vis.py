@@ -3,13 +3,14 @@ import imp
 
 import bpy
 
-import pam
+import pam.pam as pam
 import pam.config as config
-
+import pam.model as model
 
 # imp.reload(pam)
 imp.reload(config)
 imp.reload(pam)
+imp.reload(model)
 
 vis_objects = 0
 
@@ -106,15 +107,15 @@ def visualizeConnectionsForNeuron(no_connection, pre_index):
     synapses            : optional list of coordinates for synapses
     """
 
-    layers = pam.pam_connections[no_connection][0]
-    neuronset1 = pam.pam_connections[no_connection][1]
-    neuronset2 = pam.pam_connections[no_connection][2]
-    slayer = pam.pam_connections[no_connection][3]
-    connections = pam.pam_connections[no_connection][4]
-    distances = pam.pam_connections[no_connection][5]
+    layers = model.CONNECTIONS[no_connection][0]
+    neuronset1 = model.CONNECTIONS[no_connection][1]
+    neuronset2 = model.CONNECTIONS[no_connection][2]
+    slayer = model.CONNECTIONS[no_connection][3]
+    connections = model.CONNECTIONS[no_connection][4]
+    distances = model.CONNECTIONS[no_connection][5]
 
-    post_indices = pam.pam_connection_results[no_connection]['c'][pre_index]
-    synapses = pam.pam_connection_results[no_connection]['s'][pre_index]
+    post_indices = model.CONNECTION_RESULTS[no_connection]['c'][pre_index]
+    synapses = model.CONNECTION_RESULTS[no_connection]['s'][pre_index]
 
     # path of the presynaptic neuron to the synaptic layer
     pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer + 1)],

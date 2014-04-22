@@ -13,8 +13,8 @@ import numpy as np
 from . import config
 from . import helper
 from . import pam_vis
-import export
-import model
+from . import export
+from . import model
 
 imp.reload(helper)
 imp.reload(config)
@@ -669,8 +669,6 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
 
 # TODO(SK): missing docstring
 def addConnection(*args):
-    global model.CONNECTIONS
-
     model.CONNECTIONS.append(args)
 
     # returns the future index of the connection
@@ -695,9 +693,6 @@ def addConnection(*args):
 
 # TODO(SK): missing docstring
 def computeAllConnections():
-    global model.CONNECTIONS
-    global model.CONNECTION_RESULTS
-
     for c in model.CONNECTIONS:
         print(c[0][0].name + ' - ' + c[0][-1].name)
 
@@ -733,11 +728,6 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
                           of its corresponding position on the synapse layer
     no_synapses         : number of synapses for each pre-synaptic neuron
     """
-    global model.NG_LIST
-    global model.NG_DICT
-    global model.CONNECTION_COUNTER
-    global model.CONNECTION_INDICES
-
     # connection matrix
     conn = np.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses)).astype(int)
 
@@ -982,24 +972,21 @@ def returnNeuronGroups():
                 r_dict[o.name] = {}
             r_dict[o.name][p.name] = counter
             counter += 1
+            
     return r_list, r_dict
 
 
 def initialize3D():
     """prepares all necessary steps for the computation of connections"""
-    global model.NG_LIST
-    global model.NG_DICT
-    global model.CONNECTION_COUNTER
-    global model.CONNECTION_INDICES
-
     print("Initialize 3D settings")
+    Reset()
+
     print("- Compute UV-scaling factor")
+
     initializeUVs()             # compute the uv-scaling factor
 
     print(" -Collect all neuron groups")
     model.NG_LIST, model.NG_DICT = returnNeuronGroups()
-
-    Reset()
 
     print("End of Initialization")
     print("============================")

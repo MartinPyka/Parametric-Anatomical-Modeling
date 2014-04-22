@@ -22,7 +22,7 @@ def export_connections(filepath):
 
     cmatrices = []
     dmatrices = []
-    for c in model.CONNECTION_RESULTS
+    for c in model.CONNECTION_RESULTS:
         cmatrices.append(c['c'])
         dmatrices.append(c['d'])
 

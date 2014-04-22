@@ -10,11 +10,17 @@ import bpy
 import mathutils
 import numpy as np
 
+<<<<<<< HEAD
+import exporter
+import config
+import helper
+import pam_vis
+=======
+from . import export
 from . import config
 from . import helper
 from . import pam_vis
-import export
-import model
+>>>>>>> 37b65494332b27a89da6d1f6cac517051e2f60a7
 
 imp.reload(helper)
 imp.reload(config)
@@ -35,6 +41,14 @@ DIS_jumpUV = 2
 DIS_UVjump = 3
 DIS_normalUV = 4
 DIS_UVnormal = 5
+
+pam_ng_list = []                # ng = neurongroup
+pam_ng_dict = {}
+pam_connection_counter = 0
+pam_connection_indices = []
+pam_connections = []
+pam_connection_results = []
+
 
 # TODO(SK): missing docstring
 def computePoint(v1, v2, v3, v4, x1, x2):
@@ -74,7 +88,6 @@ def computeUVScalingFactor(object):
     """
 
     result = []
-
     for i in range(0, len(object.data.polygons)):
         uvs = [object.data.uv_layers.active.data[li] for li in object.data.polygons[i].loop_indices]
 
@@ -150,12 +163,10 @@ def mapUVPointTo3d(object_uv, uv_list):
     for p in uv_polygons:
         uvs = [object_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
         for i in to_find:
-            result = mathutils.geometry.intersect_point_tri_2d(
-                uv_list[i],
-                uvs[0].uv,
-                uvs[1].uv,
-                uvs[2].uv
-            )
+            result = mathutils.geometry.intersect_point_tri_2d(uv_list[i],
+                                                uvs[0].uv,
+                                                uvs[1].uv,
+                                                uvs[2].uv)
             if result == 1:
                 U = uvs[0].uv.to_3d()
                 V = uvs[1].uv.to_3d()
@@ -166,12 +177,10 @@ def mapUVPointTo3d(object_uv, uv_list):
                 points_3d[i] = mathutils.geometry.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
                 to_find.remove(i)
             else:
-                result = mathutils.geometry.intersect_point_tri_2d(
-                    uv_list[i],
-                    uvs[0].uv,
-                    uvs[2].uv,
-                    uvs[3].uv
-                )
+                result = mathutils.geometry.intersect_point_tri_2d(uv_list[i],
+                                                    uvs[0].uv,
+                                                    uvs[2].uv,
+                                                    uvs[3].uv)
                 if result == 1:
                     U = uvs[0].uv.to_3d()
                     V = uvs[2].uv.to_3d()
@@ -187,12 +196,10 @@ def mapUVPointTo3d(object_uv, uv_list):
     for p in object_uv.data.polygons:
         uvs = [object_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
         for i in to_find:
-            result = mathutils.geometry.intersect_point_tri_2d(
-                uv_list[i],
-                uvs[0].uv,
-                uvs[1].uv,
-                uvs[2].uv
-            )
+            result = mathutils.geometry.intersect_point_tri_2d(uv_list[i],
+                                                uvs[0].uv,
+                                                uvs[1].uv,
+                                                uvs[2].uv)
             if result == 1:
                 U = uvs[0].uv.to_3d()
                 V = uvs[1].uv.to_3d()
@@ -204,12 +211,10 @@ def mapUVPointTo3d(object_uv, uv_list):
                 to_find.remove(i)
                 uv_polygons.append(p)
             else:
-                result = mathutils.geometry.intersect_point_tri_2d(
-                    uv_list[i],
-                    uvs[0].uv,
-                    uvs[2].uv,
-                    uvs[3].uv
-                )
+                result = mathutils.geometry.intersect_point_tri_2d(uv_list[i],
+                                                    uvs[0].uv,
+                                                    uvs[2].uv,
+                                                    uvs[3].uv)
                 if result == 1:
                     U = uvs[0].uv.to_3d()
                     V = uvs[2].uv.to_3d()
@@ -286,6 +291,48 @@ def map3dPointTo3d(o1, o2, point, normal=None):
     return p_new
 
 
+<<<<<<< HEAD
+# TODO(MP): Kernel definition must be equal across code fragments
+# TODO(MP): Kernel functions can moved to separate module
+def connfunc_gauss_post(uv, guv, *args):
+    """Gauss-function for 2d
+    u, v    : coordinates, to determine the function value
+    vu, vv  : variance for both dimensionsj
+    su, sv  : shift in u and v direction
+    """
+    vu = args[0][0]
+    vv = args[0][1]
+    su = args[0][2]
+    sv = args[0][3]
+
+    ruv = guv - uv  # compute relative position
+
+    return math.exp(-((ruv[0] + su) ** 2 / (2 * vu ** 2) +
+                    (ruv[1] + sv) ** 2 / (2 * vv ** 2)))
+
+
+def connfunc_gauss_pre(u, v, *args):
+    """Gauss-function for 2d
+    u, v    : coordinates, to determine the function value
+    vu, vv  : variance for both dimensions
+    su, sv  : shift in u and v direction
+    """
+
+    vu = args[0][0]
+    vv = args[0][1]
+    su = args[0][2]
+    sv = args[0][3]
+
+    return [random.gauss(0, vu) + su, random.gauss(0, vv) + sv]
+
+
+# TODO(SK): missing docstring
+def connfunc_unity(u, v, *args):
+    return 1
+
+
+=======
+>>>>>>> 37b65494332b27a89da6d1f6cac517051e2f60a7
 # TODO(SK): missing docstring
 def computeConnectivityProbability(uv1, uv2, func, args):
     return func(uv1, uv2, args)
@@ -312,11 +359,11 @@ def computeDistance_PreToSynapse(no_connection, pre_index):
     """ computes distance for a pre-synaptic neuron and a certain
     connection definition
     """
-    layers = model.CONNECTIONS[no_connection][0]
-    neuronset1 = model.CONNECTIONS[no_connection][1]
-    slayer = model.CONNECTIONS[no_connection][3]
-    connections = model.CONNECTIONS[no_connection][4]
-    distances = model.CONNECTIONS[no_connection][5]
+    layers = pam_connections[no_connection][0]
+    neuronset1 = pam_connections[no_connection][1]
+    slayer = pam_connections[no_connection][3]
+    connections = pam_connections[no_connection][4]
+    distances = pam_connections[no_connection][5]
 
     point = layers[0].particle_systems[neuronset1].particles[pre_index].location
 
@@ -669,16 +716,16 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
 
 # TODO(SK): missing docstring
 def addConnection(*args):
-    global model.CONNECTIONS
+    global pam_connections
 
-    model.CONNECTIONS.append(args)
+    pam_connections.append(args)
 
     # returns the future index of the connection
-    return (len(model.CONNECTIONS) - 1)
+    return (len(pam_connections) - 1)
 
 # TODO(SK): ??? closing brackets are switched
 
-#    model.CONNECTIONS.append(
+#    pam_connections.append(
 #    {'layers': args[0],
 #     'neuronset1': args[1],
 #     'neuronset2': args[2],
@@ -695,14 +742,14 @@ def addConnection(*args):
 
 # TODO(SK): missing docstring
 def computeAllConnections():
-    global model.CONNECTIONS
-    global model.CONNECTION_RESULTS
+    global pam_connections
+    global pam_connection_results
 
-    for c in model.CONNECTIONS:
+    for c in pam_connections:
         print(c[0][0].name + ' - ' + c[0][-1].name)
 
         result = computeConnectivity(*c)
-        model.CONNECTION_RESULTS.append(
+        pam_connection_results.append(
             {
                 'c': result[0],
                 'd': result[1],
@@ -733,10 +780,10 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
                           of its corresponding position on the synapse layer
     no_synapses         : number of synapses for each pre-synaptic neuron
     """
-    global model.NG_LIST
-    global model.NG_DICT
-    global model.CONNECTION_COUNTER
-    global model.CONNECTION_INDICES
+    global pam_ng_list
+    global pam_ng_dict
+    global pam_connection_counter
+    global pam_connection_indices
 
     # connection matrix
     conn = np.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses)).astype(int)
@@ -820,14 +867,14 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
         for rest in range(j + 1, no_synapses):
             conn[i, rest] = -1
 
-    model.CONNECTION_INDICES.append(
+    pam_connection_indices.append(
         [
-            model.CONNECTION_COUNTER,
-            model.NG_DICT[layers[0].name][neuronset1],
-            model.NG_DICT[layers[-1].name][neuronset2]
+            pam_connection_counter,
+            pam_ng_dict[layers[0].name][neuronset1],
+            pam_ng_dict[layers[-1].name][neuronset2]
         ]
     )
-    model.CONNECTION_COUNTER += 1
+    pam_connection_counter += 1
 
     return conn, dist, syn, grid
 
@@ -889,9 +936,9 @@ def computeConnectivityAll(layers, neuronset1, neuronset2, slayer, connections, 
 
 def printConnections():
     """ Print all connection pairs """
-    for i, c in enumerate(model.CONNECTION_INDICES):
-        print(i, model.NG_LIST[c[1]][0] + ' - ' +
-              model.NG_LIST[c[2]][0])
+    for i, c in enumerate(pam_connection_indices):
+        print(i, pam_ng_list[c[1]][0] + ' - ' +
+              pam_ng_list[c[2]][0])
 
 
 def computeDistance(layer1, layer2, neuronset1, neuronset2, commonl, conn_matrix):
@@ -987,17 +1034,17 @@ def returnNeuronGroups():
 
 def initialize3D():
     """prepares all necessary steps for the computation of connections"""
-    global model.NG_LIST
-    global model.NG_DICT
-    global model.CONNECTION_COUNTER
-    global model.CONNECTION_INDICES
+    global pam_ng_list
+    global pam_ng_dict
+    global pam_connection_counter
+    global pam_connection_indices
 
     print("Initialize 3D settings")
     print("- Compute UV-scaling factor")
     initializeUVs()             # compute the uv-scaling factor
 
     print(" -Collect all neuron groups")
-    model.NG_LIST, model.NG_DICT = returnNeuronGroups()
+    pam_ng_list, pam_ng_dict = returnNeuronGroups()
 
     Reset()
 
@@ -1009,9 +1056,188 @@ def Reset():
     """ Resets the most important variables without calculating everything from
     scratch """
 
-    model.NG_LIST = []                # ng = neurongroup
-    model.NG_DICT = {}
-    model.CONNECTION_COUNTER = 0
-    model.CONNECTION_INDICES = []
-    model.CONNECTIONS = []
-    model.CONNECTION_RESULTS = []
+    pam_ng_list = []                # ng = neurongroup
+    pam_ng_dict = {}
+    pam_connection_counter = 0
+    pam_connection_indices = []
+    pam_connections = []
+    pam_connection_results = []
+<<<<<<< HEAD
+
+
+def test():
+    """ Just a routine to perform some tests """
+    # get all important layers
+    dg = bpy.data.objects['DG_sg']
+    ca3 = bpy.data.objects['CA3_sp']
+    ca1 = bpy.data.objects['CA1_sp']
+    al_dg = bpy.data.objects['DG_sg_axons_all']
+    al_ca3 = bpy.data.objects['CA3_sp_axons_all']
+
+    # get all important neuron groups
+    ca3_neurons = 'CA3_Pyramidal'
+    ca1_neurons = 'CA1_Pyramidal'
+
+    # number of neurons per layer
+    n_dg = 1200000
+    n_ca3 = 250000
+    n_ca1 = 390000
+
+    # number of outgoing connectionso
+    s_ca3_ca3 = 60000
+    s_ca3_ca1 = 85800
+
+    f = 0.001     # factor for the neuron numbers
+    # adjust the number of neurons per layer
+    ca3.particle_systems[ca3_neurons].settings.count = int(n_ca3 * f)
+    ca1.particle_systems[ca1_neurons].settings.count = int(n_ca3 * f)
+
+    pam_vis.visualizeClean()
+    initialize3D()
+
+    ca3_params_post = [0.3, 0.3, 0.0, 0.00]
+    ca3_params_pre = [10., 0.2, 0.0, 0.00]
+    ca1_params_post = ca3_params_post
+
+    c_ca3_ca3, d_ca3_ca3, s_ca3_ca3, grid = computeConnectivity(
+        [ca3, al_ca3, ca3],                      # layers involved in the connection
+        ca3_neurons, ca3_neurons,       # neuronsets involved
+        1,                                      # synaptic layer
+        [MAP_normal, MAP_normal],                                 # connection mapping
+        [DIS_normalUV, DIS_euclid],                                 # distance calculation
+        connfunc_gauss_pre, ca3_params_pre, connfunc_gauss_post, ca3_params_post,   # kernel function plus parameters
+        int(s_ca3_ca3 * f)
+    )                      # number of synapses for each  pre-synaptic neuron
+
+    # namespace = globals().copy()
+    # namespace.update(locals())
+    # code.interact(local=namespace)
+
+    c_ca3_ca1 = []
+    d_ca3_ca1 = []
+    s_ca3_ca1 = []
+    grid = []
+#    c_ca3_ca1, d_ca3_ca1, s_ca3_ca1, grid = computeConnectivity(
+#        [ca3, al_ca3, ca1],                      # layers involved in the connection
+#        ca3_neurons, ca1_neurons,      # neuronsets involved
+#        1,                                      # synaptic layer
+#        [MAP_normal, MAP_normal],                                 # connection mapping
+#        [DIS_normalUV, DIS_euclid],                                 # distance calculation
+#        connfunc_gauss_pre, ca3_params_pre, connfunc_gauss_post, ca1_params_post,   # kernel function plus parameters
+#        int(s_ca3_ca1 * f)
+#    )                      # number of synapses for each  pre-synaptic neuron
+
+    particle = 40
+
+    pam_vis.setCursor(ca3.particle_systems[ca3_neurons].particles[particle].location)
+
+    pam_vis.visualizePostNeurons(ca3, ca3_neurons, c_ca3_ca3[particle])
+    # pam_vis.visualizePostNeurons(ca1, ca1_neurons, c_ca3_ca1[particle])
+
+    pam_vis.visualizeConnectionsForNeuron(
+        [ca3, al_ca3, ca3],                      # layers involved in the connection
+        ca3_neurons, ca3_neurons,      # neuronsets involved
+        1,                                      # synaptic layer
+        [MAP_normal, MAP_normal],                                 # connection mapping
+        [DIS_normalUV, DIS_euclid],                                 # distance calculation
+        particle,
+        c_ca3_ca3[particle], s_ca3_ca3[particle]
+    )
+
+#    pam_vis.visualizeConnectionsForNeuron([ca3, al_ca3, ca1],                      # layers involved in the connection
+#                                     ca3_neurons, ca1_neurons,       # neuronsets involved
+#                                     1,                                      # synaptic layer
+#                                     [MAP_normal, MAP_normal],                                 # connection mapping
+#                                     [DIS_normalUV, DIS_euclid],                                 # distance calculation
+#                                     particle,
+#                                     c_ca3_ca1[particle],
+#                                     s_ca3_ca1[particle])
+
+    return grid, c_ca3_ca3, d_ca3_ca3, s_ca3_ca3, c_ca3_ca1, d_ca3_ca1, s_ca3_ca1
+
+
+def hippotest():
+    """ A routine to test the functionality on a hippocampus-like shape """
+    dg = bpy.data.objects['DG_sg']
+    ca3 = bpy.data.objects['CA3_sp']
+    ca1 = bpy.data.objects['CA1_sp']
+    al_dg = bpy.data.objects['DG_sg_axons_all']
+    al_ca3 = bpy.data.objects['CA3_sp_axons_all']
+
+    # preparatory steps are done in initialize3D (e.g. calculating the uv-scaling-factor for all
+    # meshs with uv-data.
+    print('Initialize data')
+    initialize3D()
+
+    # connect ca3 with ca3 using an intermediate layer al_ca3. first relationship is topological,
+    # second one is euclidian
+    # use a gauss-function with given variance and shifting parameters to determine the connectivity
+
+    params = [10., 1., -5., 0.00]
+
+    print('Compute Connectivity for ca3 to ca1')
+    c_ca3_ca3, d_ca3_ca3 = computeConnectivityAll([ca3, al_ca3, ca3],                      # layers involved in the connection
+                                                  'CA3_Pyramidal', 'CA3_Pyramidal',       # neuronsets involved
+                                                  1,                                      # synaptic layer
+                                                  [MAP_top, MAP_euclid],                                 # connection mapping
+                                                  [DIS_normalUV, DIS_euclid],                                 # distance calculation
+                                                  connfunc_gauss_post, params)   # kernel function plus parameters
+
+    print('Compute Connectivity for ca3 to ca1')
+    c_ca3_ca1, d_ca3_ca1 = computeConnectivityAll(
+        [ca3, al_ca3, ca1],                      # layers involved in the connection
+        'CA3_Pyramidal', 'CA1_Pyramidal',       # neuronsets involved
+        1,                                      # synaptic layer
+        [MAP_top, MAP_euclid],                                 # connection mapping
+        [DIS_normalUV, DIS_euclid],                                 # distance calculation
+        connfunc_gauss_post, params
+    )   # kernel function plus parameters
+
+    # c_ca3_ca1 = computeConnectivity(ca3, 'CA3_Pyramidal', ca1, 'CA1_Pyramidal', al_ca3, 1, 0, connfunc_gauss, [3.0, 0.3, 2.3, 0.00])
+
+    # the rest is just for visualization
+    pam_vis.visualizeClean()
+
+    particle = 20
+
+    pam_vis.setCursor(ca3.particle_systems['CA3_Pyramidal'].particles[particle].location)
+
+    pam_vis.visualizePostNeurons(ca3, 'CA3_Pyramidal', c_ca3_ca3[particle])
+    pam_vis.visualizePostNeurons(ca1, 'CA1_Pyramidal', c_ca3_ca1[particle])
+
+#    p3, p2, d = computeMapping([ca3, al_ca3],
+#                               [MAP_top],
+#                               [DIS_normalUV],
+#                               ca3.particle_systems['CA3_Pyramidal'].particles[particle].location)
+#    print(p3)
+#    if (p3 != None):
+#        pam_vis.visualizePath(p3)
+
+
+# TODO(SK): missing docstring
+def subiculumtest():
+    ca1 = bpy.data.objects['CA1_sp']
+    al_ca1 = bpy.data.objects['CA1_sp_axons_all']
+    sub = bpy.data.objects['Subiculum']
+
+    print('Initialize data')
+    initialize3D()
+
+    params = [0.5, 3., 0., 0.]
+
+    c_ca1_sub, d_ca1_sub = computeConnectivityAll([ca1, al_ca1, sub],                      # layers involved in the connection
+                                                  'CA1_Pyramidal', 'CA1_Pyramidal',       # neuronsets involved
+                                                  1,                                      # synaptic layer
+                                                  [1, 0],                                 # connection mapping
+                                                  [1, 0],                                 # distance calculation
+                                                  connfunc_gauss, params)   # kernel function plus parameters
+
+    pam_vis.visualizeClean()
+
+    particle = 44
+
+    pam_vis.setCursor(ca1.particle_systems['CA1_Pyramidal'].particles[particle].location)
+
+    pam_vis.visualizePostNeurons(ca1, 'CA1_Pyramidal', c_ca1_sub[particle])
+=======
+>>>>>>> 37b65494332b27a89da6d1f6cac517051e2f60a7

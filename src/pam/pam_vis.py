@@ -3,8 +3,9 @@ import imp
 
 import bpy
 
-from . import config
-from . import pam
+import pam
+import pam.config as config
+
 
 # imp.reload(pam)
 imp.reload(config)
@@ -121,7 +122,11 @@ def visualizeConnectionsForNeuron(no_connection, pre_index):
                                                  distances[0:slayer],
                                                  layers[0].particle_systems[neuronset1].particles[pre_index].location)
 
+    first_item = True
+
     for i in range(0, len(post_indices)):
+        if post_indices[i] == -1:
+            continue
         post_p3d, post_p2d, post_d = pam.computeMapping(layers[:(slayer - 1):-1],
                                                         connections[:(slayer - 1):-1],
                                                         distances[:(slayer - 1):-1],
@@ -135,8 +140,12 @@ def visualizeConnectionsForNeuron(no_connection, pre_index):
                 if distances_pre >= 0:
                     distances_post, post_path = pam.computeDistanceToSynapse(
                         layers[slayer + 1], layers[slayer], post_p3d[-1], synapses[i], distances[slayer])
-                    if distances_post >= 0:
-                        visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1])
+                    if (distances_post >= 0):
+                        if first_item:
+                            visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1])
+                            first_item = False
+                        else:
+                            visualizePath(pre_path + post_path[::-1] + post_p3d[::-1])
                         # visualizePath(pre_p3d)
                         # visualizePath(pre_path)
                         # visualizePath(post_path[::-1])
@@ -180,6 +189,22 @@ def visualizeOneConnection(layers, neuronset1, neuronset2, slayer,
             if distances_post >= 0:
                 visualizePath(pre_p3d + pre_path + post_path + post_p3d[::-1])
 
+
+def visualizeNeuronSpread(connections, neuron):
+    """ Visualizes for a collection of connections, the post-synaptic targets
+    of a given neuron number of the first layer in the first connection and
+    iteratively uses the post-synaptic targets as pre-synaptic neurons for
+    the following connections
+    connections     : list of connection-ids
+    neuron          : neuron number for the pre-synaptic layer of the first
+                      connection
+    """
+    visualizeConnectionsForNeuron(connections[0], neuron)
+    if (len(connections) > 1):
+        post_indices = pam.pam_connection_results[connections[0]]['c'][neuron]
+        for post_index in post_indices:
+            if post_index >= 0:
+                visualizeNeuronSpread(connections[1:], post_index)
 
 def visualizeClean():
     """delete all visualization objects"""

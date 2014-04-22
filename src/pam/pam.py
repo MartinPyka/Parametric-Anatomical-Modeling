@@ -14,6 +14,7 @@ from . import export
 from . import config
 from . import helper
 from . import pam_vis
+import model
 
 imp.reload(helper)
 imp.reload(config)
@@ -21,13 +22,6 @@ imp.reload(config)
 
 DEBUG_LEVEL = 0
 DEFAULT_MAXTRIALS = 50
-
-pam_ng_list = []                # ng = neurongroup
-pam_ng_dict = {}
-pam_connection_counter = 0
-pam_connection_indices = []
-pam_connections = []
-pam_connection_results = []
 
 
 # TODO(SK): missing docstring
@@ -306,11 +300,11 @@ def computeDistance_PreToSynapse(no_connection, pre_index):
     """ computes distance for a pre-synaptic neuron and a certain
     connection definition
     """
-    layers = pam_connections[no_connection][0]
-    neuronset1 = pam_connections[no_connection][1]
-    slayer = pam_connections[no_connection][3]
-    connections = pam_connections[no_connection][4]
-    distances = pam_connections[no_connection][5]
+    layers = model.CONNECTIONS[no_connection][0]
+    neuronset1 = model.CONNECTIONS[no_connection][1]
+    slayer = model.CONNECTIONS[no_connection][3]
+    connections = model.CONNECTIONS[no_connection][4]
+    distances = model.CONNECTIONS[no_connection][5]
 
     point = layers[0].particle_systems[neuronset1].particles[pre_index].location
 
@@ -621,16 +615,16 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
 
 # TODO(SK): missing docstring
 def addConnection(*args):
-    global pam_connections
+    global model.CONNECTIONS
 
-    pam_connections.append(args)
+    model.CONNECTIONS.append(args)
 
     # returns the future index of the connection
-    return (len(pam_connections) - 1)
+    return (len(model.CONNECTIONS) - 1)
 
 # TODO(SK): ??? closing brackets are switched
 
-#    pam_connections.append(
+#    model.CONNECTIONS.append(
 #    {'layers': args[0],
 #     'neuronset1': args[1],
 #     'neuronset2': args[2],
@@ -647,14 +641,14 @@ def addConnection(*args):
 
 # TODO(SK): missing docstring
 def computeAllConnections():
-    global pam_connections
-    global pam_connection_results
+    global model.CONNECTIONS
+    global model.CONNECTION_RESULTS
 
-    for c in pam_connections:
+    for c in model.CONNECTIONS:
         print(c[0][0].name + ' - ' + c[0][-1].name)
 
         result = computeConnectivity(*c)
-        pam_connection_results.append(
+        model.CONNECTION_RESULTS.append(
             {
                 'c': result[0],
                 'd': result[1],
@@ -685,10 +679,10 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
                           of its corresponding position on the synapse layer
     no_synapses         : number of synapses for each pre-synaptic neuron
     """
-    global pam_ng_list
-    global pam_ng_dict
-    global pam_connection_counter
-    global pam_connection_indices
+    global model.NG_LIST
+    global model.NG_DICT
+    global model.CONNECTION_COUNTER
+    global model.CONNECTION_INDICES
 
     # connection matrix
     conn = np.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses)).astype(int)
@@ -769,14 +763,14 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
         for rest in range(j + 1, no_synapses):
             conn[i, j] = -1
 
-    pam_connection_indices.append(
+    model.CONNECTION_INDICES.append(
         [
-            pam_connection_counter,
-            pam_ng_dict[layers[0].name][neuronset1],
-            pam_ng_dict[layers[-1].name][neuronset2]
+            model.CONNECTION_COUNTER,
+            model.NG_DICT[layers[0].name][neuronset1],
+            model.NG_DICT[layers[-1].name][neuronset2]
         ]
     )
-    pam_connection_counter += 1
+    model.CONNECTION_COUNTER += 1
 
     return conn, dist, syn, grid
 
@@ -838,9 +832,9 @@ def computeConnectivityAll(layers, neuronset1, neuronset2, slayer, connections, 
 
 def printConnections():
     """ Print all connection pairs """
-    for i, c in enumerate(pam_connection_indices):
-        print(i, pam_ng_list[c[1]][0] + ' - ' +
-              pam_ng_list[c[2]][0])
+    for i, c in enumerate(model.CONNECTION_INDICES):
+        print(i, model.NG_LIST[c[1]][0] + ' - ' +
+              model.NG_LIST[c[2]][0])
 
 
 def computeDistance(layer1, layer2, neuronset1, neuronset2, commonl, conn_matrix):
@@ -936,17 +930,17 @@ def returnNeuronGroups():
 
 def initialize3D():
     """prepares all necessary steps for the computation of connections"""
-    global pam_ng_list
-    global pam_ng_dict
-    global pam_connection_counter
-    global pam_connection_indices
+    global model.NG_LIST
+    global model.NG_DICT
+    global model.CONNECTION_COUNTER
+    global model.CONNECTION_INDICES
 
     print("Initialize 3D settings")
     print("- Compute UV-scaling factor")
     initializeUVs()             # compute the uv-scaling factor
 
     print(" -Collect all neuron groups")
-    pam_ng_list, pam_ng_dict = returnNeuronGroups()
+    model.NG_LIST, model.NG_DICT = returnNeuronGroups()
 
     Reset()
 
@@ -958,9 +952,9 @@ def Reset():
     """ Resets the most important variables without calculating everything from
     scratch """
 
-    pam_ng_list = []                # ng = neurongroup
-    pam_ng_dict = {}
-    pam_connection_counter = 0
-    pam_connection_indices = []
-    pam_connections = []
-    pam_connection_results = []
+    model.NG_LIST = []                # ng = neurongroup
+    model.NG_DICT = {}
+    model.CONNECTION_COUNTER = 0
+    model.CONNECTION_INDICES = []
+    model.CONNECTIONS = []
+    model.CONNECTION_RESULTS = []

@@ -7,7 +7,7 @@ import zipfile
 
 import bpy
 
-from . import pam
+from .. import model
 
 logger = logging.getLogger(__package__)
 
@@ -22,15 +22,15 @@ def export_connections(filepath):
 
     cmatrices = []
     dmatrices = []
-    for c in pam.pam_connection_results:
+    for c in model.CONNECTION_RESULTS
         cmatrices.append(c['c'])
         dmatrices.append(c['d'])
 
     with zipfile.ZipFile(filepath, 'w', zipfile.ZIP_DEFLATED) as file:
         csv_write_matrices(file, "c", cmatrices)
         csv_write_matrices(file, "d", dmatrices)
-        csv_write_matrix(file, "connections", pam.pam_connection_indices)
-        csv_write_matrix(file, "neurongroups", pam.pam_ng_list)
+        csv_write_matrix(file, "connections", model.CONNECTION_INDICES)
+        csv_write_matrix(file, "neurongroups", model.NG_LIST)
 
 
 def export_UVfactors(filepath, uv_matrices, layer_names):

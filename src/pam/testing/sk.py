@@ -4,8 +4,6 @@ import logging
 
 import bpy
 
-from .. import tools
-
 logger = logging.getLogger(__package__)
 
 
@@ -40,5 +38,5 @@ class PAMTestPanel(bpy.types.Panel):
         layout = self.layout
         col = layout.column()
         col.operator(
-            "pam.test_operator",
+            "pam.visualize_cursor",
         )

@@ -6,6 +6,7 @@ import math
 import bpy
 
 from . import colorscheme
+from .. import kernel
 
 logger = logging.getLogger(__package__)
 
@@ -15,16 +16,40 @@ VIEW_LIST = [
     ("MAPPED", "Mapped", "", 2)
 ]
 
+MODE_LIST = [
+    ("CURSOR", "Cursor", "", 1),
+    ("COORDINATES", "Coordinates", "", 2)
+]
+
 KERNEL_LIST = [
     ("GAUSSIAN", "Gaussian", "", 1),
     ("UNI", "Uni", "", 2)
 ]
 
 
-def gaussian_kernel(x, y, origin_x, origin_y, var_x, var_y):
-    """Computes distribution value in two dimensional gaussian kernel"""
-    return math.exp(-((x - origin_x) ** 2 / (2 * var_x ** 2) +
-                      (y - origin_y) ** 2 / (2 * var_y ** 2)))
+# TODO(SK): rephrase descriptions
+# TODO(SK): missing docstring
+class PAMVisualizeKernelAtCursor(bpy.types.Operator):
+    bl_idname = "pam.visualize_cursor"
+    bl_label = "Generate kernel image at cursor position"
+    bl_description = "Generate kernel image"
+
+    @classmethod
+    def poll(cls, context):
+        active_obj = context.active_object
+        return active_obj.type == "MESH"
+
+    def execute(self, context):
+        active_obj = context.active_object
+        cursor_location = context.scene.cursor_location.copy()
+
+        cursor_on_mesh = active_obj.closest_point_on_mesh(cursor_location)
+
+
+
+        logger.debug("%s", cursor_on_mesh)
+
+        return {'FINISHED'}
 
 
 # TODO(SK): missing docstring
@@ -49,18 +74,11 @@ class PAMVisualizeKernelGenerateImage(bpy.types.Operator):
     def execute(self, context):
         pam_visualize = context.scene.pam_visualize
 
-        if "pam.temp_texture" in context.blend_data.textures:
-            temp_texture = context.blend_data.textures["pam.temp_texture"]
-            context.blend_data.textures.remove(temp_texture)
+        temp_texture = uv_visualize_texture(context)
 
-        if "pam.temp_image" in context.blend_data.images:
-            temp_image = context.blend_data.images["pam.temp_image"]
-            context.blend_data.images.remove(temp_image)
+        if temp_texture.image is not None:
+            current_image = temp_texture.image
 
-        temp_texture = context.blend_data.textures.new(
-            name="pam.temp_texture",
-            type="IMAGE"
-        )
 
         temp_image = context.blend_data.images.new(
             name="pam.temp_image",
@@ -76,7 +94,7 @@ class PAMVisualizeKernelGenerateImage(bpy.types.Operator):
         for custom in pam_visualize.customs:
             args.append(custom.value)
 
-        kernel_image(temp_image, gaussian_kernel, u, v, *args)
+        kernel_image(temp_image, kernel.gauss_2d.gauss_viz, u, v, *args)
 
         context.blend_data.textures["pam.temp_texture"].image = temp_image
 
@@ -144,7 +162,7 @@ class PamVisualizeKernelRemoveCustomParam(bpy.types.Operator):
 
 
 # TODO(SK): missing docstring
-def toggle_mode(self, context):
+def toggle_view_mode(self, context):
     textured_solid = False
     if self.view_mode == "MAPPED":
         textured_solid = True
@@ -170,7 +188,12 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
         name="View mode",
         default="NORMAL",
         items=VIEW_LIST,
-        update=toggle_mode
+        update=toggle_view_mode
+    )
+    operator_mode = bpy.props.EnumProperty(
+        name="Operator mode",
+        default="CURSOR",
+        items=MODE_LIST
     )
     kernel = bpy.props.EnumProperty(
         name="Kernel function",
@@ -224,6 +247,20 @@ def kernel_image(image, func, u, v, *args):
             color = colorscheme.schemes["classic"][color_index]
 
             image.pixels[pixel_index:pixel_index + 3] = map(lambda x: x / 255.0, color)
+
+
+# TODO(SK): missing docstring
+def uv_visualize_texture(context):
+    if "pam.temp_texture" in context.blend_data.textures:
+        temp_texture = context.blend_data.textures["pam.temp_texture"]
+
+    else:
+        temp_texture = context.blend_data.textures.new(
+            name="pam.temp_texture",
+            type="IMAGE"
+        )
+
+    return temp_texture
 
 
 # TODO(SK): missing docstring

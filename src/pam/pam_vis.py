@@ -140,7 +140,7 @@ def visualizeConnectionsForNeuron(no_connection, pre_index):
                             visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1])
                             first_item = False
                         else:
-                            visualizePath(pre_path + post_path[::-1] + post_p3d[::-1])
+                            visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1])
                         # visualizePath(pre_p3d)
                         # visualizePath(pre_path)
                         # visualizePath(post_path[::-1])

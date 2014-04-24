@@ -45,8 +45,6 @@ class PAMVisualizeKernelAtCursor(bpy.types.Operator):
 
         cursor_on_mesh = active_obj.closest_point_on_mesh(cursor_location)
 
-
-
         logger.debug("%s", cursor_on_mesh)
 
         return {'FINISHED'}
@@ -78,7 +76,6 @@ class PAMVisualizeKernelGenerateImage(bpy.types.Operator):
 
         if temp_texture.image is not None:
             current_image = temp_texture.image
-
 
         temp_image = context.blend_data.images.new(
             name="pam.temp_image",

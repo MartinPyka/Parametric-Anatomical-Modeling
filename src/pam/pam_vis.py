@@ -201,6 +201,7 @@ def visualizeNeuronSpread(connections, neuron):
             if post_index >= 0:
                 visualizeNeuronSpread(connections[1:], post_index)
 
+
 def visualizeClean():
     """delete all visualization objects"""
 

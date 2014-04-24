@@ -38,5 +38,5 @@ class PAMTestPanel(bpy.types.Panel):
         layout = self.layout
         col = layout.column()
         col.operator(
-            "pam.visualize_cursor",
+            "pam.visualize_cursor"
         )

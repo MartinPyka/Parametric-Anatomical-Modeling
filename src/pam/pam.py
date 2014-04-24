@@ -1,8 +1,6 @@
 # TODO(SK): missing module docstring
 
-import code
 import copy
-import imp
 import math
 import random
 
@@ -12,13 +10,8 @@ import numpy as np
 
 from . import config
 from . import helper
-from . import pam_vis
-from . import export
 from . import model
 
-imp.reload(helper)
-imp.reload(config)
-# imp.reload(pam_vis)
 
 DEBUG_LEVEL = 0
 DEFAULT_MAXTRIALS = 50
@@ -35,6 +28,7 @@ DIS_jumpUV = 2
 DIS_UVjump = 3
 DIS_normalUV = 4
 DIS_UVnormal = 5
+
 
 # TODO(SK): missing docstring
 def computePoint(v1, v2, v3, v4, x1, x2):
@@ -765,10 +759,6 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
             continue
 
         grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
-
-#    namespace = globals().copy()
-#    namespace.update(locals())
-#    code.interact(local=namespace)
 
     print("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)

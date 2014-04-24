@@ -1,16 +1,10 @@
-import code
-import imp
+# TODO(SK): module docstring missing
 
 import bpy
 
-import pam.pam as pam
-import pam.config as config
-import pam.model as model
+from . import pam
+from . import model
 
-# imp.reload(pam)
-imp.reload(config)
-imp.reload(pam)
-imp.reload(model)
 
 vis_objects = 0
 

@@ -13,6 +13,12 @@ from . import config
 from . import helper
 from . import model
 
+import imp
+
+imp.reload(config)
+imp.reload(helper)
+imp.reload(model)
+
 logger = logging.getLogger(__package__)
 
 
@@ -359,7 +365,7 @@ def sortNeuronsToUV(layer, neuronset, UorV):
     p2d = [map3dPointToUV(layer, layer, p)[index] for p in p3d]
 
     # return permutation of a sorted list (ascending)
-    return numpy.argsort(p2d)
+    return np.argsort(p2d)
 
 
 def computeMapping(layers, connections, distances, point):
@@ -619,7 +625,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
     """
     s_3d = mapUVPointTo3d(slayer, [s_2d])
     if s_3d[0] == []:
-        logger.debug("Need to exclude one connection")
+        logger.info("Need to exclude one connection")
         return -1, -1
 
     if dis == DIS_euclid:
@@ -638,7 +644,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
         return computePathLength(path), path
 
     elif dis == DIS_UVjump:
-        i_3d = ilayer.closest_point_on_mesh(s_3d[0])
+        i_3d = ilayer.closest_point_on_mesh(s_3d[0])[0]
         path = [p_3d]
         path = path + interpolateUVTrackIn3D(p_3d, i_3d, ilayer)
         path.append(i_3d)
@@ -690,7 +696,7 @@ def addConnection(*args):
 # TODO(SK): missing docstring
 def computeAllConnections():
     for c in model.CONNECTIONS:
-        logger.debug(c[0][0].name + ' - ' + c[0][-1].name)
+        logger.info(c[0][0].name + ' - ' + c[0][-1].name)
 
         result = computeConnectivity(*c)
         model.CONNECTION_RESULTS.append(
@@ -700,7 +706,7 @@ def computeAllConnections():
                 's': result[2]
             }
         )
-        logger.debug(" ")
+        logger.info(" ")
 
 
 # TODO(SK): missing docstring
@@ -733,13 +739,13 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
     syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
 
-    grid = helper.UVGrid(layers[slayer])
+    grid = helper.UVGrid(layers[slayer], 0.02)
 
     # rescale arg-parameters
     args_pre = [i / layers[slayer]['uv_scaling'] for i in args_pre]
     args_post = [i / layers[slayer]['uv_scaling'] for i in args_post]
 
-    logger.debug("Prepare Grid")
+    logger.info("Prepare Grid")
 
     grid.pre_kernel = func_pre
     grid.pre_kernel_args = args_pre
@@ -749,7 +755,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
     grid.post_kernel_args = args_post
     grid.compute_postMask()
 
-    logger.debug("Compute Post-Mapping")
+    logger.info("Compute Post-Mapping")
 
     # fill grid with post-neuron-links
     for i in range(0, len(layers[-1].particle_systems[neuronset2].particles)):
@@ -762,7 +768,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
 
         grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
 
-    logger.debug("Compute Pre-Mapping")
+    logger.info("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)
     for i in range(0, num_particles):
         pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer + 1)],
@@ -770,7 +776,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
                                                  distances[0:slayer],
                                                  layers[0].particle_systems[neuronset1].particles[i].location)
 
-        logger.debug(str(round((i / num_particles) * 10000) / 100) + '%')
+        logger.info(str(round((i / num_particles) * 10000) / 100) + '%')
 
         if pre_p3d is None:
             for j in range(0, len(conn[i])):
@@ -872,7 +878,7 @@ def computeConnectivityAll(layers, neuronset1, neuronset2, slayer, connections, 
 def printConnections():
     """ Print all connection pairs """
     for i, c in enumerate(model.CONNECTION_INDICES):
-        logger.debug(i, model.NG_LIST[c[1]][0] + ' - ' +
+        logger.info(str(i) + ': ' + model.NG_LIST[c[1]][0] + ' - ' +
                      model.NG_LIST[c[2]][0])
 
 
@@ -970,18 +976,18 @@ def returnNeuronGroups():
 
 def initialize3D():
     """prepares all necessary steps for the computation of connections"""
-    logger.debug("Initialize 3D settings")
+    logger.info("Initialize 3D settings")
     Reset()
 
-    logger.debug("- Compute UV-scaling factor")
+    logger.info("- Compute UV-scaling factor")
 
     initializeUVs()             # compute the uv-scaling factor
 
-    logger.debug(" -Collect all neuron groups")
+    logger.info(" -Collect all neuron groups")
     model.NG_LIST, model.NG_DICT = returnNeuronGroups()
 
-    logger.debug("End of Initialization")
-    logger.debug("============================")
+    logger.info("End of Initialization")
+    logger.info("============================")
 
 
 def Reset():

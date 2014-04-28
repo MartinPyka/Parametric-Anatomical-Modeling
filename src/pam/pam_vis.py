@@ -1,6 +1,7 @@
 # TODO(SK): module docstring missing
 
 import bpy
+import numpy
 
 from . import pam
 from . import model
@@ -140,7 +141,7 @@ def visualizeConnectionsForNeuron(no_connection, pre_index):
                             visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1])
                             first_item = False
                         else:
-                            visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1])
+                            visualizePath([pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1])
                         # visualizePath(pre_p3d)
                         # visualizePath(pre_path)
                         # visualizePath(post_path[::-1])
@@ -196,10 +197,24 @@ def visualizeNeuronSpread(connections, neuron):
     """
     visualizeConnectionsForNeuron(connections[0], neuron)
     if (len(connections) > 1):
-        post_indices = pam.pam_connection_results[connections[0]]['c'][neuron]
-        for post_index in post_indices:
+        post_indices = model.CONNECTION_RESULTS[connections[0]]['c'][neuron]
+        for post_index in post_indices[0:1]:
             if post_index >= 0:
                 visualizeNeuronSpread(connections[1:], post_index)
+
+def visualizeUnconnectedNeurons(no_connection):
+    """ Visualizes unconnected neurons for a given connection_index """
+    c = numpy.array(model.CONNECTION_RESULTS[no_connection]['c'])
+    sums = numpy.array([sum(row) for row in c])
+    indices = numpy.where(sums == -5)[0]
+
+    print(indices)
+
+    layer = model.CONNECTIONS[no_connection][0][0]
+    
+    for index in indices:
+        visualizePoint(layer.particle_systems[0].particles[index].location)
+        
 
 
 def visualizeClean():

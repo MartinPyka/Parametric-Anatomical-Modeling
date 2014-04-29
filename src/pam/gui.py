@@ -158,9 +158,6 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         # row.template_preview(context.blend_data.textures.get("pam.temp_texture"))
 
         row = layout.row(align=True)
-        op = row.operator("pam.generate_image", text="Generate")
-
-        row = layout.row(align=True)
         op = row.operator("pam.visualize_kernel", text="Apply")
         op = row.operator("pam.visualize_kernel_reset", text="Reset")
 

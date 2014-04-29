@@ -26,9 +26,9 @@ def initialize():
     """Registering log handlers"""
 
     formatter = logging.Formatter(
-        fmt="%(asctime)s [%(levelname)-8s] - "
-        "%(message)s (%(filename)s:%(funcName)s:%(lineno)s)",
-        datefmt="%Y-%m-%d, %H:%M:%S"
+        fmt="%(asctime)s %(levelname)-8s  %(message)s  "
+        "[%(filename)s:%(lineno)s]",
+        datefmt="%Y-%m-%d %H:%M:%S"
     )
 
     # Setting up loghandlers for stdout and file logging

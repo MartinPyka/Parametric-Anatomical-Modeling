@@ -20,7 +20,7 @@ def gauss(uv, guv, *args):
                     (ruv[1] + sv) ** 2 / (2 * vv ** 2)))
 
 
-def gauss_viz(x, y, origin_x, origin_y, var_x, var_y):
+def gauss_vis(x, y, origin_x, origin_y, var_x, var_y):
     """Computes distribution value in two dimensional gaussian kernel"""
     return math.exp(-((x - origin_x) ** 2 / (2 * var_x ** 2) +
                       (y - origin_y) ** 2 / (2 * var_y ** 2)))

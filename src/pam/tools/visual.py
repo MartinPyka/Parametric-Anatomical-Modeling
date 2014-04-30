@@ -112,8 +112,7 @@ class PAMVisualizeKernelAtCursor(bpy.types.Operator):
             alpha=True
         )
 
-        args = [item.value/uv_scaling_factor for item in pam_visualize.customs]
-
+        args = [item.value / uv_scaling_factor for item in pam_visualize.customs]
 
         u, v = pam.map3dPointToUV(active_obj, active_obj, cursor_location, None)
 
@@ -218,7 +217,7 @@ def kernel_image(image, func, u, v, *args):
     for x in range(width):
         for y in range(height):
             x_in_uv = x * x_resolution
-            y_in_uv = (height - y) * y_resolution
+            y_in_uv = x * y_resolution
 
             value = func(x_in_uv, y_in_uv, u, v, *args)
 

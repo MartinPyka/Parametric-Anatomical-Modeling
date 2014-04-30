@@ -112,15 +112,16 @@ class PAMVisualizeKernelAtCursor(bpy.types.Operator):
             alpha=True
         )
 
-        args = [item.value for item in pam_visualize.customs]
+        args = [item.value/uv_scaling_factor for item in pam_visualize.customs]
+
 
         u, v = pam.map3dPointToUV(active_obj, active_obj, cursor_location, None)
 
         logger.debug("u: %s v: %s", u, v)
 
-        # u *= uv_scaling_factor
-        # v *= uv_scaling_factor
-        # logger.debug("u: %s v: %s", u, v)
+        #u /= uv_scaling_factor
+        #v /= uv_scaling_factor
+        #logger.info("u: %s v: %s", u, v)
 
         kernel_image(
             temp_image,

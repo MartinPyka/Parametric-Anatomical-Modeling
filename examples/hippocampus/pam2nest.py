@@ -118,7 +118,6 @@ def import_UVfactors(filepath):
         for filename in file.namelist():
             filename_split = os.path.splitext(filename)  
             filename_extension = filename_split[-1]
-            
             data = io.StringIO(unicode(file.read(filename)))
             func = SUPPORTED_FILETYPES[filename_extension]
             matrix = func(data)

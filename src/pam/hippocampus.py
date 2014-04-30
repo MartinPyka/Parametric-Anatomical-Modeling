@@ -1,14 +1,22 @@
 import bpy
 import sys
 
-from pam import pam
-from pam import model
-from pam import pam_vis
-from pam.export import to_csv as export
-from pam.kernel import gauss_2d as kernel
+import pam
+import model
+import pam_vis
+import export
+import gauss_2d as kernel
 
 import code
 import profile
+
+import imp
+
+imp.reload(pam)
+imp.reload(pam_vis)
+imp.reload(model)
+imp.reload(export)
+imp.reload(kernel)
 
 
 EXPORT_PATH = '/home/martin/Dropbox/Work/Hippocampus3D/PAM/results/'
@@ -83,7 +91,7 @@ n_ec = 110000
 s_dg_ca3 = 15
 s_ca3_ca3 = 60 # 6000
 s_ca3_ca1 = 85 # 8580
-s_ca1_sub = 15
+s_ca1_sub = 15 
 s_ec21_dg = 38 # 38400
 s_sub_ec5 = int((n_ec * s_ec21_dg) / n_sub)
 s_ca1_ec5 = int((n_ec * s_ec21_dg) / n_ca1)
@@ -121,7 +129,7 @@ uv_data, layer_names = pam.measureUVs([al_dg, al_ca3])
 #exporter.export_UVfactors(EXPORT_PATH + 'UVscaling.zip', uv_data, layer_names)
 
 
-if False:
+if True:
     id_ec21_dg = pam.addConnection(
         [ec2, ec2_1_i1, ec2_1_i2, ec2_1_i3, ec2_1_i4, ec2_1_synapses, dg],
         ec2_neurons, dg_neurons,
@@ -135,7 +143,7 @@ if False:
         s_ec21_dg
         )
 
-if False:
+if True:
     id_ec22_dg = pam.addConnection(
         [ec2, ec2_2_i1, ec2_2_i2, ec2_2_i3, ec2_2_synapses, dg],
         ec2_neurons, dg_neurons,
@@ -147,9 +155,9 @@ if False:
         kernel.gauss,
         dg_params_dendrites,
         s_ec21_dg
-        )
+        )        
 
-if False:
+if True:
     id_ec23_dg = pam.addConnection(
         [ec2, ec2_3_i1, ec2_3_i2, ec2_3_i3, ec2_3_synapses, dg],
         ec2_neurons, dg_neurons,
@@ -162,46 +170,46 @@ if False:
         dg_params_dendrites,
         s_ec21_dg
         )
+        
+#if True:
+#    id_sub_ec5 = pam.addConnection(
+#        [sub, sub_i1, sub_i2, sub_i3, ec5],
+#        sub_neurons, ec5_neurons,
+#        3,
+#        [pam.MAP_normal, pam.MAP_top, pam.MAP_top, pam.MAP_euclid],
+#        [pam.DIS_euclid, pam.DIS_UVnormal, pam.DIS_normalUV, pam.MAP_euclid],
+#        kernel.gauss,
+#        sub_params,
+#        kernel.gauss,
+#        ec5_params_dendrites,
+#        s_sub_ec5
+#        )
 
-if False:
-    id_sub_ec5 = pam.addConnection(
-        [sub, sub_i1, sub_i2, sub_i3, ec5],
-        sub_neurons, ec5_neurons,
-        3,
-        [pam.MAP_normal, pam.MAP_top, pam.MAP_top, pam.MAP_euclid],
-        [pam.DIS_euclid, pam.DIS_UVnormal, pam.DIS_normalUV, pam.MAP_euclid],
-        kernel.gauss,
-        sub_params,
-        kernel.gauss,
-        ec5_params_dendrites,
-        s_sub_ec5
-        )
-
-if False:
+if True:
     id_dg_ca3 = pam.addConnection([dg, al_dg, ca3],                      # layers involved in the connection
        dg_neurons, ca3_neurons,       # neuronsets involved
        1,                                      # synaptic layer
        [pam.MAP_euclid, pam.MAP_euclid],                                 # connection mapping
        [pam.DIS_euclidUV, pam.DIS_euclid],                                 # distance calculation
        kernel.gauss,
-       dg_params,
-       kernel.gauss,
+       dg_params, 
+       kernel.gauss, 
        ca3_params_dendrites,   # kernel function plus parameters
        int(s_dg_ca3))                      # number of synapses for each  pre-synaptic neuron
 
-if False:
+if True:
     id_ca3_ca3 = pam.addConnection([ca3, al_ca3, ca3],                      # layers involved in the connection
        ca3_neurons, ca3_neurons,       # neuronsets involved
        1,                                      # synaptic layer
        [pam.MAP_normal, pam.MAP_normal],                                 # connection mapping
        [pam.DIS_normalUV, pam.DIS_normalUV],                                 # distance calculation
        kernel.gauss,
-       ca3_params,
+       ca3_params, 
        kernel.gauss,
        ca3_params_dendrites,   # kernel function plus parameters
        int(s_ca3_ca3))                      # number of synapses for each  pre-synaptic neuron
 
-if False:
+if True:
     id_ca3_ca1 = pam.addConnection(
         [ca3, al_ca3, ca1],
         ca3_neurons,
@@ -229,8 +237,8 @@ if True:
         sub_params_dendrites,
         s_ca1_sub
         )
-
-if False:
+        
+if True:
     id_ca1_ec5 = pam.addConnection(
         [ca1, ca1_i1, ca1_i2, ca1_i3, ca1_synapses, ec5],
         ca1_neurons, ec5_neurons,
@@ -244,7 +252,7 @@ if False:
         s_ca1_ec5
         )
 
-if False:
+if True:
     id_sub_ec5 = pam.addConnection(
         [sub, sub_i1, sub_i2, sub_i3, sub_i4, ec5],
         sub_neurons, ec5_neurons,
@@ -256,9 +264,9 @@ if False:
         kernel.gauss,
         ec5_params_dendrites,
         s_sub_ec5
-        )
+        )        
 
-
+    
 #    pam.addConnection(
 #        layers=[ca3, al_ca3, ca1],
 #        neuronset1=ca3_neurons,
@@ -276,13 +284,13 @@ if False:
 pam.computeAllConnections()
 #profile.run("pam.computeAllConnections()")
 pam.printConnections()
-
+                                               
 #print(pam.pam_connection_counter)
 #print(pam.pam_connections)
 #print(pam.pam_ng_list)
 
-
-print("Visualization")
+   
+print("Visualization")    
 
 particle = 22
 
@@ -293,12 +301,12 @@ particle = 22
 #namespace = globals().copy()
 #namespace.update(locals())
 #code.interact(local=namespace)
+    
 
-
-export.export_connections(EXPORT_PATH + 'test.zip')
+export.export_connections(EXPORT_PATH + 'hippocampus_full.zip')
 
 for j in range(0, model.CONNECTION_COUNTER):
     print(j)
-    for i in range(0,3):
+    for i in range(0,2):
         print(i)
         pam_vis.visualizeConnectionsForNeuron(j, i)

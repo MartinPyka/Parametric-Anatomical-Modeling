@@ -95,8 +95,9 @@ class PAMMeasureToolsPanel(bpy.types.Panel):
         row = layout.row()
         col = row.column()
         op = col.operator("pam.measure_layer", "Calculate")
-        col.label("Total neurons:")
-        col.label("%d" % context.scene.pam_measure.neurons)
+        col.label("Total neurons: %d" % context.scene.pam_measure.neurons)
+        col.label("Total area: %d" % context.scene.pam_measure.total_area)
+
 
 
 class PAMVisualizeKernelToolsPanel(bpy.types.Panel):

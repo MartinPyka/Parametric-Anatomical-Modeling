@@ -44,6 +44,7 @@ class PAMMeasureLayer(bpy.types.Operator):
         )
 
         context.scene.pam_measure.neurons = neurons
+        context.scene.pam_measure.total_area = surface
 
         return {'FINISHED'}
 
@@ -84,6 +85,12 @@ class MeasureProperties(bpy.types.PropertyGroup):
         default=0,
         subtype="UNSIGNED"
     )
+    total_area = bpy.props.FloatProperty(
+        name="Total area",
+        default=1.0,
+        min=0.0,
+        unit="AREA"
+    )    
 
 
 # TODO(SK): missing docstring

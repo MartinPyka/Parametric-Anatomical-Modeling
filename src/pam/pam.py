@@ -107,6 +107,7 @@ def map3dPointToUV(object, object_uv, point, normal=None):
         if f == -1:
             return None
 
+    print(object.data.polygons[f].vertices)
     # get the uv-coordinate of the first triangle of the polygon
     A = object.data.vertices[object.data.polygons[f].vertices[0]].co
     B = object.data.vertices[object.data.polygons[f].vertices[1]].co

@@ -1,6 +1,7 @@
 """Log Module"""
 
 import logging
+import os
 
 import bpy
 
@@ -12,7 +13,20 @@ def filepath():
     """Returns root log filepath"""
 
     prefs = bpy.context.user_preferences.addons[ROOT_MODULE].preferences
-    return "%s/%s" % (prefs.log_directory, prefs.log_filename)
+    return prefs.log_directory
+
+
+def filename():
+    """Returns log filename"""
+
+    prefs = bpy.context.user_preferences.addons[ROOT_MODULE].preferences
+    return prefs.log_filename
+
+
+def fullpath():
+    """Returns complete path to logfile"""
+
+    return "%s/%s" % (filepath(), filename())
 
 
 def level():
@@ -25,6 +39,15 @@ def level():
 def initialize():
     """Registering log handlers"""
 
+    if not os.path.exists(filepath()):
+        default_location = bpy.utils.user_resource(
+            "DATAFILES",
+            path=ROOT_MODULE,
+            create=True
+        )
+        prefs = bpy.context.user_preferences.addons[ROOT_MODULE].preferences
+        prefs.log_directory = default_location
+
     formatter = logging.Formatter(
         fmt="%(asctime)s %(levelname)-8s  %(message)s  "
         "[%(filename)s:%(lineno)s]",
@@ -34,7 +57,7 @@ def initialize():
     # Setting up loghandlers for stdout and file logging
     streamhandler = logging.StreamHandler()
     filehandler = logging.FileHandler(
-        filename=filepath(),
+        filename=(fullpath()),
         mode="a",
         encoding="utf-8"
     )

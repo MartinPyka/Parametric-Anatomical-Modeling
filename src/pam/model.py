@@ -82,14 +82,15 @@ class ModelSnapshot(object):
         self.CONNECTION_RESULTS = convertVector2Array(CONNECTION_RESULTS)
 
 
-# TODO(SK): missing docstring
-def save_snapshot(path):
+def save(path):
+    """ saves the current model using pickle in the given path """
     snapshot = ModelSnapshot()
     pickle.dump(snapshot, open(path, "wb"))
 
 
 # TODO(SK): missing docstring
-def load_snapshot(path):
+def load(path):
+    """ loads the model with pickle from the given path """
     global NG_LIST
     global NG_DICT
     global CONNECTION_COUNTER

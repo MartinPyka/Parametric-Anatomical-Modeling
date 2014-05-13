@@ -10,7 +10,7 @@ logger = logging.getLogger(__package__)
 
 
 class PAMPreferencesPane(bpy.types.AddonPreferences):
-    """Preferences pane displying all addon-wide properties.
+    """Preferences pane displaying all addon-wide properties.
 
     Located in
     `File > User Preferences > Addons > Object: PAM"
@@ -66,8 +66,10 @@ class PAMToolsPanel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        col = layout.column()
-
+        row = layout.column()
+        #col = row.column()
+        row.operator("pam_vis.visualize_connections_for_neuron", "Visualize Connections")
+        row.operator("pam_vis.visualize_clean", "Clean Visualizations")
 
 class PAMMeasureToolsPanel(bpy.types.Panel):
     """A tools panel inheriting all measurment operations"""

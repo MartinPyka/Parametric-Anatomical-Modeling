@@ -8,6 +8,8 @@ import bpy
 from . import colorscheme
 from .. import kernel
 from .. import pam
+from .. import pam_vis
+from .. import model
 
 logger = logging.getLogger(__package__)
 
@@ -205,6 +207,43 @@ class PamVisualizeKernelRemoveCustomParam(bpy.types.Operator):
         active_index = context.scene.pam_visualize.active_index
         context.scene.pam_visualize.customs.remove(active_index)
 
+        return {'FINISHED'}
+    
+    
+class PamVisualizeClean(bpy.types.Operator):  
+    bl_idname = "pam_vis.visualize_clean"
+    bl_label = "Clean Visualizations"
+    bl_description = "Removes all visualizations"
+    bl_options = {'UNDO'}    
+    
+    def execute(self, context):
+        pam_vis.visualizeClean()
+        
+        return {'FINISHED'}  
+
+class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
+    bl_idname = "pam_vis.visualize_connections_for_neuron"
+    bl_label = "Visualize Connections"
+    bl_description = "Visualizes all outgoing connections"
+    bl_options = {'UNDO'}
+    
+    def execute(self, context):
+        # EXPORT_PATH = '/home/martin/ownCloud/work/Projekte/hippocampal_model/results/'
+        # model.load(EXPORT_PATH + 'hippocampus_rat.pam')
+        
+        object = context.active_object
+        cursor = context.scene.cursor_location
+        
+        ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
+        p_index = pam.map3dPointToParticle(object, 0, cursor)
+        
+        for ci in model.CONNECTION_INDICES:
+            # if ng_index is the pre-synaptic layer in a certain mapping 
+            if ci[1] == ng_index:
+                # visualize the connections
+                pam_vis.visualizeConnectionsForNeuron(ci[0], p_index)
+
+        
         return {'FINISHED'}
 
 

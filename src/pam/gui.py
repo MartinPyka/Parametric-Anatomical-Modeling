@@ -67,9 +67,12 @@ class PAMToolsPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         row = layout.column()
-        #col = row.column()
-        row.operator("pam_vis.visualize_connections_for_neuron", "Visualize Connections")
+        row.operator(
+            "pam_vis.visualize_connections_for_neuron",
+            "Visualize Connections"
+        )
         row.operator("pam_vis.visualize_clean", "Clean Visualizations")
+
 
 class PAMMeasureToolsPanel(bpy.types.Panel):
     """A tools panel inheriting all measurment operations"""
@@ -99,7 +102,6 @@ class PAMMeasureToolsPanel(bpy.types.Panel):
         op = col.operator("pam.measure_layer", "Calculate")
         col.label("Total neurons: %d" % context.scene.pam_measure.neurons)
         col.label("Total area: %d" % context.scene.pam_measure.total_area)
-
 
 
 class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
@@ -163,6 +165,23 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         row = layout.row(align=True)
         op = row.operator("pam.visualize_kernel", text="Apply")
         op = row.operator("pam.visualize_kernel_reset", text="Reset")
+
+
+class PAMModelDataPanel(bpy.types.Panel):
+    """A panel for loading and saving model data"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "Model data"
+    bl_category = "PAM"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row(align=True)
+        row.operator("pam.model_load", text="Load")
+        row.operator("pam.model_save", text="Save")
 
 
 # TODO(SK): missing docstring

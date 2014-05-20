@@ -3,8 +3,10 @@
 import pickle
 import copy
 import numpy
-from mathutils import Vector
+
 import bpy
+import bpy_extras
+from mathutils import Vector
 
 NG_LIST = []
 NG_DICT = {}
@@ -15,14 +17,16 @@ CONNECTION_RESULTS = []
 
 
 def convertObject2String(connection):
-    """ Takes a CONNECTION-struct and converts bpy.objects to 
-    string names and returns a list of stirngs """
+    """Takes a CONNECTION-struct and converts bpy.objects to
+    string names and returns a list of strings"""
     return [o.name for o in connection[0]]
 
+
 def convertString2Object(connection):
-    """ Takes a CONNECTION-struct and converts string names to 
-    bpy.objects and returns a list of bpy.objects """
+    """Takes a CONNECTION-struct and converts string names to
+    bpy.objects and returns a list of bpy.objects"""
     return [bpy.data.objects[name] for name in connection[0]]
+
 
 def Connection2Pickle(connections):
     result = []
@@ -31,6 +35,7 @@ def Connection2Pickle(connections):
         new_c = new_c + list(c[1:])
         result.append(new_c)
     return result
+
 
 def Pickle2Connection(connections):
     result = []
@@ -49,8 +54,9 @@ def convertVector2Array(connection_results):
         temp = []
         for r in c['s']:
             temp.append(numpy.array(r))
-        result.append({'c':c['c'], 'd':c['d'], 's':temp})
+        result.append({'c': c['c'], 'd': c['d'], 's': temp})
     return result
+
 
 def convertArray2Vector(connection_results):
     """ Takes a CONNECTION_RESULTS-struct and converts numpy.arrays
@@ -61,9 +67,9 @@ def convertArray2Vector(connection_results):
         for r in c['s']:
             if r.size > 0:
                 temp.append([Vector(v) for v in r])
-        result.append({'c':c['c'], 'd':c['d'], 's':temp})
+        result.append({'c': c['c'], 'd': c['d'], 's': temp})
     return result
-    
+
 
 # TODO(SK): missing docstring
 class ModelSnapshot(object):
@@ -103,6 +109,34 @@ def load(path):
     NG_DICT = snapshot.NG_DICT
     CONNECTION_COUNTER = snapshot.CONNECTION_COUNTER
     CONNECTION_INDICES = snapshot.CONNECTION_INDICES
-    CONNECTIONS  =  Pickle2Connection(snapshot.CONNECTIONS)
+    CONNECTIONS = Pickle2Connection(snapshot.CONNECTIONS)
     CONNECTION_RESULTS = convertArray2Vector(snapshot.CONNECTION_RESULTS)
     return snapshot
+
+
+class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
+    """Model Load Operator"""
+
+    bl_idname = "pam.model_load"
+    bl_label = "Load model data"
+    bl_description = "Load model data"
+
+    def execute(self, context):
+        save(self.filepath)
+        return {'FINISHED'}
+
+
+class PAMModelSave(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
+    """Model Save Operator"""
+
+    bl_idname = "pam.model_save"
+    bl_label = "Save model data"
+    bl_description = "Save model data"
+
+    @classmethod
+    def poll(cls, context):
+        return any(CONNECTIONS)
+
+    def execute(self, context):
+        load(self.filepath)
+        return {'FINISHED'}

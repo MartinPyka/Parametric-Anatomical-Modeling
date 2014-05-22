@@ -135,7 +135,7 @@ class PAMModelSave(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     bl_label = "Save model data"
     bl_description = "Save model data"
 
-    filename_ext = "*.pam"
+    filename_ext = ".pam"
 
     @classmethod
     def poll(cls, context):

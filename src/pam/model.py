@@ -97,20 +97,7 @@ def save(path):
 # TODO(SK): missing docstring
 def load(path):
     """ loads the model with pickle from the given path """
-    global NG_LIST
-    global NG_DICT
-    global CONNECTION_COUNTER
-    global CONNECTION_INDICES
-    global CONNECTIONS
-    global CONNECTION_RESULTS
-
     snapshot = pickle.load(open(path, "rb"))
-    NG_LIST = snapshot.NG_LIST
-    NG_DICT = snapshot.NG_DICT
-    CONNECTION_COUNTER = snapshot.CONNECTION_COUNTER
-    CONNECTION_INDICES = snapshot.CONNECTION_INDICES
-    CONNECTIONS = Pickle2Connection(snapshot.CONNECTIONS)
-    CONNECTION_RESULTS = convertArray2Vector(snapshot.CONNECTION_RESULTS)
     return snapshot
 
 
@@ -122,21 +109,39 @@ class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     bl_description = "Load model data"
 
     def execute(self, context):
-        save(self.filepath)
+        snapshot = load(self.filepath)
+
+        global NG_LIST
+        global NG_DICT
+        global CONNECTION_COUNTER
+        global CONNECTION_INDICES
+        global CONNECTIONS
+        global CONNECTION_RESULTS
+
+        NG_LIST = snapshot.NG_LIST
+        NG_DICT = snapshot.NG_DICT
+        CONNECTION_COUNTER = snapshot.CONNECTION_COUNTER
+        CONNECTION_INDICES = snapshot.CONNECTION_INDICES
+        CONNECTIONS = Pickle2Connection(snapshot.CONNECTIONS)
+        CONNECTION_RESULTS = convertArray2Vector(snapshot.CONNECTION_RESULTS)
+
         return {'FINISHED'}
 
 
-class PAMModelSave(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
+class PAMModelSave(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     """Model Save Operator"""
 
     bl_idname = "pam.model_save"
     bl_label = "Save model data"
     bl_description = "Save model data"
 
+    filename_ext = "*.pam"
+
     @classmethod
     def poll(cls, context):
         return any(CONNECTIONS)
 
     def execute(self, context):
-        load(self.filepath)
+        save(self.filepath)
+
         return {'FINISHED'}

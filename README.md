@@ -24,7 +24,7 @@ A layer is defined as a 2d manifold (a deformed 2d surface). Each point on a lay
 
 In order to create axonal and dendritic connections in 3d space, neuron positions are mapped between layers. When the internal mesh-structure between layers is identical, neurons can be directly mapped using topological mapping. Otherwise, normal-, Euclidean- and random-based mapping are available.
 
-### Conversion into a artificial neural network simulation
+### Conversion into an artificial neural network simulation
 
 * CVS-export of connections and distances for usage in an arbitrary neural network simulator
 * Importer for [NEST](www.nest-initiative.org) available

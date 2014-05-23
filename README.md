@@ -2,13 +2,13 @@
 
 Parametric Anatomical Modeilng is a method to translate large-scale anatomical data into spiking neural networks.
 
-![hippocampal_model.png](https://bitbucket.org/repo/EaAEne/images/3309588034-hippocampal_model.png)
+![hippocampal_model.png](https://bitbucket.org/repo/EaAEne/images/1007682870-hippocampal_model.png)
 
 ## Features ##
 
 ### Complex connection patterns between neurongroups are described by layers and a combination of simple mapping techniques between layers ###
 
-![hippocampal_model.png](https://bitbucket.org/repo/EaAEne/images/1007682870-hippocampal_model.png)
+![mapping.png](https://bitbucket.org/repo/EaAEne/images/3024196489-mapping.png)
 
 2d layers define the location of neurons and their projection directions. Probability functions for pre- and post-synaptic neurons are applied on the surface of the synaptic layer to determine connections between the two neuron groups.
 
@@ -28,4 +28,3 @@ In order to create axonal and dendritic connections in 3d space, neuron position
 
 * CVS-export of connections and distances for usage in an arbitrary neural network simulator
 * Importer for [NEST](www.nest-initiative.org) available
-

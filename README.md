@@ -10,7 +10,7 @@ Parametric Anatomical Modeilng is a method to translate large-scale anatomical d
 
 ![mapping.png](https://bitbucket.org/repo/EaAEne/images/3024196489-mapping.png)
 
-2d layers define the location of neurons and their projection directions. Probability functions for pre- and post-synaptic neurons are applied on the surface of the synaptic layer to determine connections between the two neuron groups.
+2d layers define the location of neurons and their projection directions. Probability functions for pre- and post-synaptic neurons are applied on the surface of the synaptic layer to determine connections between two neuron groups.
 
 ### Anatomical properties can be defined along global and local anatomical axes ###
 

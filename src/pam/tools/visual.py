@@ -106,7 +106,22 @@ class PAMVisualizeKernelAtCursor(bpy.types.Operator):
 
         uv_scaling_factor, _ = pam.computeUVScalingFactor(active_obj)
 
-        logger.debug("%s uv scaling factor: %s", active_obj, uv_scaling_factor)
+        u, v = pam.map3dPointToUV(
+            active_obj,
+            active_obj,
+            cursor_location
+        )
+
+        logger.debug(
+            "object (%s) uvscaling (%f) cursor (%f, %f, %f) uvmapped (%f, %f)",
+            active_obj.name,
+            uv_scaling_factor,
+            cursor_location[0],
+            cursor_location[1],
+            cursor_location[2],
+            u,
+            v
+        )
 
         temp_image = bpy.data.images.new(
             name="pam.temp_image",
@@ -115,16 +130,14 @@ class PAMVisualizeKernelAtCursor(bpy.types.Operator):
             alpha=True
         )
 
-        args = [c.value / uv_scaling_factor for c in pam_visualize.customs]
-
-        u, v = pam.map3dPointToUV(
-            active_obj,
-            active_obj,
-            cursor_location,
-            None
+        temp_texture = bpy.data.textures.new(
+            "temp_texture",
+            type="IMAGE"
         )
 
-        logger.debug("u: %s v: %s", u, v)
+        temp_material = bpy.data.materials.new("temp_material")
+
+        args = [c.value / uv_scaling_factor for c in pam_visualize.customs]
 
         kernel_image(
             temp_image,
@@ -134,14 +147,7 @@ class PAMVisualizeKernelAtCursor(bpy.types.Operator):
             *args
         )
 
-        temp_texture = bpy.data.textures.new(
-            "temp_texture",
-            type="IMAGE"
-        )
-
         temp_texture.image = temp_image
-
-        temp_material = bpy.data.materials.new("temp_material")
 
         tex_slot = temp_material.texture_slots.add()
         tex_slot.texture = temp_texture
@@ -305,7 +311,7 @@ def kernel_image(image, func, u, v, *args):
 
             value = func(x_in_uv, y_in_uv, u, v, *args)
 
-            logger.debug("x: %f y: %f value: %f", x_in_uv, y_in_uv, value)
+            # logger.debug("x: %f y: %f value: %f", x_in_uv, y_in_uv, value)
 
             pixel_index = (x + y * width) * 4
             color_index = 255 - math.floor(value * 255.0)

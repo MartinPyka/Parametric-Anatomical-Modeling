@@ -88,6 +88,53 @@ def visualizePath(pointlist):
     vis_objects = vis_objects + 1
 
 
+def visualizeForwardMapping(no_connection, pre_index):
+    """ This is a debugging routine. The procedure tries to visualize the maximal
+    amount of mappings to determine, where the mapping fails 
+    no_connection       : connection/mapping-index
+    pre_index           : index of pre-synaptic neuron    
+    """
+    layers = model.CONNECTIONS[no_connection][0]
+    neuronset1 = model.CONNECTIONS[no_connection][1]
+    neuronset2 = model.CONNECTIONS[no_connection][2]
+    slayer = model.CONNECTIONS[no_connection][3]
+    connections = model.CONNECTIONS[no_connection][4]
+    distances = model.CONNECTIONS[no_connection][5]
+
+    for s in range(1, slayer):
+        pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer + 1)],
+                                                     connections[0:slayer],
+                                                     distances[0:(slayer-1)] + [pam.DIS_euclidUV],
+                                                     layers[0].particle_systems[neuronset1].particles[pre_index].location)
+        print(s)
+        print(pre_p3d)                                                     
+        visualizePath(pre_p3d)   
+        
+        
+def visualizeBackwardMapping(no_connection, post_index):
+    """ This is a debugging routine. The procedure tries to visualize the maximal
+    amount of mappings to determine, where the mapping fails 
+    no_connection       : connection/mapping-index
+    post_index          : index of post-synaptic neuron    
+    """
+    layers = model.CONNECTIONS[no_connection][0]
+    neuronset1 = model.CONNECTIONS[no_connection][1]
+    neuronset2 = model.CONNECTIONS[no_connection][2]
+    slayer = model.CONNECTIONS[no_connection][3]
+    connections = model.CONNECTIONS[no_connection][4]
+    distances = model.CONNECTIONS[no_connection][5]
+
+    for s in range(len(layers), slayer, -1):
+        post_p3d, post_p2d, post_d = pam.computeMapping(layers[:(slayer - 1):-1],
+                                                        connections[:(slayer - 1):-1],
+                                                        distances[:(slayer - 1):-1],
+                                                        layers[-1].particle_systems[neuronset2].particles[post_index].location)
+        print(s)
+        print(post_p3d)                                                     
+        visualizePath(post_p3d)                                                                            
+        
+    
+
 def visualizeConnectionsForNeuron(no_connection, pre_index):
     """ Visualizes all connections between a given pre-synaptic neuron and its connections
     to all post-synaptic neurons

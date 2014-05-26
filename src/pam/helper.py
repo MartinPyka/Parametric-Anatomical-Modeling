@@ -92,7 +92,7 @@ def uv_pixel_values(image, u, v):
 
     logger.debug(
         "uv (%f,%f) to img xy (%d, %d) at index %d with rgba (%f, %f, %f, %f)",
-        u, v, x, y, index, r, g, b, a
+        u, v, x, y, index, r, g, ab, a
     )
 
     return r, g, b, a
@@ -277,6 +277,7 @@ class UVGrid(object):
         # self._reset_weights()
         row, col = self._uv_to_cell_index(uv[0], uv[1])
         # if the uv-coordinate is not on the grid, return
+        
         if row == -1:
             return
 
@@ -324,7 +325,7 @@ class UVGrid(object):
         mask = self.compute_intersect_premask_weights(row, col)
         if len(mask) == 0:
             return []
-
+        
         weights = [item[2] for item in mask]
         indices = random_select_indices(weights, quantity)
         selected_cells = [mask[index] for index in indices]
@@ -406,7 +407,8 @@ class UVGrid(object):
                 uvs[2].uv
             )
 
-            if result == 1:
+            if (result == 1) | (result == -1):
+                result = 1
                 break
             else:
                 result = mathutils.geometry.intersect_point_tri_2d(
@@ -416,7 +418,8 @@ class UVGrid(object):
                     uvs[3].uv
                 )
 
-                if result == 1:
+                if (result == 1) | (result == -1):
+                    result = 1
                     break
 
         return result

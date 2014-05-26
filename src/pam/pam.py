@@ -12,6 +12,7 @@ import numpy as np
 from . import config
 from . import helper
 from . import model
+from . import pam_vis
 
 import imp
 
@@ -159,7 +160,7 @@ def mapUVPointTo3d(object_uv, uv_list):
                 uvs[1].uv,
                 uvs[2].uv
             )
-            if result == 1:
+            if (result == 1) | (result == -1):
                 U = uvs[0].uv.to_3d()
                 V = uvs[1].uv.to_3d()
                 W = uvs[2].uv.to_3d()
@@ -175,7 +176,7 @@ def mapUVPointTo3d(object_uv, uv_list):
                     uvs[2].uv,
                     uvs[3].uv
                 )
-                if result == 1:
+                if (result == 1) | (result == -1):
                     U = uvs[0].uv.to_3d()
                     V = uvs[2].uv.to_3d()
                     W = uvs[3].uv.to_3d()
@@ -196,7 +197,7 @@ def mapUVPointTo3d(object_uv, uv_list):
                 uvs[1].uv,
                 uvs[2].uv
             )
-            if result == 1:
+            if (result == 1) | (result == -1):
                 U = uvs[0].uv.to_3d()
                 V = uvs[1].uv.to_3d()
                 W = uvs[2].uv.to_3d()
@@ -213,7 +214,7 @@ def mapUVPointTo3d(object_uv, uv_list):
                     uvs[2].uv,
                     uvs[3].uv
                 )
-                if result == 1:
+                if (result == 1) | (result == -1):
                     U = uvs[0].uv.to_3d()
                     V = uvs[2].uv.to_3d()
                     W = uvs[3].uv.to_3d()
@@ -636,7 +637,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
     dis         : distance calculation technique
     """
     s_3d = mapUVPointTo3d(slayer, [s_2d])
-    if s_3d[0] == []:
+    if (s_3d == []):
         logger.info("Need to exclude one connection")
         return -1, -1
 
@@ -780,6 +781,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
 
         grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
 
+
     logger.info("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)
     for i in range(0, num_particles):
@@ -796,7 +798,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
             continue
 
         post_neurons = grid.select_random(pre_p2d, no_synapses)
-
+        
         if (len(post_neurons) == 0):
             for j in range(0, len(conn[i])):
                 conn[i, j] = -1

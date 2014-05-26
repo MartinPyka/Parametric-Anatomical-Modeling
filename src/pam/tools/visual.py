@@ -98,6 +98,7 @@ class PAMVisualizeKernelAtCursor(bpy.types.Operator):
 
         if active_obj.data.uv_layers.active is None:
             message = "active object has no active uv layer"
+
             logger.warn(message)
             self.report({"WARNING"}, message)
 
@@ -114,15 +115,16 @@ class PAMVisualizeKernelAtCursor(bpy.types.Operator):
             alpha=True
         )
 
-        args = [item.value / uv_scaling_factor for item in pam_visualize.customs]
+        args = [c.value / uv_scaling_factor for c in pam_visualize.customs]
 
-        u, v = pam.map3dPointToUV(active_obj, active_obj, cursor_location, None)
+        u, v = pam.map3dPointToUV(
+            active_obj,
+            active_obj,
+            cursor_location,
+            None
+        )
 
         logger.debug("u: %s v: %s", u, v)
-
-        #u /= uv_scaling_factor
-        #v /= uv_scaling_factor
-        #logger.info("u: %s v: %s", u, v)
 
         kernel_image(
             temp_image,
@@ -134,7 +136,7 @@ class PAMVisualizeKernelAtCursor(bpy.types.Operator):
 
         temp_texture = bpy.data.textures.new(
             "temp_texture",
-            type = "IMAGE"
+            type="IMAGE"
         )
 
         temp_texture.image = temp_image
@@ -208,49 +210,51 @@ class PamVisualizeKernelRemoveCustomParam(bpy.types.Operator):
         context.scene.pam_visualize.customs.remove(active_index)
 
         return {'FINISHED'}
-    
-    
-class PamVisualizeClean(bpy.types.Operator):  
+
+
+class PamVisualizeClean(bpy.types.Operator):
     bl_idname = "pam_vis.visualize_clean"
     bl_label = "Clean Visualizations"
     bl_description = "Removes all visualizations"
-    bl_options = {'UNDO'}    
-    
+    bl_options = {'UNDO'}
+
     def execute(self, context):
         pam_vis.visualizeClean()
-        
+
         return {'FINISHED'}
-    
+
+
 class PamVisualizeAllConnections(bpy.types.Operator):
     bl_idname = "pam_vis.visualize_connections_all"
     bl_label = "Visualize All Connections"
     bl_description = "Visualizes all outgoing connections"
     bl_options = {'UNDO'}
-    
+
     def execute(self, context):
         connections = context.scene.pam_visualize_conns.connections
         for j in range(0, model.CONNECTION_COUNTER):
-            for i in range(0,connections):
+            for i in range(0, connections):
                 pam_vis.visualizeConnectionsForNeuron(j, i)
 
         return {'FINISHED'}
-    
-class PamVisualizeUnconnectedNeurons(bpy.types.Operator):    
+
+
+class PamVisualizeUnconnectedNeurons(bpy.types.Operator):
     bl_idname = "pam_vis.visualize_unconnected_neurons"
     bl_label = "Visualize Unconnected Neurons"
     bl_description = "Visualizes neurons with no connection"
     bl_options = {'UNDO'}
-    
+
     def execute(self, context):
         object = context.active_object
-        
+
         if object.name in model.NG_DICT:
             ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
         else:
             return {'FINISHED'}
-        
+
         for ci in model.CONNECTION_INDICES:
-            # if ng_index is the pre-synaptic layer in a certain mapping 
+            # if ng_index is the pre-synaptic layer in a certain mapping
             if ci[1] == ng_index:
                 # visualize the connections
                 pam_vis.visualizeUnconnectedNeurons(ci[0])
@@ -258,30 +262,28 @@ class PamVisualizeUnconnectedNeurons(bpy.types.Operator):
         bpy.context.scene.objects.active = object
         object.select = True
         return {'FINISHED'}
-    
-    
-    
+
+
 class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
     bl_idname = "pam_vis.visualize_connections_for_neuron"
     bl_label = "Visualize Connections at Cursor"
     bl_description = "Visualizes all outgoing connections for a neuron at cursor position"
     bl_options = {'UNDO'}
-    
+
     def execute(self, context):
-        # EXPORT_PATH = '/home/martin/ownCloud/work/Projekte/hippocampal_model/results/'
-        # model.load(EXPORT_PATH + 'hippocampus_rat.pam')
-        
         object = context.active_object
         cursor = context.scene.cursor_location
-        
+
         if object.name in model.NG_DICT:
             ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
         else:
             return {'FINISHED'}
-        
+
+        ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
         p_index = pam.map3dPointToParticle(object, 0, cursor)
+
         for ci in model.CONNECTION_INDICES:
-            # if ng_index is the pre-synaptic layer in a certain mapping 
+            # if ng_index is the pre-synaptic layer in a certain mapping
             if ci[1] == ng_index:
                 # visualize the connections
                 pam_vis.visualizeConnectionsForNeuron(ci[0], p_index)
@@ -299,7 +301,7 @@ def kernel_image(image, func, u, v, *args):
     for x in range(width):
         for y in range(height):
             x_in_uv = x * x_resolution
-            y_in_uv = x * y_resolution
+            y_in_uv = y * y_resolution
 
             value = func(x_in_uv, y_in_uv, u, v, *args)
 
@@ -377,6 +379,7 @@ class PamVisualizeKernelFloatProperties(bpy.types.PropertyGroup):
         name="Float value",
         default=0.0
     )
+
 
 # TODO(SK): missing docstring
 class PamVisualizeKernelProperties(bpy.types.PropertyGroup):

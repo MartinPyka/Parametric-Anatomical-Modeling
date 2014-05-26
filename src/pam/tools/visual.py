@@ -154,6 +154,10 @@ class PAMVisualizeKernelAtCursor(bpy.types.Operator):
         tex_slot.texture_coords = "UV"
         tex_slot.mapping = "FLAT"
 
+        temp_material.diffuse_intensity = 1.0
+        temp_material.specular_intensity = 0.0
+
+        active_obj.data.materials.clear(update_data=True)
         active_obj.data.materials.append(temp_material)
 
         return {'FINISHED'}

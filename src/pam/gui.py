@@ -55,21 +55,46 @@ class PAMPreferencesPane(bpy.types.AddonPreferences):
         col.prop(self, "log_level", text="Level")
 
 
+class PAMModelDataPanel(bpy.types.Panel):
+    """A panel for loading and saving model data"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "Model data"
+    bl_category = "PAM"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row(align=True)
+        row.operator("pam.model_load", text="Load")
+        row.operator("pam.model_save", text="Save")
+
 class PAMToolsPanel(bpy.types.Panel):
     """A tools panel inheriting all neuronal modelling operations"""
 
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "Base"
+    bl_label = "Visualize Connections"
     bl_category = "PAM"
 
     def draw(self, context):
         layout = self.layout
         row = layout.column()
+        row.prop(context.scene.pam_visualize_conns, "connections", text="Connections")
+        row.operator(
+            "pam_vis.visualize_connections_all",
+            "Connections for all mappings"
+        )
         row.operator(
             "pam_vis.visualize_connections_for_neuron",
-            "Visualize Connections"
+            "Connections at Cursor"
+        )
+        row.operator(
+            "pam_vis.visualize_unconnected_neurons",
+            "Unconnected neurons"
         )
         row.operator("pam_vis.visualize_clean", "Clean Visualizations")
 
@@ -166,22 +191,6 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         op = row.operator("pam.visualize_kernel", text="Apply")
         op = row.operator("pam.visualize_kernel_reset", text="Reset")
 
-
-class PAMModelDataPanel(bpy.types.Panel):
-    """A panel for loading and saving model data"""
-
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS"
-    bl_context = "objectmode"
-    bl_label = "Model data"
-    bl_category = "PAM"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    def draw(self, context):
-        layout = self.layout
-        row = layout.row(align=True)
-        row.operator("pam.model_load", text="Load")
-        row.operator("pam.model_save", text="Save")
 
 
 # TODO(SK): missing docstring

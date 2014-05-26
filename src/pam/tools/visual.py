@@ -219,12 +219,52 @@ class PamVisualizeClean(bpy.types.Operator):
     def execute(self, context):
         pam_vis.visualizeClean()
         
-        return {'FINISHED'}  
+        return {'FINISHED'}
+    
+class PamVisualizeAllConnections(bpy.types.Operator):
+    bl_idname = "pam_vis.visualize_connections_all"
+    bl_label = "Visualize All Connections"
+    bl_description = "Visualizes all outgoing connections"
+    bl_options = {'UNDO'}
+    
+    def execute(self, context):
+        connections = context.scene.pam_visualize_conns.connections
+        for j in range(0, model.CONNECTION_COUNTER):
+            for i in range(0,connections):
+                pam_vis.visualizeConnectionsForNeuron(j, i)
 
+        return {'FINISHED'}
+    
+class PamVisualizeUnconnectedNeurons(bpy.types.Operator):    
+    bl_idname = "pam_vis.visualize_unconnected_neurons"
+    bl_label = "Visualize Unconnected Neurons"
+    bl_description = "Visualizes neurons with no connection"
+    bl_options = {'UNDO'}
+    
+    def execute(self, context):
+        object = context.active_object
+        
+        if object.name in model.NG_DICT:
+            ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
+        else:
+            return {'FINISHED'}
+        
+        for ci in model.CONNECTION_INDICES:
+            # if ng_index is the pre-synaptic layer in a certain mapping 
+            if ci[1] == ng_index:
+                # visualize the connections
+                pam_vis.visualizeUnconnectedNeurons(ci[0])
+
+        bpy.context.scene.objects.active = object
+        object.select = True
+        return {'FINISHED'}
+    
+    
+    
 class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
     bl_idname = "pam_vis.visualize_connections_for_neuron"
-    bl_label = "Visualize Connections"
-    bl_description = "Visualizes all outgoing connections"
+    bl_label = "Visualize Connections at Cursor"
+    bl_description = "Visualizes all outgoing connections for a neuron at cursor position"
     bl_options = {'UNDO'}
     
     def execute(self, context):
@@ -234,16 +274,19 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
         object = context.active_object
         cursor = context.scene.cursor_location
         
-        ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
-        p_index = pam.map3dPointToParticle(object, 0, cursor)
+        if object.name in model.NG_DICT:
+            ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
+        else:
+            return {'FINISHED'}
         
+        p_index = pam.map3dPointToParticle(object, 0, cursor)
         for ci in model.CONNECTION_INDICES:
             # if ng_index is the pre-synaptic layer in a certain mapping 
             if ci[1] == ng_index:
                 # visualize the connections
                 pam_vis.visualizeConnectionsForNeuron(ci[0], p_index)
 
-        
+        bpy.context.scene.objects.active = object
         return {'FINISHED'}
 
 
@@ -299,16 +342,29 @@ def toggle_view_mode(self, context):
 
 # TODO(SK): missing docstring
 def register():
+    bpy.utils.register_class(PamVisualizeConnectionProperties)
     bpy.utils.register_class(PamVisualizeKernelFloatProperties)
     bpy.utils.register_class(PamVisualizeKernelProperties)
     bpy.types.Scene.pam_visualize = bpy.props.PointerProperty(
         type=PamVisualizeKernelProperties
+    )
+    bpy.types.Scene.pam_visualize_conns = bpy.props.PointerProperty(
+        type=PamVisualizeConnectionProperties
     )
 
 
 # TODO(SK): missing docstring
 def unregister():
     del bpy.types.Scene.pam_visualize
+
+
+class PamVisualizeConnectionProperties(bpy.types.PropertyGroup):
+    connections = bpy.props.IntProperty(
+        name="Number of Connections per Mapping",
+        default=3,
+        min=1,
+        max=20
+    )
 
 
 # TODO(SK): missing docstring
@@ -321,7 +377,6 @@ class PamVisualizeKernelFloatProperties(bpy.types.PropertyGroup):
         name="Float value",
         default=0.0
     )
-
 
 # TODO(SK): missing docstring
 class PamVisualizeKernelProperties(bpy.types.PropertyGroup):

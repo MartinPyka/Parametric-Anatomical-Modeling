@@ -67,6 +67,8 @@ def convertArray2Vector(connection_results):
         for r in c['s']:
             if r.size > 0:
                 temp.append([Vector(v) for v in r])
+            else:
+                temp.append([[] for i in range(r.shape[0])])
         result.append({'c': c['c'], 'd': c['d'], 's': temp})
     return result
 

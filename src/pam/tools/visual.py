@@ -346,10 +346,14 @@ def uv_visualize_texture():
 # TODO(SK): missing docstring
 def toggle_view_mode(self, context):
     textured_solid = False
+    material_mode = "MULTITEXTURE"
+
     if self.view_mode == "MAPPED":
         textured_solid = True
+        material_mode = "GLSL"
 
     context.space_data.show_textured_solid = textured_solid
+    context.scene.game_settings.material_mode = material_mode
 
 
 # TODO(SK): missing docstring

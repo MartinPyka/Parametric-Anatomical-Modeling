@@ -12,7 +12,6 @@ import numpy as np
 from . import config
 from . import helper
 from . import model
-from . import pam_vis
 
 import imp
 

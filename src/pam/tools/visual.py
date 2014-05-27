@@ -5,7 +5,7 @@ import math
 
 import bpy
 
-from . import colorscheme
+from . import colors
 from .. import kernel
 from .. import pam
 from .. import pam_vis
@@ -315,14 +315,14 @@ def kernel_image(image, func, u, v, *args):
 
             value = func(x_in_uv, y_in_uv, u, v, *args)
 
-            # logger.debug("x: %f y: %f value: %f", x_in_uv, y_in_uv, value)
+            # logger.debug("u: %f v: %f value: %f", x_in_uv, y_in_uv, value)
 
             pixel_index = (x + y * width) * 4
-            color_index = 255 - math.floor(value * 255.0)
+            color_index = math.floor(value * 255.0)
 
-            color = colorscheme.schemes["classic"][color_index]
+            color = colors.schemes["classic"][color_index]
 
-            image.pixels[pixel_index:pixel_index + 3] = map(lambda x: x / 255.0, color)
+            image.pixels[pixel_index:pixel_index + 3] = color
 
 
 # TODO(SK): missing docstring

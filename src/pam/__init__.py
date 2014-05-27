@@ -9,9 +9,6 @@ from . import helper
 from . import utils
 from . import tools
 
-# TODO(SK): testing module should be removed upon public release
-from . import testing
-
 logger = logging.getLogger(__name__)
 
 bl_info = {

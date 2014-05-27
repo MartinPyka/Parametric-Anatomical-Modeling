@@ -5,11 +5,11 @@ import math
 
 import bpy
 
-from . import colors
 from .. import kernel
+from .. import model
 from .. import pam
 from .. import pam_vis
-from .. import model
+from ..utils import colors
 
 logger = logging.getLogger(__package__)
 

@@ -66,18 +66,17 @@ def map_via_uv(origin, target):
         raise Exception("Target object is not a mesh")
     
     o_2d = []
-    
+
     for v in origin.data.vertices:
         o_2d.append(
             pam.map3dPointToUV(origin, origin, v.co)
         )
     
     t_3d = pam.mapUVPointTo3d(target, o_2d)
-    for p in t_3d:
-        if p == []:
-            raise Exception("One of the points is not in the UV-grid of the " + 
-                "target object")
+    
+    if len(t_3d) != len(o_2d):
+        raise Exception("One of the points is not in the UV-grid of the " + 
+            "target object")
                 
     for i in range(len(t_3d)):
         origin.data.vertices[i].co = t_3d[i]
-        

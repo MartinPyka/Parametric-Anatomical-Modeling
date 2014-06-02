@@ -138,11 +138,13 @@ def map3dPointToUV(object, object_uv, point, normal=None):
 
 
 # TODO(SK): Quads into triangles (indices)
-def mapUVPointTo3d(object_uv, uv_list):
-    """Converts a given UV-coordinate into a 3d point,
-    object for the 3d point and object_uv must have the same topology
-    if normal is not None, the normal is used to detect the point on object, otherwise
-    the closest_point_on_mesh operation is used
+def mapUVPointTo3d(object_uv, uv_list, cleanup=True):
+    """ Converts a list of uv-points into 3d. This function is mostly
+    used by interpolateUVTrackIn3D. Note, that therefore, not all points
+    can and have to be converted to 3d points. The return list can therefore
+    have less points than the uv-list. This cleanup can be deactivated
+    by setting cleanup = False. Then, the return-list may contain
+    some [] elements.
     """
 
     uv_polygons = []
@@ -159,8 +161,8 @@ def mapUVPointTo3d(object_uv, uv_list):
                 uvs[1].uv,
                 uvs[2].uv
             )
-            if (result == 1) | (result == -1):
-                U = uvs[0].uv.to_3d()
+            if (result != 0):
+                U = uvs[0].uv.to_3d()   
                 V = uvs[1].uv.to_3d()
                 W = uvs[2].uv.to_3d()
                 A = object_uv.data.vertices[p.vertices[0]].co
@@ -175,7 +177,7 @@ def mapUVPointTo3d(object_uv, uv_list):
                     uvs[2].uv,
                     uvs[3].uv
                 )
-                if (result == 1) | (result == -1):
+                if (result != 0):
                     U = uvs[0].uv.to_3d()
                     V = uvs[2].uv.to_3d()
                     W = uvs[3].uv.to_3d()
@@ -189,6 +191,7 @@ def mapUVPointTo3d(object_uv, uv_list):
 
     for p in object_uv.data.polygons:
         uvs = [object_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
+        to_delete = []
         for i in to_find:
             result = mathutils.geometry.intersect_point_tri_2d(
                 uv_list[i],
@@ -196,7 +199,7 @@ def mapUVPointTo3d(object_uv, uv_list):
                 uvs[1].uv,
                 uvs[2].uv
             )
-            if (result == 1) | (result == -1):
+            if (result != 0):
                 U = uvs[0].uv.to_3d()
                 V = uvs[1].uv.to_3d()
                 W = uvs[2].uv.to_3d()
@@ -204,7 +207,7 @@ def mapUVPointTo3d(object_uv, uv_list):
                 B = object_uv.data.vertices[p.vertices[1]].co
                 C = object_uv.data.vertices[p.vertices[2]].co
                 points_3d[i] = mathutils.geometry.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
-                to_find.remove(i)
+                to_delete.append(i)
                 uv_polygons.append(p)
             else:
                 result = mathutils.geometry.intersect_point_tri_2d(
@@ -213,7 +216,7 @@ def mapUVPointTo3d(object_uv, uv_list):
                     uvs[2].uv,
                     uvs[3].uv
                 )
-                if (result == 1) | (result == -1):
+                if (result != 0):
                     U = uvs[0].uv.to_3d()
                     V = uvs[2].uv.to_3d()
                     W = uvs[3].uv.to_3d()
@@ -221,12 +224,16 @@ def mapUVPointTo3d(object_uv, uv_list):
                     B = object_uv.data.vertices[p.vertices[2]].co
                     C = object_uv.data.vertices[p.vertices[3]].co
                     points_3d[i] = mathutils.geometry.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
-                    to_find.remove(i)
+                    to_delete.append(i)
                     uv_polygons.append(p)
             if len(to_find) == 0:
                 return points_3d
 
-    points_3d = [p for p in points_3d if p != []]
+        for d in to_delete:
+            to_find.remove(d)
+
+    if cleanup:
+        points_3d = [p for p in points_3d if p != []]
 
     return points_3d
 

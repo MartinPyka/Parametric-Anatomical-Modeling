@@ -72,7 +72,7 @@ class PAMModelDataPanel(bpy.types.Panel):
         row.operator("pam.model_save", text="Save")
         
         col = layout.column()
-        col.operator("pam.map_via_uv", text="Map via UV")
+        col.operator("pam.map_via_uv", text="Deform mesh via UV")
 
 class PAMToolsPanel(bpy.types.Panel):
     """A tools panel inheriting all neuronal modelling operations"""

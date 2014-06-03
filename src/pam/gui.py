@@ -80,8 +80,8 @@ class PAMToolsPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "Visualize Connections"
-    bl_category = "PAM"
+    bl_label = "Connections"
+    bl_category = "PAM Visualize"
 
     def draw(self, context):
         layout = self.layout
@@ -108,8 +108,8 @@ class PAMMeasureToolsPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "Measure"
-    bl_category = "PAM"
+    bl_label = "Neuron Distribution"
+    bl_category = "PAM Measure"
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -138,8 +138,8 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "Visualize kernel"
-    bl_category = "PAM"
+    bl_label = "Kernel"
+    bl_category = "PAM Visualize"
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):

@@ -70,9 +70,10 @@ class PAMModelDataPanel(bpy.types.Panel):
         row = layout.row(align=True)
         row.operator("pam.model_load", text="Load")
         row.operator("pam.model_save", text="Save")
-        
+
         col = layout.column()
         col.operator("pam.map_via_uv", text="Deform mesh via UV")
+
 
 class PAMToolsPanel(bpy.types.Panel):
     """A tools panel inheriting all neuronal modelling operations"""
@@ -86,7 +87,11 @@ class PAMToolsPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         row = layout.column()
-        row.prop(context.scene.pam_visualize_conns, "connections", text="Connections")
+        row.prop(
+            context.scene.pam_visualize_conns,
+            "connections",
+            text="Connections"
+        )
         row.operator(
             "pam_vis.visualize_connections_all",
             "Connections for all mappings"
@@ -193,7 +198,6 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         row = layout.row(align=True)
         op = row.operator("pam.visualize_kernel", text="Apply")
         op = row.operator("pam.visualize_kernel_reset", text="Reset")
-
 
 
 # TODO(SK): missing docstring

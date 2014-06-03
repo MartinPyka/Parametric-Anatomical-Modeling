@@ -277,7 +277,7 @@ class UVGrid(object):
         # self._reset_weights()
         row, col = self._uv_to_cell_index(uv[0], uv[1])
         # if the uv-coordinate is not on the grid, return
-        
+
         if row == -1:
             return
 
@@ -325,7 +325,7 @@ class UVGrid(object):
         mask = self.compute_intersect_premask_weights(row, col)
         if len(mask) == 0:
             return []
-        
+
         weights = [item[2] for item in mask]
         indices = random_select_indices(weights, quantity)
         selected_cells = [mask[index] for index in indices]

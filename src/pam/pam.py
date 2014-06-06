@@ -13,14 +13,7 @@ from . import config
 from . import helper
 from . import model
 
-import imp
-
-imp.reload(config)
-imp.reload(helper)
-imp.reload(model)
-
 logger = logging.getLogger(__package__)
-
 
 DEBUG_LEVEL = 0
 DEFAULT_MAXTRIALS = 50

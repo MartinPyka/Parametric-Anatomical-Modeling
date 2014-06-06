@@ -5,7 +5,6 @@ import logging
 import bpy
 
 from . import gui
-from . import grid
 from . import utils
 from . import tools
 

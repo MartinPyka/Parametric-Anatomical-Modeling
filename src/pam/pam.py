@@ -142,43 +142,6 @@ def mapUVPointTo3d(object_uv, uv_list, cleanup=True):
     points_3d = [[] for j in range(len(uv_list))]
     to_find = [i for i in range(len(uv_list))]
 
-    for p in uv_polygons:
-        uvs = [object_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
-        for i in to_find:
-            result = mathutils.geometry.intersect_point_tri_2d(
-                uv_list[i],
-                uvs[0].uv,
-                uvs[1].uv,
-                uvs[2].uv
-            )
-            if (result != 0):
-                U = uvs[0].uv.to_3d()   
-                V = uvs[1].uv.to_3d()
-                W = uvs[2].uv.to_3d()
-                A = object_uv.data.vertices[p.vertices[0]].co
-                B = object_uv.data.vertices[p.vertices[1]].co
-                C = object_uv.data.vertices[p.vertices[2]].co
-                points_3d[i] = mathutils.geometry.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
-                to_find.remove(i)
-            else:
-                result = mathutils.geometry.intersect_point_tri_2d(
-                    uv_list[i],
-                    uvs[0].uv,
-                    uvs[2].uv,
-                    uvs[3].uv
-                )
-                if (result != 0):
-                    U = uvs[0].uv.to_3d()
-                    V = uvs[2].uv.to_3d()
-                    W = uvs[3].uv.to_3d()
-                    A = object_uv.data.vertices[p.vertices[0]].co
-                    B = object_uv.data.vertices[p.vertices[2]].co
-                    C = object_uv.data.vertices[p.vertices[3]].co
-                    points_3d[i] = mathutils.geometry.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
-                    to_find.remove(i)
-            if len(to_find) == 0:
-                return points_3d
-
     for p in object_uv.data.polygons:
         uvs = [object_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
         to_delete = []

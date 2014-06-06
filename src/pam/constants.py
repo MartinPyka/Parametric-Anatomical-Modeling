@@ -1,9 +1,9 @@
-# TODO(SK): missing module docstring
+"""Constants"""
 
 # config files with many hard-coded variables, used in
 # in other parts of PAM, primarily in pam.py
 
-# some key-values for the mapping-procedure
+# key-values for the mapping-procedure
 MAP_euclid = 0
 MAP_normal = 1
 MAP_random = 2

@@ -9,7 +9,7 @@ import bpy
 import mathutils
 import numpy as np
 
-from . import config
+from . import constants
 from . import grid
 from . import model
 
@@ -92,7 +92,7 @@ def map3dPointToUV(object, object_uv, point, normal=None):
         # get point, normal and face of closest point to a given point
         p, n, f = object.closest_point_on_mesh(point)
     else:
-        p, n, f = object.ray_cast(point + normal * config.ray_fac, point - normal * config.ray_fac)
+        p, n, f = object.ray_cast(point + normal * constants.ray_fac, point - normal * constants.ray_fac)
         # if no collision could be detected, return None
         if f == -1:
             return None
@@ -240,7 +240,7 @@ def map3dPointTo3d(o1, o2, point, normal=None):
         # get point, normal and face of closest point to a given point
         p, n, f = o1.closest_point_on_mesh(point)
     else:
-        p, n, f = o1.ray_cast(point + normal * config.ray_fac, point - normal * config.ray_fac)
+        p, n, f = o1.ray_cast(point + normal * constants.ray_fac, point - normal * constants.ray_fac)
         # if no collision could be detected, return None
         if f == -1:
             return None
@@ -311,8 +311,8 @@ def interpolateUVTrackIn3D(p1_3d, p2_3d, layer):
 
     uv_p_2d = []
 
-    for interp in range(1, config.INTERPOLATION_QUALITY):
-        ip = interp / config.INTERPOLATION_QUALITY
+    for interp in range(1, constants.INTERPOLATION_QUALITY):
+        ip = interp / constants.INTERPOLATION_QUALITY
         uv_p_2d.append(p2_2d * ip + p1_2d * (1 - ip))
 
     i_3d = mapUVPointTo3d(layer, uv_p_2d)

@@ -141,7 +141,7 @@ class PAMVisualizeKernelAtCursor(bpy.types.Operator):
 
         kernel_image(
             temp_image,
-            kernel.gauss_2d.gauss_vis,
+            kernel.gaussian.gauss_vis,
             u,
             v,
             *args

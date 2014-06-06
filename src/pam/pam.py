@@ -10,7 +10,7 @@ import mathutils
 import numpy as np
 
 from . import config
-from . import helper
+from . import grid
 from . import model
 
 logger = logging.getLogger(__package__)
@@ -748,7 +748,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
     syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
 
-    grid = helper.UVGrid(layers[slayer], 0.02)
+    grid = grid.UVGrid(layers[slayer], 0.02)
 
     # rescale arg-parameters
     args_pre = [i / layers[slayer]['uv_scaling'] for i in args_pre]

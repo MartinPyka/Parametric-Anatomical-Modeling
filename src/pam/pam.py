@@ -59,7 +59,7 @@ def selectRandomPoint(object):
         return p, n, f
 
 
-def computeUVScalingFactor(object):
+def computeUVScalingFactor(obj):
     """computes the scaling factor between uv- and 3d-coordinates for a
     given object
     the return value is the factor that has to be multiplied with the
@@ -68,10 +68,10 @@ def computeUVScalingFactor(object):
 
     result = []
 
-    for i in range(0, len(object.data.polygons)):
-        uvs = [object.data.uv_layers.active.data[li] for li in object.data.polygons[i].loop_indices]
+    for i in range(len(obj.data.polygons)):
+        uvs = [obj.data.uv_layers.active.data[li] for li in obj.data.polygons[i].loop_indices]
 
-        rdist = (object.data.vertices[object.data.polygons[i].vertices[0]].co - object.data.vertices[object.data.polygons[i].vertices[1]].co).length
+        rdist = (obj.data.vertices[obj.data.polygons[i].vertices[0]].co - obj.data.vertices[obj.data.polygons[i].vertices[1]].co).length
         mdist = (uvs[0].uv - uvs[1].uv).length
         result.append(rdist / mdist)
 

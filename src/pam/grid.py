@@ -9,7 +9,7 @@ import types
 import bpy
 import mathutils
 
-import helper
+from . import helper
 
 logger = logging.getLogger(__package__)
 

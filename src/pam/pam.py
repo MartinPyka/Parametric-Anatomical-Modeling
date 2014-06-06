@@ -40,21 +40,21 @@ def computePoint(v1, v2, v3, v4, x1, x2):
 
 
 # TODO(SK): missing docstring
-def selectRandomPoint(object):
+def selectRandomPoint(obj):
         # select a random polygon
-        p_select = random.random() * object['area_sum']
-        polygon = object.data.polygons[
-            np.nonzero(np.array(object['area_cumsum']) > p_select)[0][0]]
+        p_select = random.random() * obj['area_sum']
+        polygon = obj.data.polygons[
+            np.nonzero(np.array(obj['area_cumsum']) > p_select)[0][0]]
 
         # define position on the polygon
         vert_inds = polygon.vertices[:]
-        poi = computePoint(object.data.vertices[vert_inds[0]],
-                           object.data.vertices[vert_inds[1]],
-                           object.data.vertices[vert_inds[2]],
-                           object.data.vertices[vert_inds[3]],
+        poi = computePoint(obj.data.vertices[vert_inds[0]],
+                           obj.data.vertices[vert_inds[1]],
+                           obj.data.vertices[vert_inds[2]],
+                           obj.data.vertices[vert_inds[3]],
                            random.random(), random.random())
 
-        p, n, f = object.closest_point_on_mesh(poi)
+        p, n, f = obj.closest_point_on_mesh(poi)
 
         return p, n, f
 
@@ -80,30 +80,30 @@ def computeUVScalingFactor(obj):
 
 
 # TODO(SK): Quads into triangles (indices)
-def map3dPointToUV(object, object_uv, point, normal=None):
+def map3dPointToUV(obj, obj_uv, point, normal=None):
     """Converts a given 3d-point into uv-coordinates,
-    object for the 3d point and object_uv must have the same topology
-    if normal is not None, the normal is used to detect the point on object, otherwise
+    obj for the 3d point and obj_uv must have the same topology
+    if normal is not None, the normal is used to detect the point on obj, otherwise
     the closest_point_on_mesh operation is used
     """
 
     # if normal is None, we don't worry about orthogonal projections
     if normal is None:
         # get point, normal and face of closest point to a given point
-        p, n, f = object.closest_point_on_mesh(point)
+        p, n, f = obj.closest_point_on_mesh(point)
     else:
-        p, n, f = object.ray_cast(point + normal * constants.ray_fac, point - normal * constants.ray_fac)
+        p, n, f = obj.ray_cast(point + normal * constants.ray_fac, point - normal * constants.ray_fac)
         # if no collision could be detected, return None
         if f == -1:
             return None
 
     # get the uv-coordinate of the first triangle of the polygon
-    A = object.data.vertices[object.data.polygons[f].vertices[0]].co
-    B = object.data.vertices[object.data.polygons[f].vertices[1]].co
-    C = object.data.vertices[object.data.polygons[f].vertices[2]].co
+    A = obj.data.vertices[obj.data.polygons[f].vertices[0]].co
+    B = obj.data.vertices[obj.data.polygons[f].vertices[1]].co
+    C = obj.data.vertices[obj.data.polygons[f].vertices[2]].co
 
     # and the uv-coordinates of the first triangle
-    uvs = [object_uv.data.uv_layers.active.data[li] for li in object_uv.data.polygons[f].loop_indices]
+    uvs = [obj_uv.data.uv_layers.active.data[li] for li in obj_uv.data.polygons[f].loop_indices]
     U = uvs[0].uv.to_3d()
     V = uvs[1].uv.to_3d()
     W = uvs[2].uv.to_3d()
@@ -114,9 +114,9 @@ def map3dPointToUV(object, object_uv, point, normal=None):
     # if the point is not within the first triangle, we have to repeat the calculation
     # for the second triangle
     if (mathutils.geometry.intersect_point_tri_2d(p_uv.to_2d(), uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (len(uvs)==4):
-        A = object.data.vertices[object.data.polygons[f].vertices[0]].co
-        B = object.data.vertices[object.data.polygons[f].vertices[2]].co
-        C = object.data.vertices[object.data.polygons[f].vertices[3]].co
+        A = obj.data.vertices[obj.data.polygons[f].vertices[0]].co
+        B = obj.data.vertices[obj.data.polygons[f].vertices[2]].co
+        C = obj.data.vertices[obj.data.polygons[f].vertices[3]].co
 
         U = uvs[0].uv.to_3d()
         V = uvs[2].uv.to_3d()
@@ -128,7 +128,7 @@ def map3dPointToUV(object, object_uv, point, normal=None):
 
 
 # TODO(SK): Quads into triangles (indices)
-def mapUVPointTo3d(object_uv, uv_list, cleanup=True):
+def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
     """ Converts a list of uv-points into 3d. This function is mostly
     used by interpolateUVTrackIn3D. Note, that therefore, not all points
     can and have to be converted to 3d points. The return list can therefore
@@ -142,8 +142,8 @@ def mapUVPointTo3d(object_uv, uv_list, cleanup=True):
     points_3d = [[] for j in range(len(uv_list))]
     to_find = [i for i in range(len(uv_list))]
 
-    for p in object_uv.data.polygons:
-        uvs = [object_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
+    for p in obj_uv.data.polygons:
+        uvs = [obj_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
         to_delete = []
         for i in to_find:
             result = mathutils.geometry.intersect_point_tri_2d(
@@ -156,9 +156,9 @@ def mapUVPointTo3d(object_uv, uv_list, cleanup=True):
                 U = uvs[0].uv.to_3d()
                 V = uvs[1].uv.to_3d()
                 W = uvs[2].uv.to_3d()
-                A = object_uv.data.vertices[p.vertices[0]].co
-                B = object_uv.data.vertices[p.vertices[1]].co
-                C = object_uv.data.vertices[p.vertices[2]].co
+                A = obj_uv.data.vertices[p.vertices[0]].co
+                B = obj_uv.data.vertices[p.vertices[1]].co
+                C = obj_uv.data.vertices[p.vertices[2]].co
                 points_3d[i] = mathutils.geometry.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
                 to_delete.append(i)
                 uv_polygons.append(p)
@@ -173,9 +173,9 @@ def mapUVPointTo3d(object_uv, uv_list, cleanup=True):
                     U = uvs[0].uv.to_3d()
                     V = uvs[2].uv.to_3d()
                     W = uvs[3].uv.to_3d()
-                    A = object_uv.data.vertices[p.vertices[0]].co
-                    B = object_uv.data.vertices[p.vertices[2]].co
-                    C = object_uv.data.vertices[p.vertices[3]].co
+                    A = obj_uv.data.vertices[p.vertices[0]].co
+                    B = obj_uv.data.vertices[p.vertices[2]].co
+                    C = obj_uv.data.vertices[p.vertices[3]].co
                     points_3d[i] = mathutils.geometry.barycentric_transform(uv_list[i].to_3d(), U, V, W, A, B, C)
                     to_delete.append(i)
                     uv_polygons.append(p)
@@ -248,12 +248,12 @@ def map3dPointTo3d(o1, o2, point, normal=None):
 
     return p_new
 
-def map3dPointToParticle(object, particle_system, location):
+def map3dPointToParticle(obj, particle_system, location):
     """ Determines based on a 3d-point location (e.g. given by the cursor position)
     the index of the closest particle on an object """
     index = -1
     distance = float("inf")
-    for (i, p) in enumerate(object.particle_systems[particle_system].particles):
+    for (i, p) in enumerate(obj.particle_systems[particle_system].particles):
         if (p.location - location).length < distance:
             distance = (p.location - location).length
             index = i

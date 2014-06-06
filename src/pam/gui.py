@@ -196,6 +196,9 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         op = row.operator("pam.visualize_kernel", text="Apply")
         op = row.operator("pam.visualize_kernel_reset", text="Reset")
 
+        row = layout.row(align=True)
+        op = row.operator("pam.visualize_cursor", text="Generate at cursor")
+
 
 # TODO(SK): missing docstring
 class CustomPropList(bpy.types.UIList):

@@ -34,7 +34,6 @@ def register():
 
     tools.measure.register()
     tools.visual.register()
-    tools.modeling.register()
 
     bpy.utils.register_module(__name__)
     logger.debug("Registering addon")
@@ -44,7 +43,6 @@ def unregister():
     """Called on disabling this addon"""
     tools.measure.unregister()
     tools.visual.unregister()
-    tools.modeling.unregister()
 
     bpy.utils.unregister_module(__name__)
     logger.debug("Unregistering addon")

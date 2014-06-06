@@ -113,7 +113,7 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
 
     # if the point is not within the first triangle, we have to repeat the calculation
     # for the second triangle
-    if (mathutils.geometry.intersect_point_tri_2d(p_uv.to_2d(), uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (len(uvs)==4):
+    if (mathutils.geometry.intersect_point_tri_2d(p_uv.to_2d(), uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (len(uvs) == 4):
         A = obj.data.vertices[obj.data.polygons[f].vertices[0]].co
         B = obj.data.vertices[obj.data.polygons[f].vertices[2]].co
         C = obj.data.vertices[obj.data.polygons[f].vertices[3]].co

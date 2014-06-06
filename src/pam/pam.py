@@ -300,19 +300,14 @@ def computeDistance_PreToSynapse(no_connection, pre_index):
                                              distances[0:slayer],
                                              point)
 
-    length = computePathLength(pre_p3d)
+    path_length = compute_path_length(pre_p3d)
 
-    return length, pre_p3d
+    return path_length, pre_p3d
 
 
-def computePathLength(path):
+def compute_path_length(path):
     """ computes for an array of 3d-vectors their length in space """
-    length = 0
-
-    for p in range(1, len(path)):
-        length = length + (path[p] - path[p - 1]).length
-
-    return length
+    return sum([(path[i] - path[i - 1]).length for i in range(1, len(path))])
 
 
 def sortNeuronsToUV(layer, neuronset, UorV):
@@ -584,7 +579,7 @@ def computeMapping(layers, connections, distances, point):
         if i == (len(connections) - 1):
             p2d = map3dPointToUV(layers[i + 1], layers[i + 1], p3d_n)
 
-    return p3d, p2d, computePathLength(p3d)
+    return p3d, p2d, compute_path_length(p3d)
 
 
 def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
@@ -607,13 +602,13 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
         path = [p_3d]
         path = path + interpolateUVTrackIn3D(p_3d, s_3d[0], slayer)
         path.append(s_3d[0])
-        return computePathLength(path), path
+        return compute_path_length(path), path
 
     elif dis == DIS_jumpUV:
         path = [p_3d]
         path = path + interpolateUVTrackIn3D(p_3d, s_3d[0], slayer)
         path.append(s_3d[0])
-        return computePathLength(path), path
+        return compute_path_length(path), path
 
     elif dis == DIS_UVjump:
         i_3d = ilayer.closest_point_on_mesh(s_3d[0])[0]
@@ -621,13 +616,13 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
         path = path + interpolateUVTrackIn3D(p_3d, i_3d, ilayer)
         path.append(i_3d)
         path.append(s_3d[0])
-        return computePathLength(path), path
+        return compute_path_length(path), path
 
     elif dis == DIS_normalUV:
         path = [p_3d]
         path = path + interpolateUVTrackIn3D(p_3d, s_3d[0], slayer)
         path.append(s_3d[0])
-        return computePathLength(path), path
+        return compute_path_length(path), path
 
     elif dis == DIS_UVnormal:
         p, n, f = slayers.closest_point_on_mesh(s_3d[0])
@@ -638,7 +633,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
         path = path + interpolateUVTrackIn3D(p_3d, t_3d, ilayers)
         path.append(t_3d)
         path.append(s_3d[0])
-        return computePathLength(path), path
+        return compute_path_length(path), path
 
 
 # TODO(SK): missing docstring

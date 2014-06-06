@@ -63,7 +63,6 @@ class PAMModelDataPanel(bpy.types.Panel):
     bl_context = "objectmode"
     bl_label = "Model data"
     bl_category = "PAM"
-    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
@@ -115,7 +114,6 @@ class PAMMeasureToolsPanel(bpy.types.Panel):
     bl_context = "objectmode"
     bl_label = "Neuron Distribution"
     bl_category = "PAM Measure"
-    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         active_obj = context.active_object
@@ -145,7 +143,6 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
     bl_context = "objectmode"
     bl_label = "Kernel"
     bl_category = "PAM Visualize"
-    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
 

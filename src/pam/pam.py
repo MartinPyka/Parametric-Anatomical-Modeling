@@ -15,7 +15,7 @@ from . import model
 
 logger = logging.getLogger(__package__)
 
-# some key-values for the mapping-procedure
+# key-values for the mapping-procedure
 MAP_euclid = 0
 MAP_normal = 1
 MAP_random = 2

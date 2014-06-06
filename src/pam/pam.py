@@ -15,9 +15,6 @@ from . import model
 
 logger = logging.getLogger(__package__)
 
-DEBUG_LEVEL = 0
-DEFAULT_MAXTRIALS = 50
-
 # some key-values for the mapping-procedure
 MAP_euclid = 0
 MAP_normal = 1

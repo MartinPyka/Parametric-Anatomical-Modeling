@@ -312,21 +312,22 @@ def compute_path_length(path):
     return sum([(path[i] - path[i - 1]).length for i in range(1, len(path))])
 
 
-def sortNeuronsToUV(layer, neuronset, UorV):
-    """ Sorts particles according to their position on the u
+def sortNeuronsToUV(layer, neuronset, u_or_v):
+    """Sorts particles according to their position on the u
     or v axis and returns the permutation indices
+
     layer       : the layers were the neurons are
     neuronset   : name or number of the neuronset (particle system)
-    UorV        : 'u' means sort for u
+    u_or_v      : 'u' means sort for u
                   'v' means sort for v
     """
 
-    if UorV is 'u':
+    if u_or_v == 'u':
         index = 0
-    elif UorV is 'v':
+    elif u_or_v == 'v':
         index = 1
     else:
-        raise Exception("UorV must be either 'u' or 'v' ")
+        raise Exception("u_or_v must be either 'u' or 'v' ")
 
     # get all particle positions
     p3d = [i.location for i in layer.particle_systems[neuronset].particles]

@@ -254,10 +254,10 @@ def map3dPointToParticle(obj, particle_system, location):
     """
 
     index = -1
-    max_distance = float("inf")
+    distance = float("inf")
     for (i, p) in enumerate(obj.particle_systems[particle_system].particles):
-        distance = (p.location - location).length
-        if distance < max_distance:
+        if (p.location - location).length < distance:
+            distance = (p.location - location).length
             index = i
     
     return index

@@ -852,32 +852,39 @@ def printConnections():
                      model.NG_LIST[c[2]][0])
 
 
-def computeDistance(layer1, layer2, neuronset1, neuronset2, commonl, conn_matrix):
-    """ measures the distance between neurons on the same layer according to the connectivity
-    matrix
-    layer1
-    layer2      : layer of pre- and post-synaptic neurons
-    neuronset1,
-    neuronset2  : name of the neuronset (particlesystem)
-    commonl     : layer, on which the distances should be measured
-    conn_matrix : connectivity matrix that determines, which distances should be measured
+def computeDistance(layer1, layer2, neuronset1, neuronset2, common_layer,
+                    connection_matrix):
+    """Measures the distance between neurons on the same layer according to the
+    connectivity matrix.
 
-    result      : matrix of the same structure, like conn_matrix, but with distances
+    layer1
+    layer2            : layer of pre- and post-synaptic neurons
+    neuronset1,
+    neuronset2        : name of the neuronset (particlesystem)
+    common_layer      : layer, on which the distances should be measured
+    connection_matrix : connectivity matrix that determines, which distances
+                        should be measured
+
+    result            : matrix of the same structure, like connection_matrix,
+                        but with distances
     """
     positions1 = []     # list of uv-positions for the first group
     positions2 = []     # list of uv-positions for the second group
+
     for p in layer1.particle_systems[neuronset1].particles:
-        p2d = map3dPointToUV(commonl, commonl, p.location)
+        p2d = map3dPointToUV(common_layer, common_layer, p.location)
         positions1.append(p2d)
 
     for p in layer2.particle_systems[neuronset2].particles:
-        p2d = map3dPointToUV(commonl, commonl, p.location)
+        p2d = map3dPointToUV(common_layer, common_layer, p.location)
         positions2.append(p2d)
 
-    result = np.zeros(conn_matrix.shape)
-    for i in range(0, len(conn_matrix)):
-        for j in range(0, len(conn_matrix[i])):
-            result[i, j] = (positions2[conn_matrix[i][j]] - positions1[i]).length * commonl['uv_scaling']
+    result = np.zeros(connection_matrix.shape)
+
+    for i in range(len(connection_matrix)):
+        for j in range(len(connection_matrix[i])):
+            distance = (positions2[connection_matrix[i][j]] - positions1[i]).length
+            result[i, j] = distance * common_layer['uv_scaling']
 
     return result, positions1, positions2
 

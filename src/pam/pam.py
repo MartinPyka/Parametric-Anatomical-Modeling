@@ -901,11 +901,12 @@ def measureUVs(objects):
     """
     uv_data = []
     layer_names = []
-    for o in objects:
-        if o.type == 'MESH':
-            if len(o.data.uv_layers) > 0:
-                uv_data.append(computeUVScalingFactor(o)[1])
-                layer_names.append(o.name)
+
+    for obj in objects:
+        if obj.type == 'MESH':
+            if any(obj.data.uv_layers):
+                uv_data.append(computeUVScalingFactor(obj)[1])
+                layer_names.append(obj.name)
 
     return uv_data, layer_names
 

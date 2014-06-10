@@ -249,8 +249,10 @@ def map3dPointTo3d(o1, o2, point, normal=None):
     return p_new
 
 def map3dPointToParticle(obj, particle_system, location):
-    """ Determines based on a 3d-point location (e.g. given by the cursor position)
-    the index of the closest particle on an object """
+    """Determines based on a 3d-point location (e.g. given by the cursor
+    position) the index of the closest particle on an object
+    """
+
     index = -1
     max_distance = float("inf")
     for (i, p) in enumerate(obj.particle_systems[particle_system].particles):

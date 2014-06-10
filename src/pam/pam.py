@@ -269,20 +269,20 @@ def computeConnectivityProbability(uv1, uv2, func, args):
 
 
 def interpolateUVTrackIn3D(p1_3d, p2_3d, layer):
-    """ Creates a 3D-path along given 3d-coordinates p1_3d and p2_3d on layer """
+    """Creates a 3D-path along given 3d-coordinates p1_3d and p2_3d on layer"""
     # get 2d-coordinates
     p1_2d = map3dPointToUV(layer, layer, p1_3d)
     p2_2d = map3dPointToUV(layer, layer, p2_3d)
 
     uv_p_2d = []
 
-    for interp in range(1, constants.INTERPOLATION_QUALITY):
-        ip = interp / constants.INTERPOLATION_QUALITY
-        uv_p_2d.append(p2_2d * ip + p1_2d * (1 - ip))
+    for step in range(1, constants.INTERPOLATION_QUALITY):
+        interpolation = step / constants.INTERPOLATION_QUALITY
+        uv_p_2d.append(p2_2d * interpolation + p1_2d * (1 - interpolation))
 
-    i_3d = mapUVPointTo3d(layer, uv_p_2d)
+    ip_3d = mapUVPointTo3d(layer, uv_p_2d)
 
-    return i_3d
+    return ip_3d
 
 
 def computeDistance_PreToSynapse(no_connection, pre_index):

@@ -676,7 +676,6 @@ def computeAllConnections():
                 's': result[2]
             }
         )
-        logger.info(" ")
 
 
 # TODO(SK): missing docstring

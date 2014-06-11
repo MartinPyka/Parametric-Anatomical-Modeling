@@ -958,15 +958,14 @@ def returnNeuronGroups():
 
 def initialize3D():
     """prepares all necessary steps for the computation of connections"""
-    logger.info("Initialize 3D settings")
+
+    logger.info("reset model")
     model.reset()
 
-    logger.info("- Compute UV-scaling factor")
+    logger.info("computing uv-scaling factor")
+    initializeUVs()
 
-    initializeUVs()             # compute the uv-scaling factor
-
-    logger.info(" -Collect all neuron groups")
+    logger.info("collecting neuron groups")
     model.NG_LIST, model.NG_DICT = returnNeuronGroups()
 
-    logger.info("End of Initialization")
-    logger.info("============================")
+    logger.info("done initalizing")

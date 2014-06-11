@@ -913,24 +913,27 @@ def measureUVs(objects):
 
 def initializeUVs():
     """ compute the UV scaling factor for all layers that have UV-maps """
-    for o in bpy.data.objects:
-        if o.type == 'MESH':
-            if len(o.data.uv_layers) > 0:
-                o['uv_scaling'] = computeUVScalingFactor(o)[0]
+    for obj in bpy.data.objects:
+        if obj.type == 'MESH':
+            if any(obj.data.uv_layers):
+                obj['uv_scaling'], _ = computeUVScalingFactor(obj)
 
             ''' area size of each polygon '''
             p_areas = []
 
             ''' collect area values for all polygons '''
-            for p in o.data.polygons:
+            for p in obj.data.polygons:
                 p_areas.append(p.area)
 
             # convert everything to numpy
             p_areas = np.array(p_areas)
-            p_cumsum = p_areas.cumsum()     # compute the cumulative sum
-            p_sum = p_areas.sum()           # compute the sum of all areas
-            o['area_cumsum'] = p_cumsum
-            o['area_sum'] = p_sum
+            # compute the cumulative sum
+            p_cumsum = p_areas.cumsum()
+            # compute the sum of all areas
+            p_sum = p_areas.sum()
+
+            obj['area_cumsum'] = p_cumsum
+            obj['area_sum'] = p_sum
 
 
 def returnNeuronGroups():

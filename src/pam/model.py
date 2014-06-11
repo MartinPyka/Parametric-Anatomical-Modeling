@@ -88,6 +88,9 @@ class ModelSnapshot(object):
         self.CONNECTION_INDICES = CONNECTION_INDICES
         self.CONNECTIONS = Connection2Pickle(CONNECTIONS)
         self.CONNECTION_RESULTS = convertVector2Array(CONNECTION_RESULTS)
+        
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
 
 def save(path):
@@ -101,6 +104,13 @@ def load(path):
     """ loads the model with pickle from the given path """
     snapshot = pickle.load(open(path, "rb"))
     return snapshot
+
+def compare(path1, path2):
+    """ compares two models with each other, addressed by path1 and
+    path """
+    m1 = load(path1)
+    m2 = load(path2)
+    return m1 == m2
 
 
 class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):

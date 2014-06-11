@@ -846,10 +846,12 @@ def computeConnectivityAll(layers, neuronset1, neuronset2, slayer, connections, 
 
 
 def printConnections():
-    """ Print all connection pairs """
+    """ Print connection pairs """
     for i, c in enumerate(model.CONNECTION_INDICES):
-        logger.info(str(i) + ': ' + model.NG_LIST[c[1]][0] + ' - ' +
-                     model.NG_LIST[c[2]][0])
+        message = "%d: %s - %s" % (i, model.NG_LIST[c[1]][0],
+                                   model.NG_LIST[c[2]][0])
+
+        logger.info(message)
 
 
 def computeDistance(layer1, layer2, neuronset1, neuronset2, common_layer,

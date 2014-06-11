@@ -614,7 +614,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
         return compute_path_length(path), path
 
     elif dis == DIS_UVjump:
-        i_3d = ilayer.closest_point_on_mesh(s_3d[0])[0]
+        i_3d, _ = ilayer.closest_point_on_mesh(s_3d[0])
         path = [p_3d]
         path = path + interpolateUVTrackIn3D(p_3d, i_3d, ilayer)
         path.append(i_3d)
@@ -905,7 +905,8 @@ def measureUVs(objects):
     for obj in objects:
         if obj.type == 'MESH':
             if any(obj.data.uv_layers):
-                uv_data.append(computeUVScalingFactor(obj)[1])
+                _, edges_scaled = computeUVScalingFactor(obj)
+                uv_data.append(edges_scaled)
                 layer_names.append(obj.name)
 
     return uv_data, layer_names

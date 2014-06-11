@@ -938,19 +938,20 @@ def initializeUVs():
 
 
 def returnNeuronGroups():
-    """ returns a list of neural groups (particle-systems) for the whole model.
-    This is used for the NEST import to determine, which neural groups should be
-    connected
+    """Returns a list of neural groups (particle-systems) for the whole model.
+    This is used for the NEST import to determine, which neural groups should
+    be connected
     """
+
     r_list = []
     r_dict = {}
     counter = 0
-    for o in bpy.data.objects:
-        for p in o.particle_systems:
-            r_list.append([o.name, p.name, p.settings.count])
-            if r_dict.get(o.name) is None:
-                r_dict[o.name] = {}
-            r_dict[o.name][p.name] = counter
+    for obj in bpy.data.objects:
+        for p in obj.particle_systems:
+            r_list.append([obj.name, p.name, p.settings.count])
+            if r_dict.get(obj.name) is None:
+                r_dict[obj.name] = {}
+            r_dict[obj.name][p.name] = counter
             counter += 1
 
     return r_list, r_dict

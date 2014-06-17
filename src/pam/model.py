@@ -90,7 +90,7 @@ class ModelSnapshot(object):
         self.CONNECTION_RESULTS = convertVector2Array(CONNECTION_RESULTS)
         
     def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+        return str(self.__dict__) == str(other.__dict__)
 
 
 def save(path):

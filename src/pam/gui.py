@@ -99,7 +99,7 @@ class PAMToolsPanel(bpy.types.Panel):
             "pam_vis.visualize_unconnected_neurons",
             "Unconnected neurons"
         )
-        row.operator("pam_vis.visualize_clean", "Clean Visualizations")
+        row.operator("pam_vis.visualize_clean", "Clear Visualizations")
 
 
 class PAMMeasureToolsPanel(bpy.types.Panel):
@@ -193,6 +193,9 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         row = layout.row(align=True)
         op = row.operator("pam.visualize_kernel", text="Apply")
         op = row.operator("pam.visualize_kernel_reset", text="Reset")
+        
+        row = layout.row()
+        op = row.operator("pam.visualize_cursor", text="Kernel at Cursor")
 
 
 

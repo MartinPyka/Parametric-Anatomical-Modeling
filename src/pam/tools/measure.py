@@ -90,7 +90,7 @@ class MeasureProperties(bpy.types.PropertyGroup):
         default=1.0,
         min=0.0,
         unit="AREA"
-    )    
+    )
 
 
 # TODO(SK): missing docstring

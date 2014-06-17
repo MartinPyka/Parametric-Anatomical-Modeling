@@ -112,6 +112,22 @@ def compare(path1, path2):
     m2 = load(path2)
     return m1 == m2
 
+def reset():
+    """ Resets the most important variables without calculating everything from
+    scratch """
+    global NG_LIST
+    global NG_DICT
+    global CONNECTION_COUNTER
+    global CONNECTION_INDICES
+    global CONNECTIONS
+    global CONNECTION_RESULTS
+    NG_LIST = []
+    NG_DICT = {}
+    CONNECTION_COUNTER = 0
+    CONNECTION_INDICES = []
+    CONNECTIONS = []
+    CONNECTION_RESULTS = []
+
 
 class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """Model Load Operator"""

@@ -1,12 +1,14 @@
 """Log Module"""
 
 import logging
+import logging.handlers
 import os
 
 import bpy
 
 # TODO(SK): root module solution flaky
 ROOT_MODULE = "pam"
+LOG_FILE_MAX_BYTES = 2000000
 
 
 def filepath():
@@ -48,7 +50,11 @@ def initialize():
         prefs = bpy.context.user_preferences.addons[ROOT_MODULE].preferences
         prefs.log_directory = default_location
 
-    formatter = logging.Formatter(
+    stream_formatter = logging.Formatter(
+        fmt="%(asctime)s %(levelname)-8s  %(message)s",
+        datefmt="%H:%M:%S"
+    )
+    file_formatter = logging.Formatter(
         fmt="%(asctime)s %(levelname)-8s  %(message)s  "
         "[%(filename)s:%(lineno)s]",
         datefmt="%Y-%m-%d %H:%M:%S"
@@ -56,14 +62,16 @@ def initialize():
 
     # Setting up loghandlers for stdout and file logging
     streamhandler = logging.StreamHandler()
-    filehandler = logging.FileHandler(
+    filehandler = logging.handlers.RotatingFileHandler(
         filename=(fullpath()),
         mode="a",
+        maxBytes=LOG_FILE_MAX_BYTES,
+        backupCount=5,
         encoding="utf-8"
     )
 
-    streamhandler.setFormatter(formatter)
-    filehandler.setFormatter(formatter)
+    streamhandler.setFormatter(stream_formatter)
+    filehandler.setFormatter(file_formatter)
 
     logger = logging.getLogger(ROOT_MODULE)
     logger.setLevel(level())

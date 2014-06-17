@@ -708,7 +708,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
     syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
 
-    grid = grid.UVGrid(layers[slayer], 0.02)
+    uvgrid = grid.UVGrid(layers[slayer], 0.02)
 
     # rescale arg-parameters
     args_pre = [i / layers[slayer]['uv_scaling'] for i in args_pre]
@@ -716,13 +716,13 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
 
     logger.info("Prepare Grid")
 
-    grid.pre_kernel = func_pre
-    grid.pre_kernel_args = args_pre
-    grid.compute_preMask()
+    uvgrid.pre_kernel = func_pre
+    uvgrid.pre_kernel_args = args_pre
+    uvgrid.compute_preMask()
 
-    grid.post_kernel = func_post
-    grid.post_kernel_args = args_post
-    grid.compute_postMask()
+    uvgrid.post_kernel = func_post
+    uvgrid.post_kernel_args = args_post
+    uvgrid.compute_postMask()
 
     logger.info("Compute Post-Mapping")
 
@@ -735,7 +735,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
         if post_p3d is None:
             continue
 
-        grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
+        uvgrid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
 
 
     logger.info("Compute Pre-Mapping")
@@ -753,7 +753,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
                 conn[i, j] = -1
             continue
 
-        post_neurons = grid.select_random(pre_p2d, no_synapses)
+        post_neurons = uvgrid.select_random(pre_p2d, no_synapses)
         
         if (len(post_neurons) == 0):
             for j in range(0, len(conn[i])):

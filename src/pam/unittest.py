@@ -1,7 +1,7 @@
 import bpy
 from pam import pam
 from pam import pam_vis
-from pam.kernel import gauss_2d as kernel
+from pam.kernel import gaussian as kernel
 from pam import model
 import random
 import numpy

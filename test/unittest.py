@@ -8,7 +8,7 @@ import numpy
 
 import pickle
 
-EXPORT_PATH = '/home/martin/ownCloud/work/Projekte/hippocampal_model/results/'
+EXPORT_PATH = '//'
 
 p1 = bpy.data.objects['Plane']
 p2 = bpy.data.objects['Plane.001']
@@ -54,7 +54,7 @@ id2 = pam.addConnection(
 pam.computeAllConnections()
 path = pam_vis.visualizeConnectionsForNeuron(id1, 8)
 
-create_reference = False
+create_reference = True
 
 
 if create_reference:
@@ -68,7 +68,7 @@ if create_reference:
 reference = model.load(EXPORT_PATH + 'test_universal.pam')
 result = model.ModelSnapshot()
 
-#print('Connections: ', model.connections_equal(reference.CONNECTION_RESULTS, result.CONNECTION_RESULTS )
+print('Connections: ', model.connections_equal(reference.CONNECTION_RESULTS, result.CONNECTION_RESULTS ))
 
 f = open(EXPORT_PATH + 'test_universal.path', 'rb')
 reference_path = pickle.load(f)

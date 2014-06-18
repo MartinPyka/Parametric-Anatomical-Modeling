@@ -605,6 +605,7 @@ def computeMapping(layers, connections, distances, point):
 
             p2d_t = map3dPointToUV(layers[i], layers[i], p3d[-1])
             p3d_n = mapUVPointTo3d(layers[i+1], [p2d_t])
+            
             if p3d_n == []:
                 return None, None, None
             

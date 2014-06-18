@@ -632,11 +632,12 @@ def computeMapping(layers, connections, distances, point):
         # map via UV overlap
         elif connections[i] == MAP_uv:
 
-            p2d_t = pam.map3dPointToUV(layers[i], layers[i], p3d[-1])
-            p3d_n = pam.mapUVPointTo3d(layers[i+1], p2d_t)
-                
+            p2d_t = map3dPointToUV(layers[i], layers[i], p3d[-1])
+            p3d_n = mapUVPointTo3d(layers[i+1], [p2d_t])
             if p3d_n == []:
                 return None, None, None
+            
+            p3d_n = p3d_n[0]
 
             # if this is not the last layer, compute the topological mapping
             if i < (len(connections) - 1):

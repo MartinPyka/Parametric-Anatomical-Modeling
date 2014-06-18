@@ -13,6 +13,10 @@ EXPORT_PATH = '/home/martin/ownCloud/work/Projekte/hippocampal_model/results/'
 p1 = bpy.data.objects['Plane']
 p2 = bpy.data.objects['Plane.001']
 p3 = bpy.data.objects['Plane.002']
+p4 = bpy.data.objects['Plane.003']
+p5 = bpy.data.objects['Plane.004']
+p6 = bpy.data.objects['Plane.005']
+
 
 pam_vis.visualizeClean()
 pam.initialize3D()
@@ -32,10 +36,26 @@ id1 = pam.addConnection(
     [0.2, 0.2, 0., 0.],
     1
     )
+    
+id2 = pam.addConnection(
+    [p4, p5, p6],
+    'ParticleSystem', 'ParticleSystem',
+    1,
+    [pam.MAP_uv, pam.MAP_uv],
+    [pam.DIS_jumpUV, pam.DIS_euclid],
+    kernel.gauss,
+    [0.2, 0.2, 0., 0.],
+    kernel.gauss,
+    [0.2, 0.2, 0., 0.],
+    1
+    )    
+    
+    
+    
 pam.computeAllConnections()
 path = pam_vis.visualizeConnectionsForNeuron(id1, 8)
 
-create_reference = False
+create_reference = True
 
 
 if create_reference:

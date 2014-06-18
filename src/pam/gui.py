@@ -63,16 +63,16 @@ class PAMModelDataPanel(bpy.types.Panel):
     bl_context = "objectmode"
     bl_label = "Model data"
     bl_category = "PAM"
-    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
         row = layout.row(align=True)
         row.operator("pam.model_load", text="Load")
         row.operator("pam.model_save", text="Save")
-        
+
         col = layout.column()
         col.operator("pam.map_via_uv", text="Deform mesh via UV")
+
 
 class PAMToolsPanel(bpy.types.Panel):
     """A tools panel inheriting all neuronal modelling operations"""
@@ -80,13 +80,17 @@ class PAMToolsPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "Visualize Connections"
-    bl_category = "PAM"
+    bl_label = "Connections"
+    bl_category = "PAM Visualize"
 
     def draw(self, context):
         layout = self.layout
         row = layout.column()
-        row.prop(context.scene.pam_visualize_conns, "connections", text="Connections")
+        row.prop(
+            context.scene.pam_visualize_conns,
+            "connections",
+            text="Connections"
+        )
         row.operator(
             "pam_vis.visualize_connections_all",
             "Connections for all mappings"
@@ -108,9 +112,8 @@ class PAMMeasureToolsPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "Measure"
-    bl_category = "PAM"
-    bl_options = {'DEFAULT_CLOSED'}
+    bl_label = "Neuron Distribution"
+    bl_category = "PAM Measure"
 
     def draw(self, context):
         active_obj = context.active_object
@@ -138,9 +141,8 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "Visualize kernel"
-    bl_category = "PAM"
-    bl_options = {'DEFAULT_CLOSED'}
+    bl_label = "Kernel"
+    bl_category = "PAM Visualize"
 
     def draw(self, context):
 
@@ -197,6 +199,8 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         row = layout.row()
         op = row.operator("pam.visualize_cursor", text="Kernel at Cursor")
 
+        row = layout.row(align=True)
+        op = row.operator("pam.visualize_cursor", text="Generate at cursor")
 
 
 # TODO(SK): missing docstring

@@ -1,1 +1,1 @@
-from . import gauss_2d
+from . import gaussian

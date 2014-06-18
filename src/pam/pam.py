@@ -9,6 +9,8 @@ import bpy
 import mathutils
 import numpy as np
 
+import code
+
 from . import constants
 from . import grid
 from . import model
@@ -86,7 +88,7 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
     if normal is not None, the normal is used to detect the point on obj, otherwise
     the closest_point_on_mesh operation is used
     """
-
+    
     # if normal is None, we don't worry about orthogonal projections
     if normal is None:
         # get point, normal and face of closest point to a given point
@@ -127,7 +129,7 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
     return p_uv.to_2d()
 
 
-# TODO(SK): Quads into triangles (indices)
+## TODO(SK): Quads into triangles (indices)
 def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
     """ Converts a list of uv-points into 3d. This function is mostly
     used by interpolateUVTrackIn3D. Note, that therefore, not all points
@@ -154,7 +156,7 @@ def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
         vertex_0 = obj_uv.data.vertices[p.vertices[0]].co
         vertex_1 = obj_uv.data.vertices[p.vertices[1]].co
         vertex_2 = obj_uv.data.vertices[p.vertices[2]].co
-        vertex_3 = obj_uv.data.vertices[p.vertices[2]].co
+        vertex_3 = obj_uv.data.vertices[p.vertices[3]].co
 
         for i in list(unseen):
             point = uv_list[i].to_3d()
@@ -200,7 +202,7 @@ def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
                     uv_polygons.append(p)
                     unseen.remove(i)
 
-            if not any(unseen):
+            if len(unseen) == 0:
                 return points_3d
 
     if cleanup:
@@ -612,7 +614,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
     dis         : distance calculation technique
     """
     s_3d = mapUVPointTo3d(slayer, [s_2d])
-    if (s_3d == []):
+    if not any(s_3d):
         logger.info("Need to exclude one connection")
         return -1, -1
 
@@ -744,7 +746,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
 
     logger.info("Compute Post-Mapping")
 
-    # fill grid with post-neuron-links
+    # fill uv_grid with post-neuron-links
     for i in range(0, len(layers[-1].particle_systems[neuronset2].particles)):
         post_p3d, post_p2d, post_d = computeMapping(layers[:(slayer - 1):-1],
                                                     connections[:(slayer - 1):-1],

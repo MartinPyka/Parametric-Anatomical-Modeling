@@ -1,4 +1,5 @@
 """Helper functions module"""
+
 import random
 
 def accumulate(items):

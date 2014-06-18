@@ -129,7 +129,7 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
     return p_uv.to_2d()
 
 
-# TODO(SK): Quads into triangles (indices)
+## TODO(SK): Quads into triangles (indices)
 def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
     """ Converts a list of uv-points into 3d. This function is mostly
     used by interpolateUVTrackIn3D. Note, that therefore, not all points
@@ -202,7 +202,7 @@ def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
                     uv_polygons.append(p)
                     unseen.remove(i)
 
-            if not any(unseen):
+            if len(unseen) == 0:
                 return points_3d
 
     if cleanup:

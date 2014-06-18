@@ -112,21 +112,6 @@ def compare(path1, path2):
     m2 = load(path2)
     return m1 == m2
 
-def connections_equal(connections1, connections2):
-
-    c1_length = len(connections1)
-    c2_length = len(connections2)
-
-    if c1_length != c2_length:
-        return False
-
-    for i in range(c1_length):
-        if connections1[i] != connections2[i]:
-            return False
-
-    return True
-
-
 def reset():
     """ Resets the most important variables without calculating everything from
     scratch """

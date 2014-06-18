@@ -9,6 +9,8 @@ import bpy
 import mathutils
 import numpy as np
 
+import code
+
 from . import constants
 from . import grid
 from . import model
@@ -86,7 +88,7 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
     if normal is not None, the normal is used to detect the point on obj, otherwise
     the closest_point_on_mesh operation is used
     """
-
+    
     # if normal is None, we don't worry about orthogonal projections
     if normal is None:
         # get point, normal and face of closest point to a given point
@@ -154,7 +156,7 @@ def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
         vertex_0 = obj_uv.data.vertices[p.vertices[0]].co
         vertex_1 = obj_uv.data.vertices[p.vertices[1]].co
         vertex_2 = obj_uv.data.vertices[p.vertices[2]].co
-        vertex_3 = obj_uv.data.vertices[p.vertices[2]].co
+        vertex_3 = obj_uv.data.vertices[p.vertices[3]].co
 
         for i in list(unseen):
             point = uv_list[i].to_3d()
@@ -609,7 +611,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
     dis         : distance calculation technique
     """
     s_3d = mapUVPointTo3d(slayer, [s_2d])
-    if (s_3d == []):
+    if not any(s_3d):
         logger.info("Need to exclude one connection")
         return -1, -1
 
@@ -724,7 +726,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
     syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
 
-    grid = grid.UVGrid(layers[slayer], 0.02)
+    uv_grid = grid.UVGrid(layers[slayer], 0.02)
 
     # rescale arg-parameters
     args_pre = [i / layers[slayer]['uv_scaling'] for i in args_pre]
@@ -732,17 +734,17 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
 
     logger.info("Prepare Grid")
 
-    grid.pre_kernel = func_pre
-    grid.pre_kernel_args = args_pre
-    grid.compute_preMask()
+    uv_grid.pre_kernel = func_pre
+    uv_grid.pre_kernel_args = args_pre
+    uv_grid.compute_preMask()
 
-    grid.post_kernel = func_post
-    grid.post_kernel_args = args_post
-    grid.compute_postMask()
+    uv_grid.post_kernel = func_post
+    uv_grid.post_kernel_args = args_post
+    uv_grid.compute_postMask()
 
     logger.info("Compute Post-Mapping")
 
-    # fill grid with post-neuron-links
+    # fill uv_grid with post-neuron-links
     for i in range(0, len(layers[-1].particle_systems[neuronset2].particles)):
         post_p3d, post_p2d, post_d = computeMapping(layers[:(slayer - 1):-1],
                                                     connections[:(slayer - 1):-1],
@@ -751,7 +753,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
         if post_p3d is None:
             continue
 
-        grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
+        uv_grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
 
 
     logger.info("Compute Pre-Mapping")
@@ -769,7 +771,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
                 conn[i, j] = -1
             continue
 
-        post_neurons = grid.select_random(pre_p2d, no_synapses)
+        post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
         
         if (len(post_neurons) == 0):
             for j in range(0, len(conn[i])):
@@ -803,7 +805,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
     )
     model.CONNECTION_COUNTER += 1
 
-    return conn, dist, syn, grid
+    return conn, dist, syn, uv_grid
 
 
 def computeConnectivityAll(layers, neuronset1, neuronset2, slayer, connections, distances, func, args):

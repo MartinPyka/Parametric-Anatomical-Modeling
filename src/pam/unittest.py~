@@ -23,6 +23,7 @@ pam.initialize3D()
 
 random.seed(1)
 
+
 id1 = pam.addConnection(
     [p1, p2, p3],
     'ParticleSystem', 'ParticleSystem',
@@ -35,6 +36,21 @@ id1 = pam.addConnection(
     [0.2, 0.2, 0., 0.],
     1
     )
+<<<<<<< HEAD
+    
+id2 = pam.addConnection(
+    [p4, p5, p6],
+    'ParticleSystem', 'ParticleSystem',
+    1,
+    [pam.MAP_uv, pam.MAP_uv],
+    [pam.DIS_jumpUV, pam.DIS_euclid],
+    kernel.gauss,
+    [0.2, 0.2, 0., 0.],
+    kernel.gauss,
+    [0.2, 0.2, 0., 0.],
+    1
+    )    
+=======
         
 #id2 = pam.addConnection(
 #    [p4, p5, p6],
@@ -48,6 +64,7 @@ id1 = pam.addConnection(
 #    [0.2, 0.2, 0., 0.],
 #    1
 #    )    
+>>>>>>> master
     
     
     

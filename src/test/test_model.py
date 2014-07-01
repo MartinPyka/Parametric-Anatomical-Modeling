@@ -49,11 +49,13 @@ class TestModelComparison(unittest.TestCase):
         self.path = pam_vis.visualizeConnectionsForNeuron(self.id1, 8)
 
     def test_model_snapshot(self):
+        """Docstrings will show up in the testrunner"""
         result = model.ModelSnapshot()
         reference = model.load(CURRENT_DIR + "/test_universal.pam")
         self.assertTrue(str(reference.CONNECTION_RESULTS) == str(result.CONNECTION_RESULTS))
 
     def test_model_path(self):
+        """So you should use them"""
         with open(CURRENT_DIR + "/test_universal.path", "rb") as f:
             reference_path = pickle.load(f)
             self.assertTrue((self.path == reference_path).all())

@@ -32,3 +32,6 @@ coverage.xml
 
 # Sphinx
 docs/sphinx/_build/
+
+# No merge/backup files
+*~

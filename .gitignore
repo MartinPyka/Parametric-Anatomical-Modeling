@@ -35,3 +35,6 @@ docs/sphinx/_build/
 
 # No merge/backup files
 *~
+
+# Blender versioning
+*.blend([0-9])+

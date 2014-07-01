@@ -1,11 +1,14 @@
 # TODO(SK): module docstring missing
 
 import bpy
+import logging
 import numpy
 
 from . import pam
 from . import model
 
+
+logger = logging.getLogger(__package__)
 
 vis_objects = 0
 
@@ -106,8 +109,8 @@ def visualizeForwardMapping(no_connection, pre_index):
                                                      connections[0:slayer],
                                                      distances[0:(slayer - 1)] + [pam.DIS_euclidUV],
                                                      layers[0].particle_systems[neuronset1].particles[pre_index].location)
-        print(s)
-        print(pre_p3d)
+        logger.debug(s)
+        logger.debug(pre_p3d)
         visualizePath(pre_p3d)
 
 
@@ -129,8 +132,8 @@ def visualizeBackwardMapping(no_connection, post_index):
                                                         connections[:(slayer - 1):-1],
                                                         distances[:(slayer - 1):-1],
                                                         layers[-1].particle_systems[neuronset2].particles[post_index].location)
-        print(s)
-        print(post_p3d)
+        logger.debug(s)
+        logger.debug(post_p3d)
         visualizePath(post_p3d)
 
 
@@ -258,7 +261,7 @@ def visualizeUnconnectedNeurons(no_connection):
     sums = numpy.array([sum(row) for row in c])
     indices = numpy.where(sums == -model.CONNECTIONS[no_connection][-1])[0]
 
-    print(indices)
+    logger.debug(indices)
 
     layer = model.CONNECTIONS[no_connection][0][0]
 
@@ -272,7 +275,7 @@ def visualizePartlyConnectedNeurons(no_connection):
     sums = numpy.array([sum(row) for row in c])
     indices = numpy.where(sums < model.CONNECTIONS[no_connection][-1])[0]
 
-    print(indices)
+    logger.debug(indices)
 
     layer = model.CONNECTIONS[no_connection][0][0]
 

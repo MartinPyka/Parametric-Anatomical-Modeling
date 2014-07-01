@@ -195,7 +195,7 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         row = layout.row(align=True)
         op = row.operator("pam.visualize_kernel", text="Apply")
         op = row.operator("pam.visualize_kernel_reset", text="Reset")
-        
+
         row = layout.row()
         op = row.operator("pam.visualize_cursor", text="Kernel at Cursor")
 

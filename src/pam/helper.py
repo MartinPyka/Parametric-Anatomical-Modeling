@@ -2,6 +2,7 @@
 
 import random
 
+
 def accumulate(items):
     """Generator function for cumulative sum"""
     total = 0

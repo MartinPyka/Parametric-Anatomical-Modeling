@@ -90,9 +90,9 @@ def visualizePath(pointlist):
 
 def visualizeForwardMapping(no_connection, pre_index):
     """ This is a debugging routine. The procedure tries to visualize the maximal
-    amount of mappings to determine, where the mapping fails 
+    amount of mappings to determine, where the mapping fails
     no_connection       : connection/mapping-index
-    pre_index           : index of pre-synaptic neuron    
+    pre_index           : index of pre-synaptic neuron
     """
     layers = model.CONNECTIONS[no_connection][0]
     neuronset1 = model.CONNECTIONS[no_connection][1]
@@ -104,18 +104,18 @@ def visualizeForwardMapping(no_connection, pre_index):
     for s in range(1, slayer):
         pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer + 1)],
                                                      connections[0:slayer],
-                                                     distances[0:(slayer-1)] + [pam.DIS_euclidUV],
+                                                     distances[0:(slayer - 1)] + [pam.DIS_euclidUV],
                                                      layers[0].particle_systems[neuronset1].particles[pre_index].location)
         print(s)
-        print(pre_p3d)                                                     
-        visualizePath(pre_p3d)   
-        
-        
+        print(pre_p3d)
+        visualizePath(pre_p3d)
+
+
 def visualizeBackwardMapping(no_connection, post_index):
     """ This is a debugging routine. The procedure tries to visualize the maximal
-    amount of mappings to determine, where the mapping fails 
+    amount of mappings to determine, where the mapping fails
     no_connection       : connection/mapping-index
-    post_index          : index of post-synaptic neuron    
+    post_index          : index of post-synaptic neuron
     """
     layers = model.CONNECTIONS[no_connection][0]
     neuronset1 = model.CONNECTIONS[no_connection][1]
@@ -130,10 +130,9 @@ def visualizeBackwardMapping(no_connection, post_index):
                                                         distances[:(slayer - 1):-1],
                                                         layers[-1].particle_systems[neuronset2].particles[post_index].location)
         print(s)
-        print(post_p3d)                                                     
-        visualizePath(post_p3d)                                                                            
-        
-    
+        print(post_p3d)
+        visualizePath(post_p3d)
+
 
 def visualizeConnectionsForNeuron(no_connection, pre_index):
     """ Visualizes all connections between a given pre-synaptic neuron and its connections
@@ -194,7 +193,7 @@ def visualizeConnectionsForNeuron(no_connection, pre_index):
 
 
 def visualizeOneConnection(no_connection, pre_index, post_index):
-    """ Visualizes all connections between a given pre-synaptic and a given post-synaptic 
+    """ Visualizes all connections between a given pre-synaptic and a given post-synaptic
     no_connection       : connection/mapping-id
     pre_index           : index of pre-synaptic neuron
     post_index          : index of post-synaptic neuron
@@ -213,7 +212,6 @@ def visualizeOneConnection(no_connection, pre_index, post_index):
     post_list_index = numpy.where(
         model.CONNECTION_RESULTS[no_connection]['c'][pre_index] == post_index
     )[0][0]
-
 
     # path of the presynaptic neuron to the synaptic layer
     pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer + 1)],
@@ -253,6 +251,7 @@ def visualizeNeuronSpread(connections, neuron):
             if post_index >= 0:
                 visualizeNeuronSpread(connections[1:], post_index)
 
+
 def visualizeUnconnectedNeurons(no_connection):
     """ Visualizes unconnected neurons for a given connection_index """
     c = numpy.array(model.CONNECTION_RESULTS[no_connection]['c'])
@@ -262,10 +261,11 @@ def visualizeUnconnectedNeurons(no_connection):
     print(indices)
 
     layer = model.CONNECTIONS[no_connection][0][0]
-    
+
     for index in indices:
         visualizePoint(layer.particle_systems[0].particles[index].location)
-        
+
+
 def visualizePartlyConnectedNeurons(no_connection):
     """ Visualizes neurons which are only partly connected """
     c = numpy.array(model.CONNECTION_RESULTS[no_connection]['c'])
@@ -275,9 +275,10 @@ def visualizePartlyConnectedNeurons(no_connection):
     print(indices)
 
     layer = model.CONNECTIONS[no_connection][0][0]
-    
+
     for index in indices:
         visualizePoint(layer.particle_systems[0].particles[index].location)
+
 
 def visualizeClean():
     """delete all visualization objects"""

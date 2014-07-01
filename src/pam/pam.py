@@ -87,7 +87,7 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
     if normal is not None, the normal is used to detect the point on obj, otherwise
     the closest_point_on_mesh operation is used
     """
-    
+
     # if normal is None, we don't worry about orthogonal projections
     if normal is None:
         # get point, normal and face of closest point to a given point
@@ -128,7 +128,7 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
     return p_uv.to_2d()
 
 
-## TODO(SK): Quads into triangles (indices)
+# TODO(SK): Quads into triangles (indices)
 def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
     """ Converts a list of uv-points into 3d. This function is mostly
     used by interpolateUVTrackIn3D. Note, that therefore, not all points
@@ -267,6 +267,7 @@ def map3dPointTo3d(o1, o2, point, normal=None):
 
     return p_new
 
+
 def map3dPointToParticle(obj, particle_system, location):
     """Determines based on a 3d-point location (e.g. given by the cursor
     position) the index of the closest particle on an object
@@ -278,7 +279,7 @@ def map3dPointToParticle(obj, particle_system, location):
         if (p.location - location).length < distance:
             distance = (p.location - location).length
             index = i
-    
+
     return index
 
 
@@ -596,17 +597,16 @@ def computeMapping(layers, connections, distances, point):
                     p3d.append(p3d_t)
                 # elif distances[i] == UVnormal:
                 #    do nothing
-                
-                
+
         # map via UV overlap
         elif connections[i] == MAP_uv:
 
             p2d_t = map3dPointToUV(layers[i], layers[i], p3d[-1])
-            p3d_n = mapUVPointTo3d(layers[i+1], [p2d_t])
-            
+            p3d_n = mapUVPointTo3d(layers[i + 1], [p2d_t])
+
             if p3d_n == []:
                 return None, None, None
-            
+
             p3d_n = p3d_n[0]
 
             # if this is not the last layer, compute the topological mapping
@@ -660,7 +660,7 @@ def computeMapping(layers, connections, distances, point):
                         return None, None, None
                     p3d.append(p3d_t)
                 # elif distances[i] == UVnormal:
-                #    do nothing                
+                #    do nothing
 
         # for the synaptic layer, compute the uv-coordinates
         if i == (len(connections) - 1):
@@ -821,7 +821,6 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
 
         uv_grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
 
-
     logger.info("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)
     for i in range(0, num_particles):
@@ -838,7 +837,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
             continue
 
         post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
-        
+
         if (len(post_neurons) == 0):
             for j in range(0, len(conn[i])):
                 conn[i, j] = -1

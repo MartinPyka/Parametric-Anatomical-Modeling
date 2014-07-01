@@ -34,9 +34,9 @@ id1 = pam.addConnection(
     kernel.gauss,
     [0.2, 0.2, 0., 0.],
     1
-    )
-        
-#id2 = pam.addConnection(
+)
+
+# id2 = pam.addConnection(
 #    [p4, p5, p6],
 #    'ParticleSystem', 'ParticleSystem',
 #   1,
@@ -47,10 +47,8 @@ id1 = pam.addConnection(
 #    kernel.gauss,
 #    [0.2, 0.2, 0., 0.],
 #    1
-#    )    
-    
-    
-    
+#    )
+
 pam.computeAllConnections()
 path = pam_vis.visualizeConnectionsForNeuron(id1, 8)
 
@@ -59,16 +57,16 @@ create_reference = True
 
 if create_reference:
     reference = model.save(EXPORT_PATH + 'test_universal.pam')
-    
+
     f = open(EXPORT_PATH + 'test_universal.path', 'wb')
     pickle.dump(numpy.array(path), f)
     f.close()
-    
+
 
 reference = model.load(EXPORT_PATH + 'test_universal.pam')
 result = model.ModelSnapshot()
 
-print('Connections: ', str(reference.CONNECTION_RESULTS) == str(result.CONNECTION_RESULTS) )
+print('Connections: ', str(reference.CONNECTION_RESULTS) == str(result.CONNECTION_RESULTS))
 
 f = open(EXPORT_PATH + 'test_universal.path', 'rb')
 reference_path = pickle.load(f)

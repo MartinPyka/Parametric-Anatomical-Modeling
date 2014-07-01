@@ -13,7 +13,7 @@ def gauss(uv, guv, *args):
     vv = args[0][1]   # variance in v
     su = args[0][2]   # shift in u
     sv = args[0][3]   # shift in v
-    
+
     ruv = guv - uv  # compute relative position
 
     return math.exp(-((ruv[0] + su) ** 2 / (2 * vu ** 2) +
@@ -32,8 +32,9 @@ def gauss_u(uv, guv, *args):
 
     ruv = guv - uv  # compute relative position
 
-    return math.exp(-(1/2)*((ruv[1]+su)/vu)**2)
-    
+    return math.exp(-(1 / 2) * ((ruv[1] + su) / vu) ** 2)
+
+
 def gauss_v(uv, guv, *args):
     """ Gauss-function that create a gauss-line
     along the v-coordinate
@@ -46,8 +47,9 @@ def gauss_v(uv, guv, *args):
 
     ruv = guv - uv  # compute relative position
 
-    return math.exp(-(1/2)*((ruv[0]+sv)/vv)**2)    
-    
+    return math.exp(-(1 / 2) * ((ruv[0] + sv) / vv) ** 2)
+
+
 def gauss_vis(x, y, origin_x, origin_y, var_x, var_y):
     """Computes distribution value in two dimensional gaussian kernel"""
     return math.exp(-((x - origin_x) ** 2 / (2 * var_x ** 2) +

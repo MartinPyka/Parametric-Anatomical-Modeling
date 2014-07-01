@@ -1,4 +1,4 @@
-.PHONY: tests
+.PHONY: test
 
 UNAME := $(shell uname -s)
 CURRENT_DIR := $(shell pwd)

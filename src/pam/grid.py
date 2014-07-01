@@ -1,6 +1,5 @@
 """Temporary Helper Module"""
 
-import code
 import logging
 import math
 import random

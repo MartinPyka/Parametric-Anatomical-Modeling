@@ -9,8 +9,6 @@ import bpy
 import mathutils
 import numpy as np
 
-import code
-
 from . import constants
 from . import grid
 from . import model

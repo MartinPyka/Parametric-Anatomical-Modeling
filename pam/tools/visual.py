@@ -30,51 +30,6 @@ KERNEL_LIST = [
 ]
 
 
-# # TODO(SK): missing docstring
-# class PAMVisualizeKernelGenerateImage(bpy.types.Operator):
-#     bl_idname = "pam.generate_image"
-#     bl_label = "Generate kernel image"
-#     bl_description = "Generate kernel image"
-
-#     # TODO(SK): will always return true
-#     @classmethod
-#     def poll(cls, context):
-#         return True
-
-#     def check(self, context):
-#         return True
-
-#     def execute(self, context):
-#         pam_visualize = context.scene.pam_visualize
-
-#         temp_texture = uv_visualize_texture(context)
-
-#         if temp_texture.image is not None:
-#             current_image = temp_texture.image
-
-#         temp_image = context.blend_data.images.new(
-#             name="pam.temp_image",
-#             width=pam_visualize.resolution,
-#             height=pam_visualize.resolution,
-#             alpha=True
-#         )
-
-#         u = pam_visualize.u
-#         v = pam_visualize.v
-
-#         args = []
-#         for custom in pam_visualize.customs:
-#             args.append(custom.value)
-
-#         kernel_image(temp_image, kernel.gauss_2d.gauss_viz, u, v, *args)
-
-#         context.blend_data.textures["pam.temp_texture"].image = temp_image
-
-#         context.scene.update()
-
-#         return {'FINISHED'}
-
-
 # TODO(SK): rephrase descriptions
 # TODO(SK): missing docstring
 class PAMVisualizeKernelAtCursor(bpy.types.Operator):

@@ -1,33 +1,40 @@
-.PHONY: test test-ci check-binary
+.PHONY: test test-ci check-binary clean
 
-UNAME := $(shell uname -s)
-PWD := $(shell pwd)
+OS := $(shell uname -s)
 
 ifdef CI
 	BLENDER := $(BLENDER_BIN)
-else ifeq ($(UNAME),Linux)
+else ifeq ($(OS),Linux)
 	# TODO(SK): Linux blender executable filepath missing
 	BLENDER :=
-else ifeq ($(UNAME),Darwin)
+else ifeq ($(OS),Darwin)
 	BLENDER := /Applications/Blender/blender.app/Contents/MacOS/blender
 endif
 
-TEST_DIR := $(PWD)/pam/tests
-TEST_BLENDFILE := test_universal.blend
-TEST_FILE := run_tests.py
-TEST_LOG := unittest.log
-TEST_FLAGS := -b -noaudio
-TEST_FAILED := FAILED
+TESTS_DIRECTORY := ./pam/tests
+RUN := run_tests.py
+BLENDFILE := test_universal.blend
+LOGFILE := unittest.log
+FLAGS := -b -noaudio
+FAILED_STRING := FAILED
 
-test: binary-exists
-	@echo "Running tests"
-	@$(BLENDER) $(TEST_DIR)/$(TEST_BLENDFILE) $(TEST_FLAGS) -P $(TEST_FILE)
+all: test
 
-test-ci: binary-exists
-	@echo "Running continuous integration tests"
-	@$(BLENDER) $(TEST_DIR)/$(TEST_BLENDFILE) $(TEST_FLAGS) -P $(TEST_FILE) 2>&1 | tee $(TEST_LOG)
-	@if grep -q $(TEST_FAILED) $(TEST_LOG); then exit 1; fi
+test: clean binary-exists
+	@echo "Running unittests"
+	@$(BLENDER) $(TESTS_DIRECTORY)/$(BLENDFILE) $(FLAGS) -P $(RUN)
+
+test-ci: clean binary-exists
+	@echo "Running continuous integration unittests"
+	@$(BLENDER) $(TESTS_DIRECTORY)/$(BLENDFILE) $(FLAGS) -P $(RUN) 2>&1 | tee $(LOG)
+	@if grep -q $(FAILED_STRING) $(LOG); then exit 1; fi
 
 binary-exists:
 	@if [ -z $(BLENDER) ]; then echo "Blender binary path not set"; exit 1; fi
-	@if [ ! -x $(BLENDER) ]; then echo "Blender binary is missing or not executable"; exit 1; fi
+	@if [ ! -x $(BLENDER) ]; then echo "Blender binary is missing or it is not executable"; exit 1; fi
+
+clean:
+	@echo "Removing logfiles"
+	rm -rf ./$(LOGFILE)
+	@echo "Removing cached python files"
+	find ./ \( -name "__pycache__" -o -name "*.pyc" \) -delete

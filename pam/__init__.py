@@ -11,13 +11,13 @@ from . import tools
 logger = logging.getLogger(__name__)
 
 bl_info = {
-    "name": "Parametrical Anatomical Mapping",
-    "author": "Sebastian Klatt, Dr. Martin Pyka",
+    "name": "PAM",
+    "author": "Sebastian Klatt, Martin Pyka",
     "version": (0, 2, 0),
     "blender": (2, 7, 0),
     "license": "GPL v2",
-    # TODO(SK): Description missing
-    "description": "",
+    "description": "Parametric Anatomical Modeling is a method to translate "
+                   "large-scale anatomical data into spiking neural networks.",
     "category": "Object"
 }
 

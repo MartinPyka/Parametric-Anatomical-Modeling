@@ -11,7 +11,8 @@ else ifeq ($(OS),Darwin)
 	BLENDER := /Applications/Blender/blender.app/Contents/MacOS/blender
 endif
 
-TESTS_DIRECTORY := ./pam/tests
+SOURCE_DIRECTORY := ./pam
+TESTS_DIRECTORY := $(SOURCE_DIRECTORY)/tests
 RUN := run_tests.py
 BLENDFILE := test_universal.blend
 LOGFILE := unittest.log
@@ -20,11 +21,11 @@ FAILED_STRING := FAILED
 
 all: test
 
-test: clean binary-exists
+test: clean lint binary-exists
 	@echo "Running unittests"
 	@$(BLENDER) $(TESTS_DIRECTORY)/$(BLENDFILE) $(FLAGS) -P $(RUN)
 
-test-ci: clean binary-exists
+test-ci: clean lint binary-exists
 	@echo "Running continuous integration unittests"
 	@$(BLENDER) $(TESTS_DIRECTORY)/$(BLENDFILE) $(FLAGS) -P $(RUN) 2>&1 | tee $(LOG)
 	@if grep -q $(FAILED_STRING) $(LOG); then exit 1; fi
@@ -35,6 +36,10 @@ binary-exists:
 
 clean:
 	@echo "Removing logfiles"
-	rm -rf ./$(LOGFILE)
+	@rm -rf ./$(LOGFILE)
 	@echo "Removing cached python files"
-	find ./ \( -name "__pycache__" -o -name "*.pyc" \) -delete
+	@find ./ \( -name "__pycache__" -o -name "*.pyc" \) -delete
+
+lint:
+	@echo "Checking pep8 compliance"
+	@pep8 $(SOURCE_DIRECTORY) --ignore=E501 --show-source

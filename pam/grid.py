@@ -60,19 +60,20 @@ class UVGrid(object):
         self._resolution = resolution
 
         self._u, self._v = uv_bounds(obj)
-        self._row, self._col = grid_dimension(u, v, res)
+        self._row, self._col = grid_dimension(
+            self._u,
+            self._v,
+            self._resolution
+        )
 
-        self._weights = [[[] for j in range(col)] for i in range(row)]
-        self._uvcoords = [[[] for j in range(col)] for i in range(row)]
-        self._gridmask = [[True for j in range(col)] for i in range(row)]
+        self._weights = [[[] for j in range(self._col)] for i in range(self._row)]
+        self._uvcoords = [[[] for j in range(self._col)] for i in range(self._row)]
+        self._gridmask = [[True for j in range(self._col)] for i in range(self._row)]
 
-        self._pre_kernel = None
-        self._pre_kernel_args = None
-        self._pre_mask = []
-
-        self._post_kernel = None
-        self._post_kernel_args = None
-        self._post_mask = []
+        self._masks = {
+            "pre": [],
+            "post": []
+        }
 
         self._compute_uvcoords()
 
@@ -105,76 +106,40 @@ class UVGrid(object):
     def uv_bounds(self):
         return self._u, self._v
 
-    @property
-    def pre_kernel(self):
-        return self._pre_kernel
-
-    @pre_kernel.setter
-    def pre_kernel(self, func):
-        if not isinstance(func, types.FunctionType):
-            logger.error("kernel must be a function, %s is not", func)
-            raise Exception("kernel must be a function")
-
-        self._pre_kernel = func
-
-    @property
-    def pre_kernel_args(self):
-        return self._pre_kernel_args
-
-    @pre_kernel_args.setter
-    def pre_kernel_args(self, args):
-        self._pre_kernel_args = args
-
-    @property
-    def post_kernel(self):
-        return self._post_kernel
-
-    @post_kernel.setter
-    def post_kernel(self, func):
-        if not isinstance(func, types.FunctionType):
-            logger.error("kernel must be a function, %s is not", func)
-            raise Exception("kernel must be a function")
-
-        self._post_kernel = func
-
-    @property
-    def post_kernel_args(self):
-        return self._post_kernel_args
-
-    @post_kernel_args.setter
-    def post_kernel_args(self, args):
-        self._post_kernel_args = args
+    # TODO(SK): missing docstring
+    def compute_pre_mask(self, kernel, args):
+        self._compute_mask("pre", kernel, args)
 
     # TODO(SK): missing docstring
-    def compute_preMask(self):
-        elems = range(int((2. / self._resolution) + 1))
-        shift = int((len(elems) - 1) / 2)
-        for r_row in elems:
-            for r_col in range(int((2 / self._resolution) + 1)):
-                relativ_row = r_row - shift
-                relativ_col = r_col - shift
-                v = self._pre_kernel(
-                    mathutils.Vector((0, 0)),
-                    mathutils.Vector((relativ_row * self._resolution, relativ_col * self._resolution)),
-                    self._pre_kernel_args)
-                if (v > constants.KERNEL_THRESHOLD):
-                    self._pre_mask.append((relativ_row, relativ_col, v))
+    def compute_post_mask(self, kernel, args):
+        self._compute_mask("post", kernel, args)
 
     # TODO(SK): missing docstring
-    def compute_postMask(self):
-        elems = range(int((2. / self._resolution) + 1))
-        shift = int((len(elems) - 1) / 2)
-        for r_row in elems:
-            for r_col in range(int((2. / self._resolution) + 1)):
-                relativ_row = r_row - shift
-                relativ_col = r_col - shift
-                v = self._post_kernel(
-                    mathutils.Vector((0, 0)),
-                    mathutils.Vector((relativ_row * self._resolution, relativ_col * self._res)),
-                    self._post_kernel_args)
+    def _compute_mask(self, mask, kernel, args):
 
-                if (v > constants.KERNEL_THRESHOLD):
-                    self._post_mask.append((relativ_row, relativ_col, v))
+        elements = range(math.ceil(2 / self._resolution))
+        shift = math.floor(len(elements) / 2)
+
+        for row in elements:
+            for col in elements:
+                relative_row = row - shift
+                relative_col = col - shift
+
+                result = kernel(
+                    mathutils.Vector((0, 0)),
+                    mathutils.Vector((
+                        relative_row * self._resolution,
+                        relative_col * self._resolution
+                    )),
+                    args
+                )
+
+                if result > constants.KERNEL_THRESHOLD:
+                    self._masks[mask].append((
+                        relative_row,
+                        relative_col,
+                        result
+                    ))
 
     def insert_postNeuron(self, index, uv, p_3d, d):
         """Computes weights with current registered kernel across the grid"""
@@ -185,7 +150,7 @@ class UVGrid(object):
         if row == -1:
             return
 
-        for cell in self._post_mask:
+        for cell in self._masks["post"]:
             if (row + cell[0] >= 0) & (row + cell[0] < self._row) & (col + cell[1] >= 0) & (col + cell[1] < self._col):
                 if self._gridmask[row + cell[0]][col + cell[1]] is True:
                     self._weights[int(row + cell[0])][int(col + cell[1])].append(
@@ -195,7 +160,7 @@ class UVGrid(object):
         """ Computes the intersect between premask applied on row and col and
         the weights-array """
         result = []
-        for cell in self._pre_mask:
+        for cell in self._masks["pre"]:
             # if we are in the bords of the grid
             if (row + cell[0] >= 0) & (row + cell[0] < self._row) & (col + cell[1] >= 0) & (col + cell[1] < self._col):
                 # if the weight-cell has some entries

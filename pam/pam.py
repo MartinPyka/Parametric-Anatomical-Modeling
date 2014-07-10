@@ -89,7 +89,7 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
     """
 
     if normal:
-        normal_scaled = normal * constants.ray_fac
+        normal_scaled = normal * constants.RAY_FAC
         p, n, f = obj.ray_cast(point + normal_scaled, point - normal_)
         # if no collision could be detected, return None
         if f == -1: return None
@@ -221,7 +221,7 @@ def map3dPointTo3d(o1, o2, point, normal=None):
         # get point, normal and face of closest point to a given point
         p, n, f = o1.closest_point_on_mesh(point)
     else:
-        p, n, f = o1.ray_cast(point + normal * constants.ray_fac, point - normal * constants.ray_fac)
+        p, n, f = o1.ray_cast(point + normal * constants.RAY_FAC, point - normal * constants.RAY_FAC)
         # if no collision could be detected, return None
         if f == -1:
             return None

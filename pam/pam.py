@@ -88,15 +88,14 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
     the closest_point_on_mesh operation is used
     """
 
-    # if normal is None, we don't worry about orthogonal projections
-    if normal is None:
+    if normal:
+        normal_scaled = normal * constants.ray_fac
+        p, n, f = obj.ray_cast(point + normal_scaled, point - normal_)
+        # if no collision could be detected, return None
+        if f == -1: return None
+    else:
         # get point, normal and face of closest point to a given point
         p, n, f = obj.closest_point_on_mesh(point)
-    else:
-        p, n, f = obj.ray_cast(point + normal * constants.ray_fac, point - normal * constants.ray_fac)
-        # if no collision could be detected, return None
-        if f == -1:
-            return None
 
     # get the uv-coordinate of the first triangle of the polygon
     A = obj.data.vertices[obj.data.polygons[f].vertices[0]].co

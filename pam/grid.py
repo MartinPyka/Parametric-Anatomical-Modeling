@@ -53,13 +53,11 @@ def uv_to_grid_dimension(u, v, res):
 
 class UVGrid(object):
     """Convenience class to raster and project on uv mesh"""
-    _weights = None
-    _uvcoords = None
 
-    def __init__(self, obj, res=constants.DEFAULT_RESOLUTION):
+    def __init__(self, obj, resolution=constants.DEFAULT_RESOLUTION):
         self._obj = obj
         self._scaling = obj['uv_scaling']
-        self._res = res
+        self._resolution = resolution
 
         u, v = uv_bounds(obj)
         row, col = uv_to_grid_dimension(u, v, res)
@@ -105,7 +103,7 @@ class UVGrid(object):
 
     @property
     def resolution(self):
-        return self._res
+        return self._resolution
 
     @property
     def uv_bounds(self):
@@ -153,30 +151,30 @@ class UVGrid(object):
 
     # TODO(SK): missing docstring
     def compute_preMask(self):
-        elems = range(int((2. / self._res) + 1))
+        elems = range(int((2. / self._resolution) + 1))
         shift = int((len(elems) - 1) / 2)
         for r_row in elems:
-            for r_col in range(int((2 / self._res) + 1)):
+            for r_col in range(int((2 / self._resolution) + 1)):
                 relativ_row = r_row - shift
                 relativ_col = r_col - shift
                 v = self._pre_kernel(
                     mathutils.Vector((0, 0)),
-                    mathutils.Vector((relativ_row * self._res, relativ_col * self._res)),
+                    mathutils.Vector((relativ_row * self._resolution, relativ_col * self._resolution)),
                     self._pre_kernel_args)
                 if (v > constants.KERNEL_THRESHOLD):
                     self._pre_mask.append((relativ_row, relativ_col, v))
 
     # TODO(SK): missing docstring
     def compute_postMask(self):
-        elems = range(int((2. / self._res) + 1))
+        elems = range(int((2. / self._resolution) + 1))
         shift = int((len(elems) - 1) / 2)
         for r_row in elems:
-            for r_col in range(int((2. / self._res) + 1)):
+            for r_col in range(int((2. / self._resolution) + 1)):
                 relativ_row = r_row - shift
                 relativ_col = r_col - shift
                 v = self._post_kernel(
                     mathutils.Vector((0, 0)),
-                    mathutils.Vector((relativ_row * self._res, relativ_col * self._res)),
+                    mathutils.Vector((relativ_row * self._resolution, relativ_col * self._res)),
                     self._post_kernel_args)
 
                 if (v > constants.KERNEL_THRESHOLD):
@@ -266,8 +264,8 @@ class UVGrid(object):
             # u = min(self._u, max(0., u))
             # v = min(self._v, max(0., v))
 
-        row = math.floor(u / self._res)
-        col = math.floor(v / self._res)
+        row = math.floor(u / self._resolution)
+        col = math.floor(v / self._resolution)
 
         logger.debug("uv (%f, %f) to cell index [%d][%d]", u, v, row, col)
 
@@ -275,9 +273,9 @@ class UVGrid(object):
 
     def _cell_index_to_uv(self, row, col):
         """Returns uv coordinate from the center of a cell"""
-        center = self._res / 2
-        u = row * self._res + center
-        v = col * self._res + center
+        center = self._resolution / 2
+        u = row * self._resolution + center
+        v = col * self._resolution + center
 
         logger.debug(
             "cell index [%d][%d] to center uv (%f, %f)",

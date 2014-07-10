@@ -2,6 +2,8 @@
 
 import random
 
+from . import constants
+
 
 def accumulate(items):
     """Generator function for cumulative sum"""
@@ -42,9 +44,9 @@ def transformed_objects():
     transformed = []
 
     for obj in objects:
-        is_relocated = obj.location != DEFAULT_LOCATION
-        is_scaled = obj.scale != DEFAULT_SCALE
-        is_rotated = obj.rotation_euler != DEFAULT_ROTATION
+        is_relocated = obj.location != constants.DEFAULT_LOCATION
+        is_scaled = obj.scale != constants.DEFAULT_SCALE
+        is_rotated = obj.rotation_euler != constants.DEFAULT_ROTATION
         if is_relocated or is_scaled or is_rotated:
             transformed.append(obj)
 

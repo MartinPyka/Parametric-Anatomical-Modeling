@@ -8,16 +8,10 @@ import types
 import bpy
 import mathutils
 
+from . import constants
 from . import helper
 
 logger = logging.getLogger(__package__)
-
-DEFAULT_LOCATION = mathutils.Vector((0.0, 0.0, 0.0))
-DEFAULT_SCALE = mathutils.Vector((1.0, 1.0, 1.0))
-DEFAULT_ROTATION = mathutils.Euler((0.0, 0.0, 0.0), "XYZ")
-
-DEFAULT_RESOLUTION = 0.05
-KERNEL_THRESHOLD = 0.05
 
 
 def uv_bounds(obj):
@@ -62,7 +56,7 @@ class UVGrid(object):
     _weights = None
     _uvcoords = None
 
-    def __init__(self, obj, res=DEFAULT_RESOLUTION):
+    def __init__(self, obj, res=constants.DEFAULT_RESOLUTION):
         self._obj = obj
         self._scaling = obj['uv_scaling']
         self._res = res
@@ -169,7 +163,7 @@ class UVGrid(object):
                     mathutils.Vector((0, 0)),
                     mathutils.Vector((relativ_row * self._res, relativ_col * self._res)),
                     self._pre_kernel_args)
-                if (v > KERNEL_THRESHOLD):
+                if (v > constants.KERNEL_THRESHOLD):
                     self._pre_mask.append((relativ_row, relativ_col, v))
 
     # TODO(SK): missing docstring
@@ -185,7 +179,7 @@ class UVGrid(object):
                     mathutils.Vector((relativ_row * self._res, relativ_col * self._res)),
                     self._post_kernel_args)
 
-                if (v > KERNEL_THRESHOLD):
+                if (v > constants.KERNEL_THRESHOLD):
                     self._post_mask.append((relativ_row, relativ_col, v))
 
     def insert_postNeuron(self, index, uv, p_3d, d):

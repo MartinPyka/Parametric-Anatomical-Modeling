@@ -1,5 +1,7 @@
 """Constants"""
 
+import mathutils
+
 # config files with many hard-coded variables, used in
 # in other parts of PAM, primarily in pam.py
 
@@ -21,3 +23,10 @@ DIS_UVnormal = 4
 RAY_FAC = 0.3
 
 INTERPOLATION_QUALITY = 10
+
+DEFAULT_LOCATION = mathutils.Vector((0.0, 0.0, 0.0))
+DEFAULT_SCALE = mathutils.Vector((1.0, 1.0, 1.0))
+DEFAULT_ROTATION = mathutils.Euler((0.0, 0.0, 0.0), "XYZ")
+
+DEFAULT_RESOLUTION = 0.05
+KERNEL_THRESHOLD = 0.05

@@ -1,5 +1,3 @@
-.PHONY: test test-ci check-binary clean
-
 OS := $(shell uname -s)
 
 ifdef CI
@@ -27,8 +25,8 @@ test: clean lint binary-exists
 
 test-ci: clean lint binary-exists
 	@echo "Running continuous integration unittests"
-	@$(BLENDER) $(TESTS_DIRECTORY)/$(BLENDFILE) $(FLAGS) -P $(RUN) 2>&1 | tee $(LOG)
-	@if grep -q $(FAILED_STRING) $(LOG); then exit 1; fi
+	@$(BLENDER) $(TESTS_DIRECTORY)/$(BLENDFILE) $(FLAGS) -P $(RUN) 2>&1 | tee $(LOGFILE)
+	@if grep -q $(FAILED_STRING) $(LOGFILE); then exit 1; fi
 
 binary-exists:
 	@if [ -z $(BLENDER) ]; then echo "Blender binary path not set"; exit 1; fi
@@ -43,3 +41,5 @@ clean:
 lint:
 	@echo "Checking pep8 compliance"
 	@pep8 $(SOURCE_DIRECTORY) --ignore=E501 --show-source
+
+.PHONY: test test-ci check-binary clean

@@ -59,12 +59,8 @@ class UVGrid(object):
         self._scaling = obj['uv_scaling']
         self._resolution = resolution
 
-        u, v = uv_bounds(obj)
-        row, col = grid_dimension(u, v, res)
-        self._u = u
-        self._v = v
-        self._row = row
-        self._col = col
+        self._u, self._v = uv_bounds(obj)
+        self._row, self._col = grid_dimension(u, v, res)
 
         self._weights = [[[] for j in range(col)] for i in range(row)]
         self._uvcoords = [[[] for j in range(col)] for i in range(row)]

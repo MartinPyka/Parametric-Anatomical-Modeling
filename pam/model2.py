@@ -1,5 +1,10 @@
 """Model data module"""
 
+import os
+
+CURRENT = None
+PAST = []
+
 
 class Network(object):
     """Network model data"""
@@ -73,3 +78,28 @@ class Neuron(object):
 
     def __init__(self):
         pass
+
+
+def load_network(filepath):
+    return pickle.load(open(filepath), "rb")
+
+
+def dump_network(filepath, model=None):
+    to_dump = CURRENT
+
+    if model and isinstance(model, Network):
+        to_dump = model
+
+    pickle.dump(to_dump, open(filepath, "wb"))
+
+
+def dump_all_network(path, prefix):
+    dump_network(path, "_".join(prefix, "current"))
+    for i, network in enumerate(PAST):
+        dump_network(path, "_".join(prefix, "past", str(i)))
+
+
+def reset():
+    global CURRENT, PAST
+    PAST.append(current)
+    CURRENT = Network()

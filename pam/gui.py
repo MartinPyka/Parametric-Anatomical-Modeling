@@ -203,6 +203,19 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         op = row.operator("pam.visualize_cursor", text="Generate at cursor")
 
 
+class PAMMappingPanel(bpy.types.Panel):
+    """A panel to conveniently create neuron mappings"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "Mapping"
+    bl_category = "PAM Mapping"
+
+    def draw(self, context):
+        pass
+
+
 # TODO(SK): missing docstring
 class CustomPropList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data,

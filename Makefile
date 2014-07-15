@@ -10,22 +10,27 @@ else ifeq ($(OS),Darwin)
 endif
 
 SOURCE_DIRECTORY := ./pam
-TESTS_DIRECTORY := $(SOURCE_DIRECTORY)/tests
-RUN := run_tests.py
+
+TEST_DIRECTORY := $(SOURCE_DIRECTORY)/tests
+TEST_FLAGS := --background --disable-crash-handler -noaudio
+TEST_ENTRY := run_tests.py
+FAILED_STRING := FAILED
+
 BLENDFILE := test_universal.blend
 LOGFILE := unittest.log
-FLAGS := -b -noaudio
-FAILED_STRING := FAILED
+
+PEP8_FLAGS := --ignore=E501 --show-source
+
 
 all: test
 
-test: clean lint binary-exists
+test: clean pep8 binary-exists
 	@echo "Running unittests"
-	@$(BLENDER) $(TESTS_DIRECTORY)/$(BLENDFILE) $(FLAGS) -P $(RUN)
+	$(BLENDER) $(TEST_DIRECTORY)/$(BLENDFILE) $(TEST_FLAGS) --python $(TEST_ENTRY)
 
-test-ci: clean lint binary-exists
+test-ci: clean pep8 binary-exists
 	@echo "Running continuous integration unittests"
-	@$(BLENDER) $(TESTS_DIRECTORY)/$(BLENDFILE) $(FLAGS) -P $(RUN) 2>&1 | tee $(LOGFILE)
+	$(BLENDER) $(TEST_DIRECTORY)/$(BLENDFILE) $(TEST_FLAGS) --python $(TEST_ENTRY) 2>&1 | tee $(LOGFILE)
 	@if grep -q $(FAILED_STRING) $(LOGFILE); then exit 1; fi
 
 binary-exists:
@@ -34,12 +39,12 @@ binary-exists:
 
 clean:
 	@echo "Removing logfiles"
-	@rm -rf ./$(LOGFILE)
+	rm -rf ./$(LOGFILE)
 	@echo "Removing cached python files"
-	@find ./ \( -name "__pycache__" -o -name "*.pyc" \) -delete
+	find . \( -name "__pycache__" -o -name "*.pyc" \) -delete
 
-lint:
+pep8:
 	@echo "Checking pep8 compliance"
-	@pep8 $(SOURCE_DIRECTORY) --ignore=E501 --show-source
+	pep8 $(SOURCE_DIRECTORY) $(PEP8_FLAGS)
 
 .PHONY: test test-ci check-binary clean

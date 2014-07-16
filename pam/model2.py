@@ -93,12 +93,6 @@ def dump_network(filepath, model=None):
     pickle.dump(to_dump, open(filepath, "wb"))
 
 
-def dump_all_network(path, prefix):
-    dump_network(path, "_".join(prefix, "current"))
-    for i, network in enumerate(PAST):
-        dump_network(path, "_".join(prefix, "past", str(i)))
-
-
 def reset():
     global CURRENT, PAST
     PAST.append(current)

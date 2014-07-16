@@ -7,7 +7,7 @@ PAST = []
 
 
 class Network(object):
-    """Network model data"""
+    """Network representation"""
 
     def __init__(self):
         pass

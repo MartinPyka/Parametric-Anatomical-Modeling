@@ -11,15 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-PAM
-===
-
-.. automodule:: pam
-
-Helper
-======
-
-.. automodule:: pam.helper
+   modules/helper
 
 Indices and tables
 ==================

@@ -6,7 +6,14 @@ from . import constants
 
 
 def accumulate(items):
-    """Generator function for cumulative sum"""
+    """Generator function for cumulative sum
+
+    :param items: List of numbers to accumulate
+    :type items: List of int
+    :return: Sum of all numbers
+    :rtype: int
+
+    """
     total = 0
     for item in items:
         total += item
@@ -14,7 +21,15 @@ def accumulate(items):
 
 
 def random_select_indices(items, quantity):
-    """Returns a list of randomly selected indices"""
+    """Selects random indices
+
+    :param items: A list of int
+    :type items: list of int
+    :param int quantity: Number of draws from ``items``
+    :return: Drawn items
+    :rtype: list of int
+
+    """
     if quantity < 0:
         logger.error("quantity must not be smaller than zero")
         raise Exception("Quantity must not be smaller than zero")
@@ -38,8 +53,14 @@ def random_select_indices(items, quantity):
     return indices
 
 
+# TODO(SK): Check if ojects are really of type bpy.types.Mesh
 def transformed_objects():
-    """Returns a list of all objects with transformation modifiers applied"""
+    """Returns a list of all objects with transformation modifiers applied
+
+    :return: Transformed objects
+    :rtype: list of ``bpy.types.Mesh``
+
+    """
     objects = bpy.data.objects
     transformed = []
 
@@ -59,7 +80,16 @@ def transformed_objects():
 
 
 def uv_pixel_values(image, u, v):
-    """Returns rgba value at uv coordinate from an image"""
+    """Returns rgba value at uv coordinate from an image
+
+    :param bpy.types.Image image: An image
+    :param int u: u coordinate
+    :param int v: v coordinate
+
+    :return: A tuple of 4 rgba values
+    :rtype: list
+
+    """
     if u < 0.0 or u > 1.0 or v < 0.0 or v > 1.0:
         logger.error("uv coordinate out of bounds (%f, %f)", u, v)
         raise Exception("UV coordinate are out of bounds")

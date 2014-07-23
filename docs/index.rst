@@ -1,17 +1,25 @@
-.. Parametric Anatomical Mapping documentation master file, created by
-   sphinx-quickstart on Tue Feb 11 10:57:04 2014.
+.. pam-blender documentation master file, created by
+   sphinx-quickstart on Wed Jul 23 13:28:28 2014.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Parametric Anatomical Mapping's documentation!
-=========================================================
+Welcome to pam-blender's documentation!
+=======================================
 
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
+PAM
+===
 
+.. automodule:: pam
+
+Helper
+======
+
+.. automodule:: pam.helper
 
 Indices and tables
 ==================
@@ -19,4 +27,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

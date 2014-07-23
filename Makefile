@@ -29,11 +29,11 @@ help:
 
 test: clean pep8 binary-exists
 	@echo "Running unittests"
-	$(BLENDER) $(TEST_DIRECTORY)/$(BLENDFILE) $(TEST_FLAGS) --python $(TEST_ENTRY)
+	$(BLENDER) $(TEST_DIRECTORY)/$(BLENDFILE) $(BLENDERFLAGS) --python $(TEST_ENTRY)
 
 test-ci: clean pep8 binary-exists
 	@echo "Running continuous integration unittests"
-	$(BLENDER) $(TEST_DIRECTORY)/$(BLENDFILE) $(TEST_FLAGS) --python $(TEST_ENTRY) 2>&1 | tee $(LOGFILE)
+	$(BLENDER) $(TEST_DIRECTORY)/$(BLENDFILE) $(BLENDERFLAGS) --python $(TEST_ENTRY) 2>&1 | tee $(LOGFILE)
 	@if grep -q $(FAILED_STRING) $(LOGFILE); then exit 1; fi
 
 binary-exists:

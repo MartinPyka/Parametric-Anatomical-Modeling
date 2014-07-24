@@ -70,9 +70,6 @@ class PAMModelDataPanel(bpy.types.Panel):
         row.operator("pam.model_load", text="Load")
         row.operator("pam.model_save", text="Save")
 
-        col = layout.column()
-        col.operator("pam.map_via_uv", text="Deform mesh via UV")
-
 
 class PAMToolsPanel(bpy.types.Panel):
     """A tools panel inheriting all neuronal modelling operations"""
@@ -81,11 +78,20 @@ class PAMToolsPanel(bpy.types.Panel):
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
     bl_label = "Connections"
-    bl_category = "PAM Visualize"
+    bl_category = "PAM"
 
     def draw(self, context):
         layout = self.layout
         row = layout.column()
+        row.operator(
+            "pam_vis.visualize_connections_for_neuron",
+            "Connections at Cursor"
+        )
+        row.operator(
+            "pam_vis.visualize_unconnected_neurons",
+            "Unconnected neurons"
+        )
+        row.separator()
         row.prop(
             context.scene.pam_visualize_conns,
             "connections",
@@ -95,44 +101,7 @@ class PAMToolsPanel(bpy.types.Panel):
             "pam_vis.visualize_connections_all",
             "Connections for all mappings"
         )
-        row.operator(
-            "pam_vis.visualize_connections_for_neuron",
-            "Connections at Cursor"
-        )
-        row.operator(
-            "pam_vis.visualize_unconnected_neurons",
-            "Unconnected neurons"
-        )
         row.operator("pam_vis.visualize_clean", "Clear Visualizations")
-
-
-class PAMMeasureToolsPanel(bpy.types.Panel):
-    """A tools panel inheriting all measurment operations"""
-
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS"
-    bl_context = "objectmode"
-    bl_label = "Neuron Distribution"
-    bl_category = "PAM Measure"
-
-    def draw(self, context):
-        active_obj = context.active_object
-
-        name = mesh_object_name(active_obj)
-
-        layout = self.layout
-        layout.label("Active: %s" % name)
-
-        row = layout.row()
-        col = row.column(align=True)
-        col.prop(context.scene.pam_measure, "quantity", text="Neurons")
-        col.prop(context.scene.pam_measure, "area", text="Area")
-
-        row = layout.row()
-        col = row.column()
-        op = col.operator("pam.measure_layer", "Calculate")
-        col.label("Total neurons: %d" % context.scene.pam_measure.neurons)
-        col.label("Total area: %d" % context.scene.pam_measure.total_area)
 
 
 class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
@@ -142,7 +111,8 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
     bl_label = "Kernel"
-    bl_category = "PAM Visualize"
+    bl_category = "PAM"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
 
@@ -201,6 +171,51 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
 
         row = layout.row(align=True)
         op = row.operator("pam.visualize_cursor", text="Generate at cursor")
+
+
+class PAMModelingPanel(bpy.types.Panel):
+    """A panel for loading and saving model data"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "Modeling Tools"
+    bl_category = "PAM"
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row(align=True)
+        row.operator("pam.map_via_uv", text="Deform mesh via UV")
+
+
+class PAMMeasureToolsPanel(bpy.types.Panel):
+    """A tools panel inheriting all measurment operations"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "Measure"
+    bl_category = "PAM"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        active_obj = context.active_object
+
+        name = mesh_object_name(active_obj)
+
+        layout = self.layout
+        layout.label("Active: %s" % name)
+
+        row = layout.row()
+        col = row.column(align=True)
+        col.prop(context.scene.pam_measure, "quantity", text="Neurons")
+        col.prop(context.scene.pam_measure, "area", text="Area")
+
+        row = layout.row()
+        col = row.column()
+        op = col.operator("pam.measure_layer", "Calculate")
+        col.label("Total neurons: %d" % context.scene.pam_measure.neurons)
+        col.label("Total area: %d" % context.scene.pam_measure.total_area)
 
 
 # TODO(SK): missing docstring

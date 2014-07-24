@@ -1,5 +1,6 @@
 """Visualization Module"""
 
+import inspect
 import logging
 import math
 
@@ -15,27 +16,27 @@ logger = logging.getLogger(__package__)
 
 
 VIEW_LIST = [
-    ("NORMAL", "Normal", "", 1),
-    ("MAPPED", "Mapped", "", 2)
+    ("NORMAL", "Multitextured", "", 0),
+    ("MAPPED", "GLSL", "", 1)
 ]
 
 MODE_LIST = [
-    ("CURSOR", "Cursor", "", 1),
-    ("COORDINATES", "Coordinates", "", 2)
+    ("CURSOR", "At cursor", "", 0),
+    ("COORDINATES", "At uv", "", 1)
 ]
 
-KERNEL_LIST = [
-    ("GAUSSIAN", "Gaussian", "", 1),
-    ("UNI", "Uni", "", 2)
-]
+KERNELS = {
+    "GAUSSIAN": kernel.gaussian.gauss_vis,
+    "UNITY": kernel.gaussian.unity_vis
+}
 
 
 # TODO(SK): rephrase descriptions
 # TODO(SK): missing docstring
-class PAMVisualizeKernelAtCursor(bpy.types.Operator):
-    bl_idname = "pam.visualize_cursor"
-    bl_label = "Generate kernel image at cursor position"
-    bl_description = "Generate kernel image"
+class PAMVisualizeKernel(bpy.types.Operator):
+    bl_idname = "pam.visualize"
+    bl_label = "Generate kernel texture"
+    bl_description = "Generate kernel texture"
     bl_options = {'UNDO'}
 
     @classmethod
@@ -177,6 +178,19 @@ class PamVisualizeKernelRemoveCustomParam(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class PamVisualizeKernelResetCustomParams(bpy.types.Operator):
+    bl_idname = "pam.reset_params"
+    bl_label = "Reset kernel parameter"
+    bl_description = "Remove kernel parameter"
+    bl_options = {'UNDO'}
+
+    def execute(self, context):
+        pam_visualize = context.scene.pam_visualize
+        update_kernels(pam_visualize, context)
+
+        return {'FINISHED'}
+
+
 class PamVisualizeClean(bpy.types.Operator):
     bl_idname = "pam_vis.visualize_clean"
     bl_label = "Clean Visualizations"
@@ -280,6 +294,21 @@ def kernel_image(image, func, u, v, *args):
             image.pixels[pixel_index:pixel_index + 3] = color
 
 
+def get_kernels(self, context):
+    return [(k, k, "", i) for i, k in enumerate(KERNELS, 1)]
+
+
+def update_kernels(self, context):
+    self.customs.clear()
+    func = KERNELS[self.kernel]
+    args, _, _, defaults = inspect.getargspec(func)
+    params = zip(args, defaults)
+    for k, v in params:
+        p = self.customs.add()
+        p.name = k
+        p.value = v
+
+
 # TODO(SK): missing docstring
 def uv_visualize_texture():
     if "pam.temp_texture" in bpy.data.textures:
@@ -299,11 +328,11 @@ def uv_visualize_texture():
 
 
 # TODO(SK): missing docstring
-def toggle_view_mode(self, context):
+def toggle_view(self, context):
     textured_solid = False
     material_mode = "MULTITEXTURE"
 
-    if self.view_mode == "MAPPED":
+    if self.view == "MAPPED":
         textured_solid = True
         material_mode = "GLSL"
 
@@ -352,21 +381,19 @@ class PamVisualizeKernelFloatProperties(bpy.types.PropertyGroup):
 
 # TODO(SK): missing docstring
 class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
-    view_mode = bpy.props.EnumProperty(
-        name="View mode",
-        default="NORMAL",
+    view = bpy.props.EnumProperty(
+        name="View",
         items=VIEW_LIST,
-        update=toggle_view_mode
+        update=toggle_view
     )
-    operator_mode = bpy.props.EnumProperty(
-        name="Operator mode",
-        default="CURSOR",
+    mode = bpy.props.EnumProperty(
+        name="Mode",
         items=MODE_LIST
     )
     kernel = bpy.props.EnumProperty(
         name="Kernel function",
-        default="GAUSSIAN",
-        items=KERNEL_LIST
+        items=get_kernels,
+        update=update_kernels
     )
     resolution = bpy.props.IntProperty(
         name="Kernel image resolution",
@@ -375,18 +402,6 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
         soft_min=8,
         soft_max=4096,
         subtype="PIXEL"
-    )
-    u = bpy.props.FloatProperty(
-        name="u",
-        default=0.0,
-        min=0.0,
-        max=1.0,
-    )
-    v = bpy.props.FloatProperty(
-        name="v",
-        default=0.0,
-        min=0.0,
-        max=1.0,
     )
     active_index = bpy.props.IntProperty()
     customs = bpy.props.CollectionProperty(

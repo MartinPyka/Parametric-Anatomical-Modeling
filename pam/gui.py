@@ -128,19 +128,13 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         row.label("Active: %s" % name)
 
         row = layout.row()
-        row.prop(context.scene.pam_visualize, "view_mode", expand=True)
+        row.prop(context.scene.pam_visualize, "view", expand=True)
 
         row = layout.row()
         row.prop(context.scene.pam_visualize, "kernel", text="")
 
-        col = layout.column(align=True)
-        col.label("Resolution:")
-        col.prop(context.scene.pam_visualize, "resolution", text="r")
-
-        col = layout.column(align=True)
-        col.label("Origin:")
-        col.prop(context.scene.pam_visualize, "u")
-        col.prop(context.scene.pam_visualize, "v")
+        row = layout.row()
+        row.prop(context.scene.pam_visualize, "resolution", text="Resolution")
 
         row = layout.row()
         row.label("Parameter:")
@@ -153,24 +147,25 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
             active_dataptr=context.scene.pam_visualize,
             active_propname="active_index",
             type="DEFAULT",
-            rows=3,
+            rows=6,
         )
-        col = row.column(align=True)
-        col.operator("pam.add_param", icon="ZOOMIN", text="")
-        col.operator("pam.remove_param", icon="ZOOMOUT", text="")
+        # col = row.column(align=True)
+        # col.operator("pam.add_param", icon="ZOOMIN", text="")
+        # col.operator("pam.remove_param", icon="ZOOMOUT", text="")
 
         # row = layout.row(align=True)
         # row.template_preview(context.blend_data.textures.get("pam.temp_texture"))
 
         row = layout.row(align=True)
-        op = row.operator("pam.visualize_kernel", text="Apply")
-        op = row.operator("pam.visualize_kernel_reset", text="Reset")
+        op = row.operator("pam.reset_params", text="Reset parameter")
+
+        layout.separator()
 
         row = layout.row()
-        op = row.operator("pam.visualize_cursor", text="Kernel at Cursor")
+        row.prop(context.scene.pam_visualize, "mode", expand=True)
 
-        row = layout.row(align=True)
-        op = row.operator("pam.visualize_cursor", text="Generate at cursor")
+        row = layout.row()
+        op = row.operator("pam.visualize", text="Generate texture")
 
 
 class PAMModelingPanel(bpy.types.Panel):

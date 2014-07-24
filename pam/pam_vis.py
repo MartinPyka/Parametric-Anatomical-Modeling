@@ -192,7 +192,10 @@ def visualizeConnectionsForNeuron(no_connection, pre_index):
                         else:
                             visualizePath([pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1])
 
-    return [pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1]
+    if first_item == False:
+        return [pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1]
+    else:
+        return []
 
 
 def visualizeOneConnection(no_connection, pre_index, post_index):

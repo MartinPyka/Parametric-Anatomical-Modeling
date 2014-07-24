@@ -50,7 +50,6 @@ class PAMVisualizeKernel(bpy.types.Operator):
     def execute(self, context):
         active_obj = context.active_object
         pam_visualize = context.scene.pam_visualize
-        cursor_location = context.scene.cursor_location.copy()
 
         if active_obj.data.uv_layers.active is None:
             message = "active object has no active uv layer"
@@ -60,24 +59,40 @@ class PAMVisualizeKernel(bpy.types.Operator):
 
             return {'CANCELLED'}
 
+        cursor = context.scene.cursor_location.copy()
+
         uv_scaling_factor, _ = pam.computeUVScalingFactor(active_obj)
 
-        u, v = pam.map3dPointToUV(
-            active_obj,
-            active_obj,
-            cursor_location
-        )
+        u, v = None, None
 
-        logger.debug(
-            "object (%s) uvscaling (%f) cursor (%f, %f, %f) uvmapped (%f, %f)",
-            active_obj.name,
-            uv_scaling_factor,
-            cursor_location[0],
-            cursor_location[1],
-            cursor_location[2],
-            u,
-            v
-        )
+        if pam_visualize.mode == "CURSOR":
+            u, v = pam.map3dPointToUV(
+                active_obj,
+                active_obj,
+                cursor_location
+            )
+
+            logger.debug(
+                "object (%s) uvscaling (%f) cursor (%f, %f, %f) uvmapped (%f, %f)",
+                active_obj.name,
+                uv_scaling_factor,
+                cursor_location[0],
+                cursor_location[1],
+                cursor_location[2],
+                u,
+                v
+            )
+        elif pam_visualize.mode == "COORDINATES":
+            u = pam_visualize.customs["u"]
+            v = pam_visualize.customs["v"]
+
+            logger.debug(
+                "object (%s) uvscaling (%f) uv (%f, %f)",
+                active_obj.name,
+                uv_scaling_factor,
+                u,
+                v
+            )
 
         temp_image = bpy.data.images.new(
             name="pam.temp_image",
@@ -93,13 +108,11 @@ class PAMVisualizeKernel(bpy.types.Operator):
 
         temp_material = bpy.data.materials.new("temp_material")
 
-        args = [c.value / uv_scaling_factor for c in pam_visualize.customs]
+        args = [(p.name, p.value / uv_scaling_factor) for p in pam_visualize.customs]
 
         kernel_image(
             temp_image,
             kernel.gaussian.gauss_vis,
-            u,
-            v,
             *args
         )
 
@@ -272,7 +285,7 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
 
 
 # TODO(SK): missing docstring
-def kernel_image(image, func, u, v, *args):
+def kernel_image(image, func, *args):
     width, height = image.size
     x_resolution = 1.0 / width
     y_resolution = 1.0 / height

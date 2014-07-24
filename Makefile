@@ -9,16 +9,18 @@ else ifeq ($(OS),Darwin)
 	BLENDER := /Applications/Blender/blender.app/Contents/MacOS/blender
 endif
 
-SOURCE_DIRECTORY := ./pam
 BLENDERFLAGS     := --background --disable-crash-handler -noaudio
-TEST_DIRECTORY   := $(SOURCE_DIRECTORY)/tests
-TEST_ENTRY       := run_tests.py
-FAILED_STRING    := FAILED
-DOCS_DIR         := ./docs
-DOCS_ENTRY       := $(DOCS_DIR)/blender_sphinx.py
-BLENDFILE        := test_universal.blend
+PEP8FLAGS       := --ignore=E501 --show-source
+
+DIR_SOURCE	 := ./pam
+DIR_TEST         := $(DIR_SOURCE)/tests
+DIR_DOC          := ./docs
+SCRIPT_TEST      := run_tests.py
+SCRIPT_DOC       := $(DIR_DOC)/blender_sphinx.py
+TEST_FAILED      := FAILED
+TEST_BLEND       := test_universal.blend
+
 LOGFILE          := unittest.log
-PEP8_FLAGS       := --ignore=E501 --show-source
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -29,12 +31,12 @@ help:
 
 test: clean pep8 binary-exists
 	@echo "Running unittests"
-	$(BLENDER) $(TEST_DIRECTORY)/$(BLENDFILE) $(BLENDERFLAGS) --python $(TEST_ENTRY)
+	$(BLENDER) $(DIR_TEST)/$(TEST_BLEND) $(BLENDERFLAGS) --python $(SCRIPT_TEST)
 
 test-ci: clean pep8 binary-exists
 	@echo "Running continuous integration unittests"
-	$(BLENDER) $(TEST_DIRECTORY)/$(BLENDFILE) $(BLENDERFLAGS) --python $(TEST_ENTRY) 2>&1 | tee $(LOGFILE)
-	@if grep -q $(FAILED_STRING) $(LOGFILE); then exit 1; fi
+	$(BLENDER) $(DIR_TEST)/$(TEST_BLEND) $(BLENDERFLAGS) --python $(SCRIPT_TEST) 2>&1 | tee $(LOGFILE)
+	@if grep -q $(TEST_FAILED) $(LOGFILE); then exit 1; fi
 
 binary-exists:
 	@if [ -z $(BLENDER) ]; then echo "Blender binary path not set"; exit 1; fi
@@ -46,14 +48,14 @@ clean:
 	@echo "Cleaning cached python files"
 	find . \( -name "__pycache__" -o -name "*.pyc" \) -delete
 	@echo "Cleaning documentation files"
-	rm -rf $(DOCS_DIR)/_build/*
+	rm -rf $(DIR_DOC)/_build/*
 
 pep8:
 	@echo "Checking pep8 compliance"
-	pep8 $(SOURCE_DIRECTORY) $(PEP8_FLAGS)
+	pep8 $(DIR_SOURCE) $(PEP8FLAGS)
 
 docs: binary-exists
 	@echo "Generating html documentation"
-	$(BLENDER) $(BLENDERFLAGS) --python $(DOCS_ENTRY)
+	$(BLENDER) $(BLENDERFLAGS) --python $(SCRIPT_DOC)
 
 .PHONY: help clean docs test test-ci check-binary

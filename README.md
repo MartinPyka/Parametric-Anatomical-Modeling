@@ -59,11 +59,13 @@ The [Wiki](https://bitbucket.org/rub-hippo/parametric-anatomical-modeling/wiki/H
 
 Here is a list of videos that introduce PAM and show some features of it.
 
+An importer of with PAM generated data to [NEST](http://www.nest-initiative.org/) can be found [here](https://bitbucket.org/rub-hippo/pam-utils)
+
 Contribute
 ----------
+PAM is continuously under development. Any support and active participation in the development of PAM is very much welcome.
 
-FAQ
----
+One long-term goal of our research is to structurally and functionally compare brain structures across different species using PAM. Therefore, we are looking for people who can assist us in creating the anatomical layout of brain structures and the projections of neurons across neural layers.
 
 Contact
 -------

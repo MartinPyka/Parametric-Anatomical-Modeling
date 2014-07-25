@@ -43,13 +43,21 @@ Otherwise, normal-, Euclidean- and random-based mapping are available.
 Installation
 ------------
 
-1. Download the latest official release (a complete list can be found here) or get a snapshot of this GIT repository 
+1. Download the latest official release ([a complete list can be found here](https://bitbucket.org/rub-hippo/parametric-anatomical-modeling/downloads)) or get a snapshot of [this GIT repository](https://bitbucket.org/rub-hippo/parametric-anatomical-modeling/src)
 
 2. Install PAM as Add-On in Blender ([how to install an Add-On](http://wiki.blender.org/index.php/Doc:2.6/Manual/Extensions/Python/Add-Ons)). If you downloaded the ZIP-file, you can directly select the ZIP-file in Blender to install the Add-On.
+
+3. In the 3d view a new panel should appear on the left side, called "PAM". This panel contains function to load and save connectivity data and to visualize them.
 
 
 Usage - getting started
 -----------------------
+
+The repository contains two examples, a very simple one and the hippocampal model, which could help to understand how to use PAM.
+
+The [Wiki](https://bitbucket.org/rub-hippo/parametric-anatomical-modeling/wiki/Home) contains a list of all mapping techniques and a description of the approach used to generate synapses.
+
+Here is a list of videos that introduce PAM and show some features of it.
 
 Contribute
 ----------

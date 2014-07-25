@@ -43,6 +43,11 @@ Otherwise, normal-, Euclidean- and random-based mapping are available.
 Installation
 ------------
 
+1. Download the latest official release (a complete list can be found here) or get a snapshot of this GIT repository 
+
+2. Install PAM as Add-On in Blender ([how to install an Add-On](http://wiki.blender.org/index.php/Doc:2.6/Manual/Extensions/Python/Add-Ons)). If you downloaded the ZIP-file, you can directly select the ZIP-file in Blender to install the Add-On.
+
+
 Usage - getting started
 -----------------------
 
@@ -54,6 +59,13 @@ FAQ
 
 Contact
 -------
+
+Dr. Martin Pyka
+Mercator Research Group "Structure of Memory", Ruhr-University Bochum
+
+m.pyka at rub.de
++49-234- 32 24682
+
 
 License
 -------

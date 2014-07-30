@@ -25,10 +25,11 @@ MODE_LIST = [
     ("COORDINATES", "At uv", "", 1)
 ]
 
-KERNELS = {
-    "GAUSSIAN": kernel.gaussian.gauss_vis,
-    "UNITY": kernel.gaussian.unity_vis
-}
+KERNELS = [
+    ("NONE", "None", None),
+    ("GAUSSIAN", "Gaussian", kernel.gaussian.gauss_vis),
+    ("UNITY", "Unity", kernel.gaussian.unity_vis)
+]
 
 
 # TODO(SK): rephrase descriptions
@@ -42,10 +43,16 @@ class PAMVisualizeKernel(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         active_obj = context.active_object
-        if active_obj is not None:
-            return active_obj.type == "MESH"
-        else:
+        pam_visualize = context.scene.pam_visualize
+
+        if active_obj is None:
             return False
+        if active_obj.type != "MESH":
+            return False
+        if pam_visualize.kernel == "NONE":
+            return False
+
+        return True
 
     def execute(self, context):
         active_obj = context.active_object
@@ -197,6 +204,15 @@ class PamVisualizeKernelResetCustomParams(bpy.types.Operator):
     bl_description = "Remove kernel parameter"
     bl_options = {'UNDO'}
 
+    @classmethod
+    def poll(cls, context):
+        pam_visualize = context.scene.pam_visualize
+
+        if pam_visualize.kernel == "NONE":
+            return False
+
+        return True
+
     def execute(self, context):
         pam_visualize = context.scene.pam_visualize
         update_kernels(pam_visualize, context)
@@ -308,18 +324,22 @@ def kernel_image(image, func, *args):
 
 
 def get_kernels(self, context):
-    return [(k, k, "", i) for i, k in enumerate(KERNELS, 1)]
+    return [(k, n, "", i) for i, (k, n, f) in enumerate(KERNELS)]
 
 
 def update_kernels(self, context):
     self.customs.clear()
-    func = KERNELS[self.kernel]
-    args, _, _, defaults = inspect.getargspec(func)
-    params = zip(args, defaults)
-    for k, v in params:
-        p = self.customs.add()
-        p.name = k
-        p.value = v
+    func = next(f for (k, n, f) in KERNELS if k == self.kernel)
+    if func is not None:
+        args, _, _, defaults = inspect.getargspec(func)
+        args = args[-len(defaults):]
+        print(args)
+        print(defaults)
+        params = zip(args, defaults)
+        for k, v in params:
+            p = self.customs.add()
+            p.name = k
+            p.value = v
 
 
 # TODO(SK): missing docstring
@@ -395,7 +415,7 @@ class PamVisualizeKernelFloatProperties(bpy.types.PropertyGroup):
 # TODO(SK): missing docstring
 class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
     view = bpy.props.EnumProperty(
-        name="View",
+        name="View mode",
         items=VIEW_LIST,
         update=toggle_view
     )

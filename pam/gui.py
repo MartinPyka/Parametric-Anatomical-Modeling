@@ -125,16 +125,16 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         layout = self.layout
 
         row = layout.row()
+        row.prop(context.scene.pam_visualize, "view", text="")
+
+        row = layout.row()
         row.label("Active: %s" % name)
 
         row = layout.row()
-        row.prop(context.scene.pam_visualize, "view", expand=True)
+        row.prop(context.scene.pam_visualize, "resolution", text="Resolution")
 
         row = layout.row()
         row.prop(context.scene.pam_visualize, "kernel", text="")
-
-        row = layout.row()
-        row.prop(context.scene.pam_visualize, "resolution", text="Resolution")
 
         row = layout.row()
         row.label("Parameter:")

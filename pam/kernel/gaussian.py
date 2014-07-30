@@ -50,7 +50,7 @@ def gauss_v(uv, guv, *args):
     return math.exp(-(1 / 2) * ((ruv[0] + sv) / vv) ** 2)
 
 
-def gauss_vis(u=0.0, v=0.0, origin_u=0.0, origin_v=0.0, var_u=1.0, var_v=1.0):
+def gauss_vis(u, v, origin_u=0.0, origin_v=0.0, var_u=1.0, var_v=1.0):
     """Computes distribution value in two dimensional gaussian kernel"""
     return math.exp(-((u - origin_u) ** 2 / (2 * var_u ** 2) +
                       (v - origin_v) ** 2 / (2 * var_v ** 2)))
@@ -61,5 +61,5 @@ def unity(uv, guv, *args):
     return 1
 
 
-def unity_vis(u=0.0, v=0.0):
+def unity_vis(u, v):
     return 1

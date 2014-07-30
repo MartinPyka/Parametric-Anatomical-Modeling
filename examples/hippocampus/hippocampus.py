@@ -76,8 +76,9 @@ sub_neurons = 'Sub_Pyramidal'
 n_dg = 1200000
 n_ca3 = 250000
 n_ca1 = 390000
-n_sub = int(n_ca1 * (surface_area(sub) / surface_area(ca1)))
-n_ec = 110000
+n_sub = 285000
+n_sec = 110000
+n_dec = 330000
 
 # number of outgoing connections
 s_dg_ca3 = 15
@@ -85,14 +86,14 @@ s_ca3_ca3 = 60 # 6000
 s_ca3_ca1 = 85 # 8580
 s_ca1_sub = 15 
 s_ec21_dg = 38 # 38400
-s_sub_ec5 = int((n_ec * s_ec21_dg) / n_sub)
-s_ca1_ec5 = int((n_ec * s_ec21_dg) / n_ca1)
+s_sub_ec5 = int((n_dec * s_ec21_dg) / n_sub)
+s_ca1_ec5 = int((n_dec * s_ec21_dg) / n_ca1)
 
 f = 0.001     # factor for the neuron numbers
 
 # adjust the number of neurons per layer
-ec2.particle_systems[ec2_neurons].settings.count = int(n_ec * f)
-ec5.particle_systems[ec5_neurons].settings.count = int(n_ec * f)
+ec2.particle_systems[ec2_neurons].settings.count = int(n_sec * f)
+ec5.particle_systems[ec5_neurons].settings.count = int(n_dec * f)
 dg.particle_systems[dg_neurons].settings.count = int(n_dg * f)
 ca3.particle_systems[ca3_neurons].settings.count = int(n_ca3 * f)
 ca1.particle_systems[ca1_neurons].settings.count = int(n_ca1 * f)

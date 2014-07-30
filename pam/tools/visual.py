@@ -28,7 +28,7 @@ MODE_LIST = [
 KERNELS = [
     ("NONE", "None", None),
     ("GAUSSIAN", "Gaussian", kernel.gaussian.gauss_vis),
-    ("UNITY", "Unity", kernel.gaussian.unity_vis)
+    ("UNITY", "Unity", kernel.unity.unity_vis)
 ]
 
 
@@ -76,16 +76,16 @@ class PAMVisualizeKernel(bpy.types.Operator):
             u, v = pam.map3dPointToUV(
                 active_obj,
                 active_obj,
-                cursor_location
+                cursor
             )
 
             logger.debug(
                 "object (%s) uvscaling (%f) cursor (%f, %f, %f) uvmapped (%f, %f)",
                 active_obj.name,
                 uv_scaling_factor,
-                cursor_location[0],
-                cursor_location[1],
-                cursor_location[2],
+                cursor[0],
+                cursor[1],
+                cursor[2],
                 u,
                 v
             )
@@ -114,13 +114,18 @@ class PAMVisualizeKernel(bpy.types.Operator):
         )
 
         temp_material = bpy.data.materials.new("temp_material")
+        # temp_material.use_shadeless = True
 
-        args = [(p.name, p.value / uv_scaling_factor) for p in pam_visualize.customs]
+        kwargs = {p.name: p.value / uv_scaling_factor for p in pam_visualize.customs}
+        kwargs["origin_u"] = u
+        kwargs["origin_v"] = v
+
+        kernel_func = next(f for (k, n, f) in KERNELS if k == pam_visualize.kernel)
 
         kernel_image(
             temp_image,
-            kernel.gaussian.gauss_vis,
-            *args
+            kernel_func,
+            kwargs
         )
 
         temp_texture.image = temp_image
@@ -129,12 +134,15 @@ class PAMVisualizeKernel(bpy.types.Operator):
         tex_slot.texture = temp_texture
         tex_slot.texture_coords = "UV"
         tex_slot.mapping = "FLAT"
+        # tex_slot.use_map_color_diffuse = True
 
         temp_material.diffuse_intensity = 1.0
         temp_material.specular_intensity = 0.0
 
         active_obj.data.materials.clear(update_data=True)
         active_obj.data.materials.append(temp_material)
+
+        # context.scene.update()
 
         return {'FINISHED'}
 
@@ -301,7 +309,7 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
 
 
 # TODO(SK): missing docstring
-def kernel_image(image, func, *args):
+def kernel_image(image, func, kwargs):
     width, height = image.size
     x_resolution = 1.0 / width
     y_resolution = 1.0 / height
@@ -311,7 +319,8 @@ def kernel_image(image, func, *args):
             x_in_uv = x * x_resolution
             y_in_uv = y * y_resolution
 
-            value = func(x_in_uv, y_in_uv, u, v, *args)
+            value = func(x_in_uv, y_in_uv, **kwargs)
+            print(value)
 
             # logger.debug("u: %f v: %f value: %f", x_in_uv, y_in_uv, value)
 
@@ -332,14 +341,13 @@ def update_kernels(self, context):
     func = next(f for (k, n, f) in KERNELS if k == self.kernel)
     if func is not None:
         args, _, _, defaults = inspect.getargspec(func)
-        args = args[-len(defaults):]
-        print(args)
-        print(defaults)
-        params = zip(args, defaults)
-        for k, v in params:
-            p = self.customs.add()
-            p.name = k
-            p.value = v
+        if args and defaults:
+            args = args[-len(defaults):]
+            params = zip(args, defaults)
+            for k, v in params:
+                p = self.customs.add()
+                p.name = k
+                p.value = v
 
 
 # TODO(SK): missing docstring
@@ -364,13 +372,18 @@ def uv_visualize_texture():
 def toggle_view(self, context):
     textured_solid = False
     material_mode = "MULTITEXTURE"
+    viewport_shade = "SOLID"
 
     if self.view == "MAPPED":
         textured_solid = True
         material_mode = "GLSL"
+        viewport_shade = "TEXTURED"
 
     context.space_data.show_textured_solid = textured_solid
     context.scene.game_settings.material_mode = material_mode
+    for area in context.screen.areas:
+        if area.type == "VIEW_3D":
+            area.spaces.active.viewport_shade = viewport_shade
 
 
 # TODO(SK): missing docstring

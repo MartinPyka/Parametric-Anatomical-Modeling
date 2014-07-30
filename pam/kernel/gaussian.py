@@ -50,10 +50,10 @@ def gauss_v(uv, guv, *args):
     return math.exp(-(1 / 2) * ((ruv[0] + sv) / vv) ** 2)
 
 
-def gauss_vis(x, y, origin_x, origin_y, var_x, var_y):
+def gauss_vis(u, v, origin_u=0.0, origin_v=0.0, var_u=1.0, var_v=1.0):
     """Computes distribution value in two dimensional gaussian kernel"""
-    return math.exp(-((x - origin_x) ** 2 / (2 * var_x ** 2) +
-                      (y - origin_y) ** 2 / (2 * var_y ** 2)))
+    return math.exp(-((u - origin_u) ** 2 / (2 * var_u ** 2) +
+                      (v - origin_v) ** 2 / (2 * var_v ** 2)))
 
 
 # TODO(SK): missing docstring

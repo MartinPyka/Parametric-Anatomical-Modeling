@@ -1,5 +1,6 @@
 """Visualization Module"""
 
+import inspect
 import logging
 import math
 
@@ -15,41 +16,47 @@ logger = logging.getLogger(__package__)
 
 
 VIEW_LIST = [
-    ("NORMAL", "Normal", "", 1),
-    ("MAPPED", "Mapped", "", 2)
+    ("NORMAL", "Multitextured", "", 0),
+    ("MAPPED", "GLSL", "", 1)
 ]
 
 MODE_LIST = [
-    ("CURSOR", "Cursor", "", 1),
-    ("COORDINATES", "Coordinates", "", 2)
+    ("CURSOR", "At cursor", "", 0),
+    ("COORDINATES", "At uv", "", 1)
 ]
 
-KERNEL_LIST = [
-    ("GAUSSIAN", "Gaussian", "", 1),
-    ("UNI", "Uni", "", 2)
+KERNELS = [
+    ("NONE", "None", None),
+    ("GAUSSIAN", "Gaussian", kernel.gaussian.gauss_vis),
+    ("UNITY", "Unity", kernel.unity.unity_vis)
 ]
 
 
 # TODO(SK): rephrase descriptions
 # TODO(SK): missing docstring
-class PAMVisualizeKernelAtCursor(bpy.types.Operator):
-    bl_idname = "pam.visualize_cursor"
-    bl_label = "Generate kernel image at cursor position"
-    bl_description = "Generate kernel image"
+class PAMVisualizeKernel(bpy.types.Operator):
+    bl_idname = "pam.visualize"
+    bl_label = "Generate kernel texture"
+    bl_description = "Generate kernel texture"
     bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context):
         active_obj = context.active_object
-        if active_obj is not None:
-            return active_obj.type == "MESH"
-        else:
+        pam_visualize = context.scene.pam_visualize
+
+        if active_obj is None:
             return False
+        if active_obj.type != "MESH":
+            return False
+        if pam_visualize.kernel == "NONE":
+            return False
+
+        return True
 
     def execute(self, context):
         active_obj = context.active_object
         pam_visualize = context.scene.pam_visualize
-        cursor_location = context.scene.cursor_location.copy()
 
         if active_obj.data.uv_layers.active is None:
             message = "active object has no active uv layer"
@@ -59,24 +66,40 @@ class PAMVisualizeKernelAtCursor(bpy.types.Operator):
 
             return {'CANCELLED'}
 
+        cursor = context.scene.cursor_location.copy()
+
         uv_scaling_factor, _ = pam.computeUVScalingFactor(active_obj)
 
-        u, v = pam.map3dPointToUV(
-            active_obj,
-            active_obj,
-            cursor_location
-        )
+        u, v = None, None
 
-        logger.debug(
-            "object (%s) uvscaling (%f) cursor (%f, %f, %f) uvmapped (%f, %f)",
-            active_obj.name,
-            uv_scaling_factor,
-            cursor_location[0],
-            cursor_location[1],
-            cursor_location[2],
-            u,
-            v
-        )
+        if pam_visualize.mode == "CURSOR":
+            u, v = pam.map3dPointToUV(
+                active_obj,
+                active_obj,
+                cursor
+            )
+
+            logger.debug(
+                "object (%s) uvscaling (%f) cursor (%f, %f, %f) uvmapped (%f, %f)",
+                active_obj.name,
+                uv_scaling_factor,
+                cursor[0],
+                cursor[1],
+                cursor[2],
+                u,
+                v
+            )
+        elif pam_visualize.mode == "COORDINATES":
+            u = pam_visualize.customs["u"]
+            v = pam_visualize.customs["v"]
+
+            logger.debug(
+                "object (%s) uvscaling (%f) uv (%f, %f)",
+                active_obj.name,
+                uv_scaling_factor,
+                u,
+                v
+            )
 
         temp_image = bpy.data.images.new(
             name="pam.temp_image",
@@ -91,15 +114,18 @@ class PAMVisualizeKernelAtCursor(bpy.types.Operator):
         )
 
         temp_material = bpy.data.materials.new("temp_material")
+        # temp_material.use_shadeless = True
 
-        args = [c.value / uv_scaling_factor for c in pam_visualize.customs]
+        kwargs = {p.name: p.value / uv_scaling_factor for p in pam_visualize.customs}
+        kwargs["origin_u"] = u
+        kwargs["origin_v"] = v
+
+        kernel_func = next(f for (k, n, f) in KERNELS if k == pam_visualize.kernel)
 
         kernel_image(
             temp_image,
-            kernel.gaussian.gauss_vis,
-            u,
-            v,
-            *args
+            kernel_func,
+            kwargs
         )
 
         temp_texture.image = temp_image
@@ -108,12 +134,15 @@ class PAMVisualizeKernelAtCursor(bpy.types.Operator):
         tex_slot.texture = temp_texture
         tex_slot.texture_coords = "UV"
         tex_slot.mapping = "FLAT"
+        # tex_slot.use_map_color_diffuse = True
 
         temp_material.diffuse_intensity = 1.0
         temp_material.specular_intensity = 0.0
 
         active_obj.data.materials.clear(update_data=True)
         active_obj.data.materials.append(temp_material)
+
+        # context.scene.update()
 
         return {'FINISHED'}
 
@@ -173,6 +202,28 @@ class PamVisualizeKernelRemoveCustomParam(bpy.types.Operator):
     def execute(self, context):
         active_index = context.scene.pam_visualize.active_index
         context.scene.pam_visualize.customs.remove(active_index)
+
+        return {'FINISHED'}
+
+
+class PamVisualizeKernelResetCustomParams(bpy.types.Operator):
+    bl_idname = "pam.reset_params"
+    bl_label = "Reset kernel parameter"
+    bl_description = "Remove kernel parameter"
+    bl_options = {'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        pam_visualize = context.scene.pam_visualize
+
+        if pam_visualize.kernel == "NONE":
+            return False
+
+        return True
+
+    def execute(self, context):
+        pam_visualize = context.scene.pam_visualize
+        update_kernels(pam_visualize, context)
 
         return {'FINISHED'}
 
@@ -258,7 +309,7 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
 
 
 # TODO(SK): missing docstring
-def kernel_image(image, func, u, v, *args):
+def kernel_image(image, func, kwargs):
     width, height = image.size
     x_resolution = 1.0 / width
     y_resolution = 1.0 / height
@@ -268,7 +319,8 @@ def kernel_image(image, func, u, v, *args):
             x_in_uv = x * x_resolution
             y_in_uv = y * y_resolution
 
-            value = func(x_in_uv, y_in_uv, u, v, *args)
+            value = func(x_in_uv, y_in_uv, **kwargs)
+            print(value)
 
             # logger.debug("u: %f v: %f value: %f", x_in_uv, y_in_uv, value)
 
@@ -278,6 +330,24 @@ def kernel_image(image, func, u, v, *args):
             color = colors.schemes["classic"][color_index]
 
             image.pixels[pixel_index:pixel_index + 3] = color
+
+
+def get_kernels(self, context):
+    return [(k, n, "", i) for i, (k, n, f) in enumerate(KERNELS)]
+
+
+def update_kernels(self, context):
+    self.customs.clear()
+    func = next(f for (k, n, f) in KERNELS if k == self.kernel)
+    if func is not None:
+        args, _, _, defaults = inspect.getargspec(func)
+        if args and defaults:
+            args = args[-len(defaults):]
+            params = zip(args, defaults)
+            for k, v in params:
+                p = self.customs.add()
+                p.name = k
+                p.value = v
 
 
 # TODO(SK): missing docstring
@@ -299,16 +369,21 @@ def uv_visualize_texture():
 
 
 # TODO(SK): missing docstring
-def toggle_view_mode(self, context):
+def toggle_view(self, context):
     textured_solid = False
     material_mode = "MULTITEXTURE"
+    viewport_shade = "SOLID"
 
-    if self.view_mode == "MAPPED":
+    if self.view == "MAPPED":
         textured_solid = True
         material_mode = "GLSL"
+        viewport_shade = "TEXTURED"
 
     context.space_data.show_textured_solid = textured_solid
     context.scene.game_settings.material_mode = material_mode
+    for area in context.screen.areas:
+        if area.type == "VIEW_3D":
+            area.spaces.active.viewport_shade = viewport_shade
 
 
 # TODO(SK): missing docstring
@@ -352,21 +427,19 @@ class PamVisualizeKernelFloatProperties(bpy.types.PropertyGroup):
 
 # TODO(SK): missing docstring
 class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
-    view_mode = bpy.props.EnumProperty(
+    view = bpy.props.EnumProperty(
         name="View mode",
-        default="NORMAL",
         items=VIEW_LIST,
-        update=toggle_view_mode
+        update=toggle_view
     )
-    operator_mode = bpy.props.EnumProperty(
-        name="Operator mode",
-        default="CURSOR",
+    mode = bpy.props.EnumProperty(
+        name="Mode",
         items=MODE_LIST
     )
     kernel = bpy.props.EnumProperty(
         name="Kernel function",
-        default="GAUSSIAN",
-        items=KERNEL_LIST
+        items=get_kernels,
+        update=update_kernels
     )
     resolution = bpy.props.IntProperty(
         name="Kernel image resolution",
@@ -375,18 +448,6 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
         soft_min=8,
         soft_max=4096,
         subtype="PIXEL"
-    )
-    u = bpy.props.FloatProperty(
-        name="u",
-        default=0.0,
-        min=0.0,
-        max=1.0,
-    )
-    v = bpy.props.FloatProperty(
-        name="v",
-        default=0.0,
-        min=0.0,
-        max=1.0,
     )
     active_index = bpy.props.IntProperty()
     customs = bpy.props.CollectionProperty(

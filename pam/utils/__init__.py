@@ -1,2 +1,2 @@
 from . import log
-from . import profile
+from . import profile as p

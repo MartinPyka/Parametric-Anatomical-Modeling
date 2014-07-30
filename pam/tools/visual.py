@@ -11,8 +11,11 @@ from .. import model
 from .. import pam
 from .. import pam_vis
 from ..utils import colors
+from ..utils import p
 
 logger = logging.getLogger(__package__)
+
+COLOR = colors.schemes["classic"]
 
 
 VIEW_LIST = [
@@ -122,7 +125,7 @@ class PAMVisualizeKernel(bpy.types.Operator):
 
         kernel_func = next(f for (k, n, f) in KERNELS if k == pam_visualize.kernel)
 
-        kernel_image(
+        kernel_image2(
             temp_image,
             kernel_func,
             kwargs
@@ -142,7 +145,7 @@ class PAMVisualizeKernel(bpy.types.Operator):
         active_obj.data.materials.clear(update_data=True)
         active_obj.data.materials.append(temp_material)
 
-        # context.scene.update()
+        context.scene.update()
 
         return {'FINISHED'}
 
@@ -309,27 +312,22 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
 
 
 # TODO(SK): missing docstring
+@p.profiling
 def kernel_image(image, func, kwargs):
     width, height = image.size
-    x_resolution = 1.0 / width
-    y_resolution = 1.0 / height
+    if width != height:
+        pass
 
-    for x in range(width):
-        for y in range(height):
-            x_in_uv = x * x_resolution
-            y_in_uv = y * y_resolution
+    res = 1.0 / width
 
-            value = func(x_in_uv, y_in_uv, **kwargs)
-            print(value)
+    ranges = list(map(lambda x: x * res, range(width)))
 
-            # logger.debug("u: %f v: %f value: %f", x_in_uv, y_in_uv, value)
+    values = [func(u, v, **kwargs) for v in ranges for u in ranges]
+    color_index = list(map(lambda x: math.floor(x * 255.0), values))
 
-            pixel_index = (x + y * width) * 4
-            color_index = math.floor(value * 255.0)
+    color_values = [COLOR[i] for i in color_index]
 
-            color = colors.schemes["classic"][color_index]
-
-            image.pixels[pixel_index:pixel_index + 3] = color
+    image.pixels = [value for color in color_values for value in color]
 
 
 def get_kernels(self, context):

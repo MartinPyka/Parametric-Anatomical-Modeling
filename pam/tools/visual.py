@@ -125,7 +125,7 @@ class PAMVisualizeKernel(bpy.types.Operator):
 
         kernel_func = next(f for (k, n, f) in KERNELS if k == pam_visualize.kernel)
 
-        kernel_image2(
+        kernel_image(
             temp_image,
             kernel_func,
             kwargs

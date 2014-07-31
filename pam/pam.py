@@ -1,13 +1,11 @@
 # TODO(SK): missing module docstring
 
-import copy
 import logging
-import math
 import random
 
 import bpy
 import mathutils
-import numpy as np
+import numpy
 
 from . import constants
 from . import grid
@@ -45,7 +43,7 @@ def selectRandomPoint(obj):
         # select a random polygon
         p_select = random.random() * obj['area_sum']
         polygon = obj.data.polygons[
-            np.nonzero(np.array(obj['area_cumsum']) > p_select)[0][0]]
+            numpy.nonzero(numpy.array(obj['area_cumsum']) > p_select)[0][0]]
 
         # define position on the polygon
         vert_inds = polygon.vertices[:]
@@ -77,7 +75,7 @@ def computeUVScalingFactor(obj):
         result.append(rdist / mdist)
 
     # TODO (MP): compute scaling factor on the basis of all edges
-    return np.mean(result), result
+    return numpy.mean(result), result
 
 
 # TODO(SK): Quads into triangles (indices)
@@ -355,7 +353,7 @@ def sortNeuronsToUV(layer, neuronset, u_or_v):
     p2d = [map3dPointToUV(layer, layer, p)[index] for p in p3d]
 
     # return permutation of a sorted list (ascending)
-    return np.argsort(p2d)
+    return numpy.argsort(p2d)
 
 
 def computeMapping(layers, connections, distances, point):
@@ -784,10 +782,10 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
     no_synapses         : number of synapses for each pre-synaptic neuron
     """
     # connection matrix
-    conn = np.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses)).astype(int)
+    conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses)).astype(int)
 
     # distance matrix
-    dist = np.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
+    dist = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
 
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
     syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
@@ -882,12 +880,12 @@ def computeConnectivityAll(layers, neuronset1, neuronset2, slayer, connections, 
     """
 
     # connection matrix
-    conn = np.zeros((len(layers[0].particle_systems[neuronset1].particles),
-                     len(layers[-1].particle_systems[neuronset2].particles)))
+    conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles),
+                        len(layers[-1].particle_systems[neuronset2].particles)))
 
     # distance matrix
-    dist = np.zeros((len(layers[0].particle_systems[neuronset1].particles),
-                     len(layers[-1].particle_systems[neuronset2].particles)))
+    dist = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles),
+                        len(layers[-1].particle_systems[neuronset2].particles)))
 
     for i in range(0, len(layers[0].particle_systems[neuronset1].particles)):
         # compute position, uv-coordinates and distance for the pre-synaptic neuron
@@ -959,7 +957,7 @@ def computeDistance(layer1, layer2, neuronset1, neuronset2, common_layer,
         p2d = map3dPointToUV(common_layer, common_layer, p.location)
         positions2.append(p2d)
 
-    result = np.zeros(connection_matrix.shape)
+    result = numpy.zeros(connection_matrix.shape)
 
     for i in range(len(connection_matrix)):
         for j in range(len(connection_matrix[i])):
@@ -1007,7 +1005,7 @@ def initializeUVs():
                 p_areas.append(p.area)
 
             # convert everything to numpy
-            p_areas = np.array(p_areas)
+            p_areas = numpy.array(p_areas)
             # compute the cumulative sum
             p_cumsum = p_areas.cumsum()
             # compute the sum of all areas

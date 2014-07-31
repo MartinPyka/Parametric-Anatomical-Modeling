@@ -1,12 +1,11 @@
 """Data model module"""
 
 import pickle
-import copy
-import numpy
 
 import bpy
 import bpy_extras
-from mathutils import Vector
+import mathutils
+import numpy
 
 NG_LIST = []
 NG_DICT = {}
@@ -66,7 +65,7 @@ def convertArray2Vector(connection_results):
         temp = []
         for r in c['s']:
             if r.size > 0:
-                temp.append([Vector(v) for v in r])
+                temp.append([mathutils.Vector(v) for v in r])
             else:
                 temp.append([[] for i in range(r.shape[0])])
         result.append({'c': c['c'], 'd': c['d'], 's': temp})

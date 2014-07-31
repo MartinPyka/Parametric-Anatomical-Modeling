@@ -1,12 +1,12 @@
 # TODO(SK): module docstring missing
 
-import bpy
 import logging
+
+import bpy
 import numpy
 
 from . import pam
 from . import model
-
 
 logger = logging.getLogger(__package__)
 

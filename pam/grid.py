@@ -2,8 +2,6 @@
 
 import logging
 import math
-import random
-import types
 
 import bpy
 import mathutils

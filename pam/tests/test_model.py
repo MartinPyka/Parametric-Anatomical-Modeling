@@ -1,3 +1,5 @@
+"""Testcase"""
+
 import logging
 import os
 import pickle
@@ -7,11 +9,10 @@ import unittest
 import bpy
 import numpy
 
+from pam import model
 from pam import pam
 from pam import pam_vis
 from pam.kernel import gaussian as kernel
-from pam import model
-
 
 CURRENT_DIR = os.path.dirname(__file__)
 

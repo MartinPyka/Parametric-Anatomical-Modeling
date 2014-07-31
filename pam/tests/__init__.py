@@ -1,3 +1,5 @@
+"""Testsuite module"""
+
 import unittest
 
 from .test_model import TestModelComparison

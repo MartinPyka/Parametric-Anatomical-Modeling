@@ -1,7 +1,6 @@
 """PAM Modeling Tools"""
 
 import logging
-import math
 
 from .. import pam
 

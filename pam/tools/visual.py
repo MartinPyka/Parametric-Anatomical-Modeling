@@ -250,7 +250,7 @@ class PamVisualizeAllConnections(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     def execute(self, context):
-        connections = context.scene.pam_visualize_conns.connections
+        connections = context.scene.pam_visualize.connections
         for j in range(0, model.CONNECTION_COUNTER):
             for i in range(0, connections):
                 pam_vis.visualizeConnectionsForNeuron(j, i)
@@ -386,29 +386,16 @@ def toggle_view(self, context):
 
 # TODO(SK): missing docstring
 def register():
-    bpy.utils.register_class(PamVisualizeConnectionProperties)
     bpy.utils.register_class(PamVisualizeKernelFloatProperties)
     bpy.utils.register_class(PamVisualizeKernelProperties)
     bpy.types.Scene.pam_visualize = bpy.props.PointerProperty(
         type=PamVisualizeKernelProperties
-    )
-    bpy.types.Scene.pam_visualize_conns = bpy.props.PointerProperty(
-        type=PamVisualizeConnectionProperties
     )
 
 
 # TODO(SK): missing docstring
 def unregister():
     del bpy.types.Scene.pam_visualize
-
-
-class PamVisualizeConnectionProperties(bpy.types.PropertyGroup):
-    connections = bpy.props.IntProperty(
-        name="Number of Connections per Mapping",
-        default=3,
-        min=1,
-        max=20
-    )
 
 
 # TODO(SK): missing docstring
@@ -446,6 +433,12 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
         soft_min=8,
         soft_max=4096,
         subtype="PIXEL"
+    )
+    connections = bpy.props.IntProperty(
+        name="Number of Connections per Mapping",
+        default=3,
+        min=1,
+        max=20
     )
     active_index = bpy.props.IntProperty()
     customs = bpy.props.CollectionProperty(

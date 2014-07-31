@@ -93,7 +93,7 @@ class PAMToolsPanel(bpy.types.Panel):
         )
         row.separator()
         row.prop(
-            context.scene.pam_visualize_conns,
+            context.scene.pam_visualize,
             "connections",
             text="Connections"
         )

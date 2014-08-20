@@ -799,7 +799,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
     logger.info("Prepare Grid")
 
     uv_grid.compute_pre_mask(func_pre, args_pre)
-    uv_grid.compute_post_mask(func_post, args_pre)
+    uv_grid.compute_post_mask(func_post, args_post)
 
     logger.info("Compute Post-Mapping")
 

@@ -294,8 +294,8 @@ def interpolateUVTrackIn3D(p1_3d, p2_3d, layer):
 
     uv_p_2d = []
 
-    for step in range(1, constants.INTERPOLATION_QUALITY):
-        interpolation = step / constants.INTERPOLATION_QUALITY
+    for step in range(1, constants.INTERPOLATION_QUALITY+1):
+        interpolation = step / (constants.INTERPOLATION_QUALITY)
         uv_p_2d.append(p2_2d * interpolation + p1_2d * (1 - interpolation))
 
     ip_3d = mapUVPointTo3d(layer, uv_p_2d)

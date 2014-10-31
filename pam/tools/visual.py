@@ -300,6 +300,7 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
 
         ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
         p_index = pam.map3dPointToParticle(object, 0, cursor)
+        print('Neuron Number: ' + str(p_index))
 
         for ci in model.CONNECTION_INDICES:
             # if ng_index is the pre-synaptic layer in a certain mapping

@@ -56,7 +56,12 @@ class IntermediateSynapticLayer(MappingLayer, UVMapLayer):
 
 
 class MappingProperties(bpy.types.PropertyGroup):
-    pass
+    presynapse = bpy.props.PointerProperty(type=PreSynapticLayer)
+    postsynapse = bpy.props.PointerProperty(type=PostSynapticLayer)
+    synapse = bpy.props.PointerProperty(type=SynapticLayer)
+
+    preintermediates = bpy.props.CollectionProperty(type=IntermediateSynapticLayer)
+    postintermediates = bpy.props.CollectionProperty(type=IntermediateSynapticLayer)
 
 
 def register():

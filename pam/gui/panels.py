@@ -171,6 +171,7 @@ class PAMMappingToolsPanel(bpy.types.Panel):
         active_obj = context.active_object
 
         layout = self.layout
+        mapping = context.scene.pam_mapping
 
 
 # TODO(SK): missing docstring

@@ -213,6 +213,21 @@ class PAMMeasureToolsPanel(bpy.types.Panel):
         col.label("Total area: %d" % context.scene.pam_measure.total_area)
 
 
+class PAMMappingToolsPanel(bpy.types.Panel):
+    """A tools panel inheriting all mapping functionality"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "Mapping"
+    bl_category = "PAM Mapping"
+
+    def draw(self, context):
+        active_obj = context.active_object
+
+        layout = self.layout
+
+
 # TODO(SK): missing docstring
 class CustomPropList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data,

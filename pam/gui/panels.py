@@ -1,4 +1,4 @@
-"""PAM Gui Module"""
+"""PAM panels module"""
 
 import bpy
 

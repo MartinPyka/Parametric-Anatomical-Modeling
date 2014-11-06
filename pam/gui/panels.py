@@ -169,9 +169,57 @@ class PAMMappingToolsPanel(bpy.types.Panel):
 
     def draw(self, context):
         active_obj = context.active_object
+        mapping = context.scene.pam_mapping
 
         layout = self.layout
-        mapping = context.scene.pam_mapping
+        layout.label("Pre-Synaptic:")
+
+        # PreSynapticLayer
+        box = layout.box()
+        row = box.row()
+        row.prop(mapping.presynapse, "name", text="Object")
+        row.prop(mapping.presynapse, "mapping", text="Mapping")
+        row.prop(mapping.presynapse, "distance", text="Distance")
+
+        # PreIntermediateLayers
+        layout.label("Pre-Intermediates:")
+        row = layout.row()
+        row.template_list(
+            listtype_name="IntermediateLayerList",
+            dataptr=mapping,
+            propname="preintermediates",
+            active_dataptr=mapping,
+            active_propname="active_preintermediates",
+            type="DEFAULT",
+            rows=3,
+        )
+
+        # SynapticLayer
+        layout.label("Synaptic:")
+        box = layout.box()
+        box.prop(mapping.synapse, "name", text="Object")
+        box.prop(mapping.synapse, "synapse_count", text="Count")
+        box.prop(mapping.synapse, "mapping", text="Mapping")
+        box.prop(mapping.synapse, "distance", text="Distance")
+
+        # PostIntermediateLayers
+        layout.label("Post-Intermediates:")
+        row = layout.row()
+        row.template_list(
+            listtype_name="IntermediateLayerList",
+            dataptr=mapping,
+            propname="postintermediates",
+            active_dataptr=mapping,
+            active_propname="active_postintermediates",
+            type="DEFAULT",
+            rows=3,
+        )
+
+        # PostSynapticLayer
+        layout.label("Post-Synaptic:")
+        box = layout.box()
+        row = box.row()
+        row.prop(mapping.postsynapse, "name", text="Object")
 
 
 # TODO(SK): missing docstring
@@ -180,6 +228,12 @@ class CustomPropList(bpy.types.UIList):
                   active_propname, index):
         layout.prop(item, "name", text="", emboss=False)
         layout.prop(item, "value", text="", emboss=False, slider=False)
+
+
+class IntermediateLayerList(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data,
+                  active_propname, index):
+        layout.prop(item, "object", text="", emboss=False)
 
 
 # TODO(SK): missing docstring

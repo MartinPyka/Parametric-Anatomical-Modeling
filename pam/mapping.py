@@ -7,14 +7,15 @@ import bpy
 logger = logging.getLogger(__package__)
 
 
+class BaseLayer(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty()
+
+
 class MappingLayer(bpy.types.PropertyGroup):
-    object = bpy.props.EnumProperty(
+    mapping = bpy.props.EnumProperty(
         items=[]
     )
-    mapping_method = bpy.props.EnumProperty(
-        items=[]
-    )
-    distance_method = bpy.props.EnumProperty(
+    distance = bpy.props.EnumProperty(
         items=[]
     )
 
@@ -28,7 +29,7 @@ class UVMapLayer(bpy.types.PropertyGroup):
     )
 
 
-class PreSynapticLayer(MappingLayer, UVMapLayer, bpy.types.PropertyGroup):
+class PreSynapticLayer(BaseLayer, MappingLayer, UVMapLayer, bpy.types.PropertyGroup):
     particle_system = bpy.props.EnumProperty(
         items=[]
     )
@@ -38,20 +39,20 @@ class PreSynapticLayer(MappingLayer, UVMapLayer, bpy.types.PropertyGroup):
     # TODO(SK): Kernel Parameter
 
 
-class SynapticLayer(MappingLayer, UVMapLayer, bpy.types.PropertyGroup):
+class SynapticLayer(BaseLayer, MappingLayer, UVMapLayer, bpy.types.PropertyGroup):
     synapse_count = bpy.props.IntProperty(
 
     )
 
 
-class PostSynapticLayer(MappingLayer, bpy.types.PropertyGroup):
+class PostSynapticLayer(BaseLayer, bpy.types.PropertyGroup):
     particle_system = bpy.props.EnumProperty(
         items=[]
     )
     # TODO(SK): Kernel Parameter
 
 
-class IntermediateSynapticLayer(bpy.types.PropertyGroup):
+class IntermediateSynapticLayer(BaseLayer, bpy.types.PropertyGroup):
     pass
 
 
@@ -62,6 +63,8 @@ class MappingProperties(bpy.types.PropertyGroup):
 
     preintermediates = bpy.props.CollectionProperty(type=IntermediateSynapticLayer)
     postintermediates = bpy.props.CollectionProperty(type=IntermediateSynapticLayer)
+    active_preintermediates = bpy.props.IntProperty()
+    active_postintermediates = bpy.props.IntProperty()
 
 
 def register():

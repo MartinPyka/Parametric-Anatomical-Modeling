@@ -7,29 +7,20 @@ import bpy
 logger = logging.getLogger(__package__)
 
 
-class BaseLayer(bpy.types.PropertyGroup):
-    name = bpy.props.StringProperty()
-
-
-class MappingLayer(bpy.types.PropertyGroup):
+class PreSynapticLayer(bpy.types.PropertyGroup):
+    object_name = bpy.props.StringProperty()
+    uv_from = bpy.props.EnumProperty(
+        items=[]
+    )
+    uv_to = bpy.props.EnumProperty(
+        items=[]
+    )
     mapping = bpy.props.EnumProperty(
         items=[]
     )
     distance = bpy.props.EnumProperty(
         items=[]
     )
-
-
-class UVMapLayer(bpy.types.PropertyGroup):
-    UV_A = bpy.props.EnumProperty(
-        items=[]
-    )
-    UV_B = bpy.props.EnumProperty(
-        items=[]
-    )
-
-
-class PreSynapticLayer(BaseLayer, MappingLayer, UVMapLayer, bpy.types.PropertyGroup):
     particle_system = bpy.props.EnumProperty(
         items=[]
     )
@@ -39,21 +30,50 @@ class PreSynapticLayer(BaseLayer, MappingLayer, UVMapLayer, bpy.types.PropertyGr
     # TODO(SK): Kernel Parameter
 
 
-class SynapticLayer(BaseLayer, MappingLayer, UVMapLayer, bpy.types.PropertyGroup):
+class SynapticLayer(bpy.types.PropertyGroup):
+    object_name = bpy.props.StringProperty()
     synapse_count = bpy.props.IntProperty(
 
     )
+    uv_from = bpy.props.EnumProperty(
+        items=[]
+    )
+    uv_to = bpy.props.EnumProperty(
+        items=[]
+    )
+    mapping = bpy.props.EnumProperty(
+        items=[]
+    )
+    distance = bpy.props.EnumProperty(
+        items=[]
+    )
 
 
-class PostSynapticLayer(BaseLayer, bpy.types.PropertyGroup):
+class PostSynapticLayer(bpy.types.PropertyGroup):
+    object_name = bpy.props.StringProperty()
     particle_system = bpy.props.EnumProperty(
+        items=[]
+    )
+    kernel_function = bpy.props.EnumProperty(
         items=[]
     )
     # TODO(SK): Kernel Parameter
 
 
-class IntermediateSynapticLayer(BaseLayer, bpy.types.PropertyGroup):
-    pass
+class IntermediateSynapticLayer(bpy.types.PropertyGroup):
+    object_name = bpy.props.StringProperty()
+    uv_from = bpy.props.EnumProperty(
+        items=[]
+    )
+    uv_to = bpy.props.EnumProperty(
+        items=[]
+    )
+    mapping = bpy.props.EnumProperty(
+        items=[]
+    )
+    distance = bpy.props.EnumProperty(
+        items=[]
+    )
 
 
 class MappingProperties(bpy.types.PropertyGroup):

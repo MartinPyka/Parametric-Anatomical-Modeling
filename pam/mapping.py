@@ -6,13 +6,32 @@ import bpy
 
 logger = logging.getLogger(__package__)
 
+LAYER_TYPES = [
+    ("postsynapse", "(5) Postsynapse", "", 5),
+    ("postintermediates", "(4) Postintermediate", "", 4),
+    ("synapse", "(3) Synapse", "", 3),
+    ("preintermediates", "(2) Preintermediate", "", 2),
+    ("presynapse", "(1) Presynapse", "", 1),
+]
 
-class PreSynapticLayer(bpy.types.PropertyGroup):
-    object_name = bpy.props.StringProperty()
-    uv_from = bpy.props.EnumProperty(
+
+class PAMKernelParameter(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(
+        name="Parameter name",
+        default="param"
+    )
+    value = bpy.props.FloatProperty(
+        name="Float value",
+        default=0.0
+    )
+
+
+class PAMPreSynapticLayer(bpy.types.PropertyGroup):
+    object = bpy.props.StringProperty()
+    uv_source = bpy.props.EnumProperty(
         items=[]
     )
-    uv_to = bpy.props.EnumProperty(
+    uv_target = bpy.props.EnumProperty(
         items=[]
     )
     mapping = bpy.props.EnumProperty(
@@ -27,18 +46,20 @@ class PreSynapticLayer(bpy.types.PropertyGroup):
     kernel_function = bpy.props.EnumProperty(
         items=[]
     )
-    # TODO(SK): Kernel Parameter
+    kernel_parameter = bpy.props.CollectionProperty(
+        type=PAMKernelParameter
+    )
 
 
-class SynapticLayer(bpy.types.PropertyGroup):
-    object_name = bpy.props.StringProperty()
+class PAMSynapticLayer(bpy.types.PropertyGroup):
+    object = bpy.props.StringProperty()
     synapse_count = bpy.props.IntProperty(
 
     )
-    uv_from = bpy.props.EnumProperty(
+    uv_source = bpy.props.EnumProperty(
         items=[]
     )
-    uv_to = bpy.props.EnumProperty(
+    uv_target = bpy.props.EnumProperty(
         items=[]
     )
     mapping = bpy.props.EnumProperty(
@@ -49,23 +70,25 @@ class SynapticLayer(bpy.types.PropertyGroup):
     )
 
 
-class PostSynapticLayer(bpy.types.PropertyGroup):
-    object_name = bpy.props.StringProperty()
+class PAMPostSynapticLayer(bpy.types.PropertyGroup):
+    object = bpy.props.StringProperty()
     particle_system = bpy.props.EnumProperty(
         items=[]
     )
     kernel_function = bpy.props.EnumProperty(
         items=[]
     )
-    # TODO(SK): Kernel Parameter
+    kernel_parameter = bpy.props.CollectionProperty(
+        type=PAMKernelParameter
+    )
 
 
-class IntermediateSynapticLayer(bpy.types.PropertyGroup):
-    object_name = bpy.props.StringProperty()
-    uv_from = bpy.props.EnumProperty(
+class PAMIntermediateSynapticLayer(bpy.types.PropertyGroup):
+    object = bpy.props.StringProperty()
+    uv_source = bpy.props.EnumProperty(
         items=[]
     )
-    uv_to = bpy.props.EnumProperty(
+    uv_target = bpy.props.EnumProperty(
         items=[]
     )
     mapping = bpy.props.EnumProperty(
@@ -76,25 +99,91 @@ class IntermediateSynapticLayer(bpy.types.PropertyGroup):
     )
 
 
-class MappingProperties(bpy.types.PropertyGroup):
-    presynapse = bpy.props.PointerProperty(type=PreSynapticLayer)
-    postsynapse = bpy.props.PointerProperty(type=PostSynapticLayer)
-    synapse = bpy.props.PointerProperty(type=SynapticLayer)
+class PAMMappingSet(bpy.types.PropertyGroup):
+    name = bpy.props.StringProperty(default="mapping")
 
-    preintermediates = bpy.props.CollectionProperty(type=IntermediateSynapticLayer)
-    postintermediates = bpy.props.CollectionProperty(type=IntermediateSynapticLayer)
-    active_preintermediates = bpy.props.IntProperty()
-    active_postintermediates = bpy.props.IntProperty()
+    presynapse = bpy.props.PointerProperty(type=PAMPreSynapticLayer)
+    postsynapse = bpy.props.PointerProperty(type=PAMPostSynapticLayer)
+    synapse = bpy.props.PointerProperty(type=PAMSynapticLayer)
+
+    preintermediates = bpy.props.CollectionProperty(type=PAMIntermediateSynapticLayer)
+    postintermediates = bpy.props.CollectionProperty(type=PAMIntermediateSynapticLayer)
+
+    active_preintermediate = bpy.props.IntProperty()
+    active_postintermediate = bpy.props.IntProperty()
+
+
+class PAMMapping(bpy.types.PropertyGroup):
+    sets = bpy.props.CollectionProperty(type=PAMMappingSet)
+    active_set = bpy.props.IntProperty()
+
+
+class PAMMappingSetLayer(bpy.types.Operator):
+    bl_idname = "pam.mapping_set_layer"
+    bl_label = "Set mapping layer"
+    bl_description = ""
+
+    layer = bpy.props.EnumProperty(
+        items=LAYER_TYPES,
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return any(context.scene.pam_mapping.sets)
+
+    def execute(self, context):
+        active_obj = context.active_object
+        active_set = context.scene.pam_mapping.sets[context.scene.pam_mapping.active_set]
+        active_layer = getattr(active_set, self.layer)
+
+        if self.layer.endswith("synapse"):
+            active_layer.object = active_obj.name
+
+        elif self.layer.endswith("intermediates"):
+            new_layer = active_layer.add()
+            new_layer.object = active_obj.name
+
+        else:
+            logger.Error("Unknown layer type")
+            return {'CANCELLED'}
+
+        context.scene.objects.active = active_obj
+
+        return {'FINISHED'}
+
+
+class PAMMappingAddSet(bpy.types.Operator):
+    bl_idname = "pam.mapping_add_set"
+    bl_label = "Add a mapping set"
+    bl_description = ""
+
+    def execute(self, context):
+        context.scene.pam_mapping.sets.add()
+
+        return {'FINISHED'}
+
+
+class PAMMappingDeleteSet(bpy.types.Operator):
+    bl_idname = "pam.mapping_delete_set"
+    bl_label = "Delete active mapping set"
+    bl_description = ""
+
+    def execute(self, context):
+        context.scene.pam_mapping.sets.remove(context.scene.pam_mapping.active_set)
+
+        return {'FINISHED'}
 
 
 def register():
-    bpy.utils.register_class(PreSynapticLayer)
-    bpy.utils.register_class(PostSynapticLayer)
-    bpy.utils.register_class(SynapticLayer)
-    bpy.utils.register_class(IntermediateSynapticLayer)
-    bpy.utils.register_class(MappingProperties)
+    bpy.utils.register_class(PAMKernelParameter)
+    bpy.utils.register_class(PAMPreSynapticLayer)
+    bpy.utils.register_class(PAMPostSynapticLayer)
+    bpy.utils.register_class(PAMSynapticLayer)
+    bpy.utils.register_class(PAMIntermediateSynapticLayer)
+    bpy.utils.register_class(PAMMappingSet)
+    bpy.utils.register_class(PAMMapping)
     bpy.types.Scene.pam_mapping = bpy.props.PointerProperty(
-        type=MappingProperties
+        type=PAMMapping
     )
 
 

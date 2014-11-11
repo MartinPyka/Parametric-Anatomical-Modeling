@@ -169,64 +169,96 @@ class PAMMappingToolsPanel(bpy.types.Panel):
 
     def draw(self, context):
         active_obj = context.active_object
-        mapping = context.scene.pam_mapping
+        m = context.scene.pam_mapping
 
         layout = self.layout
+        # Mappings
 
-        # PreSynapticLayer
-        layout.label("Pre-Synaptic:")
-        box = layout.box()
-        box.prop(mapping.presynapse, "object_name", text="Object")
-        box.prop(mapping.presynapse, "kernel_function", text="Kernel")
-        box.prop(mapping.presynapse, "mapping", text="Mapping")
-        box.prop(mapping.presynapse, "distance", text="Distance")
-
-        layout.separator()
-
-        # PreIntermediateLayers
-        layout.label("Pre-Intermediates:")
         row = layout.row()
         row.template_list(
-            listtype_name="IntermediateLayerList",
-            dataptr=mapping,
-            propname="preintermediates",
-            active_dataptr=mapping,
-            active_propname="active_preintermediates",
+            listtype_name="MappingSetList",
+            list_id="mappings",
+            dataptr=m,
+            propname="sets",
+            active_dataptr=m,
+            active_propname="active_set",
             type="DEFAULT",
-            rows=3,
+            rows=5,
         )
 
-        layout.separator()
+        col = row.column(align=True)
+        col.operator("pam.mapping_add_set", icon="ZOOMIN", text="")
+        col.operator("pam.mapping_delete_set", icon="ZOOMOUT", text="")
 
-        # SynapticLayer
-        layout.label("Synaptic:")
-        box = layout.box()
-        box.prop(mapping.synapse, "object_name", text="Object")
-        box.prop(mapping.synapse, "mapping", text="Mapping")
-        box.prop(mapping.synapse, "distance", text="Distance")
+        active_set = None
+        try:
+            active_set = m.sets[m.active_set]
+        except IndexError:
+            pass
 
-        layout.separator()
+        if active_set:
+            mapping = active_set
 
-        # PostIntermediateLayers
-        layout.label("Post-Intermediates:")
-        row = layout.row()
-        row.template_list(
-            listtype_name="IntermediateLayerList",
-            dataptr=mapping,
-            propname="postintermediates",
-            active_dataptr=mapping,
-            active_propname="active_postintermediates",
-            type="DEFAULT",
-            rows=3,
-        )
+            # PreSynapticLayer
+            layout.label("Pre-Synaptic:")
+            box = layout.box()
 
-        layout.separator()
+            if mapping.presynapse.object == "":
+                box.label("Object: unset")
+            else:
+                box.label("Object: %s" % mapping.presynapse.object)
+                box.prop(mapping.presynapse, "kernel_function", text="Kernel")
+                box.prop(mapping.presynapse, "mapping", text="Mapping")
+                box.prop(mapping.presynapse, "distance", text="Distance")
 
-        # PostSynapticLayer
-        layout.label("Post-Synaptic:")
-        box = layout.box()
-        box.prop(mapping.postsynapse, "object_name", text="Object")
-        box.prop(mapping.postsynapse, "kernel_function", text="Kernel")
+            # PreIntermediateLayers
+            layout.label("Pre-Intermediates:")
+            row = layout.row()
+            row.template_list(
+                listtype_name="IntermediateLayerList",
+                list_id="preintermediates",
+                dataptr=mapping,
+                propname="preintermediates",
+                active_dataptr=mapping,
+                active_propname="active_preintermediate",
+                type="DEFAULT",
+                rows=3,
+            )
+
+            # SynapticLayer
+            layout.label("Synaptic:")
+            box = layout.box()
+
+            if mapping.synapse.object == "":
+                box.label("Object: unset")
+            else:
+                box.label("Object: %s" % mapping.synapse.object)
+                box.prop(mapping.synapse, "mapping", text="Mapping")
+                box.prop(mapping.synapse, "distance", text="Distance")
+
+            # PostIntermediateLayers
+            layout.label("Post-Intermediates:")
+            row = layout.row()
+            row.template_list(
+                listtype_name="IntermediateLayerList",
+                list_id="postintermediates",
+                dataptr=mapping,
+                propname="postintermediates",
+                active_dataptr=mapping,
+                active_propname="active_postintermediate",
+                type="DEFAULT",
+                rows=3,
+            )
+
+            # PostSynapticLayer
+            layout.label("Post-Synaptic:")
+            box = layout.box()
+
+            if mapping.postsynapse.object == "":
+                box.label("Object: unset")
+            else:
+                box.label("Object: %s" % mapping.postsynapse.object)
+                box.prop(mapping.postsynapse, "kernel_function", text="Kernel")
 
 
 # TODO(SK): missing docstring
@@ -237,10 +269,17 @@ class CustomPropList(bpy.types.UIList):
         layout.prop(item, "value", text="", emboss=False, slider=False)
 
 
+# TODO(SK): missing docstring
 class IntermediateLayerList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data,
                   active_propname, index):
-        layout.prop(item, "object_name", text="", emboss=False)
+        layout.prop(item, "object", text="", emboss=False)
+
+
+class MappingSetList(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data,
+                  active_propname, index):
+        layout.prop(item, "name", text="", emboss=False)
 
 
 # TODO(SK): missing docstring

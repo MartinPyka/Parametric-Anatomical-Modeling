@@ -413,7 +413,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
                         if not debug:
                             return None, None, None
                         else:
-                            return p3d, i
+                            return p3d, i, None
                     p3d.append(p3d_t)
                     p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
                     p3d.append(p3d_n)
@@ -424,7 +424,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
                         if not debug:
                             return None, None, None
                         else:
-                            return p3d, i
+                            return p3d, i, None
 
                     p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
                     p3d.append(p3d_t)
@@ -448,7 +448,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
                         if not debug:
                             return None, None, None
                         else:
-                            return p3d, i
+                            return p3d, i, None
                     p3d.append(p3d_t)
                 # elif distances[i] == DIS_UVnormal:
                 #    do nothing
@@ -464,7 +464,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
                 if not debug:
                     return None, None, None
                 else:
-                    return p3d, i
+                    return p3d, i, None
 
             # we are not on the synapse layer
             if i < (len(connections) - 1):
@@ -532,7 +532,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
                         if not debug:
                             return None, None, None
                         else:
-                            return p3d, i
+                            return p3d, i, None
 
                     p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
                     p3d.append(p3d_t)
@@ -555,7 +555,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
                         if not debug:
                             return None, None, None
                         else:
-                            return p3d, i
+                            return p3d, i, None
                     p3d.append(p3d_t)
                 # elif distances[i] == UVnormal:
                 #    do nothing
@@ -586,7 +586,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
                         if not debug:
                             return None, None, None
                         else:
-                            return p3d, i
+                            return p3d, i, None
                     p3d.append(p3d_t)
                     p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
                     p3d.append(p3d_n)
@@ -597,7 +597,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
                         if not debug:
                             return None, None, None
                         else:
-                            return p3d, i
+                            return p3d, i, None
 
                     p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
                     p3d.append(p3d_t)
@@ -621,7 +621,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
                         if not debug:
                             return None, None, None
                         else:
-                            return p3d, i
+                            return p3d, i, None
                     p3d.append(p3d_t)
                 # elif distances[i] == UVnormal:
                 #    do nothing
@@ -636,7 +636,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
                 if not debug:
                     return None, None, None
                 else:
-                    return p3d, i
+                    return p3d, i, None
 
             p3d_n = p3d_n[0]
 
@@ -662,7 +662,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
                         if not debug:
                             return None, None, None
                         else:
-                            return p3d, i
+                            return p3d, i, None
                     p3d.append(p3d_t)
                     p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
                     p3d.append(p3d_n)
@@ -673,7 +673,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
                         if not debug:
                             return None, None, None
                         else:
-                            return p3d, i
+                            return p3d, i, None
 
                     p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
                     p3d.append(p3d_t)
@@ -697,7 +697,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
                         if not debug:
                             return None, None, None
                         else:
-                            return p3d, i
+                            return p3d, i, None
                     p3d.append(p3d_t)
                 # elif distances[i] == UVnormal:
                 #    do nothing

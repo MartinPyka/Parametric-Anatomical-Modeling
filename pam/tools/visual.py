@@ -302,14 +302,44 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
         p_index = pam.map3dPointToParticle(object, 0, cursor)
         print('Neuron Number: ' + str(p_index))
 
+        smoothing = context.scene.pam_visualize.smoothing
         for ci in model.CONNECTION_INDICES:
             # if ng_index is the pre-synaptic layer in a certain mapping
             if ci[1] == ng_index:
                 # visualize the connections
-                pam_vis.visualizeConnectionsForNeuron(ci[0], p_index)
+                pam_vis.visualizeConnectionsForNeuron(ci[0], p_index, smoothing)
 
         bpy.context.scene.objects.active = object
         return {'FINISHED'}
+    
+    
+class PamVisualizeForwardConnection(bpy.types.Operator):
+    bl_idname = "pam_vis.visualize_forward_connection"
+    bl_label = "Visualize Forward Connection for Neuron at Cursor"
+    bl_description = "Visualizes as many mappings as possible until the synaptic layer"
+    bl_options = {'UNDO'}
+
+    def execute(self, context):
+        object = context.active_object
+        cursor = context.scene.cursor_location
+
+        if object.name in model.NG_DICT:
+            ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
+        else:
+            return {'FINISHED'}
+
+        ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
+        p_index = pam.map3dPointToParticle(object, 0, cursor)
+        print('Neuron Number: ' + str(p_index))
+
+        for ci in model.CONNECTION_INDICES:
+            # if ng_index is the pre-synaptic layer in a certain mapping
+            if ci[1] == ng_index:
+                # visualize the connections
+                pam_vis.visualizeForwardMapping(ci[0], p_index)
+
+        bpy.context.scene.objects.active = object
+        return {'FINISHED'}    
 
 
 # TODO(SK): missing docstring
@@ -441,6 +471,14 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
         min=1,
         max=20
     )
+    
+    smoothing = bpy.props.IntProperty(
+        name = "Number of smoothing steps",
+        default = 5,
+        min = 0,
+        max = 20
+    )
+    
     active_index = bpy.props.IntProperty()
     customs = bpy.props.CollectionProperty(
         type=PamVisualizeKernelFloatProperties

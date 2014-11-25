@@ -3,6 +3,14 @@
 import math
 
 
+KERNEL_TYPES = [
+    ("unity", "Unity", "", 3),
+    ("gauss_v", "Gauss Line [v]", "", 2),
+    ("gauss_u", "Gauss Line [u]", "", 1),
+    ("gauss", "Gauss", "", 0),
+]
+
+
 def gauss(uv, guv, *args):
     """Gauss-function for 2d
     uv      : center of the gauss-bell

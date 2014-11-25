@@ -4,6 +4,8 @@ import logging
 
 import bpy
 
+from . import kernel
+
 logger = logging.getLogger(__package__)
 
 LAYER_TYPES = [
@@ -44,7 +46,7 @@ class PAMPreSynapticLayer(bpy.types.PropertyGroup):
         items=[]
     )
     kernel_function = bpy.props.EnumProperty(
-        items=[]
+        items=kernel.KERNEL_TYPES
     )
     kernel_parameter = bpy.props.CollectionProperty(
         type=PAMKernelParameter
@@ -76,7 +78,7 @@ class PAMPostSynapticLayer(bpy.types.PropertyGroup):
         items=[]
     )
     kernel_function = bpy.props.EnumProperty(
-        items=[]
+        items=kernel.KERNEL_TYPES
     )
     kernel_parameter = bpy.props.CollectionProperty(
         type=PAMKernelParameter

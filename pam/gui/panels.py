@@ -40,14 +40,14 @@ class PAMToolsPanel(bpy.types.Panel):
             "pam_vis.visualize_connections_for_neuron",
             "Connections at Cursor"
         )
-        
+
         row.label("Debugging")
-        
+
         row.operator(
             "pam_vis.visualize_forward_connection",
             "Forward mapping at Cursor"
         )
-        
+
         row.operator(
             "pam_vis.visualize_unconnected_neurons",
             "Unconnected neurons"

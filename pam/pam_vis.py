@@ -59,8 +59,8 @@ def visualizePath(pointlist, smoothing=0):
     """ Create path for a given point list
 
     This code is taken and modified from the bTrace-Addon for Blender
-    http://blenderartists.org/forum/showthread.php?214872  
-    
+    http://blenderartists.org/forum/showthread.php?214872
+
     pointlist   : list of 3d-vectors that are converted to a path
     smoothing   : number of smoothing stepts that should be applied afterwards """
 
@@ -92,7 +92,7 @@ def visualizePath(pointlist, smoothing=0):
     curve.name = "visualization.%03d" % vis_objects
 
     vis_objects = vis_objects + 1
-    
+
     # apply smoothing if requested
     if smoothing > 0:
         bpy.ops.object.editmode_toggle()
@@ -100,7 +100,7 @@ def visualizePath(pointlist, smoothing=0):
         for i in range(0, smoothing):
             bpy.ops.curve.smooth()
         bpy.ops.object.editmode_toggle()
-        
+
     return curve
 
 
@@ -117,12 +117,14 @@ def visualizeForwardMapping(no_connection, pre_index):
     connections = model.CONNECTIONS[no_connection][4]
     distances = model.CONNECTIONS[no_connection][5]
 
-    pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer + 1)],
-                                                 connections[0:slayer],
-                                                 distances[0:(slayer - 1)] + [pam.DIS_euclidUV],
-                                                 layers[0].particle_systems[neuronset1].particles[pre_index].location,
-                                                 debug = True)
-                                                 
+    pre_p3d, pre_p2d, pre_d = pam.computeMapping(
+        layers[0:(slayer + 1)],
+        connections[0:slayer],
+        distances[0:(slayer - 1)] + [pam.DIS_euclidUV],
+        layers[0].particle_systems[neuronset1].particles[pre_index].location,
+        debug=True
+    )
+
     logger.debug(pre_p3d)
     visualizePath(pre_p3d)
 

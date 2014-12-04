@@ -31,10 +31,23 @@ class PAMToolsPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         row = layout.column()
+        row.prop(
+            context.scene.pam_visualize,
+            "smoothing",
+            text="Smoothing"
+        )
         row.operator(
             "pam_vis.visualize_connections_for_neuron",
             "Connections at Cursor"
         )
+        
+        row.label("Debugging")
+        
+        row.operator(
+            "pam_vis.visualize_forward_connection",
+            "Forward mapping at Cursor"
+        )
+        
         row.operator(
             "pam_vis.visualize_unconnected_neurons",
             "Unconnected neurons"

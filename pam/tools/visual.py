@@ -311,8 +311,8 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
 
         bpy.context.scene.objects.active = object
         return {'FINISHED'}
-    
-    
+
+
 class PamVisualizeForwardConnection(bpy.types.Operator):
     bl_idname = "pam_vis.visualize_forward_connection"
     bl_label = "Visualize Forward Connection for Neuron at Cursor"
@@ -339,7 +339,7 @@ class PamVisualizeForwardConnection(bpy.types.Operator):
                 pam_vis.visualizeForwardMapping(ci[0], p_index)
 
         bpy.context.scene.objects.active = object
-        return {'FINISHED'}    
+        return {'FINISHED'}
 
 
 # TODO(SK): missing docstring
@@ -471,14 +471,14 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
         min=1,
         max=20
     )
-    
+
     smoothing = bpy.props.IntProperty(
-        name = "Number of smoothing steps",
-        default = 5,
-        min = 0,
-        max = 20
+        name="Number of smoothing steps",
+        default=5,
+        min=0,
+        max=20
     )
-    
+
     active_index = bpy.props.IntProperty()
     customs = bpy.props.CollectionProperty(
         type=PamVisualizeKernelFloatProperties

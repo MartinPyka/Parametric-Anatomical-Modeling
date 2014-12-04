@@ -17,7 +17,7 @@ LAYER_TYPES = [
 ]
 
 
-class PAMKernelParameter(bpy.types.PropertyGroup):
+class PAMKernelValues(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(
         name="Parameter name",
         default="param"
@@ -28,77 +28,56 @@ class PAMKernelParameter(bpy.types.PropertyGroup):
     )
 
 
-class PAMPreSynapticLayer(bpy.types.PropertyGroup):
-    object = bpy.props.StringProperty()
+class PAMKernelParameter(bpy.types.PropertyGroup):
+    kernel_function = bpy.props.EnumProperty(
+        items=kernel.KERNEL_TYPES
+    )
+    kernel_parameter = bpy.props.CollectionProperty(
+        type=PAMKernelValues
+    )
+
+
+class PAMMappingParameter(bpy.types.PropertyGroup):
+    distance_function = bpy.props.EnumProperty(
+        items=[]
+    )
+    mapping_function = bpy.props.EnumProperty(
+        items=[]
+    )
     uv_source = bpy.props.EnumProperty(
         items=[]
     )
     uv_target = bpy.props.EnumProperty(
         items=[]
     )
-    mapping = bpy.props.EnumProperty(
-        items=[]
-    )
-    distance = bpy.props.EnumProperty(
-        items=[]
-    )
+
+
+class PAMPreSynapticLayer(bpy.types.PropertyGroup):
+    object = bpy.props.StringProperty()
+    kernel = bpy.props.PointerProperty(type=PAMKernelParameter)
+    mapping = bpy.props.PointerProperty(type=PAMMappingParameter)
     particle_system = bpy.props.EnumProperty(
         items=[]
-    )
-    kernel_function = bpy.props.EnumProperty(
-        items=kernel.KERNEL_TYPES
-    )
-    kernel_parameter = bpy.props.CollectionProperty(
-        type=PAMKernelParameter
     )
 
 
 class PAMSynapticLayer(bpy.types.PropertyGroup):
     object = bpy.props.StringProperty()
-    synapse_count = bpy.props.IntProperty(
-
-    )
-    uv_source = bpy.props.EnumProperty(
-        items=[]
-    )
-    uv_target = bpy.props.EnumProperty(
-        items=[]
-    )
-    mapping = bpy.props.EnumProperty(
-        items=[]
-    )
-    distance = bpy.props.EnumProperty(
-        items=[]
-    )
+    mapping = bpy.props.PointerProperty(type=PAMMappingParameter)
+    synapse_count = bpy.props.IntProperty()
 
 
 class PAMPostSynapticLayer(bpy.types.PropertyGroup):
     object = bpy.props.StringProperty()
+    kernel = bpy.props.PointerProperty(type=PAMKernelParameter)
     particle_system = bpy.props.EnumProperty(
         items=[]
-    )
-    kernel_function = bpy.props.EnumProperty(
-        items=kernel.KERNEL_TYPES
-    )
-    kernel_parameter = bpy.props.CollectionProperty(
-        type=PAMKernelParameter
     )
 
 
 class PAMIntermediateSynapticLayer(bpy.types.PropertyGroup):
     object = bpy.props.StringProperty()
-    uv_source = bpy.props.EnumProperty(
-        items=[]
-    )
-    uv_target = bpy.props.EnumProperty(
-        items=[]
-    )
-    mapping = bpy.props.EnumProperty(
-        items=[]
-    )
-    distance = bpy.props.EnumProperty(
-        items=[]
-    )
+    mapping = bpy.props.PointerProperty(type=PAMMappingParameter)
 
 
 class PAMMappingSet(bpy.types.PropertyGroup):
@@ -177,7 +156,9 @@ class PAMMappingDeleteSet(bpy.types.Operator):
 
 
 def register():
+    bpy.utils.register_class(PAMKernelValues)
     bpy.utils.register_class(PAMKernelParameter)
+    bpy.utils.register_class(PAMMappingParameter)
     bpy.utils.register_class(PAMPreSynapticLayer)
     bpy.utils.register_class(PAMPostSynapticLayer)
     bpy.utils.register_class(PAMSynapticLayer)

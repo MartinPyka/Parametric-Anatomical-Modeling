@@ -9,11 +9,12 @@ from . import kernel
 logger = logging.getLogger(__package__)
 
 LAYER_TYPES = [
-    ("postsynapse", "(5) Postsynapse", "", 5),
-    ("postintermediates", "(4) Postintermediate", "", 4),
-    ("synapse", "(3) Synapse", "", 3),
-    ("preintermediates", "(2) Preintermediate", "", 2),
-    ("presynapse", "(1) Presynapse", "", 1),
+    ("none", "None", "", "", 0),
+    ("postsynapse", "Postsynapse", "", "", 1),
+    ("postintermediates", "Postintermediate", "", "", 2),
+    ("synapse", "Synapse", "", "", 3),
+    ("preintermediates", "Preintermediate", "", "", 4),
+    ("presynapse", "Presynapse", "", "", 5),
 ]
 
 
@@ -29,19 +30,20 @@ class PAMKernelValues(bpy.types.PropertyGroup):
 
 
 class PAMKernelParameter(bpy.types.PropertyGroup):
-    kernel_function = bpy.props.EnumProperty(
+    function = bpy.props.EnumProperty(
         items=kernel.KERNEL_TYPES
     )
-    kernel_parameter = bpy.props.CollectionProperty(
+    parameters = bpy.props.CollectionProperty(
         type=PAMKernelValues
     )
+    active_parameter = bpy.props.IntProperty()
 
 
 class PAMMappingParameter(bpy.types.PropertyGroup):
-    distance_function = bpy.props.EnumProperty(
+    mapping_function = bpy.props.EnumProperty(
         items=[]
     )
-    mapping_function = bpy.props.EnumProperty(
+    distance_function = bpy.props.EnumProperty(
         items=[]
     )
     uv_source = bpy.props.EnumProperty(
@@ -52,83 +54,197 @@ class PAMMappingParameter(bpy.types.PropertyGroup):
     )
 
 
-class PAMPreSynapticLayer(bpy.types.PropertyGroup):
+class PAMLayer(bpy.types.PropertyGroup):
     object = bpy.props.StringProperty()
+    type = bpy.props.EnumProperty(
+        items=LAYER_TYPES,
+        name="Layer type",
+        default=LAYER_TYPES[0][0],
+    )
+    collapsed = bpy.props.BoolProperty(
+        default=True,
+    )
     kernel = bpy.props.PointerProperty(type=PAMKernelParameter)
-    mapping = bpy.props.PointerProperty(type=PAMMappingParameter)
-    particle_system = bpy.props.EnumProperty(
-        items=[]
+    synapse_count = bpy.props.IntProperty(
+        min=1,
+        default=1,
     )
 
 
-class PAMSynapticLayer(bpy.types.PropertyGroup):
-    object = bpy.props.StringProperty()
-    mapping = bpy.props.PointerProperty(type=PAMMappingParameter)
-    synapse_count = bpy.props.IntProperty()
-
-
-class PAMPostSynapticLayer(bpy.types.PropertyGroup):
-    object = bpy.props.StringProperty()
-    kernel = bpy.props.PointerProperty(type=PAMKernelParameter)
-    particle_system = bpy.props.EnumProperty(
-        items=[]
-    )
-
-
-class PAMIntermediateSynapticLayer(bpy.types.PropertyGroup):
-    object = bpy.props.StringProperty()
-    mapping = bpy.props.PointerProperty(type=PAMMappingParameter)
-
-
-class PAMMappingSet(bpy.types.PropertyGroup):
+class PAMMapSet(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(default="mapping")
-
-    presynapse = bpy.props.PointerProperty(type=PAMPreSynapticLayer)
-    postsynapse = bpy.props.PointerProperty(type=PAMPostSynapticLayer)
-    synapse = bpy.props.PointerProperty(type=PAMSynapticLayer)
-
-    preintermediates = bpy.props.CollectionProperty(type=PAMIntermediateSynapticLayer)
-    postintermediates = bpy.props.CollectionProperty(type=PAMIntermediateSynapticLayer)
-
-    active_preintermediate = bpy.props.IntProperty()
-    active_postintermediate = bpy.props.IntProperty()
+    layers = bpy.props.CollectionProperty(type=PAMLayer)
+    mappings = bpy.props.CollectionProperty(type=PAMMappingParameter)
 
 
-class PAMMapping(bpy.types.PropertyGroup):
-    sets = bpy.props.CollectionProperty(type=PAMMappingSet)
+class PAMMap(bpy.types.PropertyGroup):
+    sets = bpy.props.CollectionProperty(type=PAMMapSet)
     active_set = bpy.props.IntProperty()
 
 
-class PAMMappingSetLayer(bpy.types.Operator):
-    bl_idname = "pam.mapping_set_layer"
-    bl_label = "Set mapping layer"
+class PAMMappingUp(bpy.types.Operator):
+    bl_idname = "pam.mapping_up"
+    bl_label = "Move mapping up"
     bl_description = ""
-
-    layer = bpy.props.EnumProperty(
-        items=LAYER_TYPES,
-    )
+    bl_options = {"UNDO"}
 
     @classmethod
     def poll(cls, context):
-        return any(context.scene.pam_mapping.sets)
+        m = context.scene.pam_mapping
+        return len(m.sets) > 1 and m.active_set > 0
 
     def execute(self, context):
-        active_obj = context.active_object
-        active_set = context.scene.pam_mapping.sets[context.scene.pam_mapping.active_set]
-        active_layer = getattr(active_set, self.layer)
+        m = context.scene.pam_mapping
 
-        if self.layer.endswith("synapse"):
-            active_layer.object = active_obj.name
+        last = m.active_set - 1
 
-        elif self.layer.endswith("intermediates"):
-            new_layer = active_layer.add()
-            new_layer.object = active_obj.name
+        if last >= 0:
+            m.sets.move(m.active_set, last)
+            m.active_set = last
 
-        else:
-            logger.Error("Unknown layer type")
-            return {'CANCELLED'}
+        return {'FINISHED'}
 
-        context.scene.objects.active = active_obj
+
+class PAMMappingDown(bpy.types.Operator):
+    bl_idname = "pam.mapping_down"
+    bl_label = "Move mapping down"
+    bl_description = ""
+    bl_options = {"UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        m = context.scene.pam_mapping
+        return len(m.sets) > 1 and m.active_set < len(m.sets) - 1
+
+    def execute(self, context):
+        m = context.scene.pam_mapping
+
+        next = m.active_set + 1
+
+        if next < len(m.sets):
+            m.sets.move(m.active_set, next)
+            m.active_set = next
+
+        return {'FINISHED'}
+
+
+class PAMMappingLayerUp(bpy.types.Operator):
+    bl_idname = "pam.mapping_layer_up"
+    bl_label = "Move layer up"
+    bl_description = ""
+    bl_options = {"UNDO"}
+
+    index = bpy.props.IntProperty()
+
+    @classmethod
+    def poll(cls, context):
+        m = context.scene.pam_mapping
+        active_set = m.sets[m.active_set]
+
+        return any(active_set.layers)
+
+    def execute(self, context):
+        m = context.scene.pam_mapping
+        active_set = m.sets[m.active_set]
+
+        last = self.index - 1
+
+        if last >= 0:
+            active_set.layers.move(self.index, last)
+            active_set.mappings.move(self.index, last)
+
+        return {'FINISHED'}
+
+
+class PAMMappingLayerDown(bpy.types.Operator):
+    bl_idname = "pam.mapping_layer_down"
+    bl_label = "Move layer down"
+    bl_description = ""
+    bl_options = {"UNDO"}
+
+    index = bpy.props.IntProperty()
+
+    @classmethod
+    def poll(self, context):
+        m = context.scene.pam_mapping
+        active_set = m.sets[m.active_set]
+
+        return any(active_set.layers)
+
+    def execute(self, context):
+        m = context.scene.pam_mapping
+        active_set = m.sets[m.active_set]
+
+        next = self.index + 1
+
+        if next < len(active_set.layers):
+            active_set.layers.move(self.index, next)
+            active_set.mappings.move(self.index, next)
+
+        return {'FINISHED'}
+
+
+class PAMMappingLayerAdd(bpy.types.Operator):
+    bl_idname = "pam.mapping_layer_add"
+    bl_label = "Add layer"
+    bl_description = ""
+    bl_options = {"UNDO"}
+
+    test123 = bpy.props.EnumProperty(items=LAYER_TYPES)
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        m = context.scene.pam_mapping
+        active_set = m.sets[m.active_set]
+
+        l = active_set.layers.add()
+        m = active_set.mappings.add()
+
+        return {'FINISHED'}
+
+
+class PAMMappingLayerRemove(bpy.types.Operator):
+    bl_idname = "pam.mapping_layer_remove"
+    bl_label = "Remove layer"
+    bl_description = ""
+    bl_options = {"UNDO"}
+
+    index = bpy.props.IntProperty()
+
+    @classmethod
+    def poll(cls, context):
+        m = context.scene.pam_mapping
+        set = m.sets[m.active_set]
+        return len(set.layers) > 2
+
+    def execute(self, context):
+        m = context.scene.pam_mapping
+        active_set = m.sets[m.active_set]
+
+        active_set.layers.remove(self.index)
+        active_set.mappings.remove(self.index)
+
+        return {'FINISHED'}
+
+
+class PAMMappingSetObject(bpy.types.Operator):
+    bl_idname = "pam.mapping_layer_set_object"
+    bl_label = "Set layer"
+    bl_description = ""
+    bl_options = {"UNDO"}
+
+    index = bpy.props.IntProperty()
+
+    def execute(self, context):
+        active_obj = context.scene.objects.active
+        m = context.scene.pam_mapping
+        active_set = m.sets[m.active_set]
+
+        layer = active_set.layers[self.index]
+        layer.object = active_obj.name
 
         return {'FINISHED'}
 
@@ -137,9 +253,23 @@ class PAMMappingAddSet(bpy.types.Operator):
     bl_idname = "pam.mapping_add_set"
     bl_label = "Add a mapping set"
     bl_description = ""
+    bl_options = {"UNDO"}
+
+    count = bpy.props.IntProperty()
 
     def execute(self, context):
-        context.scene.pam_mapping.sets.add()
+        active_obj = context.scene.objects.active
+        m = context.scene.pam_mapping
+
+        set = m.sets.add()
+        set.name = "%s.%03d" % (set.name, self.count)
+        self.count += 1
+
+        pre = set.layers.add()
+        pos = set.layers.add()
+
+        set.mappings.add()
+        set.mappings.add()
 
         return {'FINISHED'}
 
@@ -148,9 +278,43 @@ class PAMMappingDeleteSet(bpy.types.Operator):
     bl_idname = "pam.mapping_delete_set"
     bl_label = "Delete active mapping set"
     bl_description = ""
+    bl_options = {"UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return any(context.scene.pam_mapping.sets)
 
     def execute(self, context):
         context.scene.pam_mapping.sets.remove(context.scene.pam_mapping.active_set)
+
+        return {'FINISHED'}
+
+
+class PAMMappingSetLayer(bpy.types.Operator):
+    bl_idname = "pam.mapping_layer_set"
+    bl_label = "Delete active mapping set"
+    bl_description = ""
+    bl_options = {"UNDO"}
+
+    type = bpy.props.EnumProperty(items=LAYER_TYPES[1:])
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        active_obj = context.scene.objects.active
+        m = context.scene.pam_mapping
+
+        active_set = m.sets[m.active_set]
+
+        layer = active_set.layers.add()
+        mapping = active_set.mappings.add()
+
+        layer.object = active_obj.name
+        layer.type = self.type
+
+        context.scene.objects.active = active_obj
 
         return {'FINISHED'}
 
@@ -159,14 +323,11 @@ def register():
     bpy.utils.register_class(PAMKernelValues)
     bpy.utils.register_class(PAMKernelParameter)
     bpy.utils.register_class(PAMMappingParameter)
-    bpy.utils.register_class(PAMPreSynapticLayer)
-    bpy.utils.register_class(PAMPostSynapticLayer)
-    bpy.utils.register_class(PAMSynapticLayer)
-    bpy.utils.register_class(PAMIntermediateSynapticLayer)
-    bpy.utils.register_class(PAMMappingSet)
-    bpy.utils.register_class(PAMMapping)
+    bpy.utils.register_class(PAMLayer)
+    bpy.utils.register_class(PAMMapSet)
+    bpy.utils.register_class(PAMMap)
     bpy.types.Scene.pam_mapping = bpy.props.PointerProperty(
-        type=PAMMapping
+        type=PAMMap
     )
 
 
@@ -174,5 +335,20 @@ def unregister():
     del bpy.types.Scene.pam_mapping
 
 
-def is_mapping_valid():
-    pass
+def validate_layer(context, layer):
+    err = None
+
+    if layer.type == "none":
+        err = "layer missing type"
+
+    elif layer.object == "":
+        err = "layer missing object"
+
+    elif layer.object not in context.scene.objects:
+        err = "layer object missing in scene"
+
+    return err
+
+
+def validate_mapping(mapping):
+    return False

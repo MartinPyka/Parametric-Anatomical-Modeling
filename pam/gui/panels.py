@@ -2,6 +2,8 @@
 
 import bpy
 
+from .. import mapping as map
+
 
 class PAMModelDataPanel(bpy.types.Panel):
     """A panel for loading and saving model data"""
@@ -9,8 +11,8 @@ class PAMModelDataPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "Model data"
-    bl_category = "PAM"
+    bl_label = "Data"
+    bl_category = "PAM Modeling"
 
     def draw(self, context):
         layout = self.layout
@@ -26,7 +28,7 @@ class PAMToolsPanel(bpy.types.Panel):
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
     bl_label = "Connections"
-    bl_category = "PAM"
+    bl_category = "PAM Modeling"
 
     def draw(self, context):
         layout = self.layout
@@ -72,7 +74,7 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
     bl_label = "Kernel"
-    bl_category = "PAM"
+    bl_category = "PAM Modeling"
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -132,8 +134,8 @@ class PAMModelingPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "Modeling Tools"
-    bl_category = "PAM"
+    bl_label = "Modeling"
+    bl_category = "PAM Modeling"
 
     def draw(self, context):
         layout = self.layout
@@ -148,7 +150,7 @@ class PAMMeasureToolsPanel(bpy.types.Panel):
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
     bl_label = "Measure"
-    bl_category = "PAM"
+    bl_category = "PAM Modeling"
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -183,8 +185,93 @@ class PAMMappingToolsPanel(bpy.types.Panel):
     def draw(self, context):
         active_obj = context.active_object
         m = context.scene.pam_mapping
-
         layout = self.layout
+
+        row = layout.row()
+        row.template_list(
+            listtype_name="MapSetList",
+            list_id="mappings",
+            dataptr=m,
+            propname="sets",
+            active_dataptr=m,
+            active_propname="active_set",
+            type="DEFAULT",
+            rows=5,
+        )
+
+        col = row.column(align=True)
+        col.operator("pam.mapping_add_set", icon="ZOOMIN", text="")
+        col.operator("pam.mapping_delete_set", icon="ZOOMOUT", text="")
+        col.operator("pam.mapping_up", icon="TRIA_UP", text="")
+        col.operator("pam.mapping_down", icon="TRIA_DOWN", text="")
+
+        active_set = None
+
+        try:
+            active_set = m.sets[m.active_set]
+        except IndexError:
+            pass
+
+        if not active_set:
+            return
+
+        layout.label("Layers:")
+
+        for i, (layer, mapping) in enumerate(zip(active_set.layers, active_set.mappings)):
+            # layer
+            icon_collapsed = "TRIA_RIGHT"
+            if not layer.collapsed:
+                icon_collapsed = "TRIA_DOWN"
+
+            box = layout.box()
+
+            err = map.validate_layer(context, layer)
+            if err:
+                row = box.row(align=True)
+                row.label(text="Error: %s" % err, icon="ERROR")
+
+            row = box.row(align=True)
+            col = row.column()
+            col.prop(layer, "collapsed", icon=icon_collapsed, emboss=False, text="")
+
+            row.prop(layer, "type", text="")
+            row.operator("pam.mapping_layer_up", icon="TRIA_UP", text="").index = i
+            row.operator("pam.mapping_layer_down", icon="TRIA_DOWN", text="").index = i
+
+            col = row.column()
+            col.operator("pam.mapping_layer_remove", icon="X", emboss=False, text="").index = i
+
+            if not layer.collapsed:
+                row = box.row(align=True)
+                row.prop(layer, "object", text="Object")
+                row.operator("pam.mapping_layer_set_object", icon="SNAP_ON", text="").index = i
+
+                if layer.type in ['presynapse', 'postsynapse']:
+                    row = box.row(align=True)
+                    row.prop(layer.kernel, "function", text="Kernel")
+
+                    row = box.row()
+                    row.template_list(
+                        listtype_name="CustomPropList",
+                        dataptr=layer.kernel,
+                        propname="parameters",
+                        active_dataptr=layer.kernel,
+                        active_propname="active_parameter",
+                        type="DEFAULT",
+                        rows=3,
+                    )
+
+                    col = row.column(align=True)
+                    col.operator("pam.add_param", icon="ZOOMIN", text="")
+                    col.operator("pam.remove_param", icon="ZOOMOUT", text="")
+
+                if layer.type in ['synapse']:
+                    row = box.row(align=True)
+                    row.prop(layer, "synapse_count", text="Synapses")
+
+            box = layout.box()
+
+        layout.operator("pam.mapping_layer_add", icon="ZOOMIN", text="Add layer")
 
 
 # TODO(SK): missing docstring
@@ -202,7 +289,7 @@ class IntermediateLayerList(bpy.types.UIList):
         layout.prop(item, "object", text="", emboss=False)
 
 
-class MappingSetList(bpy.types.UIList):
+class MapSetList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data,
                   active_propname, index):
         layout.prop(item, "name", text="", emboss=False)

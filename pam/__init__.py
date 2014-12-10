@@ -81,6 +81,7 @@ def register():
     tools.measure.register()
     tools.visual.register()
     mapping.register()
+    gui.menus.register()
 
     bpy.utils.register_module(__name__)
     logger.debug("Registering addon")
@@ -91,6 +92,7 @@ def unregister():
     tools.measure.unregister()
     tools.visual.unregister()
     mapping.unregister()
+    gui.menus.unregister()
 
     bpy.utils.unregister_module(__name__)
     logger.debug("Unregistering addon")

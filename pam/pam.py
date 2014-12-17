@@ -405,6 +405,8 @@ def computeMapping(layers, connections, distances, point, debug=False):
                 elif distances[i] == DIS_jumpUV:
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_UVjump:
+                    p3d_t = map3dPointTo3d(layers[i], layers[i], p3d_n)
+                    p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_normalUV:
                     p, n, f = layers[i].closest_point_on_mesh(p3d[-1])

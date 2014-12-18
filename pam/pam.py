@@ -740,7 +740,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
         return compute_path_length(path), path
 
     elif dis == DIS_UVjump:
-        i_3d, _ = ilayer.closest_point_on_mesh(s_3d[0])
+        i_3d = ilayer.closest_point_on_mesh(s_3d[0])[0]
         path = [p_3d]
         path = path + interpolateUVTrackIn3D(p_3d, i_3d, ilayer)
         path.append(i_3d)

@@ -248,7 +248,8 @@ class PAMMappingToolsPanel(bpy.types.Panel):
 
                 if layer.type in ['presynapse', 'postsynapse']:
                     row = box.row(align=True)
-                    row.prop(layer.kernel, "function", text="Kernel")
+                    row.prop(layer.kernel, "particles", text="", icon="PARTICLES")
+                    row.prop(layer.kernel, "function", text="", icon="SMOOTHCURVE")
 
                     row = box.row()
                     row.template_list(
@@ -269,9 +270,20 @@ class PAMMappingToolsPanel(bpy.types.Panel):
                     row = box.row(align=True)
                     row.prop(layer, "synapse_count", text="Synapses")
 
-            box = layout.box()
+            if i < len(active_set.mappings) - 1:
+                split = layout.split(0.8)
+                box = split.box()
+                col = box.column()
+                col.prop(mapping, "function", text="", icon="MOD_UVPROJECT")
+                if mapping.function == "uv":
+                    col.prop(mapping, "uv_source", text="Source", icon="FORWARD")
+                    col.prop(mapping, "uv_target", text="Target", icon="BACK")
+                col = box.column()
+                col.prop(mapping, "distance", text="", icon="ALIGN")
 
-        layout.operator("pam.mapping_layer_add", icon="ZOOMIN", text="Add layer")
+        col = layout.column(align=True)
+        col.operator("pam.mapping_layer_add", icon="ZOOMIN", text="Add layer")
+        col.operator("pam.mapping_compute", icon="SCRIPTWIN", text="Compute mapping")
 
 
 # TODO(SK): missing docstring

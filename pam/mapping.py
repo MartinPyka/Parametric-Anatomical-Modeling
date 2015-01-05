@@ -17,6 +17,24 @@ LAYER_TYPES = [
     ("presynapse", "Presynapse", "", "", 5),
 ]
 
+MAPPING_TYPES = [
+    ("none", "None", "", "", 0),
+    ("uv", "UV", "", "", 1),
+    ("method2", "Method 2", "", "", 2),
+]
+
+DISTANCE_TYPES = [
+    ("none", "None", "", "", 0),
+    ("method1", "Method 1", "", "", 1),
+    ("method2", "Method 2", "", "", 2),
+]
+
+FAKE_PARTICLES = [
+    ("none", "None", "", "", 0),
+    ("system1", "System 1", "", "", 1),
+    ("system2", "System 2", "", "", 2),
+]
+
 
 class PAMKernelValues(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(
@@ -31,25 +49,34 @@ class PAMKernelValues(bpy.types.PropertyGroup):
 
 class PAMKernelParameter(bpy.types.PropertyGroup):
     function = bpy.props.EnumProperty(
-        items=kernel.KERNEL_TYPES
+        name="Kernel function",
+        items=kernel.KERNEL_TYPES,
     )
     parameters = bpy.props.CollectionProperty(
         type=PAMKernelValues
+    )
+    particles = bpy.props.EnumProperty(
+        name="Particle system",
+        items=FAKE_PARTICLES,
     )
     active_parameter = bpy.props.IntProperty()
 
 
 class PAMMappingParameter(bpy.types.PropertyGroup):
-    mapping_function = bpy.props.EnumProperty(
-        items=[]
+    function = bpy.props.EnumProperty(
+        name="Mapping function",
+        items=MAPPING_TYPES,
     )
-    distance_function = bpy.props.EnumProperty(
-        items=[]
+    distance = bpy.props.EnumProperty(
+        name="Distance function",
+        items=DISTANCE_TYPES,
     )
     uv_source = bpy.props.EnumProperty(
+        name="UV source",
         items=[]
     )
     uv_target = bpy.props.EnumProperty(
+        name="UV target",
         items=[]
     )
 
@@ -316,6 +343,21 @@ class PAMMappingSetLayer(bpy.types.Operator):
 
         context.scene.objects.active = active_obj
 
+        return {'FINISHED'}
+
+
+class PAMMappingCompute(bpy.types.Operator):
+    bl_idname = "pam.mapping_compute"
+    bl_label = "Compute mapping"
+    bl_description = ""
+
+    type = bpy.props.EnumProperty(items=LAYER_TYPES[1:])
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
         return {'FINISHED'}
 
 

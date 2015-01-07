@@ -8,8 +8,12 @@ from . import kernel
 
 logger = logging.getLogger(__package__)
 
-LAYER_TYPES = [
+
+NONE = [
     ("none", "None", "", "", 0),
+]
+
+LAYER_TYPES = NONE + [
     ("postsynapse", "Postsynapse", "", "", 1),
     ("postintermediates", "Postintermediate", "", "", 2),
     ("synapse", "Synapse", "", "", 3),
@@ -17,23 +21,17 @@ LAYER_TYPES = [
     ("presynapse", "Presynapse", "", "", 5),
 ]
 
-MAPPING_TYPES = [
-    ("none", "None", "", "", 0),
+MAPPING_TYPES = NONE + [
     ("uv", "UV", "", "", 1),
-    ("method2", "Method 2", "", "", 2),
 ]
 
-DISTANCE_TYPES = [
-    ("none", "None", "", "", 0),
-    ("method1", "Method 1", "", "", 1),
-    ("method2", "Method 2", "", "", 2),
-]
+DISTANCE_TYPES = NONE + []
 
-FAKE_PARTICLES = [
-    ("none", "None", "", "", 0),
-    ("system1", "System 1", "", "", 1),
-    ("system2", "System 2", "", "", 2),
-]
+
+def particle_systems(self, context):
+    p = NONE[:]
+
+    return p
 
 
 class PAMKernelValues(bpy.types.PropertyGroup):
@@ -57,7 +55,7 @@ class PAMKernelParameter(bpy.types.PropertyGroup):
     )
     particles = bpy.props.EnumProperty(
         name="Particle system",
-        items=FAKE_PARTICLES,
+        items=particle_systems,
     )
     active_parameter = bpy.props.IntProperty()
 

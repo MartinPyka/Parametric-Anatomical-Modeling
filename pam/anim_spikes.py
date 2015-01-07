@@ -40,7 +40,8 @@ def generateLayerNeurons(layer, particle_system):
     )
     cone = bpy.context.active_object
     cone.name = 'n' + '_' + layer.name + '_' + '%05d' % i
-
+    cone.data.materials.append(layer.data.materials[0])
+    
     # generates linked duplicates of this mesh
     for i, p in enumerate(layer.particle_systems[particle_system].particles[1:]):
         bpy.ops.object.select_all(action='DESELECT')

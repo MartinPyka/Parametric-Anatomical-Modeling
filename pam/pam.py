@@ -405,6 +405,8 @@ def computeMapping(layers, connections, distances, point, debug=False):
                 elif distances[i] == DIS_jumpUV:
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_UVjump:
+                    p3d_t = map3dPointTo3d(layers[i], layers[i], p3d_n)
+                    p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_normalUV:
                     p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
@@ -738,7 +740,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
         return compute_path_length(path), path
 
     elif dis == DIS_UVjump:
-        i_3d, _ = ilayer.closest_point_on_mesh(s_3d[0])
+        i_3d = ilayer.closest_point_on_mesh(s_3d[0])[0]
         path = [p_3d]
         path = path + interpolateUVTrackIn3D(p_3d, i_3d, ilayer)
         path.append(i_3d)

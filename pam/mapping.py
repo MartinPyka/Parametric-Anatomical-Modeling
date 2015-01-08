@@ -31,7 +31,87 @@ DISTANCE_TYPES = NONE + []
 def particle_systems(self, context):
     p = NONE[:]
 
+    if self.object not in context.scene.objects:
+        return p
+
+    particles = context.scene.objects[self.object].particle_systems
+    if not any(particles):
+        return p
+
+    p += [(p.name, p.name, "", "", i) for i, p in enumerate(particles, start=1)]
+
     return p
+
+
+def active_mapping_index(self, context):
+    m = context.scene.pam_mapping
+    active_set = m.sets[m.active_set]
+
+    index = -1
+
+    for i, mapping in enumerate(active_set.mappings):
+        if self == mapping:
+            index = i
+            break
+
+    return index
+
+
+def uv_source(self, context):
+    p = NONE[:]
+
+    m = context.scene.pam_mapping
+    active_set = m.sets[m.active_set]
+
+    index = active_mapping_index(self, context)
+
+    if index == -1:
+        return p
+
+    layer = active_set.layers[index]
+
+    if layer.object not in context.scene.objects:
+        return p
+
+    uv_layers = context.scene.objects[layer.object].data.uv_layers
+    if not any(uv_layers):
+        return p
+
+    p += [(l.name, l.name, "", "", i) for i, l in enumerate(uv_layers, start=1)]
+
+    return p
+
+
+def uv_target(self, context):
+    p = NONE[:]
+
+    m = context.scene.pam_mapping
+    active_set = m.sets[m.active_set]
+
+    index = active_mapping_index(self, context)
+
+    if index == -1:
+        return p
+
+    if len(active_set.layers) <= index + 1:
+        return p
+
+    layer = active_set.layers[index + 1]
+
+    if layer.object not in context.scene.objects:
+        return p
+
+    uv_layers = context.scene.objects[layer.object].data.uv_layers
+    if not any(uv_layers):
+        return p
+
+    p += [(l.name, l.name, "", "", i) for i, l in enumerate(uv_layers, start=1)]
+
+    return p
+
+
+def update_object(self, context):
+    self.kernel.object = self.object
 
 
 class PAMKernelValues(bpy.types.PropertyGroup):
@@ -46,6 +126,7 @@ class PAMKernelValues(bpy.types.PropertyGroup):
 
 
 class PAMKernelParameter(bpy.types.PropertyGroup):
+    object = bpy.props.StringProperty()
     function = bpy.props.EnumProperty(
         name="Kernel function",
         items=kernel.KERNEL_TYPES,
@@ -71,16 +152,18 @@ class PAMMappingParameter(bpy.types.PropertyGroup):
     )
     uv_source = bpy.props.EnumProperty(
         name="UV source",
-        items=[]
+        items=uv_source,
     )
     uv_target = bpy.props.EnumProperty(
         name="UV target",
-        items=[]
+        items=uv_target,
     )
 
 
 class PAMLayer(bpy.types.PropertyGroup):
-    object = bpy.props.StringProperty()
+    object = bpy.props.StringProperty(
+        update=update_object,
+    )
     type = bpy.props.EnumProperty(
         items=LAYER_TYPES,
         name="Layer type",

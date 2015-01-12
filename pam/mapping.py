@@ -1,13 +1,13 @@
 """Mapping module"""
 
 import logging
+import inspect
 
 import bpy
 
 from . import kernel
 
 logger = logging.getLogger(__package__)
-
 
 NONE = [
     ("none", "None", "", "", 0),
@@ -26,6 +26,8 @@ MAPPING_TYPES = NONE + [
 ]
 
 DISTANCE_TYPES = NONE + []
+
+KERNEL_TYPES = NONE + kernel.KERNEL_TYPES
 
 
 def particle_systems(self, context):
@@ -114,6 +116,21 @@ def update_object(self, context):
     self.kernel.object = self.object
 
 
+def update_kernels(self, context):
+    self.parameters.clear()
+    name = next(f for (f, _, _, _) in kernel.KERNEL_TYPES if f == self.function)
+    func = getattr(kernel, name)
+    if func is not None:
+        args, _, _, defaults = inspect.getargspec(func)
+        if args and defaults:
+            args = args[-len(defaults):]
+            params = zip(args, defaults)
+            for k, v in params:
+                p = self.parameters.add()
+                p.name = k
+                p.value = v
+
+
 class PAMKernelValues(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(
         name="Parameter name",
@@ -129,7 +146,8 @@ class PAMKernelParameter(bpy.types.PropertyGroup):
     object = bpy.props.StringProperty()
     function = bpy.props.EnumProperty(
         name="Kernel function",
-        items=kernel.KERNEL_TYPES,
+        items=KERNEL_TYPES,
+        update=update_kernels,
     )
     parameters = bpy.props.CollectionProperty(
         type=PAMKernelValues

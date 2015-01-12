@@ -4,10 +4,10 @@ import math
 
 
 KERNEL_TYPES = [
-    ("unity", "Unity", "", 3),
-    ("gauss_v", "Gauss Line [v]", "", 2),
-    ("gauss_u", "Gauss Line [u]", "", 1),
-    ("gauss", "Gauss", "", 0),
+    ("gauss", "Gauss", "", 1),
+    ("gauss_u", "Gauss Line [u]", "", 2),
+    ("gauss_v", "Gauss Line [v]", "", 3),
+    ("unity", "Unity", "", 4),
 ]
 
 

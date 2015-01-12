@@ -262,10 +262,6 @@ class PAMMappingToolsPanel(bpy.types.Panel):
                         rows=3,
                     )
 
-                    col = row.column(align=True)
-                    col.operator("pam.add_param", icon="ZOOMIN", text="")
-                    col.operator("pam.remove_param", icon="ZOOMOUT", text="")
-
                 if layer.type in ['synapse']:
                     row = box.row(align=True)
                     row.prop(layer, "synapse_count", text="Synapses")

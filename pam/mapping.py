@@ -7,6 +7,9 @@ import bpy
 
 from . import kernel
 
+from . import model
+from . import pam
+
 logger = logging.getLogger(__package__)
 
 NONE = [
@@ -22,10 +25,36 @@ LAYER_TYPES = NONE + [
 ]
 
 MAPPING_TYPES = NONE + [
-    ("uv", "UV", "", "", 1),
+    ("euclid", "Euclidean", "", "", 1),
+    ("normal", "Normal", "", "", 2),
+    ("top", "Topology", "", "", 3),
+    ("uv", "UV", "", "", 4),
+    ("rand", "Random", "", "", 5)
 ]
 
-DISTANCE_TYPES = NONE + []
+MAPPING_DICT = {"euclid": pam.MAP_euclid,
+                "normal": pam.MAP_normal,
+                "rand": pam.MAP_random,
+                "top": pam.MAP_top,
+                "uv": pam.MAP_uv
+                }
+
+DISTANCE_TYPES = NONE + [
+    ("euclid", "Euclidean", "", "", 1),
+    ("euclidUV", "EuclideanUV", "", "", 2),
+    ("jumpUV", "jumpUV", "", "", 3),
+    ("UVjump", "UVjump", "", "", 4),
+    ("normalUV", "NormalUV", "", "", 5),
+    ("UVnormal", "UVnormal", "", "", 6),
+    ]
+    
+DISTANCE_DICT = {"euclid": pam.DIS_euclid,
+                 "euclidUV": pam.DIS_euclidUV,
+                 "jumpUV": pam.DIS_jumpUV,
+                 "UVjump": pam.DIS_UVjump,
+                 "normalUV": pam.DIS_normalUV,
+                 "UVnormal": pam.DIS_UVnormal
+                 }
 
 KERNEL_TYPES = NONE + kernel.KERNEL_TYPES
 
@@ -457,6 +486,7 @@ class PAMMappingCompute(bpy.types.Operator):
         return True
 
     def execute(self, context):
+        
         return {'FINISHED'}
 
 

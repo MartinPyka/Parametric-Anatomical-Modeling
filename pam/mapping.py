@@ -495,11 +495,11 @@ class PAMMappingCompute(bpy.types.Operator):
 
             pre_neurons = set.layers[0].kernel.particles
             pre_func = set.layers[0].kernel.function
-            pre_params = set.layers[0].kernel.parameters
-
+            pre_params = [param.value for param in set.layers[0].kernel.parameters]
+            
             post_neurons = set.layers[-1].kernel.particles
             post_func = set.layers[-1].kernel.function
-            post_params = set.layers[0].kernel.parameters
+            post_params = [param.value for param in set.layers[-1].kernel.parameters]
 
             synapse_layer = -1
             synapse_count = 0
@@ -537,7 +537,7 @@ class PAMMappingCompute(bpy.types.Operator):
                 synapse_count
             )
 
-        pam.computeAllConnections()
+        #pam.computeAllConnections()
 
         return {'FINISHED'}
 

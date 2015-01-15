@@ -537,7 +537,7 @@ class PAMMappingCompute(bpy.types.Operator):
                 synapse_count
             )
 
-        #pam.computeAllConnections()
+        pam.computeAllConnections()
 
         return {'FINISHED'}
 

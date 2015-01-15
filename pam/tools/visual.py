@@ -30,8 +30,8 @@ MODE_LIST = [
 
 KERNELS = [
     ("NONE", "None", None),
-    ("GAUSSIAN", "Gaussian", kernel.gauss_vis),
-    ("UNITY", "Unity", kernel.unity_vis)
+    ("GAUSSIAN", "Gaussian", kernel.gauss),
+    ("UNITY", "Unity", kernel.unity)
 ]
 
 

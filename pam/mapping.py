@@ -1,6 +1,7 @@
 """Mapping module"""
 
 import logging
+import inspect
 
 import bpy
 
@@ -32,12 +33,13 @@ MAPPING_TYPES = NONE + [
     ("rand", "Random", "", "", 5)
 ]
 
-MAPPING_DICT = {"euclid": pam.MAP_euclid,
-                "normal": pam.MAP_normal,
-                "rand": pam.MAP_random,
-                "top": pam.MAP_top,
-                "uv": pam.MAP_uv
-                }
+MAPPING_DICT = {
+    "euclid": pam.MAP_euclid,
+    "normal": pam.MAP_normal,
+    "rand": pam.MAP_random,
+    "top": pam.MAP_top,
+    "uv": pam.MAP_uv
+}
 
 DISTANCE_TYPES = NONE + [
     ("euclid", "Euclidean", "", "", 1),
@@ -46,15 +48,18 @@ DISTANCE_TYPES = NONE + [
     ("UVjump", "UVjump", "", "", 4),
     ("normalUV", "NormalUV", "", "", 5),
     ("UVnormal", "UVnormal", "", "", 6),
-    ]
-    
-DISTANCE_DICT = {"euclid": pam.DIS_euclid,
-                 "euclidUV": pam.DIS_euclidUV,
-                 "jumpUV": pam.DIS_jumpUV,
-                 "UVjump": pam.DIS_UVjump,
-                 "normalUV": pam.DIS_normalUV,
-                 "UVnormal": pam.DIS_UVnormal
-                 }
+]
+
+DISTANCE_DICT = {
+    "euclid": pam.DIS_euclid,
+    "euclidUV": pam.DIS_euclidUV,
+    "jumpUV": pam.DIS_jumpUV,
+    "UVjump": pam.DIS_UVjump,
+    "normalUV": pam.DIS_normalUV,
+    "UVnormal": pam.DIS_UVnormal
+}
+
+KERNEL_TYPES = NONE + kernel.KERNEL_TYPES
 
 
 def particle_systems(self, context):
@@ -143,6 +148,21 @@ def update_object(self, context):
     self.kernel.object = self.object
 
 
+def update_kernels(self, context):
+        self.parameters.clear()
+        name = next(f for (f, _, _, _) in kernel.KERNEL_TYPES if f == self.function)
+        func = getattr(kernel, name)
+        if func is not None:
+            args, _, _, defaults = inspect.getargspec(func)
+            if args and defaults:
+                args = args[-len(defaults):]
+                params = zip(args, defaults)
+                for k, v in params:
+                    p = self.parameters.add()
+                    p.name = k
+                    p.value = v
+
+
 class PAMKernelValues(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(
         name="Parameter name",
@@ -158,7 +178,8 @@ class PAMKernelParameter(bpy.types.PropertyGroup):
     object = bpy.props.StringProperty()
     function = bpy.props.EnumProperty(
         name="Kernel function",
-        items=kernel.KERNEL_TYPES,
+        items=KERNEL_TYPES,
+        update=update_kernels,
     )
     parameters = bpy.props.CollectionProperty(
         type=PAMKernelValues
@@ -469,41 +490,40 @@ class PAMMappingCompute(bpy.types.Operator):
 
     def execute(self, context):
         pam.initialize3D()
-        
+
         for set in bpy.context.scene.pam_mapping.sets:
-            
+
             pre_neurons = set.layers[0].kernel.particles
             pre_func = set.layers[0].kernel.function
             pre_params = set.layers[0].kernel.parameters
-            
+
             post_neurons = set.layers[-1].kernel.particles
             post_func = set.layers[-1].kernel.function
             post_params = set.layers[0].kernel.parameters
-            
+
             synapse_layer = -1
             synapse_count = 0
             layers = []
 
-            # collect all 
+            # collect all
             for i, layer in enumerate(set.layers):
                 layers.append(bpy.data.objects[layer.object])
-                # if this is the synapse layer, store this 
+                # if this is the synapse layer, store this
                 if layer.type == LAYER_TYPES[3][0]:
                     synapse_layer = i
                     synapse_count = layer.synapse_count
-            
+
             # error checking procedures
             if synapse_layer == -1:
                 raise Exception('no synapse layer given')
-                
-                
+
             mapping_funcs = []
             distance_funcs = []
-            
+
             for mapping in set.mappings[:-1]:
                 mapping_funcs.append(MAPPING_DICT[mapping.function])
                 distance_funcs.append(DISTANCE_DICT[mapping.distance])
-            
+
             pam.addConnection(
                 layers,
                 pre_neurons, post_neurons,
@@ -515,10 +535,10 @@ class PAMMappingCompute(bpy.types.Operator):
                 eval('kernel.' + post_func),
                 post_params,
                 synapse_count
-                )
-        
+            )
+
         pam.computeAllConnections()
-        
+
         return {'FINISHED'}
 
 

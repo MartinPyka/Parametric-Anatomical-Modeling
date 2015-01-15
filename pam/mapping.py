@@ -1,7 +1,6 @@
 """Mapping module"""
 
 import logging
-import inspect
 
 import bpy
 
@@ -11,6 +10,7 @@ from . import model
 from . import pam
 
 logger = logging.getLogger(__package__)
+
 
 NONE = [
     ("none", "None", "", "", 0),
@@ -55,8 +55,6 @@ DISTANCE_DICT = {"euclid": pam.DIS_euclid,
                  "normalUV": pam.DIS_normalUV,
                  "UVnormal": pam.DIS_UVnormal
                  }
-
-KERNEL_TYPES = NONE + kernel.KERNEL_TYPES
 
 
 def particle_systems(self, context):
@@ -145,21 +143,6 @@ def update_object(self, context):
     self.kernel.object = self.object
 
 
-def update_kernels(self, context):
-    self.parameters.clear()
-    name = next(f for (f, _, _, _) in kernel.KERNEL_TYPES if f == self.function)
-    func = getattr(kernel, name)
-    if func is not None:
-        args, _, _, defaults = inspect.getargspec(func)
-        if args and defaults:
-            args = args[-len(defaults):]
-            params = zip(args, defaults)
-            for k, v in params:
-                p = self.parameters.add()
-                p.name = k
-                p.value = v
-
-
 class PAMKernelValues(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(
         name="Parameter name",
@@ -175,8 +158,7 @@ class PAMKernelParameter(bpy.types.PropertyGroup):
     object = bpy.props.StringProperty()
     function = bpy.props.EnumProperty(
         name="Kernel function",
-        items=KERNEL_TYPES,
-        update=update_kernels,
+        items=kernel.KERNEL_TYPES,
     )
     parameters = bpy.props.CollectionProperty(
         type=PAMKernelValues
@@ -486,6 +468,56 @@ class PAMMappingCompute(bpy.types.Operator):
         return True
 
     def execute(self, context):
+        pam.initialize3D()
+        
+        for set in bpy.context.scene.pam_mapping.sets:
+            
+            pre_neurons = set.layers[0].kernel.particles
+            pre_func = set.layers[0].kernel.function
+            pre_params = set.layers[0].kernel.parameters
+            
+            post_neurons = set.layers[-1].kernel.particles
+            post_func = set.layers[-1].kernel.function
+            post_params = set.layers[0].kernel.parameters
+            
+            synapse_layer = -1
+            synapse_count = 0
+            layers = []
+
+            # collect all 
+            for i, layer in enumerate(set.layers):
+                layers.append(bpy.data.objects[layer.object])
+                # if this is the synapse layer, store this 
+                if layer.type == LAYER_TYPES[3][0]:
+                    synapse_layer = i
+                    synapse_count = layer.synapse_count
+            
+            # error checking procedures
+            if synapse_layer == -1:
+                raise Exception('no synapse layer given')
+                
+                
+            mapping_funcs = []
+            distance_funcs = []
+            
+            for mapping in set.mappings[:-1]:
+                mapping_funcs.append(MAPPING_DICT[mapping.function])
+                distance_funcs.append(DISTANCE_DICT[mapping.distance])
+            
+            pam.addConnection(
+                layers,
+                pre_neurons, post_neurons,
+                synapse_layer,
+                mapping_funcs,
+                distance_funcs,
+                eval('kernel.' + pre_func),
+                pre_params,
+                eval('kernel.' + post_func),
+                post_params,
+                synapse_count
+                )
+        
+        pam.computeAllConnections()
         
         return {'FINISHED'}
 

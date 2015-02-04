@@ -7,6 +7,7 @@ import bpy
 from . import gui
 from . import utils
 from . import tools
+from . import pam_anim
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,18 @@ def register():
 
     tools.measure.register()
     tools.visual.register()
+
+    # PAM Anim
+
+    pam_anim.tools.animationTools.register()
+    pam_anim.tools.dataTools.register()
+    pam_anim.tools.materialTools.register()
+    pam_anim.tools.meshTools.register()
+    pam_anim.tools.orientationTools.register()
+
+    pam_anim.pam_anim.register()
+
+    # Pam Anim end
 
     bpy.utils.register_module(__name__)
     logger.debug("Registering addon")

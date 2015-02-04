@@ -55,14 +55,11 @@ def visualizePoint(point):
     vis_objects = vis_objects + 1
 
 
-def visualizePath(pointlist, smoothing=0):
+def visualizePath(pointlist):
     """ Create path for a given point list
 
     This code is taken and modified from the bTrace-Addon for Blender
-    http://blenderartists.org/forum/showthread.php?214872
-
-    pointlist   : list of 3d-vectors that are converted to a path
-    smoothing   : number of smoothing stepts that should be applied afterwards """
+    http://blenderartists.org/forum/showthread.php?214872  """
 
     global vis_objects
 
@@ -93,14 +90,6 @@ def visualizePath(pointlist, smoothing=0):
 
     vis_objects = vis_objects + 1
 
-    # apply smoothing if requested
-    if smoothing > 0:
-        bpy.ops.object.editmode_toggle()
-        bpy.ops.curve.select_all(action='SELECT')
-        for i in range(0, smoothing):
-            bpy.ops.curve.smooth()
-        bpy.ops.object.editmode_toggle()
-
     return curve
 
 
@@ -117,16 +106,14 @@ def visualizeForwardMapping(no_connection, pre_index):
     connections = model.CONNECTIONS[no_connection][4]
     distances = model.CONNECTIONS[no_connection][5]
 
-    pre_p3d, pre_p2d, pre_d = pam.computeMapping(
-        layers[0:(slayer + 1)],
-        connections[0:slayer],
-        distances[0:(slayer - 1)] + [pam.DIS_euclidUV],
-        layers[0].particle_systems[neuronset1].particles[pre_index].location,
-        debug=True
-    )
-
-    logger.debug(pre_p3d)
-    visualizePath(pre_p3d)
+    for s in range(1, slayer):
+        pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer + 1)],
+                                                     connections[0:slayer],
+                                                     distances[0:(slayer - 1)] + [pam.DIS_euclidUV],
+                                                     layers[0].particle_systems[neuronset1].particles[pre_index].location)
+        logger.debug(s)
+        logger.debug(pre_p3d)
+        visualizePath(pre_p3d)
 
 
 def visualizeBackwardMapping(no_connection, post_index):
@@ -152,7 +139,7 @@ def visualizeBackwardMapping(no_connection, post_index):
         visualizePath(post_p3d)
 
 
-def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0):
+def visualizeConnectionsForNeuron(no_connection, pre_index):
     """ Visualizes all connections between a given pre-synaptic neuron and its connections
     to all post-synaptic neurons
     layers              : list of layers connecting a pre- with a post-synaptic layer
@@ -202,11 +189,10 @@ def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0):
                         layers[slayer + 1], layers[slayer], post_p3d[-1], synapses[i], distances[slayer])
                     if (distances_post >= 0):
                         if first_item:
-                            visualizePath(pre_p3d, smoothing)
-                            visualizePath([pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1], smoothing)
+                            visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1])
                             first_item = False
                         else:
-                            visualizePath([pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1], smoothing)
+                            visualizePath([pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1])
 
     if not first_item:
         return [pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1]
@@ -246,7 +232,7 @@ def visualizeOneConnection(no_connection, pre_index, post_index):
                                                     distances[:(slayer - 1):-1],
                                                     layers[-1].particle_systems[neuronset2].particles[post_index].location)
     if synapses is None:
-        visualizePath(pre_p3d + post_p3d[::-1])
+        return visualizePath(pre_p3d + post_p3d[::-1])
     else:
         distances_pre, pre_path = pam.computeDistanceToSynapse(
             layers[slayer - 1], layers[slayer], pre_p3d[-1], synapses[post_list_index], distances[slayer - 1])
@@ -254,7 +240,7 @@ def visualizeOneConnection(no_connection, pre_index, post_index):
             distances_post, post_path = pam.computeDistanceToSynapse(
                 layers[slayer + 1], layers[slayer], post_p3d[-1], synapses[post_list_index], distances[slayer])
             if distances_post >= 0:
-                visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1])
+                return visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1])
 
 
 def visualizeNeuronSpread(connections, neuron):

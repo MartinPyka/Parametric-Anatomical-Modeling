@@ -55,9 +55,10 @@ def visualizePoint(point):
     vis_objects = vis_objects + 1
 
 
-def visualizePath(pointlist):
+def visualizePath(pointlist, smoothing=0):
     """ Create path for a given point list
-
+    pointlist   : list of 3d-vectors that are converted to a path
+    smoothing   : number of smoothing stepts that should be applied afterwards
     This code is taken and modified from the bTrace-Addon for Blender
     http://blenderartists.org/forum/showthread.php?214872  """
 
@@ -89,6 +90,14 @@ def visualizePath(pointlist):
     curve.name = "visualization.%03d" % vis_objects
 
     vis_objects = vis_objects + 1
+
+    # apply smoothing if requested
+    if smoothing > 0:
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.curve.select_all(action='SELECT')
+        for i in range(0, smoothing):
+            bpy.ops.curve.smooth()
+        bpy.ops.object.editmode_toggle()
 
     return curve
 
@@ -139,7 +148,7 @@ def visualizeBackwardMapping(no_connection, post_index):
         visualizePath(post_p3d)
 
 
-def visualizeConnectionsForNeuron(no_connection, pre_index):
+def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0):
     """ Visualizes all connections between a given pre-synaptic neuron and its connections
     to all post-synaptic neurons
     layers              : list of layers connecting a pre- with a post-synaptic layer
@@ -189,10 +198,11 @@ def visualizeConnectionsForNeuron(no_connection, pre_index):
                         layers[slayer + 1], layers[slayer], post_p3d[-1], synapses[i], distances[slayer])
                     if (distances_post >= 0):
                         if first_item:
-                            visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1])
+                            visualizePath(pre_p3d, smoothing)
+                            visualizePath([pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1], smoothing)
                             first_item = False
                         else:
-                            visualizePath([pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1])
+                            visualizePath([pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1], smoothing)
 
     if not first_item:
         return [pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1]

@@ -40,4 +40,4 @@ docs/sphinx/_build/
 *.blend([0-9])+
 
 # Exclude by underscore pattern
-_*
+# _*

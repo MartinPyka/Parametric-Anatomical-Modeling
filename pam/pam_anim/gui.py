@@ -85,6 +85,9 @@ class PamAnimMeshPane(bpy.types.Panel):
 
                 row = layout.row()
                 row.prop(options, 'animSpikes')
+                
+                row = layout.row()
+                row.prop_search(options, 'neuron_object', bpy.data, 'objects')
 
 
 class PamAnimAnimPane(bpy.types.Panel):

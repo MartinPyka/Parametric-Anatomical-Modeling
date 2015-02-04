@@ -343,8 +343,9 @@ class GenerateOperator(bpy.types.Operator):
 
                 # Animate spiking if option is selected
                 if bpy.context.scene.pam_anim_mesh.animSpikes is True:
+                        neuron_object = bpy.data.objects[bpy.context.scene.pam_anim_mesh.neuron_object]
                         for ng in data.NEURON_GROUPS:
-                                anim_spikes.generateLayerNeurons(bpy.data.objects[ng.name], ng.particle_system)
+                                anim_spikes.generateLayerNeurons(bpy.data.objects[ng.name], ng.particle_system, neuron_object)
                         anim_spikes.animNeuronSpiking(anim_spikes.animNeuronScaling)
 
                 return {'FINISHED'}

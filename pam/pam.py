@@ -280,6 +280,32 @@ def map3dPointToParticle(obj, particle_system, location):
 
     return index
 
+def maskParticle(p_layer, p_index, mask_layer, distance = 0.2):
+    """ Returns all particle-indices of particle_layer that have a smaller
+    distance than the distance-argument to mask_layer 
+    p_layer         : object that contains the particles
+    p_index         : index of particle-system
+    mask_layer      : object that serves as mask
+    distance        : distance threshold
+    """
+    result = []
+    for i, p in enumerate(p_layer.particle_systems[p_index].particles):
+        l, n, f = mask_layer.closest_point_on_mesh(p.location)
+        if (p.location-l).length < distance:
+            result.append(i)
+    return result
+
+def distanceToMask(p_layer, p_index, particle_index, mask_layer):
+    """ Returns the distance for a particle to a mask_layer
+    p_layer         : object with particle-system
+    p_index         : index of particle-system
+    particle_index  : index of particle
+    mask_layer      : object that serves as mask
+    """
+    p = p_layer.particle_systems[p_index].particles[particle_index]
+    l, n, f = mask_layer.closest_point_on_mesh(p.location)
+    return (p.location-l).length
+
 
 # TODO(SK): missing docstring
 def computeConnectivityProbability(uv1, uv2, func, args):

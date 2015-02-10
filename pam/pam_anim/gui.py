@@ -4,7 +4,6 @@ import bpy
 
 from .. import model
 
-
 class PamAnimDataPane(bpy.types.Panel):
         """Panel for loading the Model Data"""
 
@@ -19,7 +18,6 @@ class PamAnimDataPane(bpy.types.Panel):
                 row = layout.column()
                 row.prop(context.scene.pam_anim_data, "modelData")
                 row.prop(context.scene.pam_anim_data, "simulationData")
-
 
 class PamAnimMaterialPane(bpy.types.Panel):
         """Panel for choosing the used Material"""
@@ -36,13 +34,11 @@ class PamAnimMaterialPane(bpy.types.Panel):
                 options = bpy.context.scene.pam_anim_material
 
                 row = layout.row()
-
                 row.prop(bpy.context.scene.pam_anim_material, 'materialOption', expand=True)
 
                 if(options.materialOption == "CUSTOM"):
                         row = layout.row()
                         row.prop_search(context.scene.pam_anim_material, "material", bpy.data, "materials")
-
 
 class PamAnimOrientationPane(bpy.types.Panel):
         """Panel for choosing object orientation"""
@@ -64,7 +60,6 @@ class PamAnimOrientationPane(bpy.types.Panel):
                 if(options.orientationType == 'OBJECT'):
                         row = layout.row()
                         row.prop_search(options, 'orientationObject', bpy.data, "objects")
-
 
 class PamAnimMeshPane(bpy.types.Panel):
         """Panel for choosing the used Mesh"""
@@ -133,13 +128,8 @@ class PamAnimLayerPane(bpy.types.Panel):
 
                 options = bpy.context.scene.pam_anim_material
 
-                if model.NG_DICT:
-                        row = layout.row()
-                        row.prop_search(options, "script", bpy.data, "texts")
-                else:
-                        row = layout.row()
-                        row.label(text="Dict nicht vorhanden")
-
+                row = layout.row()
+                row.prop_search(options, "script", bpy.data, "texts")
 
 class PamAnimGeneratePanel(bpy.types.Panel):
         """Panel for the generate-button"""

@@ -76,4 +76,4 @@ def applyColorValues(obj, layerValues, neuronID, neuronGroupID, neuronGroups):
 	blue = layerValues["blue"]
 	green = layerValues["green"]
 
-	obj.color = (red, blue, green, 1.0)
+	obj.color = (red, green, blue, 1.0)

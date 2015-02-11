@@ -86,32 +86,34 @@ class PamAnimMeshPane(bpy.types.Panel):
 
 
 class PamAnimAnimPane(bpy.types.Panel):
-        """Panel for selecting the animation frames and speed"""
+	"""Panel for selecting the animation frames and speed"""
+	bl_space_type = "VIEW_3D"
+	bl_region_type = "TOOLS"
+	bl_context = "objectmode"
+	bl_label = "Animation"
+	bl_category = "PAM-Anim"
 
-        bl_space_type = "VIEW_3D"
-        bl_region_type = "TOOLS"
-        bl_context = "objectmode"
-        bl_label = "Animation"
-        bl_category = "PAM-Anim"
+	def draw(self, context):
+		layout = self.layout
 
-        def draw(self, context):
-                layout = self.layout
+		options = bpy.context.scene.pam_anim_animation
 
-                options = bpy.context.scene.pam_anim_animation
+		row = layout.row()
+		col = row.column()
+		sub = col.column(align=True)
+		sub.label(text="Frames:")
+		sub.prop(options, "startFrame")
+		sub.prop(options, "endFrame")
 
-                row = layout.row()
-                col = row.column()
-                sub = col.column(align=True)
-                sub.label(text="Frames:")
-                sub.prop(options, "startFrame")
-                sub.prop(options, "endFrame")
+		row = layout.row()
+		col = row.column()
+		sub = col.column(align=True)
+		sub.label(text="Time:")
+		sub.prop(options, "startTime")
+		sub.prop(options, "endTime")
 
-                row = layout.row()
-                col = row.column()
-                sub = col.column(align=True)
-                sub.label(text="Time:")
-                sub.prop(options, "startTime")
-                sub.prop(options, "endTime")
+		row = layout.row()
+		row.prop(options, "connNumber")
 
 
 class PamAnimLayerPane(bpy.types.Panel):

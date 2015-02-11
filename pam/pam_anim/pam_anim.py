@@ -165,6 +165,8 @@ def visualize(decayFunc    = anim_functions.decay,
 
 	no_timings = len(t)
 
+	maxConn = bpy.context.scene.pam_anim_animation.connNumber
+
 	for no, timing in enumerate(t):
 		# if (no % 10) == 0:
 		logger.info(str(no) + "/" + str(no_timings))
@@ -178,60 +180,67 @@ def visualize(decayFunc    = anim_functions.decay,
 		# Update the color values of all neurons with queued updates
 		poppedValues = getQueueValues(neuronUpdateQueue, fireTime)
 		for elem in poppedValues:
-		    updateTime = elem[0]
-		    key = elem[1]
-		    newLayerValues = elem[2]
+			updateTime = elem[0]
+			key = elem[1]
+			newLayerValues = elem[2]
 
-		    # If the key already has values, we have to calculate the decay of the values and then mix them with the incoming values
-		    if key in neuronValues:
-			    oldLayerValues = neuronValues[key][0]
-			    lastUpdateTime = neuronValues[key][1]
+			# If the key already has values, we have to calculate the decay of the values and then mix them with the incoming values
+			if key in neuronValues:
+				oldLayerValues = neuronValues[key][0]
+				lastUpdateTime = neuronValues[key][1]
 
-			    oldLayerValuesDecay = calculateDecay(oldLayerValues, updateTime - lastUpdateTime, decayFunc)
-			    updatedLayerValues = mixValuesFunc(oldLayerValuesDecay, newLayerValues)
+				oldLayerValuesDecay = calculateDecay(oldLayerValues, updateTime - lastUpdateTime, decayFunc)
+				updatedLayerValues = mixValuesFunc(oldLayerValuesDecay, newLayerValues)
 
-			    neuronValues[key] = (updatedLayerValues, updateTime)
-		    # If not, we don't need to mix the colors together, as this would just darken the color
-		    else:
-			    neuronValues[key] = (newLayerValues, updateTime)
+				neuronValues[key] = (updatedLayerValues, updateTime)
+			# If not, we don't need to mix the colors together, as this would just darken the color
+			else:
+				neuronValues[key] = (newLayerValues, updateTime)
 
 		if neuronID in neuronValues:
-		    # Update this neuron
-		    layerValues = neuronValues[neuronID][0]
-		    lastUpdateTime = neuronValues[neuronID][1]
-		    layerValuesDecay = calculateDecay(layerValues, fireTime - lastUpdateTime, decayFunc)
+			# Update this neuron
+			layerValues = neuronValues[neuronID][0]
+			lastUpdateTime = neuronValues[neuronID][1]
+			layerValuesDecay = calculateDecay(layerValues, fireTime - lastUpdateTime, decayFunc)
 
-		    # Now that the neuron has fired, its values go back down to zero
-		    del(neuronValues[neuronID])
+			# Now that the neuron has fired, its values go back down to zero
+			del(neuronValues[neuronID])
 
 		else:
-		    layerValuesDecay = initialColorValuesFunc(neuronGroupID, neuronID, data.NEURON_GROUPS)
+			layerValuesDecay = initialColorValuesFunc(neuronGroupID, neuronID, data.NEURON_GROUPS)
 
 		for connectionID in neuronGroup.connections:
-		    for index, i in enumerate(c[connectionID[0]]["c"][neuronID]):
-			    if (i == -1) | (d[connectionID[0]][neuronID][index] == 0):
-				    continue
-			    if (connectionID[0], neuronID, i) not in CURVES.keys():
-				    # If we do not have a curve already generated, we generate a new one with PAM and save it in our dictionary
-				    # print("Calling visualizeOneConnection with " + str(connectionID[0]) + ", " + str(neuronID)+ ", " + str(i))
-				    curve = CURVES[(connectionID[0], neuronID, i)] = pam_vis.visualizeOneConnection(connectionID[0], neuronID, i)
+			if maxConn == 0:
+				conns = len(c[connectionID[0]]["c"][neuronID])
+			else:
+				conns = min(maxConn, len(c[connectionID[0]]["c"][neuronID]))
 
-				    # The generated curve needs the right animation speed, so we set the custom property and generate the animation
-				    curveLength = timeToFrames(d[connectionID[0]][neuronID][index])
-				    # print(curve)
-				    setAnimationSpeed(curve.data, curveLength)
-				    curve.data["timeLength"] = curveLength
-			    else:
-				    curve = CURVES[(connectionID[0], neuronID, i)]
-			    startFrame = projectTimeToFrames(fireTime)
-			    obj = followCurve(curve, startFrame, (0.0, 0.0, 1.0, 1.0), bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh])
-			    SPIKE_OBJECTS.append(obj)
+			for index, i in enumerate(c[connectionID[0]]["c"][neuronID]):
+				if index < conns:
+					if (i == -1) | (d[connectionID[0]][neuronID][index] == 0):
+						continue
+					if (connectionID[0], neuronID, i) not in CURVES.keys():
+						# If we do not have a curve already generated, we generate a new one with PAM and save it in our dictionary
+						# print("Calling visualizeOneConnection with " + str(connectionID[0]) + ", " + str(neuronID)+ ", " + str(i))
+						curve = CURVES[(connectionID[0], neuronID, i)] = pam_vis.visualizeOneConnection(connectionID[0], neuronID, i)
 
-			    applyColorFunc(obj, layerValuesDecay, neuronID, neuronGroupID, data.NEURON_GROUPS)
+						# The generated curve needs the right animation speed, so we set the custom property and generate the animation
+						curveLength = timeToFrames(d[connectionID[0]][neuronID][index])
+						# print(curve)
+						setAnimationSpeed(curve.data, curveLength)
+						curve.data["timeLength"] = curveLength
+					else:
+						curve = CURVES[(connectionID[0], neuronID, i)]
 
-			    # Queue an update to the connected neuron
-			    updateTime = fireTime + d[connectionID[0]][neuronID][index]
-			    heapq.heappush(neuronUpdateQueue, (updateTime, i, layerValuesDecay))
+					startFrame = projectTimeToFrames(fireTime)
+					obj = followCurve(curve, startFrame, (0.0, 0.0, 1.0, 1.0), bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh])
+					SPIKE_OBJECTS.append(obj)
+
+					applyColorFunc(obj, layerValuesDecay, neuronID, neuronGroupID, data.NEURON_GROUPS)
+
+				# Queue an update to the connected neuron
+				updateTime = fireTime + d[connectionID[0]][neuronID][index]
+				heapq.heappush(neuronUpdateQueue, (updateTime, i, layerValuesDecay))
 
 
 # Operators:

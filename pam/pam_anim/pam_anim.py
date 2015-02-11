@@ -140,6 +140,17 @@ def createDefaultMaterial():
 		mat.use_object_color = True
 		options.material = mat.name
 
+def getUsedNeuronGroups():
+	""" Checks in pam.model which neuron groups are actually be used and return
+	the indices of those neurongroups. This routine is used by visualize() in order
+	to reduce the number of neurongroups for which neurons should be created """
+	inds = []
+	for c in model.CONNECTION_INDICES:
+		inds.append(c[1])
+		inds.append(c[2])
+	return numpy.unique(inds)
+	
+
 def visualize(decayFunc    = anim_functions.decay, 
 	initialColorValuesFunc = anim_functions.getInitialColorValues, 
 	mixValuesFunc          = anim_functions.mixLayerValues, 
@@ -340,10 +351,12 @@ class GenerateOperator(bpy.types.Operator):
 
 		# Animate spiking if option is selected
 		if bpy.context.scene.pam_anim_mesh.animSpikes is True:
-			neuron_object = bpy.data.objects[bpy.context.scene.pam_anim_mesh.neuron_object]
 			logger.info("Create neurons")
-			for ng in data.NEURON_GROUPS:
-			    anim_spikes.generateLayerNeurons(bpy.data.objects[ng.name], ng.particle_system, neuron_object)
+			neuron_object = bpy.data.objects[bpy.context.scene.pam_anim_mesh.neuron_object]
+			ng_inds = getUsedNeuronGroups()
+			for ind in ng_inds:
+				logger.info("Generate neurons for ng " + str(ind))
+				anim_spikes.generateLayerNeurons(bpy.data.objects[data.NEURON_GROUPS[ind].name], data.NEURON_GROUPS[ind].particle_system, neuron_object)
 			logger.info("Create spike animation for neurons")
 			anim_spikes.animNeuronSpiking(anim_spikes.animNeuronScaling)
 

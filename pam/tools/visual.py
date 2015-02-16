@@ -238,7 +238,10 @@ class PamVisualizeClean(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     def execute(self, context):
+        active_o = bpy.context.active_object
         pam_vis.visualizeClean()
+        active_o.select = True
+        bpy.context.scene.objects.active = active_o
 
         return {'FINISHED'}
 

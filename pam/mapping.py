@@ -2,6 +2,7 @@
 
 import logging
 import inspect
+import random
 
 import bpy
 
@@ -537,9 +538,129 @@ class PAMMappingCompute(bpy.types.Operator):
                 synapse_count
             )
 
+        pam.resetOrigins()
         pam.computeAllConnections()
 
         return {'FINISHED'}
+
+
+class PAMMappingComputeSelected(bpy.types.Operator):
+	bl_idname = "pam.mapping_compute_sel"
+	bl_label = "Compute selected mapping"
+	bl_description = ""
+
+	type = bpy.props.EnumProperty(items=LAYER_TYPES[1:])
+
+	@classmethod
+	def poll(cls, context):
+		return True
+
+	def execute(self, context):
+		pam.initialize3D()
+
+		set = bpy.context.scene.pam_mapping.sets[bpy.context.scene.pam_mapping.active_set]
+
+		pre_neurons = set.layers[0].kernel.particles
+		pre_func = set.layers[0].kernel.function
+		pre_params = [param.value for param in set.layers[0].kernel.parameters]
+
+		post_neurons = set.layers[-1].kernel.particles
+		post_func = set.layers[-1].kernel.function
+		post_params = [param.value for param in set.layers[-1].kernel.parameters]
+
+		synapse_layer = -1
+		synapse_count = 0
+		layers = []
+
+		# collect all
+		for i, layer in enumerate(set.layers):
+			layers.append(bpy.data.objects[layer.object])
+			# if this is the synapse layer, store this
+			if layer.type == LAYER_TYPES[3][0]:
+				synapse_layer = i
+				synapse_count = layer.synapse_count
+
+		# error checking procedures
+		if synapse_layer == -1:
+			raise Exception('no synapse layer given')
+
+		mapping_funcs = []
+		distance_funcs = []
+
+		for mapping in set.mappings[:-1]:
+			mapping_funcs.append(MAPPING_DICT[mapping.function])
+			distance_funcs.append(DISTANCE_DICT[mapping.distance])
+
+		pam.addConnection(
+			layers,
+			pre_neurons, post_neurons,
+			synapse_layer,
+			mapping_funcs,
+			distance_funcs,
+			eval('kernel.' + pre_func),
+			pre_params,
+			eval('kernel.' + post_func),
+			post_params,
+			synapse_count
+		)
+
+		pam.resetOrigins()
+		pam.computeAllConnections()
+
+		return {'FINISHED'}
+
+
+class PAMAddNeuronSet(bpy.types.Operator):
+    """Adds a new neuron set to the active object.
+
+    Note: Only mesh-objects are allowed to own neuron sets as custom
+    properties.
+    """
+
+    bl_idname = "pam.add_neuron_set"
+    bl_label = "Add neuron-set"
+    bl_description = "Add a new neuron set"
+    bl_options = {'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.object.type == "MESH"
+
+    def execute(self, context):
+        active_obj = context.active_object
+
+        bpy.ops.object.particle_system_add()
+
+        psys = active_obj.particle_systems[-1]
+        psys.name = "pam.neuron_group"
+        psys.seed = random.randrange(0, 1000000)
+
+        pset = psys.settings
+        pset.type = "EMITTER"
+        pset.count = 100
+        pset.frame_start = pset.frame_end = 1.0
+        pset.emit_from = "FACE"
+        pset.use_emit_random = True
+        pset.use_even_distribution = True
+        pset.distribution = "RAND"
+        pset.use_rotations = True
+        pset.use_rotation_dupli = True
+        pset.rotation_mode = "NOR"
+        pset.normal_factor = 0.0
+        pset.render_type = "OBJECT"
+        pset.use_whole_group = True
+        pset.physics_type = "NO"
+        pset.particle_size = 1.0
+
+        bpy.ops.object.select_all(action="DESELECT")
+
+        context.scene.update()
+
+        context.scene.objects.active = active_obj
+        active_obj.select = True
+
+        return {'FINISHED'}
+
 
 
 def register():

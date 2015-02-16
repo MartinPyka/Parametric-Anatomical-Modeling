@@ -1104,6 +1104,13 @@ def returnNeuronGroups():
 
     return r_list, r_dict
 
+def resetOrigins():
+	for c in model.CONNECTIONS:
+		for l in c[0]:
+			l.select = True
+			bpy.context.scene.objects.active = l
+			bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+			l.select = False
 
 def initialize3D():
     """prepares all necessary steps for the computation of connections"""

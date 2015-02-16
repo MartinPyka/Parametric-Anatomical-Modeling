@@ -7,6 +7,8 @@ import bpy
 from . import gui
 from . import utils
 from . import tools
+from . import mapping
+from . import pam_anim
 
 logger = logging.getLogger(__name__)
 
@@ -26,13 +28,73 @@ __license__ = bl_info['license']
 __version__ = ".".join([str(s) for s in bl_info['version']])
 
 
+class PAMPreferencesPane(bpy.types.AddonPreferences):
+    """Preferences pane displaying all addon-wide properties.
+
+    Located in
+    `File > User Preferences > Addons > Object: PAM"
+    """
+
+    bl_idname = __package__
+    log_level_items = [
+        ("DEBUG", "(4) DEBUG", "", 4),
+        ("INFO", "(3) INFO", "", 3),
+        ("WARNING", "(2) WARNING", "", 2),
+        ("ERROR", "(1) ERROR", "", 1),
+    ]
+    data_location = bpy.utils.user_resource(
+        "DATAFILES",
+        path=__package__,
+        create=True
+    )
+    log_directory = bpy.props.StringProperty(
+        name="Log Directory",
+        default=data_location,
+        subtype="DIR_PATH",
+        update=utils.log.callback_properties_changed
+    )
+    log_filename = bpy.props.StringProperty(
+        name="Log Filename",
+        default="pam.log",
+        update=utils.log.callback_properties_changed
+    )
+    log_level = bpy.props.EnumProperty(
+        name="Log Level",
+        default="ERROR",
+        items=log_level_items,
+        update=utils.log.callback_properties_changed
+    )
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        col.label(text="Logging:")
+        col.prop(self, "log_directory", text="Directory")
+        col.prop(self, "log_filename", text="Filename")
+        col.prop(self, "log_level", text="Level")
+
+
 def register():
     """Called on enabling this addon"""
-    bpy.utils.register_class(gui.PAMPreferencesPane)
+    bpy.utils.register_class(PAMPreferencesPane)
     utils.log.initialize()
 
     tools.measure.register()
     tools.visual.register()
+    mapping.register()
+    gui.menus.register()
+
+    # PAM Anim
+
+    pam_anim.tools.animationTools.register()
+    pam_anim.tools.dataTools.register()
+    pam_anim.tools.materialTools.register()
+    pam_anim.tools.meshTools.register()
+    pam_anim.tools.orientationTools.register()
+
+    pam_anim.pam_anim.register()
+
+    # Pam Anim end
 
     bpy.utils.register_module(__name__)
     logger.debug("Registering addon")
@@ -42,6 +104,8 @@ def unregister():
     """Called on disabling this addon"""
     tools.measure.unregister()
     tools.visual.unregister()
+    mapping.unregister()
+    gui.menus.unregister()
 
     bpy.utils.unregister_module(__name__)
     logger.debug("Unregistering addon")

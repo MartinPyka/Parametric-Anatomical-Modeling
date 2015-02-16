@@ -30,8 +30,8 @@ MODE_LIST = [
 
 KERNELS = [
     ("NONE", "None", None),
-    ("GAUSSIAN", "Gaussian", kernel.gaussian.gauss_vis),
-    ("UNITY", "Unity", kernel.unity.unity_vis)
+    ("GAUSSIAN", "Gaussian", kernel.gauss),
+    ("UNITY", "Unity", kernel.unity)
 ]
 
 
@@ -238,7 +238,10 @@ class PamVisualizeClean(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     def execute(self, context):
+        active_o = bpy.context.active_object
         pam_vis.visualizeClean()
+        active_o.select = True
+        bpy.context.scene.objects.active = active_o
 
         return {'FINISHED'}
 

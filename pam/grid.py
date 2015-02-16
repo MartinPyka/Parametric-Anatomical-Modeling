@@ -129,7 +129,7 @@ class UVGrid(object):
                         relative_row * self._resolution,
                         relative_col * self._resolution
                     )),
-                    args
+                    *args
                 )
 
                 if result > constants.KERNEL_THRESHOLD:

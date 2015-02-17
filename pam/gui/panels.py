@@ -5,6 +5,134 @@ import bpy
 from .. import mapping as map
 
 
+class PAMLayerToolsPanel(bpy.types.Panel):
+	"""A tools panel inheriting all mapping functionality"""
+
+	bl_space_type = "VIEW_3D"
+	bl_region_type = "TOOLS"
+	bl_context = "objectmode"
+	bl_label = "Layer"
+	bl_category = "PAM Mapping"
+
+	def draw(self, context):
+		active_obj = context.active_object
+		m = context.scene.pam_mapping
+		layout = self.layout
+
+		row = layout.row()
+		row.operator("pam.add_neuron_set", text="Add neuronset")
+
+
+class PAMMappingToolsPanel(bpy.types.Panel):
+    """A tools panel inheriting all mapping functionality"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "Mapping"
+    bl_category = "PAM Mapping"
+
+    def draw(self, context):
+        active_obj = context.active_object
+        m = context.scene.pam_mapping
+        layout = self.layout
+
+        row = layout.row()
+        row.template_list(
+            listtype_name="MapSetList",
+            list_id="mappings",
+            dataptr=m,
+            propname="sets",
+            active_dataptr=m,
+            active_propname="active_set",
+            type="DEFAULT",
+            rows=5,
+        )
+
+        col = row.column(align=True)
+        col.operator("pam.mapping_add_set", icon="ZOOMIN", text="")
+        col.operator("pam.mapping_delete_set", icon="ZOOMOUT", text="")
+        col.operator("pam.mapping_up", icon="TRIA_UP", text="")
+        col.operator("pam.mapping_down", icon="TRIA_DOWN", text="")
+
+        active_set = None
+
+        try:
+            active_set = m.sets[m.active_set]
+        except IndexError:
+            pass
+
+        if not active_set:
+            return
+
+        layout.label("Layers:")
+
+        for i, (layer, mapping) in enumerate(zip(active_set.layers, active_set.mappings)):
+            # layer
+            icon_collapsed = "TRIA_RIGHT"
+            if not layer.collapsed:
+                icon_collapsed = "TRIA_DOWN"
+
+            box = layout.box()
+
+            err = map.validate_layer(context, layer)
+            if err:
+                row = box.row(align=True)
+                row.label(text="Error: %s" % err, icon="ERROR")
+
+            row = box.row(align=True)
+            col = row.column()
+            col.prop(layer, "collapsed", icon=icon_collapsed, emboss=False, text="")
+
+            row.prop(layer, "type", text="")
+            row.operator("pam.mapping_layer_up", icon="TRIA_UP", text="").index = i
+            row.operator("pam.mapping_layer_down", icon="TRIA_DOWN", text="").index = i
+
+            col = row.column()
+            col.operator("pam.mapping_layer_remove", icon="X", emboss=False, text="").index = i
+
+            if not layer.collapsed:
+                row = box.row(align=True)
+                row.prop(layer, "object", text="Object")
+                row.operator("pam.mapping_layer_set_object", icon="SNAP_ON", text="").index = i
+
+                if layer.type in ['presynapse', 'postsynapse']:
+                    row = box.row(align=True)
+                    row.prop(layer.kernel, "particles", text="", icon="PARTICLES")
+                    row.prop(layer.kernel, "function", text="", icon="SMOOTHCURVE")
+
+                    row = box.row()
+                    row.template_list(
+                        listtype_name="CustomPropList",
+                        dataptr=layer.kernel,
+                        propname="parameters",
+                        active_dataptr=layer.kernel,
+                        active_propname="active_parameter",
+                        type="DEFAULT",
+                        rows=3,
+                    )
+
+                if layer.type in ['synapse']:
+                    row = box.row(align=True)
+                    row.prop(layer, "synapse_count", text="Synapses")
+
+            if i < len(active_set.mappings) - 1:
+                split = layout.split(0.8)
+                box = split.box()
+                col = box.column()
+                col.prop(mapping, "function", text="", icon="MOD_UVPROJECT")
+                if mapping.function == "uv":
+                    col.prop(mapping, "uv_source", text="Source", icon="FORWARD")
+                    col.prop(mapping, "uv_target", text="Target", icon="BACK")
+                col = box.column()
+                col.prop(mapping, "distance", text="", icon="ALIGN")
+
+        col = layout.column(align=True)
+        col.operator("pam.mapping_layer_add", icon="ZOOMIN", text="Add layer")
+        col.operator("pam.mapping_compute", icon="SCRIPTWIN", text="Compute mapping")
+        col.operator("pam.mapping_compute_sel", icon="SCRIPTWIN", text="Compute selected mapping")
+
+
 class PAMModelDataPanel(bpy.types.Panel):
     """A panel for loading and saving model data"""
 
@@ -171,135 +299,6 @@ class PAMMeasureToolsPanel(bpy.types.Panel):
         op = col.operator("pam.measure_layer", "Calculate")
         col.label("Total neurons: %d" % context.scene.pam_measure.neurons)
         col.label("Total area: %d" % context.scene.pam_measure.total_area)
-
-
-
-class PAMLayerToolsPanel(bpy.types.Panel):
-	"""A tools panel inheriting all mapping functionality"""
-
-	bl_space_type = "VIEW_3D"
-	bl_region_type = "TOOLS"
-	bl_context = "objectmode"
-	bl_label = "Layer"
-	bl_category = "PAM Mapping"
-
-	def draw(self, context):
-		active_obj = context.active_object
-		m = context.scene.pam_mapping
-		layout = self.layout
-
-		row = layout.row()
-		row.operator("pam.add_neuron_set", text="Add neuronset")
-
-
-class PAMMappingToolsPanel(bpy.types.Panel):
-    """A tools panel inheriting all mapping functionality"""
-
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS"
-    bl_context = "objectmode"
-    bl_label = "Mapping"
-    bl_category = "PAM Mapping"
-
-    def draw(self, context):
-        active_obj = context.active_object
-        m = context.scene.pam_mapping
-        layout = self.layout
-
-        row = layout.row()
-        row.template_list(
-            listtype_name="MapSetList",
-            list_id="mappings",
-            dataptr=m,
-            propname="sets",
-            active_dataptr=m,
-            active_propname="active_set",
-            type="DEFAULT",
-            rows=5,
-        )
-
-        col = row.column(align=True)
-        col.operator("pam.mapping_add_set", icon="ZOOMIN", text="")
-        col.operator("pam.mapping_delete_set", icon="ZOOMOUT", text="")
-        col.operator("pam.mapping_up", icon="TRIA_UP", text="")
-        col.operator("pam.mapping_down", icon="TRIA_DOWN", text="")
-
-        active_set = None
-
-        try:
-            active_set = m.sets[m.active_set]
-        except IndexError:
-            pass
-
-        if not active_set:
-            return
-
-        layout.label("Layers:")
-
-        for i, (layer, mapping) in enumerate(zip(active_set.layers, active_set.mappings)):
-            # layer
-            icon_collapsed = "TRIA_RIGHT"
-            if not layer.collapsed:
-                icon_collapsed = "TRIA_DOWN"
-
-            box = layout.box()
-
-            err = map.validate_layer(context, layer)
-            if err:
-                row = box.row(align=True)
-                row.label(text="Error: %s" % err, icon="ERROR")
-
-            row = box.row(align=True)
-            col = row.column()
-            col.prop(layer, "collapsed", icon=icon_collapsed, emboss=False, text="")
-
-            row.prop(layer, "type", text="")
-            row.operator("pam.mapping_layer_up", icon="TRIA_UP", text="").index = i
-            row.operator("pam.mapping_layer_down", icon="TRIA_DOWN", text="").index = i
-
-            col = row.column()
-            col.operator("pam.mapping_layer_remove", icon="X", emboss=False, text="").index = i
-
-            if not layer.collapsed:
-                row = box.row(align=True)
-                row.prop(layer, "object", text="Object")
-                row.operator("pam.mapping_layer_set_object", icon="SNAP_ON", text="").index = i
-
-                if layer.type in ['presynapse', 'postsynapse']:
-                    row = box.row(align=True)
-                    row.prop(layer.kernel, "particles", text="", icon="PARTICLES")
-                    row.prop(layer.kernel, "function", text="", icon="SMOOTHCURVE")
-
-                    row = box.row()
-                    row.template_list(
-                        listtype_name="CustomPropList",
-                        dataptr=layer.kernel,
-                        propname="parameters",
-                        active_dataptr=layer.kernel,
-                        active_propname="active_parameter",
-                        type="DEFAULT",
-                        rows=3,
-                    )
-
-                if layer.type in ['synapse']:
-                    row = box.row(align=True)
-                    row.prop(layer, "synapse_count", text="Synapses")
-
-            if i < len(active_set.mappings) - 1:
-                split = layout.split(0.8)
-                box = split.box()
-                col = box.column()
-                col.prop(mapping, "function", text="", icon="MOD_UVPROJECT")
-                if mapping.function == "uv":
-                    col.prop(mapping, "uv_source", text="Source", icon="FORWARD")
-                    col.prop(mapping, "uv_target", text="Target", icon="BACK")
-                col = box.column()
-                col.prop(mapping, "distance", text="", icon="ALIGN")
-
-        col = layout.column(align=True)
-        col.operator("pam.mapping_layer_add", icon="ZOOMIN", text="Add layer")
-        col.operator("pam.mapping_compute", icon="SCRIPTWIN", text="Compute mapping")
-        col.operator("pam.mapping_compute_sel", icon="SCRIPTWIN", text="Compute selected mapping")
 
 
 # TODO(SK): missing docstring

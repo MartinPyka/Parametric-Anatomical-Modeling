@@ -280,9 +280,10 @@ def map3dPointToParticle(obj, particle_system, location):
 
     return index
 
-def maskParticle(p_layer, p_index, mask_layer, distance = 0.2):
+
+def maskParticle(p_layer, p_index, mask_layer, distance=0.2):
     """ Returns all particle-indices of particle_layer that have a smaller
-    distance than the distance-argument to mask_layer 
+    distance than the distance-argument to mask_layer
     p_layer         : object that contains the particles
     p_index         : index of particle-system
     mask_layer      : object that serves as mask
@@ -291,9 +292,10 @@ def maskParticle(p_layer, p_index, mask_layer, distance = 0.2):
     result = []
     for i, p in enumerate(p_layer.particle_systems[p_index].particles):
         l, n, f = mask_layer.closest_point_on_mesh(p.location)
-        if (p.location-l).length < distance:
+        if (p.location - l).length < distance:
             result.append(i)
     return result
+
 
 def distanceToMask(p_layer, p_index, particle_index, mask_layer):
     """ Returns the distance for a particle to a mask_layer
@@ -304,7 +306,7 @@ def distanceToMask(p_layer, p_index, particle_index, mask_layer):
     """
     p = p_layer.particle_systems[p_index].particles[particle_index]
     l, n, f = mask_layer.closest_point_on_mesh(p.location)
-    return (p.location-l).length
+    return (p.location - l).length
 
 
 # TODO(SK): missing docstring
@@ -829,22 +831,22 @@ def computeAllConnections():
             }
         )
 
+
 def updateMapping(index):
     """ Updates a mapping given by index """
     m = model.CONNECTIONS[index]
-    result = computeConnectivity(*m, create = False)
-    model.CONNECTION_RESULTS[index] = {'c': result[0],
-                                       'd': result[1],
-                                       's': result[2]
-                                       }
+    result = computeConnectivity(*m, create=False)
+    model.CONNECTION_RESULTS[index] = {
+        'c': result[0],
+        'd': result[1],
+        's': result[2]
+    }
 
 
 # TODO(SK): missing docstring
-def computeConnectivity(layers, neuronset1, neuronset2, slayer,
-                        connections, distances,
-                        func_pre, args_pre, func_post, args_post,
-                        no_synapses,
-                        create = True):
+def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
+                        distances, func_pre, args_pre, func_post, args_post,
+                        no_synapses, create=True):
     """ Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
     with the given parameters
     layers              : list of layers connecting a pre- with a post-synaptic layer
@@ -1116,13 +1118,15 @@ def returnNeuronGroups():
 
     return r_list, r_dict
 
+
 def resetOrigins():
-	for c in model.CONNECTIONS:
-		for l in c[0]:
-			l.select = True
-			bpy.context.scene.objects.active = l
-			bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-			l.select = False
+    for c in model.CONNECTIONS:
+        for l in c[0]:
+            l.select = True
+            bpy.context.scene.objects.active = l
+            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+            l.select = False
+
 
 def initialize3D():
     """prepares all necessary steps for the computation of connections"""

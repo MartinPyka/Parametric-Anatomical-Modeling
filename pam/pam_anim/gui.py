@@ -4,6 +4,7 @@ import bpy
 
 from .. import model
 
+
 class PamAnimDataPane(bpy.types.Panel):
         """Panel for loading the Model Data"""
 
@@ -18,6 +19,7 @@ class PamAnimDataPane(bpy.types.Panel):
                 row = layout.column()
                 row.prop(context.scene.pam_anim_data, "modelData")
                 row.prop(context.scene.pam_anim_data, "simulationData")
+
 
 class PamAnimMaterialPane(bpy.types.Panel):
         """Panel for choosing the used Material"""
@@ -40,6 +42,7 @@ class PamAnimMaterialPane(bpy.types.Panel):
                         row = layout.row()
                         row.prop_search(context.scene.pam_anim_material, "material", bpy.data, "materials")
 
+
 class PamAnimOrientationPane(bpy.types.Panel):
         """Panel for choosing object orientation"""
 
@@ -61,6 +64,7 @@ class PamAnimOrientationPane(bpy.types.Panel):
                         row = layout.row()
                         row.prop_search(options, 'orientationObject', bpy.data, "objects")
 
+
 class PamAnimMeshPane(bpy.types.Panel):
         """Panel for choosing the used Mesh"""
 
@@ -80,40 +84,40 @@ class PamAnimMeshPane(bpy.types.Panel):
 
                 row = layout.row()
                 row.prop(options, 'animSpikes')
-                
+
                 row = layout.row()
                 row.prop_search(options, 'neuron_object', bpy.data, 'objects')
 
 
 class PamAnimAnimPane(bpy.types.Panel):
-	"""Panel for selecting the animation frames and speed"""
-	bl_space_type = "VIEW_3D"
-	bl_region_type = "TOOLS"
-	bl_context = "objectmode"
-	bl_label = "Animation"
-	bl_category = "PAM-Anim"
+        """Panel for selecting the animation frames and speed"""
+        bl_space_type = "VIEW_3D"
+        bl_region_type = "TOOLS"
+        bl_context = "objectmode"
+        bl_label = "Animation"
+        bl_category = "PAM-Anim"
 
-	def draw(self, context):
-		layout = self.layout
+        def draw(self, context):
+                layout = self.layout
 
-		options = bpy.context.scene.pam_anim_animation
+                options = bpy.context.scene.pam_anim_animation
 
-		row = layout.row()
-		col = row.column()
-		sub = col.column(align=True)
-		sub.label(text="Frames:")
-		sub.prop(options, "startFrame")
-		sub.prop(options, "endFrame")
+                row = layout.row()
+                col = row.column()
+                sub = col.column(align=True)
+                sub.label(text="Frames:")
+                sub.prop(options, "startFrame")
+                sub.prop(options, "endFrame")
 
-		row = layout.row()
-		col = row.column()
-		sub = col.column(align=True)
-		sub.label(text="Time:")
-		sub.prop(options, "startTime")
-		sub.prop(options, "endTime")
+                row = layout.row()
+                col = row.column()
+                sub = col.column(align=True)
+                sub.label(text="Time:")
+                sub.prop(options, "startTime")
+                sub.prop(options, "endTime")
 
-		row = layout.row()
-		row.prop(options, "connNumber")
+                row = layout.row()
+                row.prop(options, "connNumber")
 
 
 class PamAnimLayerPane(bpy.types.Panel):
@@ -132,6 +136,7 @@ class PamAnimLayerPane(bpy.types.Panel):
 
                 row = layout.row()
                 row.prop_search(options, "script", bpy.data, "texts")
+
 
 class PamAnimGeneratePanel(bpy.types.Panel):
         """Panel for the generate-button"""

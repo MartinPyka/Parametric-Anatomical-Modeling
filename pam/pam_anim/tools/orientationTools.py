@@ -9,7 +9,7 @@ class OrientationProperties(bpy.types.PropertyGroup):
             ('OBJECT', 'Object', 'The neurons are tracking a specific object, e.g. a camera'),
             ('FOLLOW', 'Follow Curve', 'The neuron orientation is following the curve')
         ),
-        default = 'NONE'
+        default='NONE'
     )
     orientationObject = bpy.props.StringProperty(name="Orientation object")
 

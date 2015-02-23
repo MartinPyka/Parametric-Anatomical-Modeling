@@ -6,21 +6,21 @@ from .. import mapping as map
 
 
 class PAMLayerToolsPanel(bpy.types.Panel):
-	"""A tools panel inheriting all mapping functionality"""
+        """A tools panel inheriting all mapping functionality"""
 
-	bl_space_type = "VIEW_3D"
-	bl_region_type = "TOOLS"
-	bl_context = "objectmode"
-	bl_label = "Layer"
-	bl_category = "PAM Mapping"
+        bl_space_type = "VIEW_3D"
+        bl_region_type = "TOOLS"
+        bl_context = "objectmode"
+        bl_label = "Layer"
+        bl_category = "PAM Mapping"
 
-	def draw(self, context):
-		active_obj = context.active_object
-		m = context.scene.pam_mapping
-		layout = self.layout
+        def draw(self, context):
+                active_obj = context.active_object
+                m = context.scene.pam_mapping
+                layout = self.layout
 
-		row = layout.row()
-		row.operator("pam.add_neuron_set", text="Add neuronset")
+                row = layout.row()
+                row.operator("pam.add_neuron_set", text="Add neuronset")
 
 
 class PAMMappingToolsPanel(bpy.types.Panel):

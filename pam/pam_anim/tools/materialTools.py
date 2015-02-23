@@ -9,7 +9,7 @@ class MaterialProperty(bpy.types.PropertyGroup):
             ('DEFAULT', 'Default', 'Creates a default material for you'),
             ('CUSTOM', 'Custom', 'You can choose a custom material for the neurons. Remember to turn on Object Color!')
         ),
-        default = 'DEFAULT'
+        default='DEFAULT'
     )
 
     script = bpy.props.StringProperty(name="Script")

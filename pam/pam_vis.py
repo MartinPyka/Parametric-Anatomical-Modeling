@@ -7,6 +7,7 @@ import numpy
 
 from . import pam
 from . import model
+from . import colormaps
 
 logger = logging.getLogger(__package__)
 
@@ -45,6 +46,59 @@ def visualizePostNeurons(no_connection, pre_neuron):
             bpy.context.selected_objects[0].name = "visualization.%03d" % vis_objects
             vis_objects = vis_objects + 1
 
+
+def generateLayerNeurons(layer, particle_system, obj, 
+                            object_color = [], indices = -1):
+    """ Generates for each particle (neuron) a cone with appropriate
+    naming """
+    # generate first mesh
+    i = 0
+    p = layer.particle_systems[particle_system].particles[0]
+   
+    if indices == -1:
+        particles = layer.particle_systems[particle_system].particles
+    else:
+        particles = layer.particle_systems[particle_system].particles[indices[0]:indices[1]]
+   
+    # generates linked duplicates of this mesh
+    for i, p in enumerate(particles):
+        bpy.ops.object.select_all(action='DESELECT')
+        bpy.context.scene.objects.active = obj
+        bpy.context.object.select = True    
+
+        bpy.ops.object.duplicate(linked=True, mode='INIT')
+        dupli = bpy.context.active_object
+        dupli.name = 'n' + '_' + layer.name + '_' + '%05d' % (i+1)
+        dupli.location = p.location
+        if object_color:
+            dupli.color = object_color[i]
+            
+
+def visualizeNeuronProjLength(no_connection, obj):
+    """ visualizes the connection-length of the pre-synaptic neurons for a given
+    mapping-index
+    no_connection    : connection index (mapping index)
+    """
+    global vis_objects 
+    layers = model.CONNECTIONS[no_connection][0][0] # get first layer
+    neuronset1 = model.CONNECTIONS[no_connection][1]
+    
+    ds = numpy.mean(model.CONNECTION_RESULTS[no_connection]['d'], 1)
+    d_min = numpy.min(ds[ds > 0.0])
+    d_span = numpy.max(ds) - d_min
+    l = len(colormaps.standard)-1
+    
+    colors = []
+    
+    for d in ds:
+        i = int(numpy.ceil(((d-d_min) / d_span) * l))
+        if i < 0:
+            colors.append([1., 0., 1., 1.])
+        else:
+            colors.append(colormaps.standard[i])
+        
+    generateLayerNeurons(layers, neuronset1, obj, colors)
+    
 
 def visualizePoint(point):
     """ visualizes a point in 3d by creating a small sphere """

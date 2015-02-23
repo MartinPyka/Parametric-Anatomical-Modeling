@@ -829,12 +829,22 @@ def computeAllConnections():
             }
         )
 
+def updateMapping(index):
+    """ Updates a mapping given by index """
+    m = model.CONNECTIONS[index]
+    result = computeConnectivity(*m, create = False)
+    model.CONNECTION_RESULTS[index] = {'c': result[0],
+                                       'd': result[1],
+                                       's': result[2]
+                                       }
+
 
 # TODO(SK): missing docstring
 def computeConnectivity(layers, neuronset1, neuronset2, slayer,
                         connections, distances,
                         func_pre, args_pre, func_post, args_post,
-                        no_synapses):
+                        no_synapses,
+                        create = True):
     """ Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
     with the given parameters
     layers              : list of layers connecting a pre- with a post-synaptic layer
@@ -850,6 +860,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
                           again, func_post can be None. Then a neuron is just assigned to the cell
                           of its corresponding position on the synapse layer
     no_synapses         : number of synapses for each pre-synaptic neuron
+    create              : if create == True, then create new connection, otherwise it is just updated
     """
     # connection matrix
     conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses)).astype(int)
@@ -924,14 +935,15 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer,
         for rest in range(j + 1, no_synapses):
             conn[i, rest] = -1
 
-    model.CONNECTION_INDICES.append(
-        [
-            model.CONNECTION_COUNTER,
-            model.NG_DICT[layers[0].name][neuronset1],
-            model.NG_DICT[layers[-1].name][neuronset2]
-        ]
-    )
-    model.CONNECTION_COUNTER += 1
+    if create:
+        model.CONNECTION_INDICES.append(
+            [
+                model.CONNECTION_COUNTER,
+                model.NG_DICT[layers[0].name][neuronset1],
+                model.NG_DICT[layers[-1].name][neuronset2]
+            ]
+        )
+        model.CONNECTION_COUNTER += 1
 
     return conn, dist, syn, uv_grid
 

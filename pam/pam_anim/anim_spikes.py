@@ -25,7 +25,8 @@ def readSpikeData(filename):
     return data
 
 
-def generateLayerNeurons(layer, particle_system, obj, indices = -1):
+def generateLayerNeurons(layer, particle_system, obj, 
+                            object_color = [], indices = -1):
     """ Generates for each particle (neuron) a cone with appropriate
     naming """
     # generate first mesh
@@ -47,6 +48,8 @@ def generateLayerNeurons(layer, particle_system, obj, indices = -1):
         dupli = bpy.context.active_object
         dupli.name = 'n' + '_' + layer.name + '_' + '%05d' % (i+1)
         dupli.location = p.location
+        if object_color:
+            dupli.color = object_color[i]
 
 
 def generateNetworkNeurons(obj):

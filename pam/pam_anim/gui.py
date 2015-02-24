@@ -12,7 +12,7 @@ class PamAnimDataPane(bpy.types.Panel):
         bl_region_type = "TOOLS"
         bl_context = "objectmode"
         bl_label = "Model data"
-        bl_category = "PAM-Anim"
+        bl_category = "PAM Animate"
 
         def draw(self, context):
                 layout = self.layout
@@ -28,7 +28,7 @@ class PamAnimMaterialPane(bpy.types.Panel):
         bl_region_type = "TOOLS"
         bl_context = "objectmode"
         bl_label = "Material"
-        bl_category = "PAM-Anim"
+        bl_category = "PAM Animate"
 
         def draw(self, context):
                 layout = self.layout
@@ -50,7 +50,7 @@ class PamAnimOrientationPane(bpy.types.Panel):
         bl_region_type = "TOOLS"
         bl_context = "objectmode"
         bl_label = "Object orientation"
-        bl_category = "PAM-Anim"
+        bl_category = "PAM Animate"
 
         def draw(self, context):
                 layout = self.layout
@@ -72,7 +72,7 @@ class PamAnimMeshPane(bpy.types.Panel):
         bl_region_type = "TOOLS"
         bl_context = "objectmode"
         bl_label = "Mesh"
-        bl_category = "PAM-Anim"
+        bl_category = "PAM Animate"
 
         def draw(self, context):
                 layout = self.layout
@@ -95,7 +95,7 @@ class PamAnimAnimPane(bpy.types.Panel):
         bl_region_type = "TOOLS"
         bl_context = "objectmode"
         bl_label = "Animation"
-        bl_category = "PAM-Anim"
+        bl_category = "PAM Animate"
 
         def draw(self, context):
                 layout = self.layout
@@ -127,7 +127,7 @@ class PamAnimLayerPane(bpy.types.Panel):
         bl_region_type = "TOOLS"
         bl_context = "objectmode"
         bl_label = "Layer colors"
-        bl_category = "PAM-Anim"
+        bl_category = "PAM Animate"
 
         def draw(self, context):
                 layout = self.layout
@@ -145,7 +145,7 @@ class PamAnimGeneratePanel(bpy.types.Panel):
         bl_region_type = "TOOLS"
         bl_context = "objectmode"
         bl_label = "Generate"
-        bl_category = "PAM-Anim"
+        bl_category = "PAM Animate"
 
         def draw(self, context):
                 layout = self.layout

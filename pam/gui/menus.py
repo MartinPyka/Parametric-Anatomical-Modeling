@@ -17,6 +17,8 @@ class PAMMappingMenu(bpy.types.Menu):
         for (key, name, _, _, _) in mapping.LAYER_TYPES[1:]:
             pie.operator("pam.mapping_layer_set", "Add layer as %s" % name).type = key
 
+        pie.operator("pam.mapping_self_inhibition", "Add layer as self-inhibition mapping")
+
 
 class PAMModelSaveMenu(bpy.types.Menu):
     bl_idname = "pam.model_save_menu"

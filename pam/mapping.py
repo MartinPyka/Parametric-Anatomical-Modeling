@@ -662,6 +662,52 @@ class PAMAddNeuronSet(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class PAMMappingAddSelfInhibition(bpy.types.Operator):
+    """Self-Inhibition Layer"""
+
+    bl_idname = "pam.mapping_self_inhibition"
+    bl_label = "Add layer as self-inhibition mapping"
+    bl_description = "Add layer as self-inhibition mapping"
+    bl_options = {'UNDO'}
+
+    count = bpy.props.IntProperty()
+
+    @classmethod
+    def poll(cls, context):
+        return context.object.type == "MESH"
+
+    def execute(self, context):
+        active_obj = context.scene.objects.active
+        m = context.scene.pam_mapping
+
+        newset = m.sets.add()
+        newset.name = "selfinhibition.%03d" % self.count
+        self.count += 1
+
+        pre = newset.layers.add()
+        pre_mapping = newset.mappings.add()
+        pre.object = active_obj.name
+        pre.type = LAYER_TYPES[5][0]
+        pre_mapping.distance = DISTANCE_TYPES[2][0]
+        pre_mapping.function = MAPPING_TYPES[3][0]
+
+        syn = newset.layers.add()
+        syn_mapping = newset.mappings.add()
+        syn.object = active_obj.name
+        syn.type = LAYER_TYPES[3][0]
+        syn_mapping.distance = DISTANCE_TYPES[2][0]
+        syn_mapping.function = MAPPING_TYPES[3][0]
+
+        post = newset.layers.add()
+        post_mapping = newset.mappings.add()
+        post.object = active_obj.name
+        post.type = LAYER_TYPES[1][0]
+
+        context.scene.objects.active = active_obj
+
+        return {'FINISHED'}
+
+
 def register():
     bpy.utils.register_class(PAMKernelValues)
     bpy.utils.register_class(PAMKernelParameter)

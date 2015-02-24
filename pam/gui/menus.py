@@ -20,17 +20,6 @@ class PAMMappingMenu(bpy.types.Menu):
         pie.operator("pam.mapping_self_inhibition", "Add layer as self-inhibition mapping")
 
 
-class PAMModelSaveMenu(bpy.types.Menu):
-    bl_idname = "pam.model_save_menu"
-    bl_label = "Model"
-
-    def draw(self, context):
-        layout = self.layout
-
-        layout.operator("pam.model_save", "Save to pickle")
-        layout.operator("pam.model_export_csv", "Save to csv")
-
-
 def register():
     wm = bpy.context.window_manager
     km = wm.keyconfigs.addon.keymaps.new(name='3D View Generic', space_type='VIEW_3D')

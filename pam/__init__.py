@@ -4,6 +4,7 @@ import logging
 
 import bpy
 
+from . import export
 from . import gui
 from . import utils
 from . import tools
@@ -79,6 +80,7 @@ def register():
     bpy.utils.register_class(PAMPreferencesPane)
     utils.log.initialize()
 
+    export.to_csv.register()
     tools.measure.register()
     tools.visual.register()
     mapping.register()
@@ -102,6 +104,7 @@ def register():
 
 def unregister():
     """Called on disabling this addon"""
+    export.to_csv.unregister()
     tools.measure.unregister()
     tools.visual.unregister()
     mapping.unregister()

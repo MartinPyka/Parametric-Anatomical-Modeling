@@ -6,6 +6,7 @@ import logging
 import zipfile
 
 import bpy
+import bpy_extras
 
 from .. import model
 
@@ -71,3 +72,30 @@ def csv_write_matrices(file, suffix, matrices):
         for row in matrix:
             writer.writerow(row)
         file.writestr("%i_%s.csv" % (i, suffix), output.getvalue())
+
+
+class PAMModelExportCSV(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
+    """Model Save Operator"""
+
+    bl_idname = "pam.model_export_csv"
+    bl_label = "Export model to csv"
+    bl_description = "Export model to csv"
+
+    filename_ext = ".zip"
+
+    @classmethod
+    def poll(cls, context):
+        return any(model.CONNECTIONS)
+
+    def execute(self, context):
+        export_connections(self.filepath)
+
+        return {'FINISHED'}
+
+
+def register():
+    bpy.utils.register_class(PAMModelExportCSV)
+
+
+def unregister():
+    pass

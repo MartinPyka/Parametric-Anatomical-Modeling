@@ -144,9 +144,10 @@ class PAMModelDataPanel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        row = layout.row(align=True)
-        row.operator("pam.model_load", text="Load")
-        row.operator("wm.call_menu", text="Save").name = "pam.model_save_menu"
+        col = layout.column(align=True)
+        col.operator("pam.model_load", text="Load")
+        col.operator("pam.model_save", text="Save")
+        col.operator("pam.model_export_csv", text="Export CSV")
 
 
 class PAMToolsPanel(bpy.types.Panel):

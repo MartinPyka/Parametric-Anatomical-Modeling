@@ -146,7 +146,7 @@ class PAMModelDataPanel(bpy.types.Panel):
         layout = self.layout
         row = layout.row(align=True)
         row.operator("pam.model_load", text="Load")
-        row.operator("pam.model_save", text="Save")
+        row.operator("wm.call_menu", text="Save").name = "pam.model_save_menu"
 
 
 class PAMToolsPanel(bpy.types.Panel):

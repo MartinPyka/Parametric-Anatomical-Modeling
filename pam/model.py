@@ -174,3 +174,22 @@ class PAMModelSave(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         save(self.filepath)
 
         return {'FINISHED'}
+
+
+class PAMModelExportCSV(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
+    """Model Save Operator"""
+
+    bl_idname = "pam.model_export_csv"
+    bl_label = "Export model to csv"
+    bl_description = "Export model to csv"
+
+    filename_ext = ".zip"
+
+    @classmethod
+    def poll(cls, context):
+        return any(CONNECTIONS)
+
+    def execute(self, context):
+        export_connections(self.filepath)
+
+        return {'FINISHED'}

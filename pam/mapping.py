@@ -703,6 +703,26 @@ class PAMMappingAddSelfInhibition(bpy.types.Operator):
         post.object = active_obj.name
         post.type = LAYER_TYPES[1][0]
 
+        for layer in [pre, post]:
+            layer.kernel.object = active_obj.name
+            layer.kernel.function = KERNEL_TYPES[1][0]
+            layer.kernel.parameters.clear()
+            var_u = layer.kernel.parameters.add()
+            var_u.name = 'var_u'
+            var_u.value = 0.2
+            var_v = layer.kernel.parameters.add()
+            var_v.name = 'var_v'
+            var_v.value = 0.2
+            shift_u = layer.kernel.parameters.add()
+            shift_u.name = 'shift_u'
+            shift_u.value = 0
+            shift_v = layer.kernel.parameters.add()
+            shift_v.name = 'shift_v'
+            shift_v.value = 0
+            item = particle_systems(layer.kernel, context)
+            if len(item) > 1:
+                layer.kernel.particles = item[1][0]
+
         context.scene.objects.active = active_obj
 
         return {'FINISHED'}

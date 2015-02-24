@@ -695,6 +695,7 @@ class PAMMappingAddSelfInhibition(bpy.types.Operator):
         syn_mapping = newset.mappings.add()
         syn.object = active_obj.name
         syn.type = LAYER_TYPES[3][0]
+        syn.synapse_count = 10        
         syn_mapping.distance = DISTANCE_TYPES[2][0]
         syn_mapping.function = MAPPING_TYPES[3][0]
 

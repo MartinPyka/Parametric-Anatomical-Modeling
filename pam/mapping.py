@@ -238,6 +238,10 @@ class PAMMapSet(bpy.types.PropertyGroup):
 class PAMMap(bpy.types.PropertyGroup):
     sets = bpy.props.CollectionProperty(type=PAMMapSet)
     active_set = bpy.props.IntProperty()
+    num_neurons = bpy.props.IntProperty(
+        default=1,
+        min=1,
+    )
 
 
 class PAMMappingUp(bpy.types.Operator):
@@ -627,6 +631,7 @@ class PAMAddNeuronSet(bpy.types.Operator):
 
     def execute(self, context):
         active_obj = context.active_object
+        m = context.scene.pam_mapping
 
         bpy.ops.object.particle_system_add()
 
@@ -636,7 +641,7 @@ class PAMAddNeuronSet(bpy.types.Operator):
 
         pset = psys.settings
         pset.type = "EMITTER"
-        pset.count = 100
+        pset.count = m.num_neurons
         pset.frame_start = pset.frame_end = 1.0
         pset.emit_from = "FACE"
         pset.use_emit_random = True

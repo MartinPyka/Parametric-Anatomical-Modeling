@@ -19,8 +19,9 @@ class PAMLayerToolsPanel(bpy.types.Panel):
                 m = context.scene.pam_mapping
                 layout = self.layout
 
-                row = layout.row()
-                row.operator("pam.add_neuron_set", text="Add neuronset")
+                col = layout.column()
+                col.prop(m, "num_neurons", text="Neurons")
+                col.operator("pam.add_neuron_set", text="Add neuronset")
 
 
 class PAMMappingToolsPanel(bpy.types.Panel):

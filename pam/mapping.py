@@ -7,7 +7,6 @@ import random
 import bpy
 
 from . import kernel
-
 from . import model
 from . import pam
 
@@ -150,18 +149,18 @@ def update_object(self, context):
 
 
 def update_kernels(self, context):
-        self.parameters.clear()
-        name = next(f for (f, _, _, _) in kernel.KERNEL_TYPES if f == self.function)
-        func = getattr(kernel, name)
-        if func is not None:
-            args, _, _, defaults = inspect.getargspec(func)
-            if args and defaults:
-                args = args[-len(defaults):]
-                params = zip(args, defaults)
-                for k, v in params:
-                    p = self.parameters.add()
-                    p.name = k
-                    p.value = v
+    self.parameters.clear()
+    name = next(f for (f, _, _, _) in kernel.KERNEL_TYPES if f == self.function)
+    func = getattr(kernel, name)
+    if func is not None:
+        args, _, _, defaults = inspect.getargspec(func)
+        if args and defaults:
+            args = args[-len(defaults):]
+            params = zip(args, defaults)
+            for k, v in params:
+                p = self.parameters.add()
+                p.name = k
+                p.value = v
 
 
 class PAMKernelValues(bpy.types.PropertyGroup):
@@ -545,69 +544,69 @@ class PAMMappingCompute(bpy.types.Operator):
 
 
 class PAMMappingComputeSelected(bpy.types.Operator):
-        bl_idname = "pam.mapping_compute_sel"
-        bl_label = "Compute selected mapping"
-        bl_description = ""
+    bl_idname = "pam.mapping_compute_sel"
+    bl_label = "Compute selected mapping"
+    bl_description = ""
 
-        type = bpy.props.EnumProperty(items=LAYER_TYPES[1:])
+    type = bpy.props.EnumProperty(items=LAYER_TYPES[1:])
 
-        @classmethod
-        def poll(cls, context):
-                return True
+    @classmethod
+    def poll(cls, context):
+            return True
 
-        def execute(self, context):
-                pam.initialize3D()
+    def execute(self, context):
+        pam.initialize3D()
 
-                set = bpy.context.scene.pam_mapping.sets[bpy.context.scene.pam_mapping.active_set]
+        set = bpy.context.scene.pam_mapping.sets[bpy.context.scene.pam_mapping.active_set]
 
-                pre_neurons = set.layers[0].kernel.particles
-                pre_func = set.layers[0].kernel.function
-                pre_params = [param.value for param in set.layers[0].kernel.parameters]
+        pre_neurons = set.layers[0].kernel.particles
+        pre_func = set.layers[0].kernel.function
+        pre_params = [param.value for param in set.layers[0].kernel.parameters]
 
-                post_neurons = set.layers[-1].kernel.particles
-                post_func = set.layers[-1].kernel.function
-                post_params = [param.value for param in set.layers[-1].kernel.parameters]
+        post_neurons = set.layers[-1].kernel.particles
+        post_func = set.layers[-1].kernel.function
+        post_params = [param.value for param in set.layers[-1].kernel.parameters]
 
-                synapse_layer = -1
-                synapse_count = 0
-                layers = []
+        synapse_layer = -1
+        synapse_count = 0
+        layers = []
 
-                # collect all
-                for i, layer in enumerate(set.layers):
-                        layers.append(bpy.data.objects[layer.object])
-                        # if this is the synapse layer, store this
-                        if layer.type == LAYER_TYPES[3][0]:
-                                synapse_layer = i
-                                synapse_count = layer.synapse_count
+        # collect all
+        for i, layer in enumerate(set.layers):
+            layers.append(bpy.data.objects[layer.object])
+            # if this is the synapse layer, store this
+            if layer.type == LAYER_TYPES[3][0]:
+                synapse_layer = i
+                synapse_count = layer.synapse_count
 
-                # error checking procedures
-                if synapse_layer == -1:
-                        raise Exception('no synapse layer given')
+        # error checking procedures
+        if synapse_layer == -1:
+            raise Exception('no synapse layer given')
 
-                mapping_funcs = []
-                distance_funcs = []
+        mapping_funcs = []
+        distance_funcs = []
 
-                for mapping in set.mappings[:-1]:
-                        mapping_funcs.append(MAPPING_DICT[mapping.function])
-                        distance_funcs.append(DISTANCE_DICT[mapping.distance])
+        for mapping in set.mappings[:-1]:
+            mapping_funcs.append(MAPPING_DICT[mapping.function])
+            distance_funcs.append(DISTANCE_DICT[mapping.distance])
 
-                pam.addConnection(
-                    layers,
-                    pre_neurons, post_neurons,
-                    synapse_layer,
-                    mapping_funcs,
-                    distance_funcs,
-                    eval('kernel.' + pre_func),
-                    pre_params,
-                    eval('kernel.' + post_func),
-                    post_params,
-                    synapse_count
-                )
+        pam.addConnection(
+            layers,
+            pre_neurons, post_neurons,
+            synapse_layer,
+            mapping_funcs,
+            distance_funcs,
+            eval('kernel.' + pre_func),
+            pre_params,
+            eval('kernel.' + post_func),
+            post_params,
+            synapse_count
+        )
 
-                pam.resetOrigins()
-                pam.computeAllConnections()
+        pam.resetOrigins()
+        pam.computeAllConnections()
 
-                return {'FINISHED'}
+        return {'FINISHED'}
 
 
 class PAMAddNeuronSet(bpy.types.Operator):
@@ -725,6 +724,21 @@ class PAMMappingAddSelfInhibition(bpy.types.Operator):
                 layer.kernel.particles = item[1][0]
 
         context.scene.objects.active = active_obj
+
+        return {'FINISHED'}
+
+
+class PAMMappingUpdate(bpy.types.Operator):
+    """Update active mapping"""
+
+    bl_idname = "pam.mapping_update"
+    bl_label = "Update active mapping"
+    bl_description = "Update active mapping"
+    bl_options = {'UNDO'}
+
+    def execute(self, context):
+        m = context.scene.pam_mapping
+        active_set = m.sets[m.active_set]
 
         return {'FINISHED'}
 

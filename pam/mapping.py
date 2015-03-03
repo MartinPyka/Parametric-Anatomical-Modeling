@@ -741,9 +741,60 @@ class PAMMappingUpdate(bpy.types.Operator):
     bl_description = "Update active mapping"
     bl_options = {'UNDO'}
 
+    @classmethod
+    def poll(cls, context):
+        return True
+
     def execute(self, context):
         m = context.scene.pam_mapping
         active_set = m.sets[m.active_set]
+
+        pre_neurons = active_set.layers[0].kernel.particles
+        pre_func = active_set.layers[0].kernel.function
+        pre_params = [param.value for param in active_set.layers[0].kernel.parameters]
+
+        post_neurons = active_set.layers[-1].kernel.particles
+        post_func = active_set.layers[-1].kernel.function
+        post_params = [param.value for param in active_set.layers[-1].kernel.parameters]
+
+        synapse_layer = -1
+        synapse_count = 0
+        layers = []
+
+        # collect all
+        for i, layer in enumerate(active_set.layers):
+            layers.append(bpy.data.objects[layer.object])
+            # if this is the synapse layer, store this
+            if layer.type == LAYER_TYPES[3][0]:
+                synapse_layer = i
+                synapse_count = layer.synapse_count
+
+        # error checking procedures
+        if synapse_layer == -1:
+            raise Exception('no synapse layer given')
+
+        mapping_funcs = []
+        distance_funcs = []
+
+        for mapping in active_set.mappings[:-1]:
+            mapping_funcs.append(MAPPING_DICT[mapping.function])
+            distance_funcs.append(DISTANCE_DICT[mapping.distance])
+
+        pam.updateConnection(
+            m.active_set,
+            layers,
+            pre_neurons, post_neurons,
+            synapse_layer,
+            mapping_funcs,
+            distance_funcs,
+            eval('kernel.' + pre_func),
+            pre_params,
+            eval('kernel.' + post_func),
+            post_params,
+            synapse_count
+        )
+
+        pam.updateMapping(m.active_set)
 
         return {'FINISHED'}
 

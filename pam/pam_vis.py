@@ -361,3 +361,46 @@ def visualizeClean():
     bpy.ops.object.select_pattern(pattern="visualization*")
     bpy.ops.object.delete(use_global=False)
     vis_objects = 0
+
+
+def polygons_coordinate(obj):
+    r = []
+    for p in obj.data.polygons:
+        co = []
+        for v in p.vertices:
+            co.append(obj.data.vertices[v].co)
+        r.append(co)
+    return r
+
+
+def color_polygons(obj, colors):
+    if len(obj.data.polygons) != len(colors):
+        raise Exception("number of colors given does not match polgyons")
+
+    if not obj.data.vertex_colors:
+        obj.data.vertex_colors.new()
+
+    vc = obj.data.vertex_colors.active
+
+    for c, p in zip(colors, obj.data.polygons):
+        for v in p.loop_indices:
+            vc.data[v].color = c
+
+
+def vertices_coordinate(obj):
+    return [v.co for v in obj.data.vertices]
+
+
+def color_vertices(obj, colors):
+    if len(obj.data.vertices) != len(colors):
+        raise Exception("number of colors given does not match vertices")
+
+    if not obj.data.vertex_colors:
+        obj.data.vertex_colors.new()
+
+    vc = obj.data.vertex_colors.active
+
+    vc_index = [v for p in obj.data.polygons for v in p.vertices]
+
+    for i, n in enumerate(vc_index):
+        vc.data[i].color = colors[n]

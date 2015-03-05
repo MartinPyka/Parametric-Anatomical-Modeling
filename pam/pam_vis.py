@@ -74,31 +74,50 @@ def generateLayerNeurons(layer, particle_system, obj, object_color=[],
             dupli.color = object_color[i]
 
 
+def getColors(colormap, v, interval = [], alpha=True):
+	""" Based on a colormaps, values in the vector are converted to colors
+	from the colormap. 
+	colormap 	- the colormap to be used
+	v 		- list of values
+	interval	- min- and maximal range to be used, if empty these
+			  values are computed based on v
+	"""
+	if not interval:
+		interval.append(min(v))
+		interval.append(max(v))
+
+	l = len(colormap) - 1
+	span = float(interval[1] - interval[0])
+	colors = []
+
+	for i in v:
+		ind = int(numpy.ceil(((i - interval[0]) / span) * l))
+		if ind < 0:
+			if alpha:
+				colors.append([1., 0., 1., 1.])
+			else:
+				colors.append([1., 0., 1.])
+		else:
+			if alpha:
+				colors.append(colormap[ind])
+			else:
+				colors.append(colormap[ind][:3])
+	return colors
+
+
 def visualizeNeuronProjLength(no_connection, obj):
-    """ visualizes the connection-length of the pre-synaptic neurons for a given
-    mapping-index
-    no_connection    : connection index (mapping index)
-    """
-    global vis_objects
-    layers = model.CONNECTIONS[no_connection][0][0]  # get first layer
-    neuronset1 = model.CONNECTIONS[no_connection][1]
+	""" visualizes the connection-length of the pre-synaptic neurons for a given
+	mapping-index
+	no_connection    : connection index (mapping index)
+	"""
+	global vis_objects
+	layers = model.CONNECTIONS[no_connection][0][0]  # get first layer
+	neuronset1 = model.CONNECTIONS[no_connection][1]
 
-    ds = numpy.mean(model.CONNECTION_RESULTS[no_connection]['d'], 1)
-    d_min = numpy.min(ds[ds > 0.0])
-    d_span = numpy.max(ds) - d_min
-    l = len(colormaps.standard) - 1
+	ds = numpy.mean(model.CONNECTION_RESULTS[no_connection]['d'], 1)
+	colors = getColors(colormaps.standard, ds)
 
-    colors = []
-
-    for d in ds:
-        i = int(numpy.ceil(((d - d_min) / d_span) * l))
-        if i < 0:
-            colors.append([1., 0., 1., 1.])
-        else:
-            colors.append(colormaps.standard[i])
-
-    generateLayerNeurons(layers, neuronset1, obj, colors)
-
+	generateLayerNeurons(layers, neuronset1, obj, colors)
 
 def visualizePoint(point):
     """ visualizes a point in 3d by creating a small sphere """
@@ -404,3 +423,15 @@ def color_vertices(obj, colors):
 
     for i, n in enumerate(vc_index):
         vc.data[i].color = colors[n]
+
+
+def colorize_vertices(obj, v, interval = []):
+	""" colorizes vertices of an object based on values in v and a
+	given interval
+	obj 		- objects, whose vertices should be used
+	v 		- vector length must correspond to number of vertices
+	interval	- min- and maximal range. if empty, it will be computed
+			  based on v
+	"""
+	colors = getColors(colormaps.standard, v, interval, alpha=False)
+	color_vertices(obj, colors)

@@ -206,7 +206,6 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
     bl_context = "objectmode"
     bl_label = "Kernel"
     bl_category = "PAM Modeling"
-    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         active_obj = context.active_object

@@ -220,7 +220,7 @@ class PAMLayer(bpy.types.PropertyGroup):
         default=LAYER_TYPES[0][0],
     )
     collapsed = bpy.props.BoolProperty(
-        default=True,
+        default=False,
     )
     kernel = bpy.props.PointerProperty(type=PAMKernelParameter)
     synapse_count = bpy.props.IntProperty(

@@ -230,6 +230,11 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         row.label("Parameter:")
 
         row = layout.row()
+        col = row.column(align=True)
+        col.prop(context.scene.pam_visualize, "u", text="u")
+        col.prop(context.scene.pam_visualize, "v", text="v")
+
+        row = layout.row()
         row.template_list(
             listtype_name="CustomPropList",
             dataptr=context.scene.pam_visualize,

@@ -91,17 +91,12 @@ def getColors(colormap, v, interval = [], alpha=True):
 	colors = []
 
 	for i in v:
-		ind = int(numpy.ceil(((i - interval[0]) / span) * l))
-		if ind < 0:
-			if alpha:
-				colors.append([1., 0., 1., 1.])
-			else:
-				colors.append([1., 0., 1.])
+		ind = int(numpy.floor(((i - interval[0]) / span) * l))
+		ind = max(min(l, ind), 0)
+		if alpha:
+			colors.append(colormap[ind])
 		else:
-			if alpha:
-				colors.append(colormap[ind])
-			else:
-				colors.append(colormap[ind][:3])
+			colors.append(colormap[ind][:3])
 	return colors
 
 
@@ -188,13 +183,15 @@ def visualizeForwardMapping(no_connection, pre_index):
     connections = model.CONNECTIONS[no_connection][4]
     distances = model.CONNECTIONS[no_connection][5]
 
-    for s in range(1, slayer):
-        pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer + 1)],
-                                                     connections[0:slayer],
-                                                     distances[0:(slayer - 1)] + [pam.DIS_euclidUV],
-                                                     layers[0].particle_systems[neuronset1].particles[pre_index].location)
+    for s in range(2, (slayer+1)):
+        pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:s],
+                                                     connections[0:(s-1)],
+                                                     distances[0:(s - 2)] + [pam.DIS_euclidUV],
+                                                     layers[0].particle_systems[neuronset1].particles[pre_index].location, debug=True)
         logger.debug(s)
         logger.debug(pre_p3d)
+        logger.debug(pre_p2d)
+        logger.debug(pre_d)
         visualizePath(pre_p3d)
 
 
@@ -435,3 +432,17 @@ def colorize_vertices(obj, v, interval = []):
 	"""
 	colors = getColors(colormaps.standard, v, interval, alpha=False)
 	color_vertices(obj, colors)
+    
+def visualizeMappingDistance(no_mapping):
+    """ visualizes the mapping distance for a pre-synaptic layer and a given
+    mapping. The mapping distance is visualized by colorizing the vertices
+    of the layer """
+    layers = model.CONNECTIONS[no_mapping][0]
+    neuronset1 = model.CONNECTIONS[no_mapping][1]
+
+    distances = []
+
+    for ds in model.CONNECTION_RESULTS[no_mapping]['d']:
+        distances.append(numpy.mean(ds))
+        
+    colorize_vertices(layers[0], distances)

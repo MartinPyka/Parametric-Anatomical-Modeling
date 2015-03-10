@@ -5,9 +5,9 @@ import numpy as np
 
 
 KERNEL_TYPES = [
-    ("gauss", "Gauss", "", 1),
-    ("stripe_with_end", "Stripe with end", "", 2),
-    ("unity", "Unity", "", 3)
+    ("gauss", "Gauss", "", 0),
+    ("stripe_with_end", "Stripe with end", "", 1),
+    ("unity", "Unity", "", 2)
 ]
 
 

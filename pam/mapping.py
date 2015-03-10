@@ -13,24 +13,20 @@ from . import pam
 logger = logging.getLogger(__package__)
 
 
-NONE = [
-    ("none", "None", "", "", 0),
+LAYER_TYPES = [
+    ("postsynapse", "Postsynapse", "", "", 0),
+    ("postintermediates", "Postintermediate", "", "", 1),
+    ("synapse", "Synapse", "", "", 2),
+    ("preintermediates", "Preintermediate", "", "", 3),
+    ("presynapse", "Presynapse", "", "", 4),
 ]
 
-LAYER_TYPES = NONE + [
-    ("postsynapse", "Postsynapse", "", "", 1),
-    ("postintermediates", "Postintermediate", "", "", 2),
-    ("synapse", "Synapse", "", "", 3),
-    ("preintermediates", "Preintermediate", "", "", 4),
-    ("presynapse", "Presynapse", "", "", 5),
-]
-
-MAPPING_TYPES = NONE + [
-    ("euclid", "Euclidean", "", "", 1),
-    ("normal", "Normal", "", "", 2),
-    ("top", "Topology", "", "", 3),
-    ("uv", "UV", "", "", 4),
-    ("rand", "Random", "", "", 5)
+MAPPING_TYPES = [
+    ("euclid", "Euclidean", "", "", 0),
+    ("normal", "Normal", "", "", 1),
+    ("top", "Topology", "", "", 2),
+    ("uv", "UV", "", "", 3),
+    ("rand", "Random", "", "", 4)
 ]
 
 MAPPING_DICT = {
@@ -41,13 +37,13 @@ MAPPING_DICT = {
     "uv": pam.MAP_uv
 }
 
-DISTANCE_TYPES = NONE + [
-    ("euclid", "Euclidean", "", "", 1),
-    ("euclidUV", "EuclideanUV", "", "", 2),
-    ("jumpUV", "jumpUV", "", "", 3),
-    ("UVjump", "UVjump", "", "", 4),
-    ("normalUV", "NormalUV", "", "", 5),
-    ("UVnormal", "UVnormal", "", "", 6),
+DISTANCE_TYPES = [
+    ("euclid", "Euclidean", "", "", 0),
+    ("euclidUV", "EuclideanUV", "", "", 1),
+    ("jumpUV", "jumpUV", "", "", 2),
+    ("UVjump", "UVjump", "", "", 3),
+    ("normalUV", "NormalUV", "", "", 4),
+    ("UVnormal", "UVnormal", "", "", 5),
 ]
 
 DISTANCE_DICT = {
@@ -59,11 +55,8 @@ DISTANCE_DICT = {
     "UVnormal": pam.DIS_UVnormal
 }
 
-KERNEL_TYPES = NONE + kernel.KERNEL_TYPES
-
-
 def particle_systems(self, context):
-    p = NONE[:]
+    p = []
 
     if self.object not in context.scene.objects:
         return p
@@ -92,7 +85,7 @@ def active_mapping_index(self, context):
 
 
 def uv_source(self, context):
-    p = NONE[:]
+    p = []
 
     m = context.scene.pam_mapping
     active_set = m.sets[m.active_set]
@@ -117,7 +110,7 @@ def uv_source(self, context):
 
 
 def uv_target(self, context):
-    p = NONE[:]
+    p = []
 
     m = context.scene.pam_mapping
     active_set = m.sets[m.active_set]
@@ -178,7 +171,7 @@ class PAMKernelParameter(bpy.types.PropertyGroup):
     object = bpy.props.StringProperty()
     function = bpy.props.EnumProperty(
         name="Kernel function",
-        items=KERNEL_TYPES,
+        items=kernel.KERNEL_TYPES,
         update=update_kernels,
     )
     parameters = bpy.props.CollectionProperty(
@@ -217,7 +210,6 @@ class PAMLayer(bpy.types.PropertyGroup):
     type = bpy.props.EnumProperty(
         items=LAYER_TYPES,
         name="Layer type",
-        default=LAYER_TYPES[0][0],
     )
     collapsed = bpy.props.BoolProperty(
         default=False,
@@ -456,7 +448,7 @@ class PAMMappingSetLayer(bpy.types.Operator):
     bl_description = ""
     bl_options = {"UNDO"}
 
-    type = bpy.props.EnumProperty(items=LAYER_TYPES[1:])
+    type = bpy.props.EnumProperty(items=LAYER_TYPES)
 
     @classmethod
     def poll(cls, context):
@@ -485,7 +477,7 @@ class PAMMappingCompute(bpy.types.Operator):
     bl_label = "Compute mapping"
     bl_description = ""
 
-    type = bpy.props.EnumProperty(items=LAYER_TYPES[1:])
+    type = bpy.props.EnumProperty(items=LAYER_TYPES)
 
     @classmethod
     def poll(cls, context):
@@ -512,7 +504,7 @@ class PAMMappingCompute(bpy.types.Operator):
             for i, layer in enumerate(set.layers):
                 layers.append(bpy.data.objects[layer.object])
                 # if this is the synapse layer, store this
-                if layer.type == LAYER_TYPES[3][0]:
+                if layer.type == LAYER_TYPES[2][0]:
                     synapse_layer = i
                     synapse_count = layer.synapse_count
 
@@ -551,7 +543,7 @@ class PAMMappingComputeSelected(bpy.types.Operator):
     bl_label = "Compute selected mapping"
     bl_description = ""
 
-    type = bpy.props.EnumProperty(items=LAYER_TYPES[1:])
+    type = bpy.props.EnumProperty(items=LAYER_TYPES)
 
     @classmethod
     def poll(cls, context):
@@ -578,7 +570,7 @@ class PAMMappingComputeSelected(bpy.types.Operator):
         for i, layer in enumerate(set.layers):
             layers.append(bpy.data.objects[layer.object])
             # if this is the synapse layer, store this
-            if layer.type == LAYER_TYPES[3][0]:
+            if layer.type == LAYER_TYPES[2][0]:
                 synapse_layer = i
                 synapse_count = layer.synapse_count
 
@@ -690,26 +682,26 @@ class PAMMappingAddSelfInhibition(bpy.types.Operator):
         pre = newset.layers.add()
         pre_mapping = newset.mappings.add()
         pre.object = active_obj.name
-        pre.type = LAYER_TYPES[5][0]
-        pre_mapping.distance = DISTANCE_TYPES[2][0]
-        pre_mapping.function = MAPPING_TYPES[3][0]
+        pre.type = LAYER_TYPES[4][0]
+        pre_mapping.distance = DISTANCE_TYPES[1][0]
+        pre_mapping.function = MAPPING_TYPES[2][0]
 
         syn = newset.layers.add()
         syn_mapping = newset.mappings.add()
         syn.object = active_obj.name
-        syn.type = LAYER_TYPES[3][0]
+        syn.type = LAYER_TYPES[2][0]
         syn.synapse_count = 10
-        syn_mapping.distance = DISTANCE_TYPES[2][0]
-        syn_mapping.function = MAPPING_TYPES[3][0]
+        syn_mapping.distance = DISTANCE_TYPES[1][0]
+        syn_mapping.function = MAPPING_TYPES[2][0]
 
         post = newset.layers.add()
         post_mapping = newset.mappings.add()
         post.object = active_obj.name
-        post.type = LAYER_TYPES[1][0]
+        post.type = LAYER_TYPES[0][0]
 
         for layer in [pre, post]:
             layer.kernel.object = active_obj.name
-            layer.kernel.function = KERNEL_TYPES[1][0]
+            layer.kernel.function = kernel.KERNEL_TYPES[0][0]
             layer.kernel.parameters.clear()
             var_u = layer.kernel.parameters.add()
             var_u.name = 'var_u'
@@ -764,7 +756,7 @@ class PAMMappingUpdate(bpy.types.Operator):
         for i, layer in enumerate(active_set.layers):
             layers.append(bpy.data.objects[layer.object])
             # if this is the synapse layer, store this
-            if layer.type == LAYER_TYPES[3][0]:
+            if layer.type == LAYER_TYPES[2][0]:
                 synapse_layer = i
                 synapse_count = layer.synapse_count
 

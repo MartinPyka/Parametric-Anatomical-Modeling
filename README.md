@@ -4,7 +4,9 @@ pam-blender - PAM (Parametric Anatomical Modeling)
 Parametric Anatomical Modeling is a method to translate large-scale anatomical data into spiking neural networks.
 PAM is implemented as a [Blender](http://www.blender.org) addon.
 
-![Hippocampal model](https://bitbucket.org/repo/EaAEne/images/1007682870-hippocampal_model.png)
+![hippocampus_rat_01.png](https://bitbucket.org/repo/EaAEne/images/3662544291-hippocampus_rat_01.png)
+
+![spiking.png](https://bitbucket.org/repo/EaAEne/images/4173479826-spiking.png)
 
 [blender]: http://www.blender.org
 

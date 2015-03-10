@@ -460,7 +460,8 @@ class PAMMappingSetLayer(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return True
+        m = context.scene.pam_mapping
+        return any(m.sets)
 
     def execute(self, context):
         active_obj = context.scene.objects.active

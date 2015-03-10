@@ -5,7 +5,7 @@ from pam import pam
 from pam import model
 from pam import pam_vis
 from pam.export import to_csv as export
-from pam.kernel import gaussian as kernel
+from pam import kernel
 
 import code
 import profile

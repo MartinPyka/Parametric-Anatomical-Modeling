@@ -352,8 +352,6 @@ class PAMMappingLayerAdd(bpy.types.Operator):
     bl_description = ""
     bl_options = {"UNDO"}
 
-    test123 = bpy.props.EnumProperty(items=LAYER_TYPES)
-
     @classmethod
     def poll(cls, context):
         return True

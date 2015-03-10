@@ -418,10 +418,16 @@ class PAMMappingAddSet(bpy.types.Operator):
         self.count += 1
 
         pre = set.layers.add()
-        pos = set.layers.add()
+        pre_mapping = set.mappings.add()
+        pre.type = LAYER_TYPES[4][0]
 
-        set.mappings.add()
-        set.mappings.add()
+        syn = set.layers.add()
+        syn_mapping = set.mappings.add()
+        syn.type = LAYER_TYPES[2][0]
+
+        post = set.layers.add()
+        post_mapping = set.mappings.add()
+        post.type = LAYER_TYPES[0][0]
 
         return {'FINISHED'}
 

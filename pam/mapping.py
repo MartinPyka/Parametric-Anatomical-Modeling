@@ -55,6 +55,7 @@ DISTANCE_DICT = {
     "UVnormal": pam.DIS_UVnormal
 }
 
+
 def particle_systems(self, context):
     p = []
 
@@ -65,7 +66,7 @@ def particle_systems(self, context):
     if not any(particles):
         return p
 
-    p += [(p.name, p.name, "", "", i) for i, p in enumerate(particles, start=1)]
+    p += [(p.name, p.name, "", "", i) for i, p in enumerate(particles)]
 
     return p
 
@@ -397,6 +398,11 @@ class PAMMappingSetObject(bpy.types.Operator):
 
         layer = active_set.layers[self.index]
         layer.object = active_obj.name
+
+        if layer.kernel.particles == "":
+            p = particle_systems(layer, context)
+            if any(p):
+                layer.kernel.particles = p[0][0]
 
         return {'FINISHED'}
 

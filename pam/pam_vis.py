@@ -74,45 +74,46 @@ def generateLayerNeurons(layer, particle_system, obj, object_color=[],
             dupli.color = object_color[i]
 
 
-def getColors(colormap, v, interval = [], alpha=True):
-	""" Based on a colormaps, values in the vector are converted to colors
-	from the colormap. 
-	colormap 	- the colormap to be used
-	v 		- list of values
-	interval	- min- and maximal range to be used, if empty these
-			  values are computed based on v
-	"""
-	if not interval:
-		interval.append(min(v))
-		interval.append(max(v))
+def getColors(colormap, v, interval=[], alpha=True):
+        """ Based on a colormaps, values in the vector are converted to colors
+        from the colormap.
+        colormap        - the colormap to be used
+        v               - list of values
+        interval        - min- and maximal range to be used, if empty these
+                          values are computed based on v
+        """
+        if not interval:
+                interval.append(min(v))
+                interval.append(max(v))
 
-	l = len(colormap) - 1
-	span = float(interval[1] - interval[0])
-	colors = []
+        l = len(colormap) - 1
+        span = float(interval[1] - interval[0])
+        colors = []
 
-	for i in v:
-		ind = int(numpy.floor(((i - interval[0]) / span) * l))
-		ind = max(min(l, ind), 0)
-		if alpha:
-			colors.append(colormap[ind])
-		else:
-			colors.append(colormap[ind][:3])
-	return colors
+        for i in v:
+                ind = int(numpy.floor(((i - interval[0]) / span) * l))
+                ind = max(min(l, ind), 0)
+                if alpha:
+                        colors.append(colormap[ind])
+                else:
+                        colors.append(colormap[ind][:3])
+        return colors
 
 
 def visualizeNeuronProjLength(no_connection, obj):
-	""" visualizes the connection-length of the pre-synaptic neurons for a given
-	mapping-index
-	no_connection    : connection index (mapping index)
-	"""
-	global vis_objects
-	layers = model.CONNECTIONS[no_connection][0][0]  # get first layer
-	neuronset1 = model.CONNECTIONS[no_connection][1]
+        """ visualizes the connection-length of the pre-synaptic neurons for a given
+        mapping-index
+        no_connection    : connection index (mapping index)
+        """
+        global vis_objects
+        layers = model.CONNECTIONS[no_connection][0][0]  # get first layer
+        neuronset1 = model.CONNECTIONS[no_connection][1]
 
-	ds = numpy.mean(model.CONNECTION_RESULTS[no_connection]['d'], 1)
-	colors = getColors(colormaps.standard, ds)
+        ds = numpy.mean(model.CONNECTION_RESULTS[no_connection]['d'], 1)
+        colors = getColors(colormaps.standard, ds)
 
-	generateLayerNeurons(layers, neuronset1, obj, colors)
+        generateLayerNeurons(layers, neuronset1, obj, colors)
+
 
 def visualizePoint(point):
     """ visualizes a point in 3d by creating a small sphere """
@@ -183,11 +184,14 @@ def visualizeForwardMapping(no_connection, pre_index):
     connections = model.CONNECTIONS[no_connection][4]
     distances = model.CONNECTIONS[no_connection][5]
 
-    for s in range(2, (slayer+1)):
-        pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:s],
-                                                     connections[0:(s-1)],
-                                                     distances[0:(s - 2)] + [pam.DIS_euclidUV],
-                                                     layers[0].particle_systems[neuronset1].particles[pre_index].location, debug=True)
+    for s in range(2, (slayer + 1)):
+        pre_p3d, pre_p2d, pre_d = pam.computeMapping(
+            layers[0:s],
+            connections[0:(s - 1)],
+            distances[0:(s - 2)] + [pam.DIS_euclidUV],
+            layers[0].particle_systems[neuronset1].particles[pre_index].location,
+            debug=True
+        )
         logger.debug(s)
         logger.debug(pre_p3d)
         logger.debug(pre_p2d)
@@ -422,17 +426,18 @@ def color_vertices(obj, colors):
         vc.data[i].color = colors[n]
 
 
-def colorize_vertices(obj, v, interval = []):
-	""" colorizes vertices of an object based on values in v and a
-	given interval
-	obj 		- objects, whose vertices should be used
-	v 		- vector length must correspond to number of vertices
-	interval	- min- and maximal range. if empty, it will be computed
-			  based on v
-	"""
-	colors = getColors(colormaps.standard, v, interval, alpha=False)
-	color_vertices(obj, colors)
-    
+def colorize_vertices(obj, v, interval=[]):
+        """ colorizes vertices of an object based on values in v and a
+        given interval
+        obj             - objects, whose vertices should be used
+        v               - vector length must correspond to number of vertices
+        interval        - min- and maximal range. if empty, it will be computed
+                          based on v
+        """
+        colors = getColors(colormaps.standard, v, interval, alpha=False)
+        color_vertices(obj, colors)
+
+
 def visualizeMappingDistance(no_mapping):
     """ visualizes the mapping distance for a pre-synaptic layer and a given
     mapping. The mapping distance is visualized by colorizing the vertices
@@ -444,5 +449,5 @@ def visualizeMappingDistance(no_mapping):
 
     for ds in model.CONNECTION_RESULTS[no_mapping]['d']:
         distances.append(numpy.mean(ds))
-        
+
     colorize_vertices(layers[0], distances)

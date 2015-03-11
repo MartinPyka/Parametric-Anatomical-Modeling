@@ -229,6 +229,12 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         row = layout.row()
         row.label("Parameter:")
 
+        if context.scene.pam_visualize.mode == "COORDINATES":
+            row = layout.row()
+            col = row.column(align=True)
+            col.prop(context.scene.pam_visualize, "u", text="u")
+            col.prop(context.scene.pam_visualize, "v", text="v")
+
         row = layout.row()
         row.template_list(
             listtype_name="CustomPropList",
@@ -239,9 +245,6 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
             type="DEFAULT",
             rows=6,
         )
-        # col = row.column(align=True)
-        # col.operator("pam.add_param", icon="ZOOMIN", text="")
-        # col.operator("pam.remove_param", icon="ZOOMOUT", text="")
 
         # row = layout.row(align=True)
         # row.template_preview(context.blend_data.textures.get("pam.temp_texture"))

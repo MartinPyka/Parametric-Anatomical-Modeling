@@ -5,6 +5,7 @@ import logging
 import math
 
 import bpy
+import numpy as np
 
 from .. import kernel
 from .. import model
@@ -26,12 +27,6 @@ VIEW_LIST = [
 MODE_LIST = [
     ("CURSOR", "At cursor", "", 0),
     ("COORDINATES", "At uv", "", 1)
-]
-
-KERNELS = [
-    ("NONE", "None", None),
-    ("GAUSSIAN", "Gaussian", kernel.gauss),
-    ("UNITY", "Unity", kernel.unity)
 ]
 
 
@@ -93,8 +88,8 @@ class PAMVisualizeKernel(bpy.types.Operator):
                 v
             )
         elif pam_visualize.mode == "COORDINATES":
-            u = pam_visualize.customs["u"]
-            v = pam_visualize.customs["v"]
+            u = pam_visualize.u
+            v = pam_visualize.v
 
             logger.debug(
                 "object (%s) uvscaling (%f) uv (%f, %f)",
@@ -120,12 +115,11 @@ class PAMVisualizeKernel(bpy.types.Operator):
         # temp_material.use_shadeless = True
 
         kwargs = {p.name: p.value / uv_scaling_factor for p in pam_visualize.customs}
-        kwargs["origin_u"] = u
-        kwargs["origin_v"] = v
 
-        kernel_func = next(f for (k, n, f) in KERNELS if k == pam_visualize.kernel)
+        kernel_func = next(getattr(kernel, k) for (k, n, d, n) in kernel.KERNEL_TYPES if k == pam_visualize.kernel)
 
         kernel_image(
+            np.array([u, v]),
             temp_image,
             kernel_func,
             kwargs
@@ -348,7 +342,7 @@ class PamVisualizeForwardConnection(bpy.types.Operator):
 
 # TODO(SK): missing docstring
 @p.profiling
-def kernel_image(image, func, kwargs):
+def kernel_image(guv, image, func, kwargs):
     width, height = image.size
     if width != height:
         pass
@@ -357,7 +351,7 @@ def kernel_image(image, func, kwargs):
 
     ranges = list(map(lambda x: x * res, range(width)))
 
-    values = [func(u, v, **kwargs) for v in ranges for u in ranges]
+    values = [func(np.array([u, v]), guv, **kwargs) for v in ranges for u in ranges]
     color_index = list(map(lambda x: math.floor(x * 255.0), values))
 
     color_values = [COLOR[i] for i in color_index]
@@ -366,12 +360,12 @@ def kernel_image(image, func, kwargs):
 
 
 def get_kernels(self, context):
-    return [(k, n, "", i) for i, (k, n, f) in enumerate(KERNELS)]
+    return kernel.KERNEL_TYPES
 
 
 def update_kernels(self, context):
     self.customs.clear()
-    func = next(f for (k, n, f) in KERNELS if k == self.kernel)
+    func = next(getattr(kernel, k) for (k, n, d, n) in kernel.KERNEL_TYPES if k == self.kernel)
     if func is not None:
         args, _, _, defaults = inspect.getargspec(func)
         if args and defaults:
@@ -487,3 +481,5 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
     customs = bpy.props.CollectionProperty(
         type=PamVisualizeKernelFloatProperties
     )
+    u = bpy.props.FloatProperty()
+    v = bpy.props.FloatProperty()

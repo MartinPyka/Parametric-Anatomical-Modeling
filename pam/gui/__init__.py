@@ -1,4 +1,4 @@
 from . import menus
 from . import panels
 
-__all__ = [menus, panels]
+__all__ = ["menus", "panels"]

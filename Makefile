@@ -24,10 +24,10 @@ LOGFILE          := unittest.log
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
-	@echo "  test  to run all tests"
-	@echo "  clean to clean up temporary files"
+	@echo "  test  to run tests"
+	@echo "  clean to clean"
 	@echo "  pep8  to check pep8 compliance"
-	@echo "  docs  to generate documentation"
+	@echo "  docs  to build documentation"
 
 test: clean pep8 binary-exists
 	@echo "Running unittests"
@@ -43,19 +43,19 @@ binary-exists:
 	@if [ ! -x $(BLENDER) ]; then echo "Blender binary is missing or it is not executable"; exit 1; fi
 
 clean:
-	@echo "Cleaning logfiles"
-	rm -rf $(LOGFILE)
+	@echo "Cleaning log files"
+	@rm -rf $(LOGFILE)
 	@echo "Cleaning cached python files"
-	find . \( -name "__pycache__" -o -name "*.pyc" \) -delete
-	@echo "Cleaning documentation files"
-	rm -rf $(DIR_DOC)/_build/*
+	@find . \( -name "__pycache__" -o -name "*.pyc" \) -delete
+	@echo "Cleaning documentation directory"
+	@rm -rf $(DIR_DOC)/_build/
 
-pep8:
+pep8: clean
 	@echo "Checking pep8 compliance"
 	pep8 $(DIR_SOURCE) $(PEP8FLAGS)
 
-docs: binary-exists
-	@echo "Generating html documentation"
+docs: binary-exists clean
+	@echo "Generating documentation"
 	$(BLENDER) $(BLENDERFLAGS) --python $(SCRIPT_DOC)
 
 .PHONY: help clean docs test test-ci check-binary

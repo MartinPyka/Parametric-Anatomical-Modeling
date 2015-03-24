@@ -9,38 +9,50 @@ else ifeq ($(OS),Darwin)
 	BLENDER := /Applications/Blender/blender.app/Contents/MacOS/blender
 endif
 
-BLENDERFLAGS     := --background --disable-crash-handler -noaudio
-PEP8FLAGS       := --ignore=E501 --show-source
+# Flags
+BLENDERFLAGS := --background --disable-crash-handler -noaudio
+PEP8FLAGS    := --ignore=E501 --show-source
+PYLINTFLAGS  :=
 
-DIR_SOURCE	 := ./pam
-DIR_TEST         := $(DIR_SOURCE)/tests
-DIR_DOC          := ./docs
-SCRIPT_TEST      := run_tests.py
-SCRIPT_DOC       := $(DIR_DOC)/blender_sphinx.py
-TEST_FAILED      := FAILED
-TEST_BLEND       := test_universal.blend
+# Base
+DIR_SOURCE := ./pam
 
-LOGFILE          := unittest.log
+# Unittest
+DIR_TEST    := ./tests
+SCRIPT_TEST := run_tests.py
+TEST_FAILED := FAILED
+TEST_BLEND  := test_universal.blend
+LOGFILE     := unittest.log
+
+# Documentation
+DIR_DOC    := ./docs
+SCRIPT_DOC := ./build_docs.py
+
+# Pylint
+SCRIPT_PYLINT := $(DIR_TEST)/blender_pylint.py
+
+
+default: help
+
+all: clean pep8 pylint tests docs
+
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
-	@echo "  test  to run tests"
-	@echo "  clean to clean"
-	@echo "  pep8  to check pep8 compliance"
-	@echo "  docs  to build documentation"
+	@echo "  clean  to clean"
+	@echo "  tests   to run tests"
+	@echo "  pep8   to check pep8 compliance"
+	@echo "  pylint to run pylint"
+	@echo "  docs    to build documentation"
 
-test: clean pep8 binary-exists
+tests: binary-exists clean
 	@echo "Running unittests"
 	$(BLENDER) $(DIR_TEST)/$(TEST_BLEND) $(BLENDERFLAGS) --python $(SCRIPT_TEST)
 
-test-ci: clean pep8 binary-exists
+tests-ci: binary-exists clean
 	@echo "Running continuous integration unittests"
 	$(BLENDER) $(DIR_TEST)/$(TEST_BLEND) $(BLENDERFLAGS) --python $(SCRIPT_TEST) 2>&1 | tee $(LOGFILE)
 	@if grep -q $(TEST_FAILED) $(LOGFILE); then exit 1; fi
-
-binary-exists:
-	@if [ -z $(BLENDER) ]; then echo "Blender binary path not set"; exit 1; fi
-	@if [ ! -x $(BLENDER) ]; then echo "Blender binary is missing or it is not executable"; exit 1; fi
 
 clean:
 	@echo "Cleaning log files"
@@ -54,8 +66,16 @@ pep8: clean
 	@echo "Checking pep8 compliance"
 	pep8 $(DIR_SOURCE) $(PEP8FLAGS)
 
+pylint: binary-exists clean
+	@echo "Running pylint"
+	echo $(BLENDER) $(BLENDERFLAGS) --python $(SCRIPT_PYLINT)
+
 docs: binary-exists clean
 	@echo "Generating documentation"
 	$(BLENDER) $(BLENDERFLAGS) --python $(SCRIPT_DOC)
 
-.PHONY: help clean docs test test-ci check-binary
+binary-exists:
+	@if [ -z $(BLENDER) ]; then echo "Blender binary path not set"; exit 1; fi
+	@if [ ! -x $(BLENDER) ]; then echo "Blender binary is missing or it is not executable"; exit 1; fi
+
+.PHONY: help clean docs tests tests-ci check-binary

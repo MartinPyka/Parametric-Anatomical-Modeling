@@ -5,5 +5,5 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from pam.tests import main
+from tests import main
 main()

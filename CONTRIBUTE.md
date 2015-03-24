@@ -1,13 +1,21 @@
 Contribute
 ==========
 
-Check compliance
-----------------
+Toolchain
+---------
 
-    make pep8
+### Prequirements
 
-Build documentation
--------------------
+* blender
+* python
+* pep8
+
+(within blender modules)
+
+* pylint
+* sphinx
+
+#### Path
 
 Substitute `<path/to/modules>` with one of the following:
 
@@ -23,15 +31,27 @@ on \*nix:
 
     ~/.blender/<version>/scripts/modules/
 
-Installing sphinx:
+### Documentation
+
+#### Install requirments
 
     $ pip install --upgrade -t <path/to/modules> sphinx
 
-Building documentation:
+#### Build
 
     $ make docs
 
-Run testsuite
--------------
+### Static analysis & compliance
+
+#### Install requirments
+
+    $ pip install --upgrade -t <path/to/modules> pylint
+
+#### Run
+
+    make pep8
+    make pylint
+
+### Unittest
 
     make test

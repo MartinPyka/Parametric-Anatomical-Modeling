@@ -1,4 +1,4 @@
-"""Helper functions module"""
+"""Helper implements common convenience functions."""
 
 import random
 

@@ -21,11 +21,16 @@ class PAMMappingMenu(bpy.types.Menu):
 
 
 def register():
-    wm = bpy.context.window_manager
-    km = wm.keyconfigs.addon.keymaps.new(name='3D View Generic', space_type='VIEW_3D')
-    kmi = km.keymap_items.new('wm.call_menu_pie', 'SPACE', 'PRESS', shift=True, ctrl=True)
-    kmi.properties.name = "pam.mapping_menu"
+    if not bpy.app.background:
+        wm = bpy.context.window_manager
+        km = wm.keyconfigs.addon.keymaps.new(name="3D View Generic", space_type="VIEW_3D")
+        kmi = km.keymap_items.new("wm.call_menu_pie", "SPACE", "PRESS", shift=True, ctrl=True)
+        kmi.properties.name = "pam.mapping_menu"
 
 
 def unregister():
-    pass
+    if not bpy.app.background:
+        wm = bpy.context.window_manager
+        km = wm.keyconfigs.addon.keymaps.find(name="3D View Generic", space_type="VIEW_3D")
+        kmi = km.keymap_items["wm.call_menu_pie"]
+        km.keymap_items.remove(kmi)

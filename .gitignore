@@ -31,7 +31,7 @@ coverage.xml
 *.log
 
 # Sphinx
-docs/sphinx/_build/
+docs/_build/
 
 # Blender versioning
 *.blend([0-9])+

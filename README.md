@@ -1,5 +1,5 @@
-pam-blender - PAM (Parametric Anatomical Modeling)
-==================================================
+PAM (Parametric Anatomical Modeling)
+====================================
 
 Parametric Anatomical Modeling is a method to translate large-scale anatomical data into spiking neural networks.
 PAM is implemented as a [Blender](http://www.blender.org) addon.
@@ -52,8 +52,8 @@ Installation
 3. In the 3d view a new panel should appear on the left side, called "PAM". This panel contains function to load and save connectivity data and to visualize them.
 
 
-Usage - getting started
------------------------
+Usage
+-----
 
 The repository contains two examples, a very simple one and the hippocampal model, which could help to understand how to use PAM.
 
@@ -82,5 +82,5 @@ m.pyka at rub.de
 License
 -------
 
-Source code and documentation copyright (c) 2013-2014 Martin Pyka, Sebastian Klatt  
-pam-blender is licensed under the GNU GPL v2 License (GPLv2). See `LICENSE.md` for full license text.
+Source code and documentation copyright (c) 2013-2015 Martin Pyka, Sebastian Klatt  
+pam is licensed under the GNU GPL v2 License (GPLv2). See license file for full text.

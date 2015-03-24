@@ -34,22 +34,22 @@ SCRIPT_PYLINT := $(DIR_TEST)/blender_pylint.py
 
 default: help
 
-all: clean pep8 pylint test doc
+all: clean pep8 pylint tests docs
 
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  clean  to clean"
-	@echo "  test   to run tests"
+	@echo "  tests   to run tests"
 	@echo "  pep8   to check pep8 compliance"
 	@echo "  pylint to run pylint"
-	@echo "  doc    to build documentation"
+	@echo "  docs    to build documentation"
 
-test: binary-exists clean
+tests: binary-exists clean
 	@echo "Running unittests"
 	$(BLENDER) $(DIR_TEST)/$(TEST_BLEND) $(BLENDERFLAGS) --python $(SCRIPT_TEST)
 
-test-ci: binary-exists clean
+tests-ci: binary-exists clean
 	@echo "Running continuous integration unittests"
 	$(BLENDER) $(DIR_TEST)/$(TEST_BLEND) $(BLENDERFLAGS) --python $(SCRIPT_TEST) 2>&1 | tee $(LOGFILE)
 	@if grep -q $(TEST_FAILED) $(LOGFILE); then exit 1; fi
@@ -70,7 +70,7 @@ pylint: binary-exists clean
 	@echo "Running pylint"
 	echo $(BLENDER) $(BLENDERFLAGS) --python $(SCRIPT_PYLINT)
 
-doc: binary-exists clean
+docs: binary-exists clean
 	@echo "Generating documentation"
 	$(BLENDER) $(BLENDERFLAGS) --python $(SCRIPT_DOC)
 
@@ -78,4 +78,4 @@ binary-exists:
 	@if [ -z $(BLENDER) ]; then echo "Blender binary path not set"; exit 1; fi
 	@if [ ! -x $(BLENDER) ]; then echo "Blender binary is missing or it is not executable"; exit 1; fi
 
-.PHONY: help clean docs test test-ci check-binary
+.PHONY: help clean docs tests tests-ci check-binary

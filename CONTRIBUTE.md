@@ -45,7 +45,8 @@ on \*nix:
 
 #### Install requirments
 
-    $ pip install --upgrade -t <path/to/modules> pylint
+    $ pip install pep8
+    $ pip install pylint
 
 #### Run
 

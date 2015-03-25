@@ -12,7 +12,7 @@ endif
 # Flags
 BLENDERFLAGS := --background --disable-crash-handler -noaudio
 PEP8FLAGS    := --ignore=E501 --show-source
-PYLINTFLAGS  :=
+PYLINTFLAGS  := --disable=C0301,C0103 --msg-template='{msg_id}:{line:3d},{column}: {obj}: {msg}'
 
 # Base
 DIR_SOURCE := ./pam
@@ -27,9 +27,6 @@ LOGFILE     := unittest.log
 # Documentation
 DIR_DOC    := ./docs
 SCRIPT_DOC := ./build_docs.py
-
-# Pylint
-SCRIPT_PYLINT := $(DIR_TEST)/blender_pylint.py
 
 
 default: help
@@ -68,7 +65,7 @@ pep8: clean
 
 pylint: binary-exists clean
 	@echo "Running pylint"
-	echo $(BLENDER) $(BLENDERFLAGS) --python $(SCRIPT_PYLINT)
+	pylint $(DIR_SOURCE) $(PYLINTFLAGS)
 
 docs: binary-exists clean
 	@echo "Generating documentation"

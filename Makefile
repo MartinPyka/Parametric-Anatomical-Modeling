@@ -15,61 +15,57 @@ PEP8FLAGS    := --ignore=E501 --show-source
 PYLINTFLAGS  := --disable=C0301,C0103 --msg-template='{msg_id}:{line:3d},{column}: {obj}: {msg}'
 
 # Base
-DIR_SOURCE := ./pam
+SOURCE_DIRECTORY := ./pam
 
 # Unittest
-DIR_TEST    := ./tests
-SCRIPT_TEST := run_tests.py
-TEST_FAILED := FAILED
-TEST_BLEND  := test_universal.blend
-LOGFILE     := unittest.log
+TEST_DIRECTORY := ./tests
+TEST_FAILED    := FAILED
+TEST_LOG       := $(TEST_DIRECTORY)/test.log
 
 # Documentation
-DIR_DOC    := ./docs
-SCRIPT_DOC := ./build_docs.py
+DOC_DIRECTORY := ./docs
+DOC_SCRIPT    := ./build_docs.py
+
+TESTCASES=$(patsubst %_test.py,%,$(notdir $(wildcard $(TEST_DIRECTORY)/*_test.py)))
 
 
 default: help
 
 all: clean pep8 pylint tests docs
 
-
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  clean  to clean"
-	@echo "  tests   to run tests"
+	@echo "  tests  to run tests"
 	@echo "  pep8   to check pep8 compliance"
 	@echo "  pylint to run pylint"
-	@echo "  docs    to build documentation"
+	@echo "  docs   to build documentation"
 
-tests: binary-exists clean
-	@echo "Running unittests"
-	$(BLENDER) $(DIR_TEST)/$(TEST_BLEND) $(BLENDERFLAGS) --python $(SCRIPT_TEST)
+tests: $(TESTCASES)
 
-tests-ci: binary-exists clean
-	@echo "Running continuous integration unittests"
-	$(BLENDER) $(DIR_TEST)/$(TEST_BLEND) $(BLENDERFLAGS) --python $(SCRIPT_TEST) 2>&1 | tee $(LOGFILE)
-	@if grep -q $(TEST_FAILED) $(LOGFILE); then exit 1; fi
+$(TESTCASES): binary-exists clean
+	$(BLENDER) $(TEST_DIRECTORY)/$@_test.blend $(BLENDERFLAGS) --python $(TEST_DIRECTORY)/$@_test.py | tee $(TEST_LOG)
+	@if grep -q $(TEST_FAILED) $(TEST_LOG); then rm -f $(TEST_LOG); exit 1; fi
 
 clean:
 	@echo "Cleaning log files"
-	@rm -rf $(LOGFILE)
+	@rm -f $(TEST_LOG)
 	@echo "Cleaning cached python files"
 	@find . \( -name "__pycache__" -o -name "*.pyc" \) -delete
 	@echo "Cleaning documentation directory"
-	@rm -rf $(DIR_DOC)/_build/
+	@rm -rf $(DOC_DIRECTORY)/_build/
 
 pep8: clean
 	@echo "Checking pep8 compliance"
-	pep8 $(DIR_SOURCE) $(PEP8FLAGS)
+	pep8 $(SOURCE_DIRECTORY) $(PEP8FLAGS)
 
 pylint: binary-exists clean
 	@echo "Running pylint"
-	pylint $(DIR_SOURCE) $(PYLINTFLAGS)
+	pylint $(SOURCE_DIRECTORY) $(PYLINTFLAGS)
 
 docs: binary-exists clean
 	@echo "Generating documentation"
-	$(BLENDER) $(BLENDERFLAGS) --python $(SCRIPT_DOC)
+	$(BLENDER) $(BLENDERFLAGS) --python $(DOC_SCRIPT)
 
 binary-exists:
 	@if [ -z $(BLENDER) ]; then echo "Blender binary path not set"; exit 1; fi

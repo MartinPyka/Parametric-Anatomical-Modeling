@@ -102,7 +102,19 @@ def save(path):
 def load(path):
     """ loads the model with pickle from the given path """
     snapshot = pickle.load(open(path, "rb"))
-    return snapshot
+
+    global NG_LIST
+    global NG_DICT
+    global CONNECTION_COUNTER
+    global CONNECTION_INDICES
+    global CONNECTIONS
+    global CONNECTION_RESULTS
+    NG_LIST = snapshot.NG_LIST
+    NG_DICT = snapshot.NG_DICT
+    CONNECTION_COUNTER = snapshot.CONNECTION_COUNTER
+    CONNECTION_INDICES = snapshot.CONNECTION_INDICES
+    CONNECTIONS = Pickle2Connection(snapshot.CONNECTIONS)
+    CONNECTION_RESULTS = convertArray2Vector(snapshot.CONNECTION_RESULTS)
 
 
 def compare(path1, path2):
@@ -138,21 +150,7 @@ class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     bl_description = "Load model data"
 
     def execute(self, context):
-        snapshot = load(self.filepath)
-
-        global NG_LIST
-        global NG_DICT
-        global CONNECTION_COUNTER
-        global CONNECTION_INDICES
-        global CONNECTIONS
-        global CONNECTION_RESULTS
-
-        NG_LIST = snapshot.NG_LIST
-        NG_DICT = snapshot.NG_DICT
-        CONNECTION_COUNTER = snapshot.CONNECTION_COUNTER
-        CONNECTION_INDICES = snapshot.CONNECTION_INDICES
-        CONNECTIONS = Pickle2Connection(snapshot.CONNECTIONS)
-        CONNECTION_RESULTS = convertArray2Vector(snapshot.CONNECTION_RESULTS)
+        load(self.filepath)
 
         return {'FINISHED'}
 

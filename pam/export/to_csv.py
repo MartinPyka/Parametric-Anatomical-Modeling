@@ -27,9 +27,12 @@ def export_connections(filepath):
         cmatrices.append(c['c'])
         dmatrices.append(c['d'])
 
+    mapping_names = get_mapping_names()
+
     with zipfile.ZipFile(filepath, 'w', zipfile.ZIP_DEFLATED) as file:
         csv_write_matrices(file, "c", cmatrices)
         csv_write_matrices(file, "d", dmatrices)
+        csv_write_matrix(file, "names", mapping_names)
         csv_write_matrix(file, "connections", model.CONNECTION_INDICES)
         csv_write_matrix(file, "neurongroups", model.NG_LIST)
 
@@ -72,6 +75,11 @@ def csv_write_matrices(file, suffix, matrices):
         for row in matrix:
             writer.writerow(row)
         file.writestr("%i_%s.csv" % (i, suffix), output.getvalue())
+
+
+def get_mapping_names():
+    m = bpy.context.scene.pam_mapping
+    return [s.name for s in m.sets]
 
 
 class PAMModelExportCSV(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):

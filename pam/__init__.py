@@ -30,10 +30,9 @@ __version__ = ".".join([str(s) for s in bl_info['version']])
 
 
 class PAMPreferencesPane(bpy.types.AddonPreferences):
-    """Preferences pane displaying all addon-wide properties.
+    """Preferences pane displaying all addon-wide properties
 
-    Located in
-    `File > User Preferences > Addons > Object: PAM"
+    Located in `File > User Preferences > Addons > Object: PAM`
     """
 
     bl_idname = __package__
@@ -76,7 +75,7 @@ class PAMPreferencesPane(bpy.types.AddonPreferences):
 
 
 def register():
-    """Called on enabling this addon"""
+    """Call on addon enable"""
     bpy.utils.register_class(PAMPreferencesPane)
     utils.log.initialize()
 
@@ -86,8 +85,6 @@ def register():
     mapping.register()
     gui.menus.register()
 
-    # PAM Anim
-
     pam_anim.tools.animationTools.register()
     pam_anim.tools.dataTools.register()
     pam_anim.tools.materialTools.register()
@@ -96,14 +93,12 @@ def register():
 
     pam_anim.pam_anim.register()
 
-    # Pam Anim end
-
     bpy.utils.register_module(__name__)
-    logger.debug("Registering addon")
+    logger.debug("Register addon")
 
 
 def unregister():
-    """Called on disabling this addon"""
+    """Call in addon disable"""
     export.to_csv.unregister()
     tools.measure.unregister()
     tools.visual.unregister()
@@ -111,8 +106,4 @@ def unregister():
     gui.menus.unregister()
 
     bpy.utils.unregister_module(__name__)
-    logger.debug("Unregistering addon")
-
-
-if __name__ == "__main__":
-    register()
+    logger.debug("Unregister addon")

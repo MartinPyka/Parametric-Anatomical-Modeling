@@ -13,9 +13,9 @@ ANIM_SPIKE_SCALE = 15.0
 ANIM_SPIKE_FADEOUT = 5
 
 
+# TODO(SK): Missing docstring
 def readSpikeData(filename):
-    """ Read spike-data from a csv-file and returns them as list
-    """
+    """Read spike-data from a csv-file and returns them as list"""
     file = open(filename, 'r')
 
     reader = csv.reader(file, delimiter=";")
@@ -25,10 +25,10 @@ def readSpikeData(filename):
     return data
 
 
+# TODO(SK): Fill in docstring parameters/return values
 def generateLayerNeurons(layer, particle_system, obj, object_color=[],
                          indices=-1):
-    """ Generates for each particle (neuron) a cone with appropriate
-    naming """
+    """Generates for each particle (neuron) a cone with appropriate naming"""
     # generate first mesh
     i = 0
     p = layer.particle_systems[particle_system].particles[0]
@@ -52,6 +52,7 @@ def generateLayerNeurons(layer, particle_system, obj, object_color=[],
             dupli.color = object_color[i]
 
 
+# TODO(SK): Missing docstring
 def generateNetworkNeurons(obj):
     for neurongroup in model.NG_LIST:
         layer = bpy.data.objects[neurongroup[0]]
@@ -60,25 +61,26 @@ def generateNetworkNeurons(obj):
         generateLayerNeurons(layer, particle_system, obj)
 
 
+# TODO(SK): Missing docstring
 def animNeuronSpiking(func):
+    timings = data.TIMINGS
+    neuronGroups = data.NEURON_GROUPS
 
-        timings = data.TIMINGS
-        neuronGroups = data.NEURON_GROUPS
+    no_timings = len(timings)
 
-        no_timings = len(timings)
+    logger.info('Animate spiking data')
+    for i, (neuronIDinGroup, neuronGroupID, fireTime) in enumerate(timings):
+        logger.info(str(i) + "/" + str(no_timings))
 
-        logger.info('Animate spiking data')
-        for i, (neuronIDinGroup, neuronGroupID, fireTime) in enumerate(timings):
-                logger.info(str(i) + "/" + str(no_timings))
-
-                layer_name = neuronGroups[neuronGroupID].name
-                frame = helper.projectTimeToFrames(fireTime)
-                func(layer_name, neuronIDinGroup, frame)
+        layer_name = neuronGroups[neuronGroupID].name
+        frame = helper.projectTimeToFrames(fireTime)
+        func(layer_name, neuronIDinGroup, frame)
 
 
+# TODO(SK): Fill in docstring parameters/return values
 def animNeuronScaling(layer_name, n_id, frame):
-    """ Animate neuron spiking for a given neuron defined by
-    layer_name, neuron-id and a given frame """
+    """Animate neuron spiking for a given neuron defined by
+    layer_name, neuron-id and a given frame"""
     neuron = bpy.data.objects['n_' + layer_name + '_%05d' % (n_id + 1)]
 
     bpy.ops.object.select_all(action='DESELECT')
@@ -95,9 +97,9 @@ def animNeuronScaling(layer_name, n_id, frame):
     bpy.ops.anim.keyframe_insert_menu(type='Scaling')
 
 
+# TODO(SK): Rephrase docstring, purpose?
 def deleteNeurons():
-    """ delete all objects with the prefix n_
-    """
+    """Delete all objects with the prefix `n_`"""
     bpy.ops.object.select_all(action='DESELECT')
     bpy.ops.object.select_pattern(pattern='n_*')
     bpy.ops.object.delete(use_global=False)

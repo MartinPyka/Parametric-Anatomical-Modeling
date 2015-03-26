@@ -14,13 +14,17 @@ logger = logging.getLogger(__package__)
 
 
 def export_connections(filepath):
-    """ export connection and distance-informations
-    cmatrices           : list of connection matrices
-    dmatrices           : list of distance matrices
-    nglist              : list of neural groups
-    connection_list     : list of layer-based connections
-    """
+    """Export connection and distance-informations
 
+    :param str filepath: export filename
+
+    .. note::
+        * cmatrices: list of connection matrices
+        * dmatrices: list of distance matrices
+        * nglist: list of neural groups
+        * connection_list: list of layer-based connections
+
+    """
     cmatrices = []
     dmatrices = []
     for c in model.CONNECTION_RESULTS:
@@ -37,21 +41,33 @@ def export_connections(filepath):
         csv_write_matrix(file, "neurongroups", model.NG_LIST)
 
 
+# TODO(SK): Fill in docstring parameters/return values
 def export_UVfactors(filepath, uv_matrices, layer_names):
-    """ list of UV-matrices, including the length of a real edge an its
+    """Export UV-matrices, including the length of a real edge an its
     UV-distance
 
-    uv_matrices         : list of uv-matrices
-    layer_names         : list of layer-names, the order corresponds to the
-                          list-order in uv_matrices
+    :param str filename: export filename
+    :param numpy.Array uv_matrices:
+    :param list layer_names:
+
+    .. note::
+        * uv_matrices: list of uv-matrices
+        * layer_names: list of layer-names, the order corresponds to the
+          list-order in uv_matrices
     """
     with zipfile.ZipFile(filepath, 'w', zipfile.ZIP_DEFLATED) as file:
         for i, matrix in enumerate(uv_matrices):
             csv_write_matrix(file, layer_names[i], [matrix])
 
 
-# TODO(SK): missing docstring
 def csv_write_matrix(file, name, matrix):
+    """Write matrix to csv file
+
+    :param file file: open file
+    :param str name: name of file
+    :param numpy.Array matrix: a matrix
+
+    """
     output = io.StringIO()
     writer = csv.writer(
         output,
@@ -63,8 +79,14 @@ def csv_write_matrix(file, name, matrix):
     file.writestr("%s.csv" % (name), output.getvalue())
 
 
-# TODO(SK): missing docstring
 def csv_write_matrices(file, suffix, matrices):
+    """Write matrices to csv file
+
+    :param file file: open file
+    :param str suffix: suffix for filename
+    :param list matrices: a list of matrices
+
+    """
     for i, matrix in enumerate(matrices):
         output = io.StringIO()
         writer = csv.writer(
@@ -78,12 +100,18 @@ def csv_write_matrices(file, suffix, matrices):
 
 
 def get_mapping_names():
+    """Return names of mappings
+
+    :return: names of mappings
+    :rtype: list
+
+    """
     m = bpy.context.scene.pam_mapping
     return [s.name for s in m.sets]
 
 
 class PAMModelExportCSV(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
-    """Model Save Operator"""
+    """Export model to csv"""
 
     bl_idname = "pam.model_export_csv"
     bl_label = "Export model to csv"
@@ -102,8 +130,10 @@ class PAMModelExportCSV(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
 
 def register():
+    """Call upon module register"""
     bpy.utils.register_class(PAMModelExportCSV)
 
 
 def unregister():
+    """Call upon module unregister"""
     pass

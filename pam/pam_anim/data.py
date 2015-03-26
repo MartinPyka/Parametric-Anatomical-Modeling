@@ -11,25 +11,34 @@ DELAYS = []
 TIMINGS = []
 
 
+# TODO(SK): Rephrase docstring
 class NeuronGroup:
-        """Class for a neuron group
-        name:              Name of the blender object
-        particle_system:   Name of the particle system in the object
-        cout:              Count of the neurons in this group
-        areaStart:         The ID of the first neuron in this group
-        areaEnd:           The ID of the last neuron in this group
-        connections:       A list of tuples with 3 elements: (connectionID, groupFrom, groupTo)
-                           These are all the connections this group has to other groups
-        """
-        def __init__(self, name, particle_system, count, areaStart):
-                self.name = name
-                self.particle_system = particle_system
-                self.count = count
-                self.areaStart = areaStart
-                self.areaEnd = areaStart + count
-                self.connections = []
+    """Represent a neuron group
+
+    :attribute str name: object name
+    :attribute str particle_system: particle system name
+    :attribute int count: neuron quantity
+    :attribute int areaStart: id of first neuron
+    :attribute int areaEnd: id of last neuron
+    :attribute list connections: connections to other neuron groups
+
+    .. note::
+        `connections` is a list of tuples with 3 elements:
+            * connectionID
+            * groupFrom
+            * groupTo
+
+    """
+    def __init__(self, name, particle_system, count, areaStart):
+        self.name = name
+        self.particle_system = particle_system
+        self.count = count
+        self.areaStart = areaStart
+        self.areaEnd = areaStart + count
+        self.connections = []
 
 
+# TODO(SK): Missing docstring
 def import_model_from_zip(filepath):
     result = []
     names = []
@@ -45,16 +54,19 @@ def import_model_from_zip(filepath):
     return result, names
 
 
+# TODO(SK): Missing docstring
 def csv_read(data):
     reader = csv.reader(data, delimiter=";", quoting=csv.QUOTE_NONNUMERIC)
     return [row for row in reader]
 
 
+# TODO(SK): Refactor, in general global variables are ugly and fault prone.
 SUPPORTED_FILETYPES = {
     ".csv": csv_read
 }
 
 
+# TODO(SK): Missing docstring
 def csvfile_read(filename):
     f = open(filename, 'r')
     result = csv_read(f)
@@ -62,45 +74,47 @@ def csvfile_read(filename):
     return result
 
 
+# TODO(SK): Missing docstring
 def readModelData(connectionsPath):
         # Convert the Blender specific paths to absolute paths
-        connectionsPath = abspath(connectionsPath)
+    connectionsPath = abspath(connectionsPath)
 
-        # result is a tuple of two lists (data + filenames)
-        result = import_model_from_zip(connectionsPath)
+    # result is a tuple of two lists (data + filenames)
+    result = import_model_from_zip(connectionsPath)
 
-        # NeuronGroup Objects (name, particles, count, areaStart)
-        neuronGroups = []
-        i = 0
-        for n in result[0][result[1].index('neurongroups')]:
-                neuronGroups.append(NeuronGroup(n[0], n[1], int(n[2]), int(i)))
-                i += n[2]
+    # NeuronGroup Objects (name, particles, count, areaStart)
+    neuronGroups = []
+    i = 0
+    for n in result[0][result[1].index('neurongroups')]:
+        neuronGroups.append(NeuronGroup(n[0], n[1], int(n[2]), int(i)))
+        i += n[2]
 
-        # connections between neuron layers
-        maxConnectionFiles = 0
-        for c in result[0][result[1].index('connections')]:
-            connectionID = int(c[0])
-            groupFrom = int(c[1])
-            groupTo = int(c[2])
-            neuronGroups[groupFrom].connections.append((connectionID, groupFrom, groupTo))
+    # connections between neuron layers
+    maxConnectionFiles = 0
+    for c in result[0][result[1].index('connections')]:
+        connectionID = int(c[0])
+        groupFrom = int(c[1])
+        groupTo = int(c[2])
+        neuronGroups[groupFrom].connections.append((connectionID, groupFrom, groupTo))
 
-            if connectionID > maxConnectionFiles:
-                maxConnectionFiles = connectionID
+        if connectionID > maxConnectionFiles:
+            maxConnectionFiles = connectionID
 
-        # neuron connections
-        connections = []
-        for i in range(maxConnectionFiles + 1):
-                c_elem = result[0][result[1].index(str(i) + "_c")]
-                c_elem = [[int(x) for x in i] for i in c_elem]
-                d_elem = result[0][result[1].index(str(i) + "_d")]
-                connections.append({'c': numpy.array(c_elem), 'd': numpy.array(d_elem)})
+    # neuron connections
+    connections = []
+    for i in range(maxConnectionFiles + 1):
+        c_elem = result[0][result[1].index(str(i) + "_c")]
+        c_elem = [[int(x) for x in i] for i in c_elem]
+        d_elem = result[0][result[1].index(str(i) + "_d")]
+        connections.append({'c': numpy.array(c_elem), 'd': numpy.array(d_elem)})
 
-        global NEURON_GROUPS
-        global CONNECTIONS
-        NEURON_GROUPS = neuronGroups
-        CONNECTIONS = connections
+    global NEURON_GROUPS
+    global CONNECTIONS
+    NEURON_GROUPS = neuronGroups
+    CONNECTIONS = connections
 
 
+# TODO(SK): Missing docstring
 def readSimulationData(simulationFile):
     # Open timing file (output.csv)
     neuronTimingPath = abspath(simulationFile)

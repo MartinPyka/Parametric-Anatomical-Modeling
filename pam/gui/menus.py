@@ -6,6 +6,7 @@ from .. import mapping
 
 
 class PAMMappingMenu(bpy.types.Menu):
+    """Mapping menu"""
     bl_idname = "pam.mapping_menu"
     bl_label = "Mapping"
 
@@ -21,6 +22,7 @@ class PAMMappingMenu(bpy.types.Menu):
 
 
 def register():
+    """Call upon module register"""
     if not bpy.app.background:
         wm = bpy.context.window_manager
         km = wm.keyconfigs.addon.keymaps.new(name="3D View Generic", space_type="VIEW_3D")
@@ -29,6 +31,7 @@ def register():
 
 
 def unregister():
+    """Call upon module unregister"""
     if not bpy.app.background:
         wm = bpy.context.window_manager
         km = wm.keyconfigs.addon.keymaps.find(name="3D View Generic", space_type="VIEW_3D")

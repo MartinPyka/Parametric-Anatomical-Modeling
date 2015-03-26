@@ -8,9 +8,9 @@ from . import constants
 def accumulate(items):
     """Generator function for cumulative sum
 
-    :param items: List of numbers to accumulate
-    :type items: List of int
-    :return: Sum of all numbers
+    :param items: list of numbers to accumulate
+    :type items: list
+    :return: sum of all numbers
     :rtype: int
 
     """

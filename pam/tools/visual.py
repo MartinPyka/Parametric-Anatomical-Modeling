@@ -235,7 +235,7 @@ class PamVisualizeClean(bpy.types.Operator):
         active_o = bpy.context.active_object
         pam_vis.visualizeClean()
         if active_o:
-                active_o.select = True
+            active_o.select = True
         bpy.context.scene.objects.active = active_o
 
         return {'FINISHED'}

@@ -62,18 +62,18 @@ def generateNetworkNeurons(obj):
 
 def animNeuronSpiking(func):
 
-        timings = data.TIMINGS
-        neuronGroups = data.NEURON_GROUPS
+    timings = data.TIMINGS
+    neuronGroups = data.NEURON_GROUPS
 
-        no_timings = len(timings)
+    no_timings = len(timings)
 
-        logger.info('Animate spiking data')
-        for i, (neuronIDinGroup, neuronGroupID, fireTime) in enumerate(timings):
-                logger.info(str(i) + "/" + str(no_timings))
+    logger.info('Animate spiking data')
+    for i, (neuronIDinGroup, neuronGroupID, fireTime) in enumerate(timings):
+        logger.info(str(i) + "/" + str(no_timings))
 
-                layer_name = neuronGroups[neuronGroupID].name
-                frame = helper.projectTimeToFrames(fireTime)
-                func(layer_name, neuronIDinGroup, frame)
+        layer_name = neuronGroups[neuronGroupID].name
+        frame = helper.projectTimeToFrames(fireTime)
+        func(layer_name, neuronIDinGroup, frame)
 
 
 def animNeuronScaling(layer_name, n_id, frame):

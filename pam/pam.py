@@ -40,22 +40,22 @@ def computePoint(v1, v2, v3, v4, x1, x2):
 
 # TODO(SK): missing docstring
 def selectRandomPoint(obj):
-        # select a random polygon
-        p_select = random.random() * obj['area_sum']
-        polygon = obj.data.polygons[
-            numpy.nonzero(numpy.array(obj['area_cumsum']) > p_select)[0][0]]
+    # select a random polygon
+    p_select = random.random() * obj['area_sum']
+    polygon = obj.data.polygons[
+        numpy.nonzero(numpy.array(obj['area_cumsum']) > p_select)[0][0]]
 
-        # define position on the polygon
-        vert_inds = polygon.vertices[:]
-        poi = computePoint(obj.data.vertices[vert_inds[0]],
-                           obj.data.vertices[vert_inds[1]],
-                           obj.data.vertices[vert_inds[2]],
-                           obj.data.vertices[vert_inds[3]],
-                           random.random(), random.random())
+    # define position on the polygon
+    vert_inds = polygon.vertices[:]
+    poi = computePoint(obj.data.vertices[vert_inds[0]],
+                       obj.data.vertices[vert_inds[1]],
+                       obj.data.vertices[vert_inds[2]],
+                       obj.data.vertices[vert_inds[3]],
+                       random.random(), random.random())
 
-        p, n, f = obj.closest_point_on_mesh(poi)
+    p, n, f = obj.closest_point_on_mesh(poi)
 
-        return p, n, f
+    return p, n, f
 
 
 def computeUVScalingFactor(obj):

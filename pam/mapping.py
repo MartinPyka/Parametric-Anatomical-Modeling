@@ -559,7 +559,7 @@ class PAMMappingComputeSelected(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-            return True
+        return True
 
     def execute(self, context):
         pam.initialize3D()

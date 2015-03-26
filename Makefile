@@ -31,7 +31,7 @@ TESTCASES=$(patsubst %_test.py,%,$(notdir $(wildcard $(TEST_DIRECTORY)/*_test.py
 
 default: help
 
-all: clean pep8 pylint tests docs
+all: clean pep8 tests docs
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -57,18 +57,18 @@ clean:
 
 pep8: clean
 	@echo "Checking pep8 compliance"
-	pep8 $(SOURCE_DIRECTORY) $(PEP8FLAGS)
+	@pep8 $(SOURCE_DIRECTORY) $(PEP8FLAGS)
 
 pylint: binary-exists clean
 	@echo "Running pylint"
-	pylint $(SOURCE_DIRECTORY) $(PYLINTFLAGS)
+	@pylint $(SOURCE_DIRECTORY) $(PYLINTFLAGS)
 
 docs: binary-exists clean
 	@echo "Generating documentation"
-	$(BLENDER) $(BLENDERFLAGS) --python $(DOC_SCRIPT)
+	@$(BLENDER) $(BLENDERFLAGS) --python $(DOC_SCRIPT)
 
 binary-exists:
 	@if [ -z $(BLENDER) ]; then echo "Blender binary path not set"; exit 1; fi
 	@if [ ! -x $(BLENDER) ]; then echo "Blender binary is missing or it is not executable"; exit 1; fi
 
-.PHONY: help clean docs tests tests-ci check-binary
+.PHONY: help clean docs tests check-binary

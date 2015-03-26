@@ -1,6 +1,7 @@
 import bpy
 
 
+# TODO(SK): Missing docstring
 class AnimationProperty(bpy.types.PropertyGroup):
     startFrame = bpy.props.IntProperty(name="Start frame", default=0)
     endFrame = bpy.props.IntProperty(name="End frame", default=100)
@@ -10,11 +11,13 @@ class AnimationProperty(bpy.types.PropertyGroup):
     connNumber = bpy.props.IntProperty(name="Max Connection", default=0)
 
 
+# TODO(SK): Missing docstring
 def register():
     bpy.utils.register_class(AnimationProperty)
     bpy.types.Scene.pam_anim_animation = bpy.props.PointerProperty(type=AnimationProperty)
 
 
+# TODO(SK): Missing docstring
 def unregister():
     del bpy.types.Scene.pam_anim_animation
     bpy.utils.unregister_class(AnimationProperty)

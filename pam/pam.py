@@ -28,7 +28,7 @@ DIS_normalUV = 4
 DIS_UVnormal = 5
 
 
-# TODO(SK): missing docstring
+# TODO(SK): Missing docstring
 def computePoint(v1, v2, v3, v4, x1, x2):
     # computes an average point on the polygon depending on x1 and x2
     mv12_co = v1.co * x1 + v2.co * (1 - x1)
@@ -38,7 +38,7 @@ def computePoint(v1, v2, v3, v4, x1, x2):
     return mv_co
 
 
-# TODO(SK): missing docstring
+# TODO(SK): Missing docstring
 def selectRandomPoint(obj):
     # select a random polygon
     p_select = random.random() * obj['area_sum']
@@ -58,11 +58,13 @@ def selectRandomPoint(obj):
     return p, n, f
 
 
+# TODO(SK): Rephrase docstring, add parameter/return values
 def computeUVScalingFactor(obj):
-    """computes the scaling factor between uv- and 3d-coordinates for a
+    """Compute the scaling factor between uv- and 3d-coordinates for a
     given object
     the return value is the factor that has to be multiplied with the
     uv-coordinates in order to have metrical relation
+
     """
 
     result = []
@@ -79,11 +81,13 @@ def computeUVScalingFactor(obj):
 
 
 # TODO(SK): Quads into triangles (indices)
+# TODO(SK): Rephrase docstring, add parameter/return values
 def map3dPointToUV(obj, obj_uv, point, normal=None):
-    """Converts a given 3d-point into uv-coordinates,
+    """Convert a given 3d-point into uv-coordinates,
     obj for the 3d point and obj_uv must have the same topology
     if normal is not None, the normal is used to detect the point on obj, otherwise
     the closest_point_on_mesh operation is used
+
     """
 
     if normal:
@@ -127,13 +131,15 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
 
 
 # TODO(SK): Quads into triangles (indices)
+# TODO(SK): Rephrase docstring, add parameter/return values
 def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
-    """ Converts a list of uv-points into 3d. This function is mostly
+    """Convert a list of uv-points into 3d. This function is mostly
     used by interpolateUVTrackIn3D. Note, that therefore, not all points
     can and have to be converted to 3d points. The return list can therefore
     have less points than the uv-list. This cleanup can be deactivated
     by setting cleanup = False. Then, the return-list may contain
     some [] elements.
+
     """
 
     uv_polygons = []
@@ -210,9 +216,11 @@ def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
 
 # TODO(MP): triangle check could be made more efficient
 # TODO(MP): check the correct triangle order !!!
+# TODO(SK): Rephrase docstring, add parameter/return values
 def map3dPointTo3d(o1, o2, point, normal=None):
-    """maps a 3d-point on a given object on another object. Both objects must have the
+    """Map a 3d-point on a given object on another object. Both objects must have the
     same topology
+
     """
 
     # if normal is None, we don't worry about orthogonal projections
@@ -266,9 +274,11 @@ def map3dPointTo3d(o1, o2, point, normal=None):
     return p_new
 
 
+# TODO(SK): Rephrase docstring, add parameter/return values
 def map3dPointToParticle(obj, particle_system, location):
-    """Determines based on a 3d-point location (e.g. given by the cursor
+    """Determine based on a 3d-point location (e.g. given by the cursor
     position) the index of the closest particle on an object
+
     """
 
     index = -1
@@ -281,13 +291,18 @@ def map3dPointToParticle(obj, particle_system, location):
     return index
 
 
+# TODO(SK): Rephrase docstring, add parameter/return values
 def maskParticle(p_layer, p_index, mask_layer, distance=0.2):
-    """ Returns all particle-indices of particle_layer that have a smaller
+    """Return particle-indices of particle_layer that have a smaller
     distance than the distance-argument to mask_layer
-    p_layer         : object that contains the particles
-    p_index         : index of particle-system
-    mask_layer      : object that serves as mask
-    distance        : distance threshold
+
+    :param bpy.types.Object p_layer: object that contains the particles
+    :param int p_index: index of particle-system
+    :param bpy.types.Object mask_layer: mask object
+    :param float distance: distance threshold
+    :return:
+    :rtype:
+
     """
     result = []
     for i, p in enumerate(p_layer.particle_systems[p_index].particles):
@@ -297,12 +312,17 @@ def maskParticle(p_layer, p_index, mask_layer, distance=0.2):
     return result
 
 
+# TODO(SK): Rephrase docstring, add parameter/return values
 def distanceToMask(p_layer, p_index, particle_index, mask_layer):
-    """ Returns the distance for a particle to a mask_layer
-    p_layer         : object with particle-system
-    p_index         : index of particle-system
-    particle_index  : index of particle
-    mask_layer      : object that serves as mask
+    """Return the distance for a particle to a mask_layer
+
+    :param bpy.types.Object p_layer: object with particle-system
+    :param int p_index: index of particle-system
+    :param int particle_index: index of particle
+    :param bpy.types.Object mask_layer: object that serves as mask
+    :return:
+    :rtype:
+
     """
     p = p_layer.particle_systems[p_index].particles[particle_index]
     l, n, f = mask_layer.closest_point_on_mesh(p.location)
@@ -310,12 +330,14 @@ def distanceToMask(p_layer, p_index, particle_index, mask_layer):
 
 
 # TODO(SK): missing docstring
+# TODO(SK): Rephrase docstring, add parameter/return values
 def computeConnectivityProbability(uv1, uv2, func, args):
     return func(uv1, uv2, args)
 
 
+# TODO(SK): Rephrase docstring, add parameter/return values
 def interpolateUVTrackIn3D(p1_3d, p2_3d, layer):
-    """Creates a 3D-path along given 3d-coordinates p1_3d and p2_3d on layer"""
+    """Create a 3D-path along given 3d-coordinates p1_3d and p2_3d on layer"""
     # get 2d-coordinates
     p1_2d = map3dPointToUV(layer, layer, p1_3d)
     p2_2d = map3dPointToUV(layer, layer, p2_3d)
@@ -331,9 +353,11 @@ def interpolateUVTrackIn3D(p1_3d, p2_3d, layer):
     return ip_3d
 
 
+# TODO(SK): Rephrase docstring, add parameter/return values
 def computeDistance_PreToSynapse(no_connection, pre_index):
-    """ computes distance for a pre-synaptic neuron and a certain
+    """Compute distance for a pre-synaptic neuron and a certain
     connection definition
+
     """
     layers = model.CONNECTIONS[no_connection][0]
     neuronset1 = model.CONNECTIONS[no_connection][1]
@@ -353,19 +377,24 @@ def computeDistance_PreToSynapse(no_connection, pre_index):
     return path_length, pre_p3d
 
 
+# TODO(SK): Rephrase docstring, add parameter/return values
 def compute_path_length(path):
-    """ computes for an array of 3d-vectors their length in space """
+    """Compute for an array of 3d-vectors their length in space"""
     return sum([(path[i] - path[i - 1]).length for i in range(1, len(path))])
 
 
+# TODO(SK): Rephrase docstring, add parameter/return values
 def sortNeuronsToUV(layer, neuronset, u_or_v):
-    """Sorts particles according to their position on the u
+    """Sort particles according to their position on the u
     or v axis and returns the permutation indices
 
-    layer       : the layers were the neurons are
-    neuronset   : name or number of the neuronset (particle system)
-    u_or_v      : 'u' means sort for u
-                  'v' means sort for v
+    :param bpy.types.Object layer: layer were the neurons are
+    :param str neuronset: name or number of the neuronset (particle system)
+    :param str u_or_v: `u` means sort for u
+                       `v` means sort for v
+    :return:
+    :rtype:
+
     """
 
     if u_or_v == 'u':
@@ -384,25 +413,30 @@ def sortNeuronsToUV(layer, neuronset, u_or_v):
     return numpy.argsort(p2d)
 
 
+# TODO(SK): Rephrase docstring, add parameter/return values
+# TODO(SK): Structure return values in docstring
 def computeMapping(layers, connections, distances, point, debug=False):
-    """based on a list of layers, connections-properties and distance-properties,
+    """Based on a list of layers, connections-properties and distance-properties,
     this function returns the 3d-point, the 2d-uv-point and the distance from a given
     point on the first layer to the corresponding point on the last layer
-    layers              : list of layers connecting the pre-synaptic layer with the synaptic layer
-    connections         : list of values determining the type of layer-mapping
-    distances           : list of values determining the calculation of the distances between layers
-    point               : 3d vector for which the mapping should be calculated
-    debug               : if true, the function returns a list of layers that it was able
+
+    :param list layers: layers connecting the pre-synaptic layer with the synaptic layer
+    :param list connections: values determining the type of layer-mapping
+    :param list distances: values determining the calculation of the distances between layers
+    :param mathutils.Vector point: vector for which the mapping should be calculated
+    :param bool debug: if true, the function returns a list of layers that it was able
                           to pass. Helps to debug the mapping-definitions in order to figure
                           our where exactly the mapping stops
 
     Return values
-    -----------------
-    p3d                 : list of 3d-vector of the neuron position on all layers until the last
+
+    p3d                   list of 3d-vector of the neuron position on all layers until the last
                           last position before the synapse. Note, that this might be before the
                           synapse layer!!! This depends on the distance-property.
-    p2d                 : 2d-vector of the neuron position on the UV map of the last layer
-    d                   : distance between neuron position on the first layer and last position before
+
+    p2d                   2d-vector of the neuron position on the UV map of the last layer
+
+    d                     distance between neuron position on the first layer and last position before
                           the synapse! This is not the distance to the p3d point! This is either the
                           distance to the 3d-position of the last but one layer or, in case
                           euclidean-uv-distance was used, the distance to the position of the last
@@ -410,6 +444,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
                           add the distance to the synapse to value d in order to retrieve
                           the complete distance from the pre- or post-synaptic neuron
                           to the synapse
+
     """
 
     p3d = [point]
@@ -739,13 +774,16 @@ def computeMapping(layers, connections, distances, point, debug=False):
     return p3d, p2d, compute_path_length(p3d)
 
 
+# TODO(SK): Rephrase docstring, add parameter/return values
 def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
-    """ computes the distance between the last 3d-point and the synapse
+    """Compute the distance between the last 3d-point and the synapse
+
     ilayer      : last intermediate layer
     slayer      : synaptic layer
     p_3d        : last 3d-point
     s_2d        : uv-coordinates of the synapse
     dis         : distance calculation technique
+
     """
     s_3d = mapUVPointTo3d(slayer, [s_2d])
     if not any(s_3d):
@@ -793,7 +831,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
         return compute_path_length(path), path
 
 
-# TODO(SK): missing docstring
+# TODO(SK): Missing docstring
 def addConnection(*args):
     model.CONNECTIONS.append(args)
 
@@ -817,7 +855,7 @@ def addConnection(*args):
 #     }
 
 
-# TODO(SK): missing docstring
+# TODO(SK): Missing docstring
 def computeAllConnections():
     for c in model.CONNECTIONS:
         logger.info(c[0][0].name + ' - ' + c[0][-1].name)
@@ -832,8 +870,9 @@ def computeAllConnections():
         )
 
 
+# TODO(SK): Rephrase docstring, add parameter/return values
 def updateMapping(index):
-    """ Updates a mapping given by index """
+    """Update a mapping given by index"""
     m = model.CONNECTIONS[index]
     result = computeConnectivity(*m, create=False)
     model.CONNECTION_RESULTS[index] = {
@@ -843,26 +882,30 @@ def updateMapping(index):
     }
 
 
-# TODO(SK): missing docstring
+# TODO(SK): Rephrase docstring, fill in parameter/return values
 def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
                         distances, func_pre, args_pre, func_post, args_post,
                         no_synapses, create=True):
-    """ Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
+    """Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
     with the given parameters
-    layers              : list of layers connecting a pre- with a post-synaptic layer
-    neuronset1,
-    neuronset2          : name of the neuronset (particle system) of the pre- and post-synaptic layer
-    slayer              : index in layers for the synaptic layer
-    connections         : list of values determining the type of layer-mapping
-    distances           : list of values determining the calculation of the distances between layers
-    func_pre, args_pre  : function of the pre-synaptic connectivity kernel, if func_pre is None
-                          only the mapping position of the pre-synaptic neuron on the synaptic layer
-                          is used
-    func_post, args_post: same, as for func_pre and and args_pre, but now for the post-synaptic neurons
-                          again, func_post can be None. Then a neuron is just assigned to the cell
-                          of its corresponding position on the synapse layer
-    no_synapses         : number of synapses for each pre-synaptic neuron
-    create              : if create == True, then create new connection, otherwise it is just updated
+
+    :param list layers: list of layers connecting a pre- with a post-synaptic layer
+    :param str neuronset1: name of the neuronset (particle system) of the pre- and post-synaptic layer
+    :param str neuronset2: name of the neuronset (particle system) of the pre- and post-synaptic layer
+    :param index slayer: index in layers for the synaptic layer
+    :param list connections: values determining the type of layer-mapping
+    :param list distances: values determining the calculation of the distances between layers
+    :param function func_pre: pre-synaptic connectivity kernel, if func_pre is None
+                              only the mapping position of the pre-synaptic neuron on the synaptic layer
+                              is used
+    :param function args_pre:
+    :param function func_post:
+    :param function args_post: same, as for func_pre and and args_pre, but now for the post-synaptic neurons
+                               again, func_post can be None. Then a neuron is just assigned to the cell
+                               of its corresponding position on the synapse layer
+    :param int no_synapses: number of synapses for each pre-synaptic neuron
+    :param bool create: if create == True, then create new connection, otherwise it is just updated
+
     """
     # connection matrix
     conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses)).astype(int)
@@ -950,17 +993,21 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     return conn, dist, syn, uv_grid
 
 
+# TODO(SK): Rephrase docstring, add parameter/return values
+# TODO(SK): Fill in param types
 def computeConnectivityAll(layers, neuronset1, neuronset2, slayer, connections, distances, func, args):
-    """computes the connectivity probability between all neurons of both neuronsets
+    """Compute the connectivity probability between all neurons of both neuronsets
     on a synaptic layer
-    layers              : list of layers connecting a pre- with a post-synaptic layer
-    neuronset1,
-    neuronset2          : name of the neuronset (particle system) of the pre- and post-synaptic layer
-    slayer              : index in layers for the synaptic layer
-    connections         : list of values determining the type of layer-mapping
-    distances           : list of values determining the calculation of the distances between layers
-    func                : function of the connectivity kernel
-    args                : argument list for the connectivity kernel
+
+    :param list layers: layers connecting a pre- with a post-synaptic layer
+    :param str neuronset1:
+    :param str neuronset2: name of the neuronset (particle system) of the pre- and post-synaptic layer
+    :param int slayer: index in layers for the synaptic layer
+    :param list connections: values determining the type of layer-mapping
+    :param list distances: values determining the calculation of the distances between layers
+    :param function func: connectivity kernel
+    :param list args: arguments for the connectivity kernel
+
     """
 
     # connection matrix
@@ -1006,7 +1053,7 @@ def computeConnectivityAll(layers, neuronset1, neuronset2, slayer, connections, 
 
 
 def printConnections():
-    """ Print connection pairs """
+    """Print connection pairs"""
     for i, c in enumerate(model.CONNECTION_INDICES):
         message = "%d: %s - %s" % (i, model.NG_LIST[c[1]][0],
                                    model.NG_LIST[c[2]][0])
@@ -1014,20 +1061,21 @@ def printConnections():
         logger.info(message)
 
 
+# TODO(SK): Fill in docstring parameters/return values
 def computeDistance(layer1, layer2, neuronset1, neuronset2, common_layer,
                     connection_matrix):
-    """Measures the distance between neurons on the same layer according to the
-    connectivity matrix.
+    """Measure the distance between neurons on the same layer according to the
+    connectivity matrix
 
-    layer1
-    layer2            : layer of pre- and post-synaptic neurons
-    neuronset1,
-    neuronset2        : name of the neuronset (particlesystem)
-    common_layer      : layer, on which the distances should be measured
-    connection_matrix : connectivity matrix that determines, which distances
-                        should be measured
+    :param bpy.types.Object layer1:
+    :param bpy.types.Object layer2: layer of pre- and post-synaptic neurons
+    :param neuronset1:
+    :param str neuronset2: name of the neuronset (particlesystem)
+    :param bpy.types.Object common_layer: layer, on which the distances should be measured
+    :param numpy.Array connection_matrix: connectivity matrix that determines, which distances
+                                          should be measured
 
-    result            : matrix of the same structure, like connection_matrix,
+    result              matrix of the same structure, like connection_matrix,
                         but with distances
     """
     positions1 = []     # list of uv-positions for the first group
@@ -1051,11 +1099,12 @@ def computeDistance(layer1, layer2, neuronset1, neuronset2, common_layer,
     return result, positions1, positions2
 
 
+# TODO(SK): Fill in docstring parameters/return values
 def measureUVs(objects):
-    """ Returns the ratio between real and UV-distance for all edges for all objects in
+    """Return the ratio between real and UV-distance for all edges for all objects in
     objects
 
-    objects             : list of objects to compute uv-data for
+    :param objects             : list of objects to compute uv-data for
 
     Returns:
         uv_data         : list of ratio-vectors
@@ -1075,7 +1124,7 @@ def measureUVs(objects):
 
 
 def initializeUVs():
-    """ compute the UV scaling factor for all layers that have UV-maps """
+    """Compute the UV scaling factor for all layers that have UV-maps"""
     for obj in bpy.data.objects:
         if obj.type == 'MESH':
             if any(obj.data.uv_layers):
@@ -1099,10 +1148,12 @@ def initializeUVs():
             obj['area_sum'] = p_sum
 
 
+# TODO(SK): Fill in docstring parameters/return values
 def returnNeuronGroups():
-    """Returns a list of neural groups (particle-systems) for the whole model.
+    """Return a list of neural groups (particle-systems) for the whole model.
     This is used for the NEST import to determine, which neural groups should
     be connected
+
     """
 
     r_list = []
@@ -1119,6 +1170,7 @@ def returnNeuronGroups():
     return r_list, r_dict
 
 
+# TODO(SK): Missing docstring
 def resetOrigins():
     for c in model.CONNECTIONS:
         for l in c[0]:
@@ -1129,7 +1181,7 @@ def resetOrigins():
 
 
 def initialize3D():
-    """prepares all necessary steps for the computation of connections"""
+    """Prepare necessary steps for the computation of connections"""
 
     logger.info("reset model")
     model.reset()

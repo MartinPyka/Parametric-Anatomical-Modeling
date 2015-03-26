@@ -306,29 +306,36 @@ class PAMMeasureToolsPanel(bpy.types.Panel):
         col.label("Total area: %d" % context.scene.pam_measure.total_area)
 
 
-# TODO(SK): missing docstring
 class CustomPropList(bpy.types.UIList):
+    """A custom cell for property display"""
     def draw_item(self, context, layout, data, item, icon, active_data,
                   active_propname, index):
         layout.prop(item, "name", text="", emboss=False)
         layout.prop(item, "value", text="", emboss=False, slider=False)
 
 
-# TODO(SK): missing docstring
 class IntermediateLayerList(bpy.types.UIList):
+    """A custom cell for intermediate layer objects"""
     def draw_item(self, context, layout, data, item, icon, active_data,
                   active_propname, index):
         layout.prop(item, "object", text="", emboss=False)
 
 
 class MapSetList(bpy.types.UIList):
+    """A custom cell for mapping names"""
     def draw_item(self, context, layout, data, item, icon, active_data,
                   active_propname, index):
         layout.prop(item, "name", text="", emboss=False)
 
 
-# TODO(SK): missing docstring
 def mesh_object_name(obj):
+    """Get name of an object
+
+    :param bpy.types.Object obj: an object
+    :return: name of object
+    :rtype: str
+
+    """
     name = ""
     if obj is not None:
         if obj.type == "MESH":

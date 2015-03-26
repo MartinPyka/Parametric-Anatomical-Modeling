@@ -1,6 +1,7 @@
 import bpy
 
 
+# TODO(SK): Missing docstring
 class OrientationProperties(bpy.types.PropertyGroup):
     orientationType = bpy.props.EnumProperty(
         name="materialOption",
@@ -14,11 +15,13 @@ class OrientationProperties(bpy.types.PropertyGroup):
     orientationObject = bpy.props.StringProperty(name="Orientation object")
 
 
+# TODO(SK): Missing docstring
 def register():
     bpy.utils.register_class(OrientationProperties)
     bpy.types.Scene.pam_anim_orientation = bpy.props.PointerProperty(type=OrientationProperties)
 
 
+# TODO(SK): Missing docstring
 def unregister():
     del bpy.types.Scene.pam_anim_orientation
     bpy.utils.unregister_class(OrientationProperties)

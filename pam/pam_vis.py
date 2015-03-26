@@ -1,4 +1,4 @@
-# TODO(SK): module docstring missing
+# TODO(SK): module Missing docstring
 
 import logging
 
@@ -21,16 +21,18 @@ def setCursor(loc):
 
 
 def getCursor():
-    """Just returns the cursor location. A bit shorter to type ;)"""
+    """Just return the cursor location. A bit shorter to type ;)"""
 
     return bpy.data.screens['Default'].scene.cursor_location
 
 
 def visualizePostNeurons(no_connection, pre_neuron):
-    """visualizes the post-synaptic neurons that are connected with a given
+    """Visualize the post-synaptic neurons that are connected with a given
     neuron from the presynaptic layer
-    no_connection : connection index
-    pre_neuron    : index of pre-synaptic neuron
+
+    :param int no_connection: connection index
+    :param int pre_neuron: index of pre-synaptic neuron
+
     """
 
     global vis_objects
@@ -49,8 +51,7 @@ def visualizePostNeurons(no_connection, pre_neuron):
 
 def generateLayerNeurons(layer, particle_system, obj, object_color=[],
                          indices=-1):
-    """ Generates for each particle (neuron) a cone with appropriate
-    naming """
+    """Generate for each particle (neuron) a cone with appropriate naming"""
     # generate first mesh
     i = 0
     p = layer.particle_systems[particle_system].particles[0]
@@ -75,12 +76,13 @@ def generateLayerNeurons(layer, particle_system, obj, object_color=[],
 
 
 def getColors(colormap, v, interval=[], alpha=True):
-    """ Based on a colormaps, values in the vector are converted to colors
-    from the colormap.
-    colormap        - the colormap to be used
-    v               - list of values
-    interval        - min- and maximal range to be used, if empty these
-                      values are computed based on v
+    """Based on a colormaps, values in the vector are converted to colors
+    from the colormap
+
+    :param list colormap: colormap to be used
+    :param list v: list of values
+    :param list interval: min and maximal range to be used, if empty these
+                          values are computed based on v
     """
     if not interval:
         interval.append(min(v))
@@ -101,9 +103,11 @@ def getColors(colormap, v, interval=[], alpha=True):
 
 
 def visualizeNeuronProjLength(no_connection, obj):
-    """ visualizes the connection-length of the pre-synaptic neurons for a given
+    """Visualizes the connection-length of the pre-synaptic neurons for a given
     mapping-index
-    no_connection    : connection index (mapping index)
+
+    :param int no_connection: connection index (mapping index)
+
     """
     global vis_objects
     layers = model.CONNECTIONS[no_connection][0][0]  # get first layer
@@ -116,7 +120,7 @@ def visualizeNeuronProjLength(no_connection, obj):
 
 
 def visualizePoint(point):
-    """ visualizes a point in 3d by creating a small sphere """
+    """Visualize a point in 3d by creating a small sphere"""
     global vis_objects
     bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location=point, layers=(True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
     bpy.ops.transform.resize(value=(0.05, 0.05, 0.05))
@@ -125,11 +129,15 @@ def visualizePoint(point):
 
 
 def visualizePath(pointlist, smoothing=0):
-    """ Create path for a given point list
-    pointlist   : list of 3d-vectors that are converted to a path
-    smoothing   : number of smoothing stepts that should be applied afterwards
+    """Create path for a given point list
+
+    :param list pointlist: 3d-vectors that are converted to a path
+    :param list smoothing: smoothing stepts that should be applied afterwards
+
     This code is taken and modified from the bTrace-Addon for Blender
-    http://blenderartists.org/forum/showthread.php?214872  """
+    http://blenderartists.org/forum/showthread.php?214872
+
+    """
 
     global vis_objects
 
@@ -172,7 +180,7 @@ def visualizePath(pointlist, smoothing=0):
 
 
 def visualizeForwardMapping(no_connection, pre_index):
-    """ This is a debugging routine. The procedure tries to visualize the maximal
+    """This is a debugging routine. The procedure tries to visualize the maximal
     amount of mappings to determine, where the mapping fails
     no_connection       : connection/mapping-index
     pre_index           : index of pre-synaptic neuron
@@ -328,13 +336,15 @@ def visualizeOneConnection(no_connection, pre_index, post_index):
 
 
 def visualizeNeuronSpread(connections, neuron):
-    """ Visualizes for a collection of connections, the post-synaptic targets
+    """Visualize for a collection of connections, the post-synaptic targets
     of a given neuron number of the first layer in the first connection and
     iteratively uses the post-synaptic targets as pre-synaptic neurons for
     the following connections
-    connections     : list of connection-ids
-    neuron          : neuron number for the pre-synaptic layer of the first
-                      connection
+
+    :param list connections: list of connection-ids
+    :param int neuron: neuron number for the pre-synaptic layer of the first
+                       connection
+
     """
     visualizeConnectionsForNeuron(connections[0], neuron)
     if (len(connections) > 1):
@@ -426,13 +436,16 @@ def color_vertices(obj, colors):
         vc.data[i].color = colors[n]
 
 
+# TODO(SK): Parameter types
 def colorize_vertices(obj, v, interval=[]):
-    """ colorizes vertices of an object based on values in v and a
+    """Colorize vertices of an object based on values in v and a
     given interval
-    obj             - objects, whose vertices should be used
-    v               - vector length must correspond to number of vertices
-    interval        - min- and maximal range. if empty, it will be computed
-                      based on v
+
+    :param bpy.types.Object obj: objects, whose vertices should be used
+    :param (???) v: vector length must correspond to number of vertices
+    :param interval: min and maximal range. if empty, it will be computed
+                     based on v
+
     """
     colors = getColors(colormaps.standard, v, interval, alpha=False)
     color_vertices(obj, colors)

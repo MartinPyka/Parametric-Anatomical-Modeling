@@ -11,15 +11,23 @@ DELAYS = []
 TIMINGS = []
 
 
+# TODO(SK): Rephrase docstring
 class NeuronGroup:
-    """Class for a neuron group
-    name:              Name of the blender object
-    particle_system:   Name of the particle system in the object
-    cout:              Count of the neurons in this group
-    areaStart:         The ID of the first neuron in this group
-    areaEnd:           The ID of the last neuron in this group
-    connections:       A list of tuples with 3 elements: (connectionID, groupFrom, groupTo)
-                       These are all the connections this group has to other groups
+    """Represent a neuron group
+
+    :attribute str name: object name
+    :attribute str particle_system: particle system name
+    :attribute int count: neuron quantity
+    :attribute int areaStart: id of first neuron
+    :attribute int areaEnd: id of last neuron
+    :attribute list connections: connections to other neuron groups
+
+    .. note::
+        `connections` is a list of tuples with 3 elements:
+            * connectionID
+            * groupFrom
+            * groupTo
+
     """
     def __init__(self, name, particle_system, count, areaStart):
         self.name = name
@@ -30,6 +38,7 @@ class NeuronGroup:
         self.connections = []
 
 
+# TODO(SK): Missing docstring
 def import_model_from_zip(filepath):
     result = []
     names = []
@@ -45,16 +54,19 @@ def import_model_from_zip(filepath):
     return result, names
 
 
+# TODO(SK): Missing docstring
 def csv_read(data):
     reader = csv.reader(data, delimiter=";", quoting=csv.QUOTE_NONNUMERIC)
     return [row for row in reader]
 
 
+# TODO(SK): Refactor, in general global variables are ugly and fault prone.
 SUPPORTED_FILETYPES = {
     ".csv": csv_read
 }
 
 
+# TODO(SK): Missing docstring
 def csvfile_read(filename):
     f = open(filename, 'r')
     result = csv_read(f)
@@ -62,6 +74,7 @@ def csvfile_read(filename):
     return result
 
 
+# TODO(SK): Missing docstring
 def readModelData(connectionsPath):
         # Convert the Blender specific paths to absolute paths
     connectionsPath = abspath(connectionsPath)
@@ -101,6 +114,7 @@ def readModelData(connectionsPath):
     CONNECTIONS = connections
 
 
+# TODO(SK): Missing docstring
 def readSimulationData(simulationFile):
     # Open timing file (output.csv)
     neuronTimingPath = abspath(simulationFile)

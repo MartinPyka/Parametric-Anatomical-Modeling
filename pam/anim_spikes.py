@@ -7,13 +7,19 @@ from pam import model
 
 logger = logging.getLogger(__package__)
 
-ANIM_FACTOR = 10     # factor that is multiplied with the milliseconds
+ANIM_FACTOR = 10  # factor that is multiplied with the milliseconds
 ANIM_SPIKE_SCALE = 10.0
 ANIM_SPIKE_FADEOUT = 20
 
 
 def readSpikeData(filename):
-    """ Read spike-data from a csv-file and returns them as list
+    """Read spike-data from a csv-file
+
+    :param filename: path/filename to read from
+    :type filename: str
+    :return: spike-data
+    :rtype: list
+
     """
     file = open(filename, 'r')
 
@@ -24,9 +30,16 @@ def readSpikeData(filename):
     return data
 
 
+# TODO(SK): Fill in docstring parameters/return values
 def generateLayerNeurons(layer, particle_system):
-    """ Generates for each particle (neuron) a cone with appropriate
-    naming """
+    """Generates for each particle (neuron) a cone with appropriate naming
+
+    :param layer:
+    :type layer:
+    :param particle_system:
+    :type particle_system:
+
+    """
     # generate first mesh
     i = 0
     p = layer.particle_systems[particle_system].particles[0]
@@ -54,6 +67,7 @@ def generateLayerNeurons(layer, particle_system):
         dupli.location = p.location
 
 
+# TODO(SK): Missing docstring
 def generateNetworkNeurons():
     for neurongroup in model.NG_LIST:
         layer = bpy.data.objects[neurongroup[0]]
@@ -62,11 +76,15 @@ def generateNetworkNeurons():
         generateLayerNeurons(layer, particle_system)
 
 
+# TODO(SK): Fill in docstring parameters/return values
 def animNeuronSpiking(filename, func):
-    """ animate neurons according to the recording spike data with a given animation
-    function
-    filename    filename of the recorded spike data
-    func        function for animating the neurons
+    """Animate neurons according to spike data with given animation
+
+    :param filename:
+    :param func:
+    :type filename: str
+    :type func: function
+
     """
     data = readSpikeData(filename)
 
@@ -83,9 +101,18 @@ def animNeuronSpiking(filename, func):
             bpy.ops.wm.save_as_mainfile(filepath="tmp.blend")
 
 
+# TODO(SK): Fill in docstring parameters/return values
 def animNeuronScaling(layer_name, n_id, frame):
-    """ Animate neuron spiking for a given neuron defined by
-    layer_name, neuron-id and a given frame """
+    """Animate neuron spiking for a given neuron
+
+    :param layer_name: neuron
+    :param n_id: neuron id
+    :param frame: frame
+    :type layer_name: str
+    :type n_id: int
+    :type frame: int
+
+    """
     neuron = bpy.data.objects['n_' + layer_name + '_%05d' % n_id]
 
     bpy.ops.object.select_all(action='DESELECT')
@@ -103,8 +130,7 @@ def animNeuronScaling(layer_name, n_id, frame):
 
 
 def deleteNeurons():
-    """ delete all objects with the prefix n_
-    """
+    """Delete all objects with the prefix `n_`"""
     bpy.ops.object.select_all(action='DESELECT')
     bpy.ops.object.select_pattern(pattern='n_*')
     bpy.ops.object.delete(use_global=False)

@@ -57,6 +57,14 @@ DISTANCE_DICT = {
 
 
 def particle_systems(self, context):
+    """Generator for particle systems on an pam layer
+
+    :param PAMKernelParameter self: a kernel parameter
+    :param bpy.types.Context context: current blender context
+    :return: list of particle system associated with object in kernel settings
+    :rtype: list
+
+    """
     p = []
 
     if self.object not in context.scene.objects:
@@ -72,6 +80,17 @@ def particle_systems(self, context):
 
 
 def active_mapping_index(self, context):
+    """Return index of a mapping in active set
+
+    :param PAMMappingParameter self: a mapping parameter
+    :param bpy.types.Context context: current blender context
+    :return: index of mapping in active set
+    :rtype: int
+
+    .. note::
+        Returns `-1` if mapping is not in active set
+
+    """
     m = context.scene.pam_mapping
     active_set = m.sets[m.active_set]
 
@@ -86,6 +105,14 @@ def active_mapping_index(self, context):
 
 
 def uv_source(self, context):
+    """Return list of source uv layer on pam layer
+
+    :param PAMMappingParameter self: a mapping parameter
+    :param bpy.types.Context context: current blender context
+    :return: list of uv layer names
+    :rtype: list
+
+    """
     p = []
 
     m = context.scene.pam_mapping
@@ -111,6 +138,14 @@ def uv_source(self, context):
 
 
 def uv_target(self, context):
+    """Return list of target uv layer on pam layer
+
+    :param PAMMappingParameter self: a mapping parameter
+    :param bpy.types.Context context: current blender context
+    :return: list of uv layer names
+    :rtype: list
+
+    """
     p = []
 
     m = context.scene.pam_mapping
@@ -139,10 +174,22 @@ def uv_target(self, context):
 
 
 def update_object(self, context):
+    """Update object in kernel parameter
+
+    :param PAMKernelParameter self: a kernel parameter
+    :param bpy.types.Context context: current blender context
+
+    """
     self.kernel.object = self.object
 
 
 def update_kernels(self, context):
+    """Update kernel parameters according to a chosen kernel function
+
+    :param PAMMappingParameter self: a mapping parameter
+    :param bpy.types.Context context: current blender context
+
+    """
     self.parameters.clear()
     name = next(f for (f, _, _, _) in kernel.KERNEL_TYPES if f == self.function)
     func = getattr(kernel, name)
@@ -158,6 +205,7 @@ def update_kernels(self, context):
 
 
 class PAMKernelValues(bpy.types.PropertyGroup):
+    """Represent a kernel name/value pair"""
     name = bpy.props.StringProperty(
         name="Parameter name",
         default="param"
@@ -169,6 +217,7 @@ class PAMKernelValues(bpy.types.PropertyGroup):
 
 
 class PAMKernelParameter(bpy.types.PropertyGroup):
+    """Represent a kernel setting"""
     object = bpy.props.StringProperty()
     function = bpy.props.EnumProperty(
         name="Kernel function",
@@ -186,6 +235,7 @@ class PAMKernelParameter(bpy.types.PropertyGroup):
 
 
 class PAMMappingParameter(bpy.types.PropertyGroup):
+    """Represent a mapping"""
     function = bpy.props.EnumProperty(
         name="Mapping function",
         items=MAPPING_TYPES,
@@ -205,6 +255,7 @@ class PAMMappingParameter(bpy.types.PropertyGroup):
 
 
 class PAMLayer(bpy.types.PropertyGroup):
+    """Represent a layer"""
     object = bpy.props.StringProperty(
         update=update_object,
     )
@@ -223,12 +274,14 @@ class PAMLayer(bpy.types.PropertyGroup):
 
 
 class PAMMapSet(bpy.types.PropertyGroup):
+    """Represent a mapping set"""
     name = bpy.props.StringProperty(default="mapping")
     layers = bpy.props.CollectionProperty(type=PAMLayer)
     mappings = bpy.props.CollectionProperty(type=PAMMappingParameter)
 
 
 class PAMMap(bpy.types.PropertyGroup):
+    """Represent pam mapping data"""
     sets = bpy.props.CollectionProperty(type=PAMMapSet)
     active_set = bpy.props.IntProperty()
     num_neurons = bpy.props.IntProperty(
@@ -238,6 +291,7 @@ class PAMMap(bpy.types.PropertyGroup):
 
 
 class PAMMappingUp(bpy.types.Operator):
+    """Move active mapping index up"""
     bl_idname = "pam.mapping_up"
     bl_label = "Move mapping up"
     bl_description = ""
@@ -261,6 +315,7 @@ class PAMMappingUp(bpy.types.Operator):
 
 
 class PAMMappingDown(bpy.types.Operator):
+    """Move active mapping index down"""
     bl_idname = "pam.mapping_down"
     bl_label = "Move mapping down"
     bl_description = ""
@@ -284,6 +339,7 @@ class PAMMappingDown(bpy.types.Operator):
 
 
 class PAMMappingLayerUp(bpy.types.Operator):
+    """Move active layer index up"""
     bl_idname = "pam.mapping_layer_up"
     bl_label = "Move layer up"
     bl_description = ""
@@ -312,6 +368,7 @@ class PAMMappingLayerUp(bpy.types.Operator):
 
 
 class PAMMappingLayerDown(bpy.types.Operator):
+    """Move active layer index down"""
     bl_idname = "pam.mapping_layer_down"
     bl_label = "Move layer down"
     bl_description = ""
@@ -340,6 +397,7 @@ class PAMMappingLayerDown(bpy.types.Operator):
 
 
 class PAMMappingLayerAdd(bpy.types.Operator):
+    """Add a new layer"""
     bl_idname = "pam.mapping_layer_add"
     bl_label = "Add layer"
     bl_description = ""
@@ -360,6 +418,7 @@ class PAMMappingLayerAdd(bpy.types.Operator):
 
 
 class PAMMappingLayerRemove(bpy.types.Operator):
+    """Remove layer by index"""
     bl_idname = "pam.mapping_layer_remove"
     bl_label = "Remove layer"
     bl_description = ""
@@ -384,6 +443,7 @@ class PAMMappingLayerRemove(bpy.types.Operator):
 
 
 class PAMMappingSetObject(bpy.types.Operator):
+    """Associate current active object with layer by index"""
     bl_idname = "pam.mapping_layer_set_object"
     bl_label = "Set layer"
     bl_description = ""
@@ -408,6 +468,7 @@ class PAMMappingSetObject(bpy.types.Operator):
 
 
 class PAMMappingAddSet(bpy.types.Operator):
+    """Add new mapping set"""
     bl_idname = "pam.mapping_add_set"
     bl_label = "Add a mapping set"
     bl_description = ""
@@ -439,6 +500,7 @@ class PAMMappingAddSet(bpy.types.Operator):
 
 
 class PAMMappingDeleteSet(bpy.types.Operator):
+    """Remove a mapping set"""
     bl_idname = "pam.mapping_delete_set"
     bl_label = "Delete active mapping set"
     bl_description = ""
@@ -455,6 +517,7 @@ class PAMMappingDeleteSet(bpy.types.Operator):
 
 
 class PAMMappingSetLayer(bpy.types.Operator):
+    """Set layer type"""
     bl_idname = "pam.mapping_layer_set"
     bl_label = "Delete active mapping set"
     bl_description = ""
@@ -485,6 +548,7 @@ class PAMMappingSetLayer(bpy.types.Operator):
 
 
 class PAMMappingCompute(bpy.types.Operator):
+    """Compute mapping"""
     bl_idname = "pam.mapping_compute"
     bl_label = "Compute mapping"
     bl_description = ""
@@ -551,6 +615,7 @@ class PAMMappingCompute(bpy.types.Operator):
 
 
 class PAMMappingComputeSelected(bpy.types.Operator):
+    """Compute active mapping"""
     bl_idname = "pam.mapping_compute_sel"
     bl_label = "Compute selected mapping"
     bl_description = ""
@@ -617,10 +682,11 @@ class PAMMappingComputeSelected(bpy.types.Operator):
 
 
 class PAMAddNeuronSet(bpy.types.Operator):
-    """Adds a new neuron set to the active object.
+    """Adds a new neuron set to the active object
 
-    Note: Only mesh-objects are allowed to own neuron sets as custom
-    properties.
+    .. note::
+        Only mesh-objects are allowed to own neuron sets as custom
+        properties.
     """
 
     bl_idname = "pam.add_neuron_set"
@@ -670,7 +736,7 @@ class PAMAddNeuronSet(bpy.types.Operator):
 
 
 class PAMMappingAddSelfInhibition(bpy.types.Operator):
-    """Self-Inhibition Layer"""
+    """Add self-inhibition layer"""
 
     bl_idname = "pam.mapping_self_inhibition"
     bl_label = "Add layer as self-inhibition mapping"
@@ -803,6 +869,7 @@ class PAMMappingUpdate(bpy.types.Operator):
 
 
 def register():
+    """Call on module register"""
     bpy.utils.register_class(PAMKernelValues)
     bpy.utils.register_class(PAMKernelParameter)
     bpy.utils.register_class(PAMMappingParameter)
@@ -815,10 +882,22 @@ def register():
 
 
 def unregister():
+    """Call on module unregister"""
     del bpy.types.Scene.pam_mapping
 
 
 def validate_layer(context, layer):
+    """Check if a layer is valid
+
+    :param bpy.types.Context context: current context
+    :param PAMLayer layer: a layer
+    :return: error message
+    :rtype: str
+
+    .. note::
+        If there is no error `None` will be returned
+
+    """
     err = None
 
     if layer.type == "none":
@@ -833,5 +912,7 @@ def validate_layer(context, layer):
     return err
 
 
+# TODO(SK): Implementation needed
 def validate_mapping(mapping):
+    """Check if a mapping is valid"""
     return False

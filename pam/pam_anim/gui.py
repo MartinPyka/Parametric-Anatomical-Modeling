@@ -6,7 +6,7 @@ from .. import model
 
 
 class PamAnimDataPane(bpy.types.Panel):
-    """Panel for loading the Model Data"""
+    """A panel for loading model data"""
 
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -22,7 +22,7 @@ class PamAnimDataPane(bpy.types.Panel):
 
 
 class PamAnimMaterialPane(bpy.types.Panel):
-    """Panel for choosing the used Material"""
+    """A panel for choosing materials"""
 
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -44,7 +44,7 @@ class PamAnimMaterialPane(bpy.types.Panel):
 
 
 class PamAnimOrientationPane(bpy.types.Panel):
-    """Panel for choosing object orientation"""
+    """A panel for choosing object orientation"""
 
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -66,7 +66,7 @@ class PamAnimOrientationPane(bpy.types.Panel):
 
 
 class PamAnimMeshPane(bpy.types.Panel):
-    """Panel for choosing the used Mesh"""
+    """A panel for choosing mesh"""
 
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -90,7 +90,7 @@ class PamAnimMeshPane(bpy.types.Panel):
 
 
 class PamAnimAnimPane(bpy.types.Panel):
-    """Panel for selecting the animation frames and speed"""
+    """A panel for selecting the frames and speed"""
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
@@ -121,7 +121,7 @@ class PamAnimAnimPane(bpy.types.Panel):
 
 
 class PamAnimLayerPane(bpy.types.Panel):
-    """Panel for choosing layer colors"""
+    """A panel for choosing layer colors"""
 
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -138,8 +138,10 @@ class PamAnimLayerPane(bpy.types.Panel):
         row.prop_search(options, "script", bpy.data, "texts")
 
 
+# TODO(SK): Rephrase docstring, purpose?
+# TODO(SK): Please do not commit commented code
 class PamAnimGeneratePanel(bpy.types.Panel):
-    """Panel for the generate-button"""
+    """A panel for the generate-button"""
 
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"

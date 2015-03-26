@@ -25,6 +25,7 @@ PATHS_GROUP_NAME = "PATHS"
 SPIKE_GROUP_NAME = "SPIKES"
 
 
+# TODO(SK): Rephrase docstring, add a `.. note::` or `.. warning::`
 def clearVisualization():
     """Clears all created objects by the animation
     The objects are saved in the specified groups and all
@@ -53,18 +54,25 @@ def clearVisualization():
     SPIKE_OBJECTS = []
 
 
+# TODO(SK): Rephrase docstring, short 50 character summury and then a next
+# TODO(SK): paragraph for further details
+# TODO(SK): Parameter types missing
 def followCurve(curve, startTime, color, meshData):
-    """This function creates a new object with the given mesh and adds a Follow Curve constraint to it.
-    To calculate the start time correctly the length of the curve needs to be saved in the custom
-    property "timeLength" in the curves data.
+    """This function creates a new object with the given mesh and adds
+    a `Follow Curve` constraint to it
 
-    :param curve:       The curve to apply the constraint to
-    :param startTime:   The start time in frames for when the animation should start playing
-    :param color:       The color to apply to the color property of the object
-    :param meshData:    The mesh for the object
+    To calculate the start time correctly the length of the curve needs to be
+    saved in the custom property `timeLength` in the curves data.
+
+    :param (???) curve: curve to apply the constraint to
+    :param (???) startTime: start time in frames for when the animation should start playing
+    :param (???) color: color to apply to the color property of the object
+    :param (???) meshData: mesh data for the object
 
 
-    :returns:     The created spike object
+    :return: spike object
+    :rtype:
+
     """
     op = bpy.context.scene.pam_anim_orientation
 
@@ -105,6 +113,9 @@ def followCurve(curve, startTime, color, meshData):
     return obj
 
 
+# TODO(SK): Rephrase docstring, short 50 character summury and then a next
+# TODO(SK): paragraph for further details
+# TODO(SK): Parameter types missing
 def setAnimationSpeed(curve, animationSpeed):
     """Sets a curves animation speed to the given speed with a linear interpolation. Any object bound to this
     curve with a Follow Curve constraint will have completed its animation along the curve in the given time.
@@ -124,6 +135,7 @@ def setAnimationSpeed(curve, animationSpeed):
     curve.animation_data.action.fcurves[0].extrapolation = 'LINEAR'
 
 
+# TODO(SK): Missing docstring
 def calculateDecay(layerValues, delta, decayFunc):
     newValues = {}
     for key in layerValues:
@@ -133,6 +145,7 @@ def calculateDecay(layerValues, delta, decayFunc):
     return newValues
 
 
+# TODO(SK): Rephrase docstring
 def createDefaultMaterial():
     """Creates a default material with a white diffuse color and the use object color property set to True.
     The name for this material is defined in the global variable DEFAULT_MAT_NAME"""
@@ -144,8 +157,10 @@ def createDefaultMaterial():
         options.material = mat.name
 
 
+# TODO(SK): Rephrase docstring
+# TODO(SK): max 80 characters per line
 def getUsedNeuronGroups():
-    """ Checks in pam.model which neuron groups are actually be used and return
+    """Checks in pam.model which neuron groups are actually be used and return
     the indices of those neurongroups. This routine is used by visualize() in order
     to reduce the number of neurongroups for which neurons should be created """
     inds = []
@@ -155,16 +170,19 @@ def getUsedNeuronGroups():
     return numpy.unique(inds)
 
 
+# TODO(SK): Rephrase docstring, short 50 character summury and then a next
+# TODO(SK): paragraph for further details
 def visualize(decayFunc=anim_functions.decay,
               initialColorValuesFunc=anim_functions.getInitialColorValues,
               mixValuesFunc=anim_functions.mixLayerValues,
               applyColorFunc=anim_functions.applyColorValues):
     """This function creates the visualization of spikes
 
-    :param decayFunc: function that calculates the decay of spikes
-    :param initialColorValuesFunc: function that sets the initial color of the spikes
-    :param mixValuesFunc: function that provides mixing of spike colors
-    :param applyColorFunc: function that applies color to the spikes
+    :param function decayFunc: calculates the decay of spikes
+    :param function initialColorValuesFunc: sets the initial color of the spikes
+    :param function mixValuesFunc: provides mixing of spike colors
+    :param function applyColorFunc: applies color to the spikes
+
     """
 
     n = data.NEURON_GROUPS
@@ -258,9 +276,8 @@ def visualize(decayFunc=anim_functions.decay,
                 heapq.heappush(neuronUpdateQueue, (updateTime, i, layerValuesDecay))
 
 
-# Operators:
 class ClearPamAnimOperator(bpy.types.Operator):
-    """ Clear Animation """
+    """Clear Animation"""
     bl_idname = "pam_anim.clear_pamanim"
     bl_label = "Clear Animation"
     bl_description = "Deletes the Spike-Animation"
@@ -273,8 +290,10 @@ class ClearPamAnimOperator(bpy.types.Operator):
         return self.execute(context)
 
 
+# TODO(SK): Rephrase docstring, purpose? If this could generate everything I
+# TODO(SK): would stop working... right... about ...now!
 class GenerateOperator(bpy.types.Operator):
-    """Class that generates everything when PAM model, modeldata and simulationData are provided"""
+    """Generate everything when PAM model, modeldata and simulationData are provided"""
 
     bl_idname = "pam_anim.generate"
     bl_label = "Generate"
@@ -371,6 +390,7 @@ class GenerateOperator(bpy.types.Operator):
         return self.execute(context)
 
 
+# TODO(SK): Missing docstring
 def register():
     # Custom property for the length of a curve for easy accessibility
     bpy.types.Curve.timeLength = bpy.props.FloatProperty()
@@ -378,6 +398,7 @@ def register():
     bpy.utils.register_class(ClearPamAnimOperator)
 
 
+# TODO(SK): Missing docstring
 def unregister():
     bpy.utils.unregister_class(GenerateOperator)
     bpy.utils.unregister_class(ClearPamAnimOperator)

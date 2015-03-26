@@ -15,19 +15,41 @@ CONNECTIONS = []
 CONNECTION_RESULTS = []
 
 
+# TODO(SK): Fill in docstring parameter/return values
 def convertObject2String(connection):
-    """Takes a CONNECTION-struct and converts bpy.objects to
-    string names and returns a list of strings"""
+    """Takes a CONNECTION-struct and converts `bpy.objects` to
+    string names and returns a list of strings
+
+    :param list connection:
+    :return:
+    :rtype:
+
+    """
     return [o.name for o in connection[0]]
 
 
+# TODO(SK): Fill in docstring parameter/return values
 def convertString2Object(connection):
     """Takes a CONNECTION-struct and converts string names to
-    bpy.objects and returns a list of bpy.objects"""
+    `bpy.objects` and returns a list of `bpy.objects`
+
+    :param list connection:
+    :return:
+    :rtype:
+
+    """
     return [bpy.data.objects[name] for name in connection[0]]
 
 
+# TODO(SK): Fill in docstring parameter/return values
 def Connection2Pickle(connections):
+    """
+
+    :param list connection:
+    :return:
+    :rtype:
+
+    """
     result = []
     for c in connections:
         new_c = [convertObject2String(c)]
@@ -36,7 +58,15 @@ def Connection2Pickle(connections):
     return result
 
 
+# TODO(SK): Fill in docstring parameter/return values
 def Pickle2Connection(connections):
+    """
+
+    :param list connection:
+    :return:
+    :rtype:
+
+    """
     result = []
     for c in connections:
         new_c = [convertString2Object(c)]
@@ -45,9 +75,16 @@ def Pickle2Connection(connections):
     return result
 
 
+# TODO(SK): Fill in docstring parameter/return values
 def convertVector2Array(connection_results):
-    """ Takes a CONNECTION_RESULTS-struct and converts mathutils.Vectors
-    to numpy.arrays and returns them """
+    """Takes a CONNECTION_RESULTS-struct and converts `mathutils.Vector`
+    to `numpy.Array`
+
+    :param list connection_results:
+    :return:
+    :rtype:
+
+    """
     result = []
     for c in connection_results:
         temp = []
@@ -57,9 +94,16 @@ def convertVector2Array(connection_results):
     return result
 
 
+# TODO(SK): Fill in docstring parameter/return values
 def convertArray2Vector(connection_results):
-    """ Takes a CONNECTION_RESULTS-struct and converts numpy.arrays
-    to mathutils.Vector and returns them """
+    """Takes a CONNECTION_RESULTS-struct and converts `numpy.array`
+    to `mathutils.Vector`
+
+    :param list connection_results:
+    :return:
+    :rtype:
+
+    """
     result = []
     for c in connection_results:
         temp = []
@@ -72,8 +116,8 @@ def convertArray2Vector(connection_results):
     return result
 
 
-# TODO(SK): missing docstring
 class ModelSnapshot(object):
+    """Represents a snapshot of the current model"""
     def __init__(self):
         global NG_LIST
         global NG_DICT
@@ -93,14 +137,21 @@ class ModelSnapshot(object):
 
 
 def save(path):
-    """ saves the current model using pickle in the given path """
+    """Save current model via pickle to given path
+
+    :param str path: filepath
+
+    """
     snapshot = ModelSnapshot()
     pickle.dump(snapshot, open(path, "wb"))
 
 
-# TODO(SK): missing docstring
 def load(path):
-    """ loads the model with pickle from the given path """
+    """Load model via pickle from given path
+
+    :param str path: filepath
+
+    """
     snapshot = pickle.load(open(path, "rb"))
 
     global NG_LIST
@@ -118,16 +169,19 @@ def load(path):
 
 
 def compare(path1, path2):
-    """ compares two models with each other, addressed by path1 and
-    path """
+    """Compare two models with each other
+
+    :param str path1: a path
+    :param str path2: another path
+
+    """
     m1 = load(path1)
     m2 = load(path2)
     return m1 == m2
 
 
 def reset():
-    """ Resets the most important variables without calculating everything from
-    scratch """
+    """Reset most important variables"""
     global NG_LIST
     global NG_DICT
     global CONNECTION_COUNTER
@@ -143,7 +197,7 @@ def reset():
 
 
 class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
-    """Model Load Operator"""
+    """Load a model"""
 
     bl_idname = "pam.model_load"
     bl_label = "Load model data"
@@ -156,7 +210,7 @@ class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
 
 class PAMModelSave(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
-    """Model Save Operator"""
+    """Save current model"""
 
     bl_idname = "pam.model_save"
     bl_label = "Save model data"

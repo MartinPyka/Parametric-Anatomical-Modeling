@@ -2,6 +2,7 @@ import bpy
 import heapq
 
 
+# TODO(SK): Missing docstring
 def projectTimeToFrames(t):
     op = bpy.context.scene.pam_anim_animation
     # Projection algorithm
@@ -9,11 +10,13 @@ def projectTimeToFrames(t):
     return frame
 
 
+# TODO(SK): Missing docstring
 def timeToFrames(t):
     op = bpy.context.scene.pam_anim_animation
     return t * (op.endFrame - op.startFrame) / (op.endTime - op.startTime)
 
 
+# TODO(SK): Missing docstring
 def addObjectsToGroup(group, elements):
     if type(elements) is dict:
         elements = elements.values()
@@ -21,6 +24,7 @@ def addObjectsToGroup(group, elements):
         group.objects.link(e)
 
 
+# TODO(SK): Missing docstring
 def getQueueValues(queue, t):
     elementsBelowThreshold = []
     while queue and queue[0][0] <= t:

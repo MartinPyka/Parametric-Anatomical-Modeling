@@ -13,12 +13,20 @@ logger = logging.getLogger(__package__)
 
 
 def uv_bounds(obj):
-    """Returns upper uv bounds of an object"""
+    """Returns upper uv bounds of an object
+
+    :param bpy.types.Object obj: blender object
+    :return: uv coordinates
+    :rtype: tuple (float, float)
+
+    :raises TypeError: if obj has no uv data attached
+
+    """
     active_uv = obj.data.uv_layers.active
 
     if not hasattr(active_uv, "data"):
         logger.error("%s has no uv data", obj)
-        raise Exception("object no uv data")
+        raise TypeError("object has no uv data")
 
     u = max([mesh.uv[0] for mesh in active_uv.data])
     v = max([mesh.uv[1] for mesh in active_uv.data])
@@ -29,10 +37,20 @@ def uv_bounds(obj):
 
 
 def grid_dimension(u, v, res):
-    """Calculates grid dimension from upper uv bounds"""
+    """Calculates grid dimension from upper uv bounds
+
+    :param float u: u coordinate
+    :param float v: v coordinate
+    :param float res: needed resolution
+    :return: row, column count
+    :rtype: tuple (int, int)
+
+    :raises ValueError: if uv coordinates exceed 0.0-1.0 range
+
+    """
     if u < 0.0 or u > 1.0 or v < 0.0 or v > 1.0:
         logger.error("uv coordinate out of bounds (%f, %f)", u, v)
-        raise Exception("uv coordinate out of bounds")
+        raise ValueError("uv coordinate out of bounds")
 
     minor = min(u, v)
     row = math.ceil(1.0 / res)
@@ -92,27 +110,29 @@ class UVGrid(object):
     def __len__(self):
         return any([len(c) for r in self._weights for c in r if any(c)])
 
+    # TODO(SK): Missing docstring
     @property
     def dimension(self):
         return mathutils.Vector((self._row, self._col))
 
+    # TODO(SK): Missing docstring
     @property
     def resolution(self):
         return self._resolution
 
+    # TODO(SK): Missing docstring
     @property
     def uv_bounds(self):
         return self._u, self._v
 
-    # TODO(SK): missing docstring
+    # TODO(SK): Missing docstring
     def compute_pre_mask(self, kernel, args):
         self._compute_mask("pre", kernel, args)
 
-    # TODO(SK): missing docstring
+    # TODO(SK): Missing docstring
     def compute_post_mask(self, kernel, args):
         self._compute_mask("post", kernel, args)
 
-    # TODO(SK): missing docstring
     def _compute_mask(self, mask, kernel, args):
 
         elements = range(math.ceil(2 / self._resolution))
@@ -140,10 +160,18 @@ class UVGrid(object):
                     ))
 
     def insert_postNeuron(self, index, uv, p_3d, d):
-        """Computes weights with current registered kernel across the grid"""
-        # self._reset_weights()
+        """Computes weights with current registered kernel across the grid
+
+        :param int index:
+        :param uv: uv coordinates
+        :type uv: tuple (float, float)
+        :param p_3d:
+        :type p_3d:
+        :param d:
+        :type d:
+
+        """
         row, col = self._uv_to_cell_index(uv[0], uv[1])
-        # if the uv-coordinate is not on the grid, return
 
         if row == -1:
             return
@@ -155,8 +183,15 @@ class UVGrid(object):
                         (index, cell[2], p_3d, d))
 
     def compute_intersect_premask_weights(self, row, col):
-        """ Computes the intersect between premask applied on row and col and
-        the weights-array """
+        """Computes the intersect between premask applied on row/col and
+        weights-array
+
+        :param int row: row
+        :param int col: column
+        :return: intersect
+        :rtype: list
+
+        """
         result = []
         for cell in self._masks["pre"]:
             # if we are in the bords of the grid
@@ -167,7 +202,14 @@ class UVGrid(object):
         return result
 
     def cell(self, u, v):
-        """Returns cell for uv coordinate"""
+        """Returns cell for uv coordinate
+
+        :param float u: u coordinate
+        :param float v: v coordinate
+        :return: cell
+        :rtype: list
+
+        """
         row, col = self._uv_to_cell_index(u, v)
         if row == -1:
             return []
@@ -179,8 +221,15 @@ class UVGrid(object):
         return cell
 
     def select_random(self, uv, quantity):
-        """Returns a number of randomly selected items from uv coordinate
+        """Returns a set of randomly selected items from uv coordinate
         corresponding cell
+
+        :param uv: uv coordinates
+        :type: tuple (float, float)
+        :param int quantity: size of set
+        :return: randomly selected items
+        :rtype: list
+
         """
         if uv[0] >= self._u or uv[1] >= self._v or uv[0] < 0.0 or uv[1] < 0.0:
             return []
@@ -208,8 +257,15 @@ class UVGrid(object):
 
         return selected
 
-    # TODO(SK): missing docstring
     def adjustUV(self, uv):
+        """Return adjustd uv coordinates
+
+        :param uv: uv coordinates
+        :type uv: tuple (float, float)
+        :return: adjusted uv coordinates
+        :rtype: tuple (float, float)
+
+        """
         if uv[0] >= self._u or vv[1] >= self._v or uv[0] < 0.0 or vv[0] < 0.0:
             uv[0] = min(self._u, max(0., uv[0]))
             uv[1] = min(self._v, max(0., vv[0]))

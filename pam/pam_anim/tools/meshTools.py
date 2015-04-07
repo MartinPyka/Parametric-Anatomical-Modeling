@@ -5,6 +5,7 @@ import bpy
 class MeshProperty(bpy.types.PropertyGroup):
     mesh = bpy.props.StringProperty(name="Mesh")
     neuron_object = bpy.props.StringProperty(name="Neuron Object")
+    animPaths = bpy.props.BoolProperty(name="Animate paths", default=True)
     animSpikes = bpy.props.BoolProperty(name="Animate spikes")
 
 

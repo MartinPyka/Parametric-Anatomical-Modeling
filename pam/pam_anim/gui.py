@@ -83,6 +83,7 @@ class PamAnimMeshPane(bpy.types.Panel):
         row.prop_search(options, 'mesh', bpy.data, 'meshes')
 
         row = layout.row()
+        row.prop(options, 'animPaths')
         row.prop(options, 'animSpikes')
 
         row = layout.row()

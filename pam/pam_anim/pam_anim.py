@@ -310,6 +310,10 @@ class GenerateOperator(bpy.types.Operator):
         if not model.NG_LIST:
             return False
 
+        # Check if either spikes or paths are to be animated (would generate nothing if not active)
+        if not (context.scene.pam_anim_mesh.animSpikes or context.scene.pam_anim_mesh.animPaths):
+            return False
+
         # Return True if all data is accessible
         return True
 
@@ -329,48 +333,49 @@ class GenerateOperator(bpy.types.Operator):
         data.readSimulationData(bpy.context.scene.pam_anim_data.simulationData)
         logger.info('Prepare Visualization')
 
-        # Create a default material if needed
-        if bpy.context.scene.pam_anim_material.materialOption == "DEFAULT":
-            createDefaultMaterial()
+        if bpy.context.scene.pam_anim_mesh.animPaths:
+            # Create a default material if needed
+            if bpy.context.scene.pam_anim_material.materialOption == "DEFAULT":
+                createDefaultMaterial()
 
-        # Prepare functions
-        decayFunc = anim_functions.decay
-        getInitialColorValuesFunc = anim_functions.getInitialColorValues
-        mixLayerValuesFunc = anim_functions.mixLayerValues
-        applyColorValuesFunc = anim_functions.applyColorValues
+            # Prepare functions
+            decayFunc = anim_functions.decay
+            getInitialColorValuesFunc = anim_functions.getInitialColorValues
+            mixLayerValuesFunc = anim_functions.mixLayerValues
+            applyColorValuesFunc = anim_functions.applyColorValues
 
-        # Load any scripts
-        script = bpy.context.scene.pam_anim_material.script
-        if script in bpy.data.texts:
-            localFuncs = {}
-            exec(bpy.data.texts[script].as_string(), localFuncs)
-            if "decay" in localFuncs:
-                decayFunc = localFuncs['decay']
-            if "getInitialColorValues" in localFuncs:
-                getInitialColorValuesFunc = localFuncs['getInitialColorValues']
-            if "mixLayerValues" in localFuncs:
-                mixLayerValuesFunc = localFuncs['mixLayerValues']
-            if "applyColorValues" in localFuncs:
-                applyColorValuesFunc = localFuncs['applyColorValues']
+            # Load any scripts
+            script = bpy.context.scene.pam_anim_material.script
+            if script in bpy.data.texts:
+                localFuncs = {}
+                exec(bpy.data.texts[script].as_string(), localFuncs)
+                if "decay" in localFuncs:
+                    decayFunc = localFuncs['decay']
+                if "getInitialColorValues" in localFuncs:
+                    getInitialColorValuesFunc = localFuncs['getInitialColorValues']
+                if "mixLayerValues" in localFuncs:
+                    mixLayerValuesFunc = localFuncs['mixLayerValues']
+                if "applyColorValues" in localFuncs:
+                    applyColorValuesFunc = localFuncs['applyColorValues']
 
-        # Create the visualization
-        logger.info('Visualize spike propagation')
-        visualize(decayFunc, getInitialColorValuesFunc, mixLayerValuesFunc, applyColorValuesFunc)
+            # Create the visualization
+            logger.info('Visualize spike propagation')
+            visualize(decayFunc, getInitialColorValuesFunc, mixLayerValuesFunc, applyColorValuesFunc)
 
-        # Create groups if they do not already exist
-        if PATHS_GROUP_NAME not in bpy.data.groups:
-            bpy.data.groups.new(PATHS_GROUP_NAME)
-        if SPIKE_GROUP_NAME not in bpy.data.groups:
-            bpy.data.groups.new(SPIKE_GROUP_NAME)
+            # Create groups if they do not already exist
+            if PATHS_GROUP_NAME not in bpy.data.groups:
+                bpy.data.groups.new(PATHS_GROUP_NAME)
+            if SPIKE_GROUP_NAME not in bpy.data.groups:
+                bpy.data.groups.new(SPIKE_GROUP_NAME)
 
-        # Insert objects into groups
-        addObjectsToGroup(bpy.data.groups[PATHS_GROUP_NAME], CURVES)
-        addObjectsToGroup(bpy.data.groups[SPIKE_GROUP_NAME], SPIKE_OBJECTS)
+            # Insert objects into groups
+            addObjectsToGroup(bpy.data.groups[PATHS_GROUP_NAME], CURVES)
+            addObjectsToGroup(bpy.data.groups[SPIKE_GROUP_NAME], SPIKE_OBJECTS)
 
-        # Apply material to mesh
-        mesh = bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh]
-        mesh.materials.clear()
-        mesh.materials.append(bpy.data.materials[bpy.context.scene.pam_anim_material.material])
+            # Apply material to mesh
+            mesh = bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh]
+            mesh.materials.clear()
+            mesh.materials.append(bpy.data.materials[bpy.context.scene.pam_anim_material.material])
 
         # Animate spiking if option is selected
         if bpy.context.scene.pam_anim_mesh.animSpikes is True:

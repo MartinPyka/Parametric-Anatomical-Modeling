@@ -120,6 +120,9 @@ class PamAnimAnimPane(bpy.types.Panel):
         row = layout.row()
         row.prop(options, "connNumber")
 
+        row = layout.row()
+        row.prop(options, "showPercent")
+
 
 class PamAnimLayerPane(bpy.types.Panel):
     """A panel for choosing layer colors"""

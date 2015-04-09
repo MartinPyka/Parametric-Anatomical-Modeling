@@ -8,7 +8,10 @@ class AnimationProperty(bpy.types.PropertyGroup):
 
     startTime = bpy.props.FloatProperty(name="Start time", default=0.0)
     endTime = bpy.props.FloatProperty(name="End time", default=1.0)
+
     connNumber = bpy.props.IntProperty(name="Max Connection", default=0)
+
+    showPercent = bpy.props.FloatProperty(name="Show percentage", default = 100.0, min = 0.0, max = 100.0, description = "Only generate x% of neurons", subtype = 'PERCENTAGE', precision = 1)
 
 
 # TODO(SK): Missing docstring

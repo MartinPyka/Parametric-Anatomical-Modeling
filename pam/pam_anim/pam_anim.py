@@ -200,8 +200,15 @@ def visualize(decayFunc=anim_functions.decay,
 
     maxConn = bpy.context.scene.pam_anim_animation.connNumber
 
+    showPercent = bpy.context.scene.pam_anim_animation.showPercent
+    pct = 0.0
+    show = True
+
     for no, timing in enumerate(t):
         # if (no % 10) == 0:
+
+
+
         logger.info(str(no) + "/" + str(no_timings))
 
         neuronID = timing[0]
@@ -249,7 +256,17 @@ def visualize(decayFunc=anim_functions.decay,
                 conns = min(maxConn, len(c[connectionID[0]]["c"][neuronID]))
 
             for index, i in enumerate(c[connectionID[0]]["c"][neuronID]):
-                if index < conns:
+
+                # Determine if this spike will be shown
+                if showPercent != 100.0:
+                    pct += showPercent
+                    if pct >= 100.0:
+                        pct = pct % 100.0
+                        show = True
+                    else:
+                        show = False
+
+                if index < conns and show:
                     if (i == -1) | (d[connectionID[0]][neuronID][index] == 0):
                         continue
                     if (connectionID[0], neuronID, i) not in CURVES.keys():

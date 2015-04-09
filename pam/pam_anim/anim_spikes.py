@@ -9,10 +9,6 @@ from . import helper
 
 logger = logging.getLogger(__package__)
 
-ANIM_SPIKE_SCALE = 15.0
-ANIM_SPIKE_FADEOUT = 5
-
-
 # TODO(SK): Missing docstring
 def readSpikeData(filename):
     """Read spike-data from a csv-file and returns them as list"""
@@ -51,6 +47,12 @@ def generateLayerNeurons(layer, particle_system, obj, object_color=[],
         if object_color:
             dupli.color = object_color[i]
 
+        elif bpy.context.scene.pam_anim_mesh.spikeUseLayerColor:
+            dupli.color = layer.color
+
+        else:
+            dupli.color = bpy.context.scene.pam_anim_mesh.spikeColor
+
 
 # TODO(SK): Missing docstring
 def generateNetworkNeurons(obj):
@@ -88,12 +90,15 @@ def animNeuronScaling(layer_name, n_id, frame):
     bpy.context.object.select = True
 
     # define the animation
+    animSpikeScale = bpy.context.scene.pam_anim_mesh.spikeScale
+    animSpikeFadeout = bpy.context.scene.pam_anim_mesh.spikeFadeout
+
     bpy.context.scene.frame_set(frame=frame - 1)
     bpy.ops.anim.keyframe_insert_menu(type='Scaling')
-    bpy.context.scene.frame_set(frame=frame + helper.timeToFrames(ANIM_SPIKE_FADEOUT))
+    bpy.context.scene.frame_set(frame=frame + animSpikeFadeout)
     bpy.ops.anim.keyframe_insert_menu(type='Scaling')
     bpy.context.scene.frame_set(frame=frame)
-    neuron.scale = (ANIM_SPIKE_SCALE, ANIM_SPIKE_SCALE, ANIM_SPIKE_SCALE)
+    neuron.scale = (animSpikeScale, animSpikeScale, animSpikeScale)
     bpy.ops.anim.keyframe_insert_menu(type='Scaling')
 
 

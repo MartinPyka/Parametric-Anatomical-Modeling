@@ -64,30 +64,66 @@ class PamAnimOrientationPane(bpy.types.Panel):
             row = layout.row()
             row.prop_search(options, 'orientationObject', bpy.data, "objects")
 
-
-class PamAnimMeshPane(bpy.types.Panel):
-    """A panel for choosing mesh"""
+class PamAnimPathsPane(bpy.types.Panel):
+    """A panel for choosing how to display paths"""
 
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "Mesh"
+    bl_label = "Paths"
     bl_category = "PAM Animate"
+
+    def draw_header(self, context):
+        options = bpy.context.scene.pam_anim_mesh
+
+        self.layout.prop(options, "animPaths", text="")
 
     def draw(self, context):
         layout = self.layout
 
         options = bpy.context.scene.pam_anim_mesh
 
+        layout.active = options["animPaths"]
+
         row = layout.row()
         row.prop_search(options, 'mesh', bpy.data, 'meshes')
 
-        row = layout.row()
-        row.prop(options, 'animPaths')
-        row.prop(options, 'animSpikes')
+class PamAnimSpikesPane(bpy.types.Panel):
+    """A panel for choosing how to display spikes"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "Spikes"
+    bl_category = "PAM Animate"
+
+    def draw_header(self, context):
+        options = bpy.context.scene.pam_anim_mesh
+
+        self.layout.prop(options, "animSpikes", text="")
+
+    def draw(self, context):
+        layout = self.layout
+
+        options = bpy.context.scene.pam_anim_mesh
+
+        layout.active = options["animSpikes"]
 
         row = layout.row()
         row.prop_search(options, 'neuron_object', bpy.data, 'objects')
+
+        row = layout.row()
+        col = row.column()
+        sub = col.column(align=True)
+        sub.prop(options, 'spikeScale')
+        sub.prop(options, 'spikeFadeout')
+
+        row = layout.row()
+        row.prop(options, 'spikeUseLayerColor')
+
+        row = layout.row()
+        row.active = not options.spikeUseLayerColor
+        row.prop(options, 'spikeColor')
 
 
 class PamAnimAnimPane(bpy.types.Panel):
@@ -161,3 +197,7 @@ class PamAnimGeneratePanel(bpy.types.Panel):
         row.operator("pam_anim.generate")
         row = layout.row()
         row.operator("pam_anim.clear_pamanim")
+
+def register():
+    """Registers all the panels for pam_anim"""
+

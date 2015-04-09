@@ -53,21 +53,19 @@ def clearVisualization():
     CURVES = {}
     SPIKE_OBJECTS = []
 
-
-# TODO(SK): Rephrase docstring, short 50 character summury and then a next
-# TODO(SK): paragraph for further details
-# TODO(SK): Parameter types missing
 def followCurve(curve, startTime, color, meshData):
-    """This function creates a new object with the given mesh and adds
-    a `Follow Curve` constraint to it
+    """Create a new object and bind it to a curve
+
+    This function creates a new object with the given mesh, adds it to the scene 
+    and adds creates `Follow Curve` constraint to it.
 
     To calculate the start time correctly the length of the curve needs to be
     saved in the custom property `timeLength` in the curves data.
 
-    :param (???) curve: curve to apply the constraint to
-    :param (???) startTime: start time in frames for when the animation should start playing
-    :param (???) color: color to apply to the color property of the object
-    :param (???) meshData: mesh data for the object
+    :param bpy.types.Object curve:  curve to apply the constraint to
+    :param float startTime:         start time in frames for when the animation should start playing
+    :param float[4] color:          color to apply to the color property of the object
+    :param bpy.types.Mesh meshData: mesh data for the object
 
 
     :return: spike object
@@ -81,7 +79,8 @@ def followCurve(curve, startTime, color, meshData):
     bpy.context.scene.objects.link(obj)
 
     constraint = obj.constraints.new(type="FOLLOW_PATH")
-    constraint.offset = startTime / curve.data["timeLength"] * 100
+    time = curve.data["timeLength"]
+    constraint.offset = startTime / time * 100
     constraint.target = curve
 
     startFrame = int(startTime)
@@ -91,14 +90,14 @@ def followCurve(curve, startTime, color, meshData):
     obj.hide = False
     obj.keyframe_insert(data_path="hide", frame=startFrame - 1)
     obj.hide = True
-    obj.keyframe_insert(data_path="hide", frame=math.ceil(startFrame + curve.data["timeLength"]))
+    obj.keyframe_insert(data_path="hide", frame=math.ceil(startFrame + time))
 
     obj.hide_render = True
     obj.keyframe_insert(data_path="hide_render", frame=startFrame - 2)
     obj.hide_render = False
     obj.keyframe_insert(data_path="hide_render", frame=startFrame - 1)
     obj.hide_render = True
-    obj.keyframe_insert(data_path="hide_render", frame=math.ceil(startFrame + curve.data["timeLength"]))
+    obj.keyframe_insert(data_path="hide_render", frame=math.ceil(startFrame + time))
 
     if(op.orientationType == 'FOLLOW'):
         constraint.use_curve_follow = True
@@ -112,16 +111,14 @@ def followCurve(curve, startTime, color, meshData):
 
     return obj
 
-
-# TODO(SK): Rephrase docstring, short 50 character summury and then a next
-# TODO(SK): paragraph for further details
-# TODO(SK): Parameter types missing
 def setAnimationSpeed(curve, animationSpeed):
-    """Sets a curves animation speed to the given speed with a linear interpolation. Any object bound to this
+    """Set the animation speed of a Bezier-curve
+
+    Sets a curves animation speed to the given speed with a linear interpolation. Any object bound to this
     curve with a Follow Curve constraint will have completed its animation along the curve in the given time.
 
-    :param curve:           The curve (bpy.types.Curve)
-    :param animationSpeed:  The animation speed in frames
+    :param bpy.types.Curve curve: The curve
+    :param float animationSpeed:  The animation speed in frames
     """
     curve.eval_time = 0
     curve.keyframe_insert(data_path="eval_time", frame=0)
@@ -134,9 +131,17 @@ def setAnimationSpeed(curve, animationSpeed):
     # Set the extrapolation of the curve to linear (This is important, without it, neurons with an offset start would not be animated)
     curve.animation_data.action.fcurves[0].extrapolation = 'LINEAR'
 
-
-# TODO(SK): Missing docstring
 def calculateDecay(layerValues, delta, decayFunc):
+    """Calculates the decay of all values in a dictionary
+
+    The given decay function is used on every value in the given dictionary. 
+    The values cannot become negative and are clamped to zero. The keys 
+    remain unchanged.
+
+    :param dict layerValues:   The given dictionary
+    :param float delta:        The time passed onto the decay function
+    :param function decayFunc: The function used to calculate the decay"""
+
     newValues = {}
     for key in layerValues:
         newValues[key] = decayFunc(layerValues[key], delta)
@@ -144,10 +149,11 @@ def calculateDecay(layerValues, delta, decayFunc):
             newValues[key] = 0
     return newValues
 
-
-# TODO(SK): Rephrase docstring
 def createDefaultMaterial():
-    """Creates a default material with a white diffuse color and the use object color property set to True.
+    """Create the default material.
+
+    Creates a default material with a white diffuse color and the use object color
+    property set to True.
     The name for this material is defined in the global variable DEFAULT_MAT_NAME"""
     options = bpy.context.scene.pam_anim_material
     if options.material != DEFAULT_MAT_NAME:
@@ -307,10 +313,12 @@ class ClearPamAnimOperator(bpy.types.Operator):
         return self.execute(context)
 
 
-# TODO(SK): Rephrase docstring, purpose? If this could generate everything I
-# TODO(SK): would stop working... right... about ...now!
 class GenerateOperator(bpy.types.Operator):
-    """Generate everything when PAM model, modeldata and simulationData are provided"""
+    """Generates connections between neuron groups and objects representing the spiking activity.
+
+    Executing this operator does some prep work, loads the model and then calls the visualize function.
+
+    For this, the PAM model, the model data and the simulation data need to be provided."""
 
     bl_idname = "pam_anim.generate"
     bl_label = "Generate"
@@ -411,16 +419,14 @@ class GenerateOperator(bpy.types.Operator):
 
         return self.execute(context)
 
-
-# TODO(SK): Missing docstring
 def register():
+    """Registers the operators"""
     # Custom property for the length of a curve for easy accessibility
     bpy.types.Curve.timeLength = bpy.props.FloatProperty()
     bpy.utils.register_class(GenerateOperator)
     bpy.utils.register_class(ClearPamAnimOperator)
 
-
-# TODO(SK): Missing docstring
 def unregister():
+    """Unregisters the operators"""
     bpy.utils.unregister_class(GenerateOperator)
     bpy.utils.unregister_class(ClearPamAnimOperator)

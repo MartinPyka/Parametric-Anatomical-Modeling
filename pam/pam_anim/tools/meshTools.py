@@ -1,10 +1,9 @@
 import bpy
 
 class MeshProperty(bpy.types.PropertyGroup):
-	"""Property group for mesh information
-
-	Holds all the properties for the meshes used in the animation.
-	Used by the Paths-panel and the Spikes-panel"""
+    """Property group for mesh information
+    Holds all the properties for the meshes used in the animation.
+    Used by the Paths-panel and the Spikes-panel"""
     mesh = bpy.props.StringProperty(name="Mesh")
     neuron_object = bpy.props.StringProperty(name="Neuron Object")
     animPaths = bpy.props.BoolProperty(name="Animate paths", default=True)
@@ -18,12 +17,12 @@ class MeshProperty(bpy.types.PropertyGroup):
 
 
 def register():
-	"""Registers the mesh properties"""
+    """Registers the mesh properties"""
     bpy.utils.register_class(MeshProperty)
     bpy.types.Scene.pam_anim_mesh = bpy.props.PointerProperty(type=MeshProperty)
 
 
 def unregister():
-	"""Unregisters the mesh properties"""
+    """Unregisters the mesh properties"""
     del bpy.types.Scene.pam_anim_mesh
     bpy.utils.unregister_class(MeshProperty)

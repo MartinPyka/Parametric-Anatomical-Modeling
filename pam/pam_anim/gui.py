@@ -83,7 +83,7 @@ class PamAnimPathsPane(bpy.types.Panel):
 
         options = bpy.context.scene.pam_anim_mesh
 
-        layout.active = options["animPaths"]
+        layout.active = options.animPaths
 
         row = layout.row()
         row.prop_search(options, 'mesh', bpy.data, 'meshes')
@@ -107,7 +107,7 @@ class PamAnimSpikesPane(bpy.types.Panel):
 
         options = bpy.context.scene.pam_anim_mesh
 
-        layout.active = options["animSpikes"]
+        layout.active = options.animSpikes
 
         row = layout.row()
         row.prop_search(options, 'neuron_object', bpy.data, 'objects')

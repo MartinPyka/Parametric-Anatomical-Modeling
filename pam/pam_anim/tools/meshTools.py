@@ -7,7 +7,7 @@ class MeshProperty(bpy.types.PropertyGroup):
     mesh = bpy.props.StringProperty(name="Mesh")
     neuron_object = bpy.props.StringProperty(name="Neuron Object")
     animPaths = bpy.props.BoolProperty(name="Animate paths", default=True)
-    animSpikes = bpy.props.BoolProperty(name="Animate spikes")
+    animSpikes = bpy.props.BoolProperty(name="Animate spikes", default = False)
 
     spikeScale = bpy.props.FloatProperty(name = "Spike scaling", description = "How big the spikes should be at the beginning of the animation", default = 3.0)
     spikeFadeout = bpy.props.IntProperty(name = "Spike fadeout", description = "How fast the spikes should scale down, in frames", default = 15)

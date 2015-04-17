@@ -1,6 +1,7 @@
 import bpy
 
 import math
+import random
 import heapq
 import numpy
 
@@ -44,7 +45,7 @@ class ConnectionCurve:
 
 
 class SpikeObject:
-    def __init__(self, connectionID, sourceNeuronID, targetNeuronID, timingID, curve, startTime):
+    def __init__(self, connectionID, sourceNeuronID, targetNeuronID, targetNeuronIndex, timingID, curve, startTime):
         self.curve = curve
         self.object = None
         self.color = (1.0, 1.0, 1.0, 1.0)
@@ -53,9 +54,10 @@ class SpikeObject:
         self.connectionID = connectionID
         self.sourceNeuronID = sourceNeuronID
         self.targetNeuronID = targetNeuronID
+        self.targetNeuronIndex = targetNeuronIndex
         self.timingID = timingID
 
-    def visualize(self, startTime, meshData, orientation = 'NONE'):
+    def visualize(self, meshData, orientationOptions = {'orientationType': 'NONE'}):
         if self.curve.curveObject is None:
             self.curve.visualize()
 
@@ -65,10 +67,10 @@ class SpikeObject:
 
         constraint = obj.constraints.new(type="FOLLOW_PATH")
         time = self.curve.curveObject.data["timeLength"]
-        constraint.offset = startTime / time * 100
+        constraint.offset = self.startTime / time * 100
         constraint.target = self.curve.curveObject
 
-        startFrame = int(startTime)
+        startFrame = int(self.startTime)
 
         obj.hide = True
         obj.keyframe_insert(data_path="hide", frame=startFrame - 2)
@@ -84,12 +86,12 @@ class SpikeObject:
         obj.hide_render = True
         obj.keyframe_insert(data_path="hide_render", frame=math.ceil(startFrame + time))
 
-        if(orientation == 'FOLLOW'):
+        if(orientationOptions.orientationType == 'FOLLOW'):
             constraint.use_curve_follow = True
 
-        if(orientation == 'OBJECT'):
+        if(orientationOptions.orientationType == 'OBJECT'):
             orientConstraint = obj.constraints.new(type="TRACK_TO")
-            orientConstraint.target = bpy.data.objects[op.orientationObject]
+            orientConstraint.target = bpy.data.objects[orientationOptions.orientationObject]
             orientConstraint.track_axis = "TRACK_Z"
             orientConstraint.up_axis = "UP_Y"
 
@@ -139,11 +141,14 @@ def simulateConnection(connectionID, sourceNeuronID, targetNeuronIndex, timingID
         CURVES[curveKey] = curve
 
     fireTime = data.TIMINGS[timingID][2]
-    SPIKE_OBJECTS[(curveKey, timingID)] = SpikeObject(connectionID, sourceNeuronID, targetNeuronID, timingID, curve, fireTime)
+    SPIKE_OBJECTS[(curveKey, timingID)] = SpikeObject(connectionID, sourceNeuronID, targetNeuronID, targetNeuronIndex, timingID, curve, fireTime)
 
 
 
-def simulateColors():
+def simulateColors(decayFunc=anim_functions.decay,
+                   initialColorValuesFunc=anim_functions.getInitialColorValues,
+                   mixValuesFunc=anim_functions.mixLayerValues,
+                   applyColorFunc=anim_functions.applyColorValues):
     for no, timing in enumerate(t):
         logger.info(str(no) + "/" + str(no_timings))
 
@@ -199,56 +204,21 @@ def simulateColors():
                 heapq.heappush(neuronUpdateQueue, (updateTime, i, layerValuesDecay))
 
 
-def generateAllTimings(frameStart = 0, frameEnd = 250, maxConn = 0, showPercent = 100.0):
-    t = data.TIMINGS
-    c = model.CONNECTION_RESULTS
+def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent = 100.0):
+    for (key, spike) in SPIKE_OBJECTS.items():
+        startFrame = projectTimeToFrames(spike.startTime)
 
-    no_timings = len(t)
+        if startFrame < frameStart or startFrame > frameEnd:
+            continue
 
-    pct = 0.0
-    show = True
+        if maxConns > 0 and spike.targetNeuronIndex > maxConns:
+            continue
 
-    for timingID, timing in enumerate(t):
-        logger.info("Generating: " + str(timingID) + "/" + str(no_timings))
+        random.seed(key)
+        if random.random() > showPercent / 100.0:
+            continue
 
-        neuronID = timing[0]
-        neuronGroupID = timing[1]
-        fireTime = timing[2]
-
-        connectionIDs = [x for x in model.CONNECTION_INDICES if x[1] == neuronGroupID]
-
-        for connectionID in connectionIDs:
-            if maxConn == 0:
-                conns = len(c[connectionID[0]]["c"][neuronID])
-            else:
-                conns = min(maxConn, len(c[connectionID[0]]["c"][neuronID]))
-
-            for index, i in enumerate(c[connectionID[0]]["c"][neuronID]):
-
-                if i == -1:
-                    continue
-
-                # Determine if this spike will be shown
-                if showPercent != 100.0:
-                    pct += showPercent
-                    if pct >= 100.0:
-                        pct = pct % 100.0
-                        show = True
-                    else:
-                        show = False
-
-                if index < conns and show:
-                    logger.info("Generating object for connectionID {}, neuronID {}, targetID {}, fire time {}".format(connectionID[0], neuronID, i, timingID))
-                    
-                    spikeObject = SPIKE_OBJECTS[((connectionID[0], neuronID, i), timingID)]
-                    startFrame = projectTimeToFrames(spikeObject.startTime)
-                    if spikeObject.object is None:
-                        spikeObject.visualize(startFrame, bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh])
-
-# def generateAllTimings(frameStart = 0, frameEnd = 250, maxConn = 0, shwoPercent = 100.0):
-#     for (key, spike) in SPIKE_OBJECTS:
-#         if spike.
-#         spike.visualize()
+        spike.visualize(bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh], bpy.context.scene.pam_anim_orientation)
 
 # TODO(SK): Rephrase docstring, add a `.. note::` or `.. warning::`
 def clearVisualization():
@@ -611,8 +581,12 @@ class GenerateOperator(bpy.types.Operator):
             # Create the visualization
             logger.info("Simulate spike propagation")
             simulate()
+            frameStart = bpy.context.scene.pam_anim_animation.startFrame
+            frameEnd = bpy.context.scene.pam_anim_animation.endFrame
+            showPercent = bpy.context.scene.pam_anim_animation.showPercent
+            maxConns = bpy.context.scene.pam_anim_animation.connNumber
             logger.info('Visualize spike propagation')
-            generateAllTimings()
+            generateAllTimings(frameStart = frameStart, frameEnd = frameEnd, maxConns = maxConns, showPercent = showPercent)
             # visualize(decayFunc, getInitialColorValuesFunc, mixLayerValuesFunc, applyColorValuesFunc)
 
             # Create groups if they do not already exist
@@ -622,8 +596,8 @@ class GenerateOperator(bpy.types.Operator):
                 bpy.data.groups.new(SPIKE_GROUP_NAME)
 
             # Insert objects into groups
-            addObjectsToGroup(bpy.data.groups[PATHS_GROUP_NAME], [obj.curveObject for obj in CURVES.values()])
-            addObjectsToGroup(bpy.data.groups[SPIKE_GROUP_NAME], [obj.object for obj in SPIKE_OBJECTS.values()])
+            addObjectsToGroup(bpy.data.groups[PATHS_GROUP_NAME], [obj.curveObject for obj in CURVES.values() if obj.curveObject is not None])
+            addObjectsToGroup(bpy.data.groups[SPIKE_GROUP_NAME], [obj.object for obj in SPIKE_OBJECTS.values() if obj.object is not None])
 
             # Apply material to mesh
             mesh = bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh]

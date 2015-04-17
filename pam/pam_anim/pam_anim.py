@@ -205,6 +205,14 @@ def simulateColors(decayFunc=anim_functions.decay,
 
 
 def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent = 100.0):
+    # This takes some time, so here's a loading bar!
+    wm = bpy.context.window_manager
+
+    progress = 0
+    total = len(SPIKE_OBJECTS)
+    step = 100 / total
+
+    wm.progress_begin(0, 100)
     for (key, spike) in SPIKE_OBJECTS.items():
         startFrame = projectTimeToFrames(spike.startTime)
 
@@ -219,6 +227,11 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
             continue
 
         spike.visualize(bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh], bpy.context.scene.pam_anim_orientation)
+
+        progress += step
+        wm.progress_update(int(progress))
+
+    wm.progress_end()
 
 # TODO(SK): Rephrase docstring, add a `.. note::` or `.. warning::`
 def clearVisualization():

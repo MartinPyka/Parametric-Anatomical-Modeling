@@ -116,8 +116,6 @@ def simulateTiming(timingID):
     neuronGroupID = timing[1]
     fireTime = timing[2]
 
-    model.NG_LIST[neuronGroupID]
-
     connectionIDs = [x for x in model.CONNECTION_INDICES if x[1] == neuronGroupID]
 
     c = model.CONNECTION_RESULTS
@@ -149,14 +147,20 @@ def simulateColors(decayFunc=anim_functions.decay,
                    initialColorValuesFunc=anim_functions.getInitialColorValues,
                    mixValuesFunc=anim_functions.mixLayerValues,
                    applyColorFunc=anim_functions.applyColorValues):
-    for no, timing in enumerate(t):
-        logger.info(str(no) + "/" + str(no_timings))
 
+    t = data.TIMINGS
+    d = data.DELAYS
+    c = model.CONNECTION_RESULTS
+
+    neuronValues = {}
+    neuronUpdateQueue = []
+
+    for timingID, timing in enumerate(t):
         neuronID = timing[0]
         neuronGroupID = timing[1]
         fireTime = timing[2]
 
-        neuronGroup = n[neuronGroupID]
+        connectionIDs = [x for x in model.CONNECTION_INDICES if x[1] == neuronGroupID]
 
         # Update the color values of all neurons with queued updates
         poppedValues = getQueueValues(neuronUpdateQueue, fireTime)
@@ -190,14 +194,10 @@ def simulateColors(decayFunc=anim_functions.decay,
         else:
             layerValuesDecay = initialColorValuesFunc(neuronGroupID, neuronID, data.NEURON_GROUPS)
 
-        for connectionID in neuronGroup.connections:
-            if maxConn == 0:
-                conns = len(c[connectionID[0]]["c"][neuronID])
-            else:
-                conns = min(maxConn, len(c[connectionID[0]]["c"][neuronID]))
-
+        for connectionID in connectionIDs:
             for index, i in enumerate(c[connectionID[0]]["c"][neuronID]):
-                applyColorFunc(obj, layerValuesDecay, neuronID, neuronGroupID, data.NEURON_GROUPS)
+                obj = SPIKE_OBJECTS[((connectionID[0], neuronID, i), timingID)]
+                applyColorFunc(obj.object, layerValuesDecay, neuronID, neuronGroupID, data.NEURON_GROUPS)
 
                 # Queue an update to the connected neuron
                 updateTime = fireTime + d[connectionID[0]][neuronID][index]

@@ -26,6 +26,8 @@ SPIKE_GROUP_NAME = "SPIKES"
 SPIKE_OBJECTS = {}
 CURVES = {}
 
+layerf = [1,2,3]
+
 class ConnectionCurve:
     def __init__(self, connectionID, sourceNeuronID, targetNeuronID, timeLength):
         self.curveObject = None
@@ -204,7 +206,14 @@ def simulateColors(decayFunc=anim_functions.decay,
                 heapq.heappush(neuronUpdateQueue, (updateTime, i, layerValuesDecay))
 
 
-def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent = 100.0):
+def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent = 100.0, layerFilter = None):
+
+    if layerFilter is not None:
+        connectionIndicesFilter = [False]*len(model.CONNECTION_INDICES)
+        for connection in model.CONNECTION_INDICES:
+            connectionIndicesFilter[connection[0]] = connection[1] in layerFilter
+        print(connectionIndicesFilter)
+
     # This takes some time, so here's a loading bar!
     wm = bpy.context.window_manager
 
@@ -222,9 +231,13 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
         if maxConns > 0 and spike.targetNeuronIndex > maxConns:
             continue
 
+        if not connectionIndicesFilter[spike.connectionID]:
+            continue
+
         random.seed(key)
         if random.random() > showPercent / 100.0:
             continue
+
 
         spike.visualize(bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh], bpy.context.scene.pam_anim_orientation)
 
@@ -599,7 +612,7 @@ class GenerateOperator(bpy.types.Operator):
             showPercent = bpy.context.scene.pam_anim_animation.showPercent
             maxConns = bpy.context.scene.pam_anim_animation.connNumber
             logger.info('Visualize spike propagation')
-            generateAllTimings(frameStart = frameStart, frameEnd = frameEnd, maxConns = maxConns, showPercent = showPercent)
+            generateAllTimings(frameStart = frameStart, frameEnd = frameEnd, maxConns = maxConns, showPercent = showPercent, layerFilter = layerf)
             # visualize(decayFunc, getInitialColorValuesFunc, mixLayerValuesFunc, applyColorValuesFunc)
 
             # Create groups if they do not already exist

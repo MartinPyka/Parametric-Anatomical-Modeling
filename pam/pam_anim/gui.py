@@ -17,7 +17,6 @@ class PamAnimDataPane(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         row = layout.column()
-        row.prop(context.scene.pam_anim_data, "modelData")
         row.prop(context.scene.pam_anim_data, "simulationData")
 
 

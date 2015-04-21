@@ -49,12 +49,15 @@ class ConnectionCurve:
 
         This function calls visualizeOneConnection with it's IDs and saves the generated object in curveObject
         """
-        logger.info("Visualizing spike " + str((self.connectionID, self.sourceNeuronID, self.targetNeuronID)))
-        self.curveObject = pam_vis.visualizeOneConnection(self.connectionID, self.sourceNeuronID, self.targetNeuronID)
-        frameLength = timeToFrames(self.timeLength)
+        logger.info("Visualizing connection " + str((self.connectionID, self.sourceNeuronID, self.targetNeuronID)))
+        try:
+            self.curveObject = pam_vis.visualizeOneConnection(self.connectionID, self.sourceNeuronID, self.targetNeuronID)
+            frameLength = timeToFrames(self.timeLength)
 
-        setAnimationSpeed(self.curveObject.data, frameLength)
-        self.curveObject.data["timeLength"] = frameLength
+            setAnimationSpeed(self.curveObject.data, frameLength)
+            self.curveObject.data["timeLength"] = frameLength
+        except:
+            logger.error("Failed to visualize connection " + str((self.connectionID, self.sourceNeuronID, self.targetNeuronID)))
 
 
 
@@ -97,6 +100,10 @@ class SpikeObject:
         """
         if self.curve.curveObject is None:
             self.curve.visualize()
+
+        if self.curve.curveObject is None:
+            logger.error("No curve object to attatch to for spike " + str((self.connectionID, self.sourceNeuronID, self.targetNeuronID, self.timingID)) + "!")
+            return
 
         obj = bpy.data.objects.new("Spike_" + "_" + str(self.timingID) + "_" + str(self.connectionID) + "_" + str(self.sourceNeuronID) + "_" + str(self.targetNeuronID), meshData)
         obj.color = self.color
@@ -168,7 +175,7 @@ def simulateTiming(timingID):
 
     for connectionID in connectionIDs:
         for index, i in enumerate(c[connectionID[0]]['c'][neuronID]):
-            if index == -1 or data.DELAYS[connectionID[0]][neuronID][index] == 0:
+            if i == -1 or data.DELAYS[connectionID[0]][neuronID][index] == 0:
                 continue
             simulateConnection(connectionID[0], neuronID, index, timingID)
 
@@ -280,18 +287,20 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
     :param float showPercent: Probability that a given spike will be generated (Must be between 0.0 and 100.0)
     :param list layerFilter: List of layer indeces that are allowed to generate spikes. None for no restrictions
     """
+    connectionIndicesFilter = None
     if layerFilter is not None:
         connectionIndicesFilter = [False]*len(model.CONNECTION_INDICES)
         for connection in model.CONNECTION_INDICES:
             connectionIndicesFilter[connection[0]] = connection[1] in layerFilter
-        print(connectionIndicesFilter)
 
     # This takes some time, so here's a loading bar!
     wm = bpy.context.window_manager
 
-    progress = 0
+    progress = 0.0
     total = len(SPIKE_OBJECTS)
     step = 100 / total
+
+    logger.info("Generating " + str(total) + " objects")
 
     wm.progress_begin(0, 100)
     for (key, spike) in SPIKE_OBJECTS.items():
@@ -303,7 +312,7 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
         if maxConns > 0 and spike.targetNeuronIndex > maxConns:
             continue
 
-        if not connectionIndicesFilter[spike.connectionID]:
+        if connectionIndicesFilter is not None and not connectionIndicesFilter[spike.connectionID]:
             continue
 
         random.seed(key)

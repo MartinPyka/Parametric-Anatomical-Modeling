@@ -5,54 +5,10 @@ import os
 import csv
 from bpy.path import abspath
 
-NEURON_GROUPS = []
-CONNECTIONS = []
+from .. import model
+
 DELAYS = []
 TIMINGS = []
-
-
-# TODO(SK): Rephrase docstring
-class NeuronGroup:
-    """Represent a neuron group
-
-    :attribute str name: object name
-    :attribute str particle_system: particle system name
-    :attribute int count: neuron quantity
-    :attribute int areaStart: id of first neuron
-    :attribute int areaEnd: id of last neuron
-    :attribute list connections: connections to other neuron groups
-
-    .. note::
-        `connections` is a list of tuples with 3 elements:
-            * connectionID
-            * groupFrom
-            * groupTo
-
-    """
-    def __init__(self, name, particle_system, count, areaStart):
-        self.name = name
-        self.particle_system = particle_system
-        self.count = count
-        self.areaStart = areaStart
-        self.areaEnd = areaStart + count
-        self.connections = []
-
-
-# TODO(SK): Missing docstring
-def import_model_from_zip(filepath):
-    result = []
-    names = []
-    with zipfile.ZipFile(filepath, "r", zipfile.ZIP_DEFLATED) as file:
-        for filename in file.namelist():
-            filename_split = os.path.splitext(filename)
-            filename_extension = filename_split[-1]
-            data = io.StringIO(str(file.read(filename), 'utf-8'))
-            func = SUPPORTED_FILETYPES[filename_extension]
-            matrix = func(data)
-            result.append(matrix)
-            names.append(filename_split[0])
-    return result, names
-
 
 # TODO(SK): Missing docstring
 def csv_read(data):
@@ -126,10 +82,9 @@ def readSimulationData(simulationFile):
     timingFile.close()
 
     prefix = neuronTimingPath[:-4]
-    global CONNECTIONS
     global DELAYS
     try:
-        for i in range(0, len(CONNECTIONS)):
+        for i in range(0, len(model.CONNECTIONS)):
             DELAYS.append(csvfile_read(prefix + '_d' + str(i) + '.csv'))
     except:
         print('cannot find file: ' + prefix + '_d' + str(i) + '.csv')

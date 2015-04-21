@@ -17,7 +17,6 @@ import logging
 logger = logging.getLogger(__package__)
 
 # CONSTANTS
-TAU = 20
 DEFAULT_MAT_NAME = "SpikeMaterial"
 
 PATHS_GROUP_NAME = "PATHS"
@@ -27,6 +26,17 @@ SPIKE_OBJECTS = {}
 CURVES = {}
 
 class ConnectionCurve:
+    """Class for holding connection information
+
+    :attribute bpy.types.Object curveObject: The object generated for this curve. 
+        May be None if object hasn't been generated.
+    :attribute float timeLength: The duration in ms how long a spike needs to 
+        get to the end of the curve        
+    :attribute int connectionID: The ID of the connection between two neuron groups
+    :attribute int sourceNeuronID: The ID of the source neuron in the firing neuron group
+    :attribute int targetNeuronID: The ID of the target neuron in the recieving neuron group
+    """
+
     def __init__(self, connectionID, sourceNeuronID, targetNeuronID, timeLength):
         self.curveObject = None
         self.timeLength = timeLength
@@ -35,6 +45,10 @@ class ConnectionCurve:
         self.targetNeuronID = targetNeuronID
 
     def visualize(self):
+        """Generates this curve as an object
+
+        This function calls visualizeOneConnection with it's IDs and saves the generated object in curveObject
+        """
         logger.info("Visualizing spike " + str((self.connectionID, self.sourceNeuronID, self.targetNeuronID)))
         self.curveObject = pam_vis.visualizeOneConnection(self.connectionID, self.sourceNeuronID, self.targetNeuronID)
         frameLength = timeToFrames(self.timeLength)
@@ -45,6 +59,19 @@ class ConnectionCurve:
 
 
 class SpikeObject:
+    """Class for holding spike information
+
+    :attribute ConnectionCurve curve: The curve object this spike is attatched to
+    :attribute bpy.types.Object object: The object generated for this spike.
+        May be None if object hasn't been generated
+    :attribute float[4] color: The color this spike will have
+    :attribute float startTime: The time in ms when this spike has been fired
+    :attribute int connectionID: The ID of the connection between two neuron groups
+    :attribute int sourceNeuronID: The ID of the source neuron in the firing neuron group
+    :attribute int targetNeuronID: The ID of the target neuron in the recieving neuron group
+    :attribute int targetNeuronIndex: The index of the target neuron. Useful for maxConns.
+    :attribute int timingID: The ID (line in the timing file) of the timing that has fired this neuron
+    """
     def __init__(self, connectionID, sourceNeuronID, targetNeuronID, targetNeuronIndex, timingID, curve, startTime):
         self.curve = curve
         self.object = None
@@ -58,6 +85,16 @@ class SpikeObject:
         self.timingID = timingID
 
     def visualize(self, meshData, orientationOptions = {'orientationType': 'NONE'}):
+        """Generates an object for this spike
+
+        This function generates a curve object for it's connection if there is none.
+        The generated object is saved in self.object.
+
+        :param bpy.types.Mesh meshData: The mesh that will be used for this object
+        :param dict orientationOptions: Options for orientation:
+            orientationType: {'NONE', 'OBJECT', 'FOLLOW'}
+            orientationObject: bpy.types.Object, Only used for orientationType OBJECT
+        """
         if self.curve.curveObject is None:
             self.curve.visualize()
 
@@ -97,8 +134,12 @@ class SpikeObject:
 
         self.object = obj
 
-
 def simulate():
+    """Simulates all timings
+
+    Calls simulateTiming for every timing in data.TIMINGS
+    data.readSimulationData() should be called before this.
+    """
     t = data.TIMINGS
 
     no_timings = len(t)
@@ -109,6 +150,11 @@ def simulate():
         simulateTiming(timingID)
 
 def simulateTiming(timingID):
+    """Simulates a timing with a geven timingID
+
+    Calls simulateConnection() with all outgoing connections for the neuron group
+
+    :param int timingID: The ID (line in timing file) of the timing"""
 
     timing = data.TIMINGS[timingID]
 
@@ -126,9 +172,21 @@ def simulateTiming(timingID):
                 continue
             simulateConnection(connectionID[0], neuronID, index, timingID)
 
-
-
 def simulateConnection(connectionID, sourceNeuronID, targetNeuronIndex, timingID):
+    """Simulates a single connection at a specific timing
+
+    Creates curve object (if not already generated) and spike object for a specific
+    connection and a specific timing
+
+    Objects are saved in CURVES and SPIKE_OBJECTS
+    
+    :attribute int connectionID: The ID of the connection between two neuron groups
+    :attribute int sourceNeuronID: The ID of the source neuron in the firing neuron group
+    :attribute int targetNeuronID: The ID of the target neuron in the recieving neuron group
+    :attribute int targetNeuronIndex: The index of the target neuron.
+    :attribute int timingID: The ID (line in the timing file) of the timing that has fired
+
+    """
     targetNeuronID = model.CONNECTION_RESULTS[connectionID]['c'][sourceNeuronID][targetNeuronIndex]
     curveKey = (connectionID, sourceNeuronID, targetNeuronID)
     if curveKey in CURVES:
@@ -147,6 +205,15 @@ def simulateColors(decayFunc=anim_functions.decay,
                    initialColorValuesFunc=anim_functions.getInitialColorValues,
                    mixValuesFunc=anim_functions.mixLayerValues,
                    applyColorFunc=anim_functions.applyColorValues):
+    """Simulates colors for simulated spikes
+
+    :param function decay_func: Function used for calculating decay at a neuron
+    :param function initialColorValuesFunc: Function for getting the initial color values for
+        neurons that have no spiking information
+    :param function mixValuesFunc: Function for calculating the mixing of colors when a spike 
+        hits a neuron with color information
+    :param function applyColorFunc: Function for generating color values from the value dictionaries
+    """
 
     t = data.TIMINGS
     d = data.DELAYS
@@ -205,7 +272,14 @@ def simulateColors(decayFunc=anim_functions.decay,
 
 
 def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent = 100.0, layerFilter = None):
+    """Generates objects for all spikes matching criteria
 
+    :param int frameStart: The frame before which no spikes will be generated
+    :param int frameEnd: The frame after which no spikes will be generated
+    :param int maxConns: Maximum number of spikes one neuron can generate. 0 for no restrictions.
+    :param float showPercent: Probability that a given spike will be generated (Must be between 0.0 and 100.0)
+    :param list layerFilter: List of layer indeces that are allowed to generate spikes. None for no restrictions
+    """
     if layerFilter is not None:
         connectionIndicesFilter = [False]*len(model.CONNECTION_INDICES)
         for connection in model.CONNECTION_INDICES:
@@ -272,64 +346,6 @@ def clearVisualization():
     CURVES = {}
     SPIKE_OBJECTS = {}
 
-def followCurve(curve, startTime, color, meshData):
-    """Create a new object and bind it to a curve
-
-    This function creates a new object with the given mesh, adds it to the scene 
-    and adds creates `Follow Curve` constraint to it.
-
-    To calculate the start time correctly the length of the curve needs to be
-    saved in the custom property `timeLength` in the curves data.
-
-    :param bpy.types.Object curve:  curve to apply the constraint to
-    :param float startTime:         start time in frames for when the animation should start playing
-    :param float[4] color:          color to apply to the color property of the object
-    :param bpy.types.Mesh meshData: mesh data for the object
-
-
-    :return: spike object
-    :rtype:
-
-    """
-    op = bpy.context.scene.pam_anim_orientation
-
-    obj = bpy.data.objects.new("Spike", meshData)
-    obj.color = color
-    bpy.context.scene.objects.link(obj)
-
-    constraint = obj.constraints.new(type="FOLLOW_PATH")
-    time = curve.data["timeLength"]
-    constraint.offset = startTime / time * 100
-    constraint.target = curve
-
-    startFrame = int(startTime)
-
-    obj.hide = True
-    obj.keyframe_insert(data_path="hide", frame=startFrame - 2)
-    obj.hide = False
-    obj.keyframe_insert(data_path="hide", frame=startFrame - 1)
-    obj.hide = True
-    obj.keyframe_insert(data_path="hide", frame=math.ceil(startFrame + time))
-
-    obj.hide_render = True
-    obj.keyframe_insert(data_path="hide_render", frame=startFrame - 2)
-    obj.hide_render = False
-    obj.keyframe_insert(data_path="hide_render", frame=startFrame - 1)
-    obj.hide_render = True
-    obj.keyframe_insert(data_path="hide_render", frame=math.ceil(startFrame + time))
-
-    if(op.orientationType == 'FOLLOW'):
-        constraint.use_curve_follow = True
-
-    if(op.orientationType == 'OBJECT'):
-        # For eventual camera tracking
-        camConstraint = obj.constraints.new(type="TRACK_TO")
-        camConstraint.target = bpy.data.objects[op.orientationObject]
-        camConstraint.track_axis = "TRACK_Z"
-        camConstraint.up_axis = "UP_Y"
-
-    return obj
-
 def setAnimationSpeed(curve, animationSpeed):
     """Set the animation speed of a Bezier-curve
 
@@ -395,129 +411,6 @@ def getUsedNeuronGroups():
     return numpy.unique(inds)
 
 
-# TODO(SK): Rephrase docstring, short 50 character summury and then a next
-# TODO(SK): paragraph for further details
-def visualize(decayFunc=anim_functions.decay,
-              initialColorValuesFunc=anim_functions.getInitialColorValues,
-              mixValuesFunc=anim_functions.mixLayerValues,
-              applyColorFunc=anim_functions.applyColorValues):
-    """This function creates the visualization of spikes
-
-    :param function decayFunc: calculates the decay of spikes
-    :param function initialColorValuesFunc: sets the initial color of the spikes
-    :param function mixValuesFunc: provides mixing of spike colors
-    :param function applyColorFunc: applies color to the spikes
-
-    """
-
-    n = data.NEURON_GROUPS
-    c = data.CONNECTIONS
-    t = data.TIMINGS
-    d = data.DELAYS
-
-    # Dictionary for generated curves, so we don't need to generate them twice
-    global CURVES
-
-    neuronValues = {}
-    neuronUpdateQueue = []
-
-    no_timings = len(t)
-
-    maxConn = bpy.context.scene.pam_anim_animation.connNumber
-
-    showPercent = bpy.context.scene.pam_anim_animation.showPercent
-    pct = 0.0
-    show = True
-
-    for no, timing in enumerate(t):
-        # if (no % 10) == 0:
-
-
-
-        logger.info(str(no) + "/" + str(no_timings))
-
-        neuronID = timing[0]
-        neuronGroupID = timing[1]
-        fireTime = timing[2]
-
-        neuronGroup = n[neuronGroupID]
-
-        # Update the color values of all neurons with queued updates
-        poppedValues = getQueueValues(neuronUpdateQueue, fireTime)
-        for elem in poppedValues:
-            updateTime = elem[0]
-            key = elem[1]
-            newLayerValues = elem[2]
-
-            # If the key already has values, we have to calculate the decay of the values and then mix them with the incoming values
-            if key in neuronValues:
-                oldLayerValues = neuronValues[key][0]
-                lastUpdateTime = neuronValues[key][1]
-
-                oldLayerValuesDecay = calculateDecay(oldLayerValues, updateTime - lastUpdateTime, decayFunc)
-                updatedLayerValues = mixValuesFunc(oldLayerValuesDecay, newLayerValues)
-
-                neuronValues[key] = (updatedLayerValues, updateTime)
-            # If not, we don't need to mix the colors together, as this would just darken the color
-            else:
-                neuronValues[key] = (newLayerValues, updateTime)
-
-        if neuronID in neuronValues:
-            # Update this neuron
-            layerValues = neuronValues[neuronID][0]
-            lastUpdateTime = neuronValues[neuronID][1]
-            layerValuesDecay = calculateDecay(layerValues, fireTime - lastUpdateTime, decayFunc)
-
-            # Now that the neuron has fired, its values go back down to zero
-            del(neuronValues[neuronID])
-
-        else:
-            layerValuesDecay = initialColorValuesFunc(neuronGroupID, neuronID, data.NEURON_GROUPS)
-
-        for connectionID in neuronGroup.connections:
-            if maxConn == 0:
-                conns = len(c[connectionID[0]]["c"][neuronID])
-            else:
-                conns = min(maxConn, len(c[connectionID[0]]["c"][neuronID]))
-
-            for index, i in enumerate(c[connectionID[0]]["c"][neuronID]):
-
-                # Determine if this spike will be shown
-                if showPercent != 100.0:
-                    pct += showPercent
-                    if pct >= 100.0:
-                        pct = pct % 100.0
-                        show = True
-                    else:
-                        show = False
-
-                if index < conns and show:
-                    if (i == -1) | (d[connectionID[0]][neuronID][index] == 0):
-                        continue
-                    if (connectionID[0], neuronID, i) not in CURVES.keys():
-                        # If we do not have a curve already generated, we generate a new one with PAM and save it in our dictionary
-                        # print("Calling visualizeOneConnection with " + str(connectionID[0]) + ", " + str(neuronID)+ ", " + str(i))
-                        curve = CURVES[(connectionID[0], neuronID, i)] = pam_vis.visualizeOneConnection(connectionID[0], neuronID, i)
-
-                        # The generated curve needs the right animation speed, so we set the custom property and generate the animation
-                        curveLength = timeToFrames(d[connectionID[0]][neuronID][index])
-                        # print(curve)
-                        setAnimationSpeed(curve.data, curveLength)
-                        curve.data["timeLength"] = curveLength
-                    else:
-                        curve = CURVES[(connectionID[0], neuronID, i)]
-
-                    startFrame = projectTimeToFrames(fireTime)
-                    obj = followCurve(curve, startFrame, (0.0, 0.0, 1.0, 1.0), bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh])
-                    SPIKE_OBJECTS.append(obj)
-
-                    applyColorFunc(obj, layerValuesDecay, neuronID, neuronGroupID, data.NEURON_GROUPS)
-
-                # Queue an update to the connected neuron
-                updateTime = fireTime + d[connectionID[0]][neuronID][index]
-                heapq.heappush(neuronUpdateQueue, (updateTime, i, layerValuesDecay))
-
-
 class ClearPamAnimOperator(bpy.types.Operator):
     """Clear Animation"""
     bl_idname = "pam_anim.clear_pamanim"
@@ -571,8 +464,6 @@ class GenerateOperator(bpy.types.Operator):
         clearVisualization()
 
         # Read data from files
-        logger.info('Read model data from csv file')
-        data.readModelData(bpy.context.scene.pam_anim_data.modelData)
         logger.info('Read spike-data')
         data.readSimulationData(bpy.context.scene.pam_anim_data.simulationData)
         logger.info('Prepare Visualization')

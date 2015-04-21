@@ -175,13 +175,19 @@ class PamAnimLayerPane(bpy.types.Panel):
         options = bpy.context.scene.pam_anim_material
 
         row = layout.row()
+
+        animOp = context.scene.pam_anim_animation
+        row.template_list("LayerSelectionList", "", animOp, "layerCollection", animOp, "activeLayerIndex")
+
+        col = row.column()
+        col.operator("pam_anim.update_available_layers", icon = "FILE_REFRESH")
+
+        row = layout.row()
         row.prop_search(options, "script", bpy.data, "texts")
 
 
-# TODO(SK): Rephrase docstring, purpose?
-# TODO(SK): Please do not commit commented code
 class PamAnimGeneratePanel(bpy.types.Panel):
-    """A panel for the generate-button"""
+    """A panel for all operators for pam_anim"""
 
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -193,11 +199,12 @@ class PamAnimGeneratePanel(bpy.types.Panel):
         layout = self.layout
 
         row = layout.row()
-        # row.scale_y = 2.0
         row.operator("pam_anim.generate")
         row = layout.row()
         row.operator("pam_anim.clear_pamanim")
 
-def register():
-    """Registers all the panels for pam_anim"""
+class LayerSelectionList(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        layout.label(item.layerName)
+        layout.prop(item, "layerGenerate", text = "")
 

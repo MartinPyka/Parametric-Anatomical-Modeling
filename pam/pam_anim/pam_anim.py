@@ -26,8 +26,6 @@ SPIKE_GROUP_NAME = "SPIKES"
 SPIKE_OBJECTS = {}
 CURVES = {}
 
-layerf = [1,2,3]
-
 class ConnectionCurve:
     def __init__(self, connectionID, sourceNeuronID, targetNeuronID, timeLength):
         self.curveObject = None
@@ -607,12 +605,21 @@ class GenerateOperator(bpy.types.Operator):
             # Create the visualization
             logger.info("Simulate spike propagation")
             simulate()
+
             frameStart = bpy.context.scene.pam_anim_animation.startFrame
             frameEnd = bpy.context.scene.pam_anim_animation.endFrame
             showPercent = bpy.context.scene.pam_anim_animation.showPercent
             maxConns = bpy.context.scene.pam_anim_animation.connNumber
+
+            layerFilter = None
+            if len(bpy.context.scene.pam_anim_animation.layerCollection) > 0:
+                layerFilter = []
+                for layerItem in bpy.context.scene.pam_anim_animation.layerCollection:
+                    if layerItem.layerGenerate:
+                        layerFilter.append(layerItem.layerIndex)
+
             logger.info('Visualize spike propagation')
-            generateAllTimings(frameStart = frameStart, frameEnd = frameEnd, maxConns = maxConns, showPercent = showPercent, layerFilter = layerf)
+            generateAllTimings(frameStart = frameStart, frameEnd = frameEnd, maxConns = maxConns, showPercent = showPercent, layerFilter = layerFilter)
             # visualize(decayFunc, getInitialColorValuesFunc, mixLayerValuesFunc, applyColorValuesFunc)
 
             # Create groups if they do not already exist

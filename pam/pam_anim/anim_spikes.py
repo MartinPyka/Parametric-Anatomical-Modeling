@@ -63,7 +63,7 @@ def generateNetworkNeurons(obj):
 # TODO(SK): Missing docstring
 def animNeuronSpiking(func):
     timings = data.TIMINGS
-    neuronGroups = data.NEURON_GROUPS
+    neuronGroups = model.NG_LIST
 
     no_timings = len(timings)
 
@@ -71,7 +71,7 @@ def animNeuronSpiking(func):
     for i, (neuronIDinGroup, neuronGroupID, fireTime) in enumerate(timings):
         logger.info(str(i) + "/" + str(no_timings))
 
-        layer_name = neuronGroups[neuronGroupID].name
+        layer_name = neuronGroups[neuronGroupID][0]
         frame = helper.projectTimeToFrames(fireTime)
         func(layer_name, neuronIDinGroup, frame)
 

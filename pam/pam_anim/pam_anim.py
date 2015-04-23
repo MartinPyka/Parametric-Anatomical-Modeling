@@ -544,7 +544,7 @@ class GenerateOperator(bpy.types.Operator):
             ng_inds = getUsedNeuronGroups()
             for ind in ng_inds:
                 logger.info("Generate neurons for ng " + str(ind))
-                anim_spikes.generateLayerNeurons(bpy.data.objects[data.NEURON_GROUPS[ind].name], data.NEURON_GROUPS[ind].particle_system, neuron_object)
+                anim_spikes.generateLayerNeurons(bpy.data.objects[model.NG_LIST[ind][0]], model.NG_LIST[ind][1], neuron_object)
             logger.info("Create spike animation for neurons")
             anim_spikes.animNeuronSpiking(anim_spikes.animNeuronScaling)
 

@@ -306,7 +306,10 @@ def simulateColors(decayFunc=anim_functions.decay,
         for connectionID in connectionIDs:
             for index, i in enumerate(c[connectionID[0]]["c"][neuronID]):
                 obj = SPIKE_OBJECTS[((connectionID[0], neuronID, i), timingID)]
-                applyColorFunc(obj.object, layerValuesDecay, neuronID, neuronGroupID, model.NG_LIST)
+                color = applyColorFunc(layerValuesDecay, neuronID, neuronGroupID, model.NG_LIST)
+                if obj.object:
+                    obj.object.color = color
+                anim_spikes.setNeuronColorKeyframe(neuronID, neuronGroupID, fireTime, color)
 
                 # Queue an update to the connected neuron
                 updateTime = fireTime + d[connectionID[0]][neuronID][index]
@@ -536,35 +539,7 @@ class GenerateOperator(bpy.types.Operator):
             logger.info('Visualize spike propagation')
             generateAllTimings(frameStart = frameStart, frameEnd = frameEnd, maxConns = maxConns, showPercent = showPercent, layerFilter = layerFilter)
 
-            # Colorize spikes:
-            if bpy.context.scene.pam_anim_material.colorizingMethod == 'LAYER':
-                if bpy.context.scene.render.engine == 'CYCLES':
-                    simulateColorsByLayer('MATERIAL_CYCLES')
-                else:
-                    simulateColorsByLayer('MATERIAL')
-            elif bpy.context.scene.pam_anim_material.colorizingMethod == 'SIMULATE':
-                # Prepare functions
-                decayFunc = anim_functions.decay
-                getInitialColorValuesFunc = anim_functions.getInitialColorValues
-                mixLayerValuesFunc = anim_functions.mixLayerValues
-                applyColorValuesFunc = anim_functions.applyColorValues
-
-                # Load any scripts
-                script = bpy.context.scene.pam_anim_material.script
-                if script in bpy.data.texts:
-                    localFuncs = {}
-                    exec(bpy.data.texts[script].as_string(), localFuncs)
-                    if "decay" in localFuncs:
-                        decayFunc = localFuncs['decay']
-                    if "getInitialColorValues" in localFuncs:
-                        getInitialColorValuesFunc = localFuncs['getInitialColorValues']
-                    if "mixLayerValues" in localFuncs:
-                        mixLayerValuesFunc = localFuncs['mixLayerValues']
-                    if "applyColorValues" in localFuncs:
-                        applyColorValuesFunc = localFuncs['applyColorValues']
-
-                simulateColors(decayFunc, getInitialColorValuesFunc, mixLayerValuesFunc, applyColorValuesFunc)
-                
+            
 
             # Create groups if they do not already exist
             if PATHS_GROUP_NAME not in bpy.data.groups:
@@ -592,6 +567,35 @@ class GenerateOperator(bpy.types.Operator):
             logger.info("Create spike animation for neurons")
             anim_spikes.animNeuronSpiking(anim_spikes.animNeuronScaling)
 
+        # Colorize spikes:
+        if bpy.context.scene.pam_anim_material.colorizingMethod == 'LAYER':
+            if bpy.context.scene.render.engine == 'CYCLES':
+                simulateColorsByLayer('MATERIAL_CYCLES')
+            else:
+                simulateColorsByLayer('MATERIAL')
+        elif bpy.context.scene.pam_anim_material.colorizingMethod == 'SIMULATE':
+            # Prepare functions
+            decayFunc = anim_functions.decay
+            getInitialColorValuesFunc = anim_functions.getInitialColorValues
+            mixLayerValuesFunc = anim_functions.mixLayerValues
+            applyColorValuesFunc = anim_functions.applyColorValues
+
+            # Load any scripts
+            script = bpy.context.scene.pam_anim_material.script
+            if script in bpy.data.texts:
+                localFuncs = {}
+                exec(bpy.data.texts[script].as_string(), localFuncs)
+                if "decay" in localFuncs:
+                    decayFunc = localFuncs['decay']
+                if "getInitialColorValues" in localFuncs:
+                    getInitialColorValuesFunc = localFuncs['getInitialColorValues']
+                if "mixLayerValues" in localFuncs:
+                    mixLayerValuesFunc = localFuncs['mixLayerValues']
+                if "applyColorValues" in localFuncs:
+                    applyColorValuesFunc = localFuncs['applyColorValues']
+
+            simulateColors(decayFunc, getInitialColorValuesFunc, mixLayerValuesFunc, applyColorValuesFunc)
+            
         return {'FINISHED'}
 
     def invoke(self, context, event):

@@ -92,6 +92,22 @@ def animNeuronScaling(layer_name, n_id, frame):
     neuron.scale = (animSpikeScale, animSpikeScale, animSpikeScale)
     neuron.keyframe_insert(data_path = 'scale', frame=frame)
 
+def setNeuronColor(neuronID, neuronGroupID, color):
+    layer_name = model.NG_LIST[neuronGroupID][0]
+    neuron_name = 'n_' + layer_name + '_%05d' % (neuronID + 1)
+    if neuron_name in bpy.data.objects:
+        neuron = bpy.data.objects[neuron_name]
+        neuron.color = color
+
+def setNeuronColorKeyframe(neuronID, neuronGroupID, frame, color):
+    layer_name = model.NG_LIST[neuronGroupID][0]
+    neuron_name = 'n_' + layer_name + '_%05d' % (neuronID + 1)
+    if neuron_name in bpy.data.objects:
+        neuron = bpy.data.objects[neuron_name]
+        neuron.color = color
+        neuron.keyframe_insert(data_path = 'color', frame = frame)
+
+
 
 # TODO(SK): Rephrase docstring, purpose?
 def deleteNeurons():

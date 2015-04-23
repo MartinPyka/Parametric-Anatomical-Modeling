@@ -78,7 +78,7 @@ def getInitialColorValues(neuronGroupID, neuronID, neuronGroups):
 # TODO(SK): than speaking of "values": e.g. colors, input_value, spike_delay, etc
 # TODO(SK): Please try to wrap code and docstrings at 80 characters
 # TODO(SK): Why are obsolete things documented?
-def applyColorValues(obj, layerValues, neuronID, neuronGroupID, neuronGroups):
+def applyColorValues(layerValues, neuronID, neuronGroupID, neuronGroups):
     """Apply a color to a spike object
 
     :param bpy.types.Object obj: an object
@@ -102,10 +102,11 @@ def applyColorValues(obj, layerValues, neuronID, neuronGroupID, neuronGroups):
                 * connections
 
         See data.py for a detailed description.
+    :return float[4]: the color for this spike
 
     """
     red = layerValues["red"]
     blue = layerValues["blue"]
     green = layerValues["green"]
 
-    obj.color = (red, green, blue, 1.0)
+    return (red, green, blue, 1.0)

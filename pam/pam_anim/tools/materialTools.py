@@ -13,6 +13,16 @@ class MaterialProperty(bpy.types.PropertyGroup):
         default='DEFAULT'
     )
 
+    colorizingMethod = bpy.props.EnumProperty(
+        name = "Colorization method",
+        items = (
+            ('NONE', 'No colorization', 'The object colors of the spikes will remain unchanged'),
+            ('LAYER', 'By layer', 'Gives each spike the color of its source layer'),
+            ('SIMULATE', 'By simulation', 'Tries to generate colors by simulating the spiking activity')
+        ),
+        default = 'NONE'
+    )
+
     script = bpy.props.StringProperty(name="Script")
 
 

@@ -182,7 +182,11 @@ class PamAnimLayerPane(bpy.types.Panel):
         col.operator("pam_anim.update_available_layers", icon = "FILE_REFRESH")
 
         row = layout.row()
-        row.prop_search(options, "script", bpy.data, "texts")
+        row.prop(options, "colorizingMethod")
+
+        if options.colorizingMethod == 'SIMULATE':
+            row = layout.row()
+            row.prop_search(options, "script", bpy.data, "texts")
 
 
 class PamAnimGeneratePanel(bpy.types.Panel):

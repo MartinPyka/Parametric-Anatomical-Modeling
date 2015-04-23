@@ -206,6 +206,41 @@ def simulateConnection(connectionID, sourceNeuronID, targetNeuronIndex, timingID
     fireTime = data.TIMINGS[timingID][2]
     SPIKE_OBJECTS[(curveKey, timingID)] = SpikeObject(connectionID, sourceNeuronID, targetNeuronID, targetNeuronIndex, timingID, curve, fireTime)
 
+def simulateColorsByLayer(source = "MATERIAL"):
+    """Gives each spike the color of its source layer
+
+    :param {"OBJECT", "MATERIAL", "MATERIAL_CYCLES"} source: From where the color should be taken, object color, material diffuse color or cycles diffuse color"""
+
+    for spike in SPIKE_OBJECTS.values():
+        connectionID = spike.connectionID
+        neuronGroupID = model.CONNECTION_INDICES[connectionID][1]
+        neuronGroupName = model.NG_LIST[neuronGroupID][0]
+        if source == "MATERIAL_CYCLES":
+            mat = bpy.context.scene.objects[neuronGroupName].active_material
+            if mat:
+                diffuseNode = mat.node_tree.nodes.get("Diffuse BSDF")
+                if diffuseNode:
+                    values = diffuseNode.inputs[0].default_value
+                    groupColor = (values[0], values[1], values[2], values[3])
+                else:
+                    source = "MATERIAL"
+            else:
+                source = "OBJECT"
+        
+        if source == "MATERIAL":
+            mat = bpy.context.scene.objects[neuronGroupName]
+            if mat:
+                color = mat.active_material.diffuse_color
+                groupColor = (color.r, color.g, color.b, 1.0)
+            else:
+                source = "OBJECT"
+                
+        if source == "OBJECT":
+            groupColor = bpy.context.scene.objects[neuronGroupName].color
+
+        spike.color = groupColor
+        if spike.object is not None:
+            spike.object.color = groupColor
 
 
 def simulateColors(decayFunc=anim_functions.decay,

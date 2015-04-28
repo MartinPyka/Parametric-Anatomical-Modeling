@@ -557,6 +557,16 @@ class ClearPamAnimOperator(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 
+class RecolorSpikesOperator(bpy.types.Operator):
+    """Recolorize the already generated spikes"""
+    bl_idname = "pam_anim.recolor_spikes"
+    bl_label = "Recolor spikes"
+    bl_description = "Recolors the already generated spikes"
+
+    def execute(self, context):
+        colorizeAnimation()
+        return {'FINISHED'}
+
 class GenerateOperator(bpy.types.Operator):
     """Generates connections between neuron groups and objects representing the spiking activity.
 
@@ -624,8 +634,10 @@ def register():
     bpy.types.Curve.timeLength = bpy.props.FloatProperty()
     bpy.utils.register_class(GenerateOperator)
     bpy.utils.register_class(ClearPamAnimOperator)
+    bpy.utils.register_class(RecolorSpikesOperator)
 
 def unregister():
     """Unregisters the operators"""
     bpy.utils.unregister_class(GenerateOperator)
     bpy.utils.unregister_class(ClearPamAnimOperator)
+    bpy.utils.unregister_class(RecolorSpikesOperator)

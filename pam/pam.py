@@ -75,12 +75,25 @@ def checkPointInObject(obj, point):
     ray_hit_count = 0
 
     for face in m.tessfaces:
-        v1 = world_matrix * m.vertices[face.vertices[0]].co.xyz
-        v2 = world_matrix * m.vertices[face.vertices[1]].co.xyz
-        v3 = world_matrix * m.vertices[face.vertices[2]].co.xyz
-        vr = mathutils.geometry.intersect_ray_tri(v1, v2, v3, ray, point)
-        if vr is not None:
-            ray_hit_count += 1
+        verts = face.vertices
+        if len(verts) == 3:
+            v1 = world_matrix * m.vertices[face.vertices[0]].co.xyz
+            v2 = world_matrix * m.vertices[face.vertices[1]].co.xyz
+            v3 = world_matrix * m.vertices[face.vertices[2]].co.xyz
+            vr = mathutils.geometry.intersect_ray_tri(v1, v2, v3, ray, point)
+            if vr is not None:
+                ray_hit_count += 1
+        elif len(verts) == 4:
+            v1 = world_matrix * m.vertices[face.vertices[0]].co.xyz
+            v2 = world_matrix * m.vertices[face.vertices[1]].co.xyz
+            v3 = world_matrix * m.vertices[face.vertices[2]].co.xyz
+            v4 = world_matrix * m.vertices[face.vertices[3]].co.xyz
+            vr1 = mathutils.geometry.intersect_ray_tri(v1, v2, v3, ray, point)
+            vr2 = mathutils.geometry.intersect_ray_tri(v1, v3, v4, ray, point)
+            if vr1 is not None:
+                ray_hit_count += 1
+            if vr2 is not None:
+                ray_hit_count += 1
 
     return ray_hit_count % 2 == 1
 

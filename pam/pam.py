@@ -367,12 +367,15 @@ def computeDistance_PreToSynapse(no_connection, pre_index):
 
     point = layers[0].particle_systems[neuronset1].particles[pre_index].location
 
-    pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer + 1)],
-                                             connections[0:slayer],
-                                             distances[0:slayer],
+    pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer + 1)] + [layers[slayer]],
+                                             connections[0:slayer] + [connections[slayer]],
+                                             distances[0:slayer] + [distances[slayer]],
                                              point)
 
-    path_length = compute_path_length(pre_p3d)
+    if  pre_p3d:
+        path_length = compute_path_length(pre_p3d)
+    else:
+        path_length = 0.
 
     return path_length, pre_p3d
 

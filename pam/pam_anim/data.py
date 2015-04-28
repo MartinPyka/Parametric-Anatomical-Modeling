@@ -4,6 +4,7 @@ import io
 import os
 import csv
 from bpy.path import abspath
+from bpy.path import display_name_from_filepath
 
 from .. import model
 
@@ -29,6 +30,18 @@ def csvfile_read(filename):
     f.close()
     return result
 
+# TODO(SK): Missing docstring
+def import_model_from_zip(filepath):
+    result = {}
+    with zipfile.ZipFile(filepath, "r", zipfile.ZIP_DEFLATED) as file:
+        for filename in file.namelist():
+            filename_split = os.path.splitext(filename)
+            filename_extension = filename_split[-1]
+            data = io.StringIO(str(file.read(filename), 'utf-8'))
+            func = SUPPORTED_FILETYPES[filename_extension]
+            matrix = func(data)
+            result[filename_split[0]] = (matrix)
+    return result
 
 # TODO(SK): Missing docstring
 def readModelData(connectionsPath):
@@ -74,18 +87,17 @@ def readModelData(connectionsPath):
 def readSimulationData(simulationFile):
     # Open timing file (output.csv)
     neuronTimingPath = abspath(simulationFile)
-    timingFile = open(neuronTimingPath, 'r')
+    fileName = display_name_from_filepath(simulationFile)
+    timingZip = import_model_from_zip(neuronTimingPath)
+    
     # read the data into the TIMINGS variable
     global TIMINGS
-    timing_data = csv_read(timingFile)
+    timing_data = timingZip[fileName]
     TIMINGS = [(int(row[0]), int(row[1]), float(row[2])) for row in timing_data]
-    timingFile.close()
-
-    prefix = neuronTimingPath[:-4]
     global DELAYS
     DELAYS = []
     try:
         for i in range(0, len(model.CONNECTIONS)):
-            DELAYS.append(csvfile_read(prefix + '_d' + str(i) + '.csv'))
+            DELAYS.append(timingZip[fileName + "_d" + str(i)])
     except:
-        print('cannot find file: ' + prefix + '_d' + str(i) + '.csv')
+        print('cannot find file: ' + fileName + '_d' + str(i) + '.csv')

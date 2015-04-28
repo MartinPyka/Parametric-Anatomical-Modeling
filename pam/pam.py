@@ -57,6 +57,32 @@ def selectRandomPoint(obj):
 
     return p, n, f
 
+def checkPointInObject(obj, point):
+    """Checks if a given point is inside or outside of the given geometry
+
+    Uses a ray casting algorithm to count intersections
+
+    :param bpy.types.Object obj: The object whose geometry will be used to check
+    :param mathutils.Vector point: The point to be checked
+
+    :return bool: True if the point is inside of the geometry, False if outside"""
+    m = obj.data
+    ray = mathutils.Vector((0.0,0.0,1.0))
+
+    world_matrix = so.matrix_world
+    
+    m.calc_tessface()
+    ray_hit_count = 0
+
+    for face in m.tessfaces:
+        v1 = world_matrix * m.vertices[face.vertices[0]].co.xyz
+        v2 = world_matrix * m.vertices[face.vertices[1]].co.xyz
+        v3 = world_matrix * m.vertices[face.vertices[2]].co.xyz
+        vr = mathutils.geometry.intersect_ray_tri(v1, v2, v3, ray, point)
+        if vr is not None:
+            ray_hit_count += 1
+
+    return ray_hit_count % 2 == 1
 
 # TODO(SK): Rephrase docstring, add parameter/return values
 def computeUVScalingFactor(obj):

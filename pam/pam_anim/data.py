@@ -83,6 +83,7 @@ def readSimulationData(simulationFile):
 
     prefix = neuronTimingPath[:-4]
     global DELAYS
+    DELAYS = []
     try:
         for i in range(0, len(model.CONNECTIONS)):
             DELAYS.append(csvfile_read(prefix + '_d' + str(i) + '.csv'))

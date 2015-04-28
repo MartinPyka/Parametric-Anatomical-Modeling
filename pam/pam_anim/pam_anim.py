@@ -457,6 +457,92 @@ def getUsedNeuronGroups():
         inds.append(c[2])
     return numpy.unique(inds)
 
+def animateSpikePropagation():
+    """Generates spike propagation objects from simulated data
+
+    Collects all information from the GUI, calls generateAllTimings() 
+    and then adds the generated objects to their respective groups"""
+
+    # Create a default material if needed
+    if bpy.context.scene.pam_anim_material.materialOption == "DEFAULT":
+        createDefaultMaterial()
+
+    frameStart = bpy.context.scene.pam_anim_animation.startFrame
+    frameEnd = bpy.context.scene.pam_anim_animation.endFrame
+    showPercent = bpy.context.scene.pam_anim_animation.showPercent
+    maxConns = bpy.context.scene.pam_anim_animation.connNumber
+
+    layerFilter = None
+    if len(bpy.context.scene.pam_anim_animation.layerCollection) > 0:
+        layerFilter = []
+        for layerItem in bpy.context.scene.pam_anim_animation.layerCollection:
+            if layerItem.layerGenerate:
+                layerFilter.append(layerItem.layerIndex)
+
+    logger.info('Visualize spike propagation')
+    generateAllTimings(frameStart = frameStart, frameEnd = frameEnd, maxConns = maxConns, showPercent = showPercent, layerFilter = layerFilter)
+
+    # Create groups if they do not already exist
+    if PATHS_GROUP_NAME not in bpy.data.groups:
+        bpy.data.groups.new(PATHS_GROUP_NAME)
+    if SPIKE_GROUP_NAME not in bpy.data.groups:
+        bpy.data.groups.new(SPIKE_GROUP_NAME)
+
+    # Insert objects into groups
+    addObjectsToGroup(bpy.data.groups[PATHS_GROUP_NAME], [obj.curveObject for obj in CURVES.values() if obj.curveObject is not None])
+    addObjectsToGroup(bpy.data.groups[SPIKE_GROUP_NAME], [obj.object for obj in SPIKE_OBJECTS.values() if obj.object is not None])
+
+    # Apply material to mesh
+    mesh = bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh]
+    mesh.materials.clear()
+    mesh.materials.append(bpy.data.materials[bpy.context.scene.pam_anim_material.material])
+
+def animateNeuronSpiking():
+    """Generates neuron spiking using anim_spikes.py
+
+    Collects inforamtion for neuron spiking from the GUI and generates all objects.
+    Also animates the spikes."""
+    logger.info("Create neurons")
+    neuron_object = bpy.data.objects[bpy.context.scene.pam_anim_mesh.neuron_object]
+    ng_inds = getUsedNeuronGroups()
+    for ind in ng_inds:
+        logger.info("Generate neurons for ng " + str(ind))
+        anim_spikes.generateLayerNeurons(bpy.data.objects[model.NG_LIST[ind][0]], model.NG_LIST[ind][1], neuron_object)
+    logger.info("Create spike animation for neurons")
+    anim_spikes.animNeuronSpiking(anim_spikes.animNeuronScaling)
+
+def colorizeAnimation():
+    """Gives the spiking animation its color
+
+    Collects information for colorization from the GUI and chooses 
+    the appropiate function for colorizing spikes"""
+    if bpy.context.scene.pam_anim_material.colorizingMethod == 'LAYER':
+        if bpy.context.scene.render.engine == 'CYCLES':
+            simulateColorsByLayer('MATERIAL_CYCLES')
+        else:
+            simulateColorsByLayer('MATERIAL')
+    elif bpy.context.scene.pam_anim_material.colorizingMethod == 'SIMULATE':
+        # Prepare functions
+        decayFunc = anim_functions.decay
+        getInitialColorValuesFunc = anim_functions.getInitialColorValues
+        mixLayerValuesFunc = anim_functions.mixLayerValues
+        applyColorValuesFunc = anim_functions.applyColorValues
+
+        # Load any scripts
+        script = bpy.context.scene.pam_anim_material.script
+        if script in bpy.data.texts:
+            localFuncs = {}
+            exec(bpy.data.texts[script].as_string(), localFuncs)
+            if "decay" in localFuncs:
+                decayFunc = localFuncs['decay']
+            if "getInitialColorValues" in localFuncs:
+                getInitialColorValuesFunc = localFuncs['getInitialColorValues']
+            if "mixLayerValues" in localFuncs:
+                mixLayerValuesFunc = localFuncs['mixLayerValues']
+            if "applyColorValues" in localFuncs:
+                applyColorValuesFunc = localFuncs['applyColorValues']
+
+        simulateColors(decayFunc, getInitialColorValuesFunc, mixLayerValuesFunc, applyColorValuesFunc)
 
 class ClearPamAnimOperator(bpy.types.Operator):
     """Clear Animation"""
@@ -470,7 +556,6 @@ class ClearPamAnimOperator(bpy.types.Operator):
 
     def invoke(self, context, event):
         return self.execute(context)
-
 
 class GenerateOperator(bpy.types.Operator):
     """Generates connections between neuron groups and objects representing the spiking activity.
@@ -502,11 +587,6 @@ class GenerateOperator(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        data.NEURON_GROUPS = []
-        data.CONNECTIONS = []
-        data.DELAYS = []
-        data.TIMINGS = []
-
         # Clear old objects if available
         clearVisualization()
 
@@ -516,90 +596,26 @@ class GenerateOperator(bpy.types.Operator):
         logger.info('Prepare Visualization')
 
         if bpy.context.scene.pam_anim_mesh.animPaths:
-            # Create a default material if needed
-            if bpy.context.scene.pam_anim_material.materialOption == "DEFAULT":
-                createDefaultMaterial()
 
             # Create the visualization
             logger.info("Simulate spike propagation")
             simulate()
-
-            frameStart = bpy.context.scene.pam_anim_animation.startFrame
-            frameEnd = bpy.context.scene.pam_anim_animation.endFrame
-            showPercent = bpy.context.scene.pam_anim_animation.showPercent
-            maxConns = bpy.context.scene.pam_anim_animation.connNumber
-
-            layerFilter = None
-            if len(bpy.context.scene.pam_anim_animation.layerCollection) > 0:
-                layerFilter = []
-                for layerItem in bpy.context.scene.pam_anim_animation.layerCollection:
-                    if layerItem.layerGenerate:
-                        layerFilter.append(layerItem.layerIndex)
-
-            logger.info('Visualize spike propagation')
-            generateAllTimings(frameStart = frameStart, frameEnd = frameEnd, maxConns = maxConns, showPercent = showPercent, layerFilter = layerFilter)
-
-            
-
-            # Create groups if they do not already exist
-            if PATHS_GROUP_NAME not in bpy.data.groups:
-                bpy.data.groups.new(PATHS_GROUP_NAME)
-            if SPIKE_GROUP_NAME not in bpy.data.groups:
-                bpy.data.groups.new(SPIKE_GROUP_NAME)
-
-            # Insert objects into groups
-            addObjectsToGroup(bpy.data.groups[PATHS_GROUP_NAME], [obj.curveObject for obj in CURVES.values() if obj.curveObject is not None])
-            addObjectsToGroup(bpy.data.groups[SPIKE_GROUP_NAME], [obj.object for obj in SPIKE_OBJECTS.values() if obj.object is not None])
-
-            # Apply material to mesh
-            mesh = bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh]
-            mesh.materials.clear()
-            mesh.materials.append(bpy.data.materials[bpy.context.scene.pam_anim_material.material])
+            logger.info("Generating spike propagation")
+            animateSpikePropagation()
 
         # Animate spiking if option is selected
         if bpy.context.scene.pam_anim_mesh.animSpikes is True:
-            logger.info("Create neurons")
-            neuron_object = bpy.data.objects[bpy.context.scene.pam_anim_mesh.neuron_object]
-            ng_inds = getUsedNeuronGroups()
-            for ind in ng_inds:
-                logger.info("Generate neurons for ng " + str(ind))
-                anim_spikes.generateLayerNeurons(bpy.data.objects[model.NG_LIST[ind][0]], model.NG_LIST[ind][1], neuron_object)
-            logger.info("Create spike animation for neurons")
-            anim_spikes.animNeuronSpiking(anim_spikes.animNeuronScaling)
+            logger.info("Generating neuron spiking")
+            animateNeuronSpiking()
 
         # Colorize spikes:
-        if bpy.context.scene.pam_anim_material.colorizingMethod == 'LAYER':
-            if bpy.context.scene.render.engine == 'CYCLES':
-                simulateColorsByLayer('MATERIAL_CYCLES')
-            else:
-                simulateColorsByLayer('MATERIAL')
-        elif bpy.context.scene.pam_anim_material.colorizingMethod == 'SIMULATE':
-            # Prepare functions
-            decayFunc = anim_functions.decay
-            getInitialColorValuesFunc = anim_functions.getInitialColorValues
-            mixLayerValuesFunc = anim_functions.mixLayerValues
-            applyColorValuesFunc = anim_functions.applyColorValues
-
-            # Load any scripts
-            script = bpy.context.scene.pam_anim_material.script
-            if script in bpy.data.texts:
-                localFuncs = {}
-                exec(bpy.data.texts[script].as_string(), localFuncs)
-                if "decay" in localFuncs:
-                    decayFunc = localFuncs['decay']
-                if "getInitialColorValues" in localFuncs:
-                    getInitialColorValuesFunc = localFuncs['getInitialColorValues']
-                if "mixLayerValues" in localFuncs:
-                    mixLayerValuesFunc = localFuncs['mixLayerValues']
-                if "applyColorValues" in localFuncs:
-                    applyColorValuesFunc = localFuncs['applyColorValues']
-
-            simulateColors(decayFunc, getInitialColorValuesFunc, mixLayerValuesFunc, applyColorValuesFunc)
+        if bpy.context.scene.pam_anim_material.colorizingMethod != 'NONE':
+            logger.info("Colorizing animation")
+            colorizeAnimation()
             
         return {'FINISHED'}
 
     def invoke(self, context, event):
-
         return self.execute(context)
 
 def register():

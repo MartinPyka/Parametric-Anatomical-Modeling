@@ -19,6 +19,7 @@ MAP_normal = 1
 MAP_random = 2
 MAP_top = 3
 MAP_uv = 4
+MAP_mask3D = 5
 
 DIS_euclid = 0
 DIS_euclidUV = 1
@@ -808,6 +809,18 @@ def computeMapping(layers, connections, distances, point, debug=False):
                     p3d.append(p3d_t)
                 # elif distances[i] == UVnormal:
                 #    do nothing
+
+        # mask 
+        elif connections[i] == MAP_mask3D:
+            if not checkPointInObject(layers[i+1], p3d[-1]):
+                if not debug:
+                    return None, None, None
+                else:
+                    return p3d, i, None
+            else:
+                p3d_n = p3d[-1]
+
+            p3d.append(p3d_n)
 
         # for the synaptic layer, compute the uv-coordinates
         if i == (len(connections) - 1):

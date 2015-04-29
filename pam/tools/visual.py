@@ -467,14 +467,14 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
         name="Number of Connections per Mapping",
         default=3,
         min=1,
-        max=20
+        max=1000
     )
 
     smoothing = bpy.props.IntProperty(
         name="Number of smoothing steps",
         default=5,
         min=0,
-        max=20
+        max=40
     )
 
     active_index = bpy.props.IntProperty()

@@ -26,7 +26,8 @@ MAPPING_TYPES = [
     ("normal", "Normal", "", "", 1),
     ("top", "Topology", "", "", 2),
     ("uv", "UV", "", "", 3),
-    ("rand", "Random", "", "", 4)
+    ("rand", "Random", "", "", 4),
+    ("mask3D", "3D Mask", "", "", 5)
 ]
 
 MAPPING_DICT = {
@@ -34,7 +35,8 @@ MAPPING_DICT = {
     "normal": pam.MAP_normal,
     "rand": pam.MAP_random,
     "top": pam.MAP_top,
-    "uv": pam.MAP_uv
+    "uv": pam.MAP_uv,
+    "mask3D": pam.MAP_mask3D
 }
 
 DISTANCE_TYPES = [

@@ -464,3 +464,46 @@ def visualizeMappingDistance(no_mapping):
         distances.append(numpy.mean(ds))
 
     colorize_vertices(layers[0], distances)
+
+
+def computeAxonLengths(no_connection, pre_index, visualize=False):
+    """ Computes the axon length to each synapse for each post-synaptic neuron the pre-
+    synaptic neuron is connected with
+    no_connection       : connection/mapping-id
+    pre_index           : index of pre-synaptic neuron
+    """
+
+    layers = model.CONNECTIONS[no_connection][0]
+    neuronset1 = model.CONNECTIONS[no_connection][1]
+    neuronset2 = model.CONNECTIONS[no_connection][2]
+    slayer = model.CONNECTIONS[no_connection][3]
+    connections = model.CONNECTIONS[no_connection][4]
+    distances = model.CONNECTIONS[no_connection][5]
+
+    post_indices = model.CONNECTION_RESULTS[no_connection]['c'][pre_index]
+    synapses = model.CONNECTION_RESULTS[no_connection]['s'][pre_index]
+
+    # path of the presynaptic neuron to the synaptic layer
+    pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer + 1)],
+                                                 connections[0:slayer],
+                                                 distances[0:slayer],
+                                                 layers[0].particle_systems[neuronset1].particles[pre_index].location)
+
+    first_item = True
+    
+    result = []
+
+    for i in range(0, len(post_indices)):
+        if post_indices[i] == -1:
+            continue
+
+        if synapses is None:
+            result.append(pam.compute_path_length(pre_p3d))
+        else:
+            if (len(synapses[i]) > 0):
+                distances_pre, pre_path = pam.computeDistanceToSynapse(
+                    layers[slayer - 1], layers[slayer], pre_p3d[-1], synapses[i], distances[slayer - 1])
+                result.append(pam.compute_path_length(pre_p3d + pre_path))
+                if visualize:
+                    visualizePath(pre_p3d + pre_path)
+    return result

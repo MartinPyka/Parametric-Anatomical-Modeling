@@ -19,6 +19,7 @@ MAP_normal = 1
 MAP_random = 2
 MAP_top = 3
 MAP_uv = 4
+MAP_mask3D = 5
 
 DIS_euclid = 0
 DIS_euclidUV = 1
@@ -57,6 +58,45 @@ def selectRandomPoint(obj):
 
     return p, n, f
 
+def checkPointInObject(obj, point):
+    """Checks if a given point is inside or outside of the given geometry
+
+    Uses a ray casting algorithm to count intersections
+
+    :param bpy.types.Object obj: The object whose geometry will be used to check
+    :param mathutils.Vector point: The point to be checked
+
+    :return bool: True if the point is inside of the geometry, False if outside"""
+    m = obj.data
+    ray = mathutils.Vector((0.0,0.0,1.0))
+
+    world_matrix = obj.matrix_world
+    
+    m.calc_tessface()
+    ray_hit_count = 0
+
+    for face in m.tessfaces:
+        verts = face.vertices
+        if len(verts) == 3:
+            v1 = world_matrix * m.vertices[face.vertices[0]].co.xyz
+            v2 = world_matrix * m.vertices[face.vertices[1]].co.xyz
+            v3 = world_matrix * m.vertices[face.vertices[2]].co.xyz
+            vr = mathutils.geometry.intersect_ray_tri(v1, v2, v3, ray, point)
+            if vr is not None:
+                ray_hit_count += 1
+        elif len(verts) == 4:
+            v1 = world_matrix * m.vertices[face.vertices[0]].co.xyz
+            v2 = world_matrix * m.vertices[face.vertices[1]].co.xyz
+            v3 = world_matrix * m.vertices[face.vertices[2]].co.xyz
+            v4 = world_matrix * m.vertices[face.vertices[3]].co.xyz
+            vr1 = mathutils.geometry.intersect_ray_tri(v1, v2, v3, ray, point)
+            vr2 = mathutils.geometry.intersect_ray_tri(v1, v3, v4, ray, point)
+            if vr1 is not None:
+                ray_hit_count += 1
+            if vr2 is not None:
+                ray_hit_count += 1
+
+    return ray_hit_count % 2 == 1
 
 # TODO(SK): Rephrase docstring, add parameter/return values
 def computeUVScalingFactor(obj):
@@ -367,12 +407,15 @@ def computeDistance_PreToSynapse(no_connection, pre_index):
 
     point = layers[0].particle_systems[neuronset1].particles[pre_index].location
 
-    pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer + 1)],
-                                             connections[0:slayer],
-                                             distances[0:slayer],
+    pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer + 1)] + [layers[slayer]],
+                                             connections[0:slayer] + [connections[slayer]],
+                                             distances[0:slayer] + [distances[slayer]],
                                              point)
 
-    path_length = compute_path_length(pre_p3d)
+    if  pre_p3d:
+        path_length = compute_path_length(pre_p3d)
+    else:
+        path_length = 0.
 
     return path_length, pre_p3d
 
@@ -766,6 +809,18 @@ def computeMapping(layers, connections, distances, point, debug=False):
                     p3d.append(p3d_t)
                 # elif distances[i] == UVnormal:
                 #    do nothing
+
+        # mask 
+        elif connections[i] == MAP_mask3D:
+            if not checkPointInObject(layers[i+1], p3d[-1]):
+                if not debug:
+                    return None, None, None
+                else:
+                    return p3d, i, None
+            else:
+                p3d_n = p3d[-1]
+
+            p3d.append(p3d_n)
 
         # for the synaptic layer, compute the uv-coordinates
         if i == (len(connections) - 1):

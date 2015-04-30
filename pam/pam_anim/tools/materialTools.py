@@ -18,12 +18,17 @@ class MaterialProperty(bpy.types.PropertyGroup):
         items = (
             ('NONE', 'No colorization', 'The object colors of the spikes will remain unchanged'),
             ('LAYER', 'By layer', 'Gives each spike the color of its source layer'),
-            ('SIMULATE', 'By simulation', 'Tries to generate colors by simulating the spiking activity')
+            ('SIMULATE', 'By simulation', 'Tries to generate colors by simulating the spiking activity'),
+            ('MASK', 'Mask', 'Gives every spike originating from a neuron iside of a specified mask a given color')
         ),
         default = 'NONE'
     )
 
-    script = bpy.props.StringProperty(name="Script")
+    maskObject = bpy.props.StringProperty(name = "Mask")
+    insideMaskColor = bpy.props.FloatVectorProperty(name = "Spike color inside", default = (1.0, 0.0, 0.0, 1.0), subtype = 'COLOR', size = 4, min = 0.0, max = 1.0)
+    outsideMaskColor = bpy.props.FloatVectorProperty(name = "Spike color outside", default = (0.0, 1.0, 0.0, 1.0), subtype = 'COLOR', size = 4, min = 0.0, max = 1.0)
+
+    script = bpy.props.StringProperty(name = "Script")
 
 
 # TODO(SK): Missing docstring

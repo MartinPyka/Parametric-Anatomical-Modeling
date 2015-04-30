@@ -188,6 +188,16 @@ class PamAnimLayerPane(bpy.types.Panel):
             row = layout.row()
             row.prop_search(options, "script", bpy.data, "texts")
 
+        elif options.colorizingMethod == 'MASK':
+            row = layout.row()
+            row.prop_search(options, "maskObject", bpy.data, "objects")
+
+            row = layout.row()
+            row.prop(options, "insideMaskColor")
+
+            row = layout.row()
+            row.prop(options, "outsideMaskColor")
+
         row = layout.row()
         row.operator("pam_anim.recolor_spikes")
 

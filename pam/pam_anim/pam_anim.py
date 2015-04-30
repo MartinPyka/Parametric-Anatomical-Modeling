@@ -316,6 +316,8 @@ def simulateColors(decayFunc=anim_functions.decay,
                 updateTime = fireTime + d[connectionID[0]][neuronID][index]
                 heapq.heappush(neuronUpdateQueue, (updateTime, i, layerValuesDecay))
 
+def simulateColorsByMask():
+    pass
 
 def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent = 100.0, layerFilter = None):
     """Generates objects for all spikes matching criteria
@@ -518,12 +520,16 @@ def colorizeAnimation():
 
     Collects information for colorization from the GUI and chooses 
     the appropiate function for colorizing spikes"""
-    if bpy.context.scene.pam_anim_material.colorizingMethod == 'LAYER':
+
+    method = bpy.context.scene.pam_anim_material.colorizingMethod
+
+    if method == 'LAYER':
         if bpy.context.scene.render.engine == 'CYCLES':
             simulateColorsByLayer('MATERIAL_CYCLES')
         else:
             simulateColorsByLayer('MATERIAL')
-    elif bpy.context.scene.pam_anim_material.colorizingMethod == 'SIMULATE':
+
+    elif method == 'SIMULATE':
         # Prepare functions
         decayFunc = anim_functions.decay
         getInitialColorValuesFunc = anim_functions.getInitialColorValues
@@ -545,6 +551,10 @@ def colorizeAnimation():
                 applyColorValuesFunc = localFuncs['applyColorValues']
 
         simulateColors(decayFunc, getInitialColorValuesFunc, mixLayerValuesFunc, applyColorValuesFunc)
+
+    elif method == 'MASK':
+        simulateColorsByMask()
+
 
 class ClearPamAnimOperator(bpy.types.Operator):
     """Clear Animation"""

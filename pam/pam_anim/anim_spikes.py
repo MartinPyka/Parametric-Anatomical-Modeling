@@ -9,6 +9,8 @@ from . import helper
 
 logger = logging.getLogger(__package__)
 
+NEURON_GROUP_NAME = "NEURONS"
+
 # TODO(SK): Missing docstring
 def readSpikeData(filename):
     """Read spike-data from a csv-file and returns them as list"""
@@ -41,6 +43,12 @@ def generateLayerNeurons(layer, particle_system, obj, object_color=[],
         bpy.context.scene.objects.link(dupli)
         dupli.location = p.location
 
+        # Add neuron to group
+        if NEURON_GROUP_NAME not in bpy.data.groups:
+            bpy.data.groups.new(NEURON_GROUP_NAME)
+
+        bpy.data.groups[NEURON_GROUP_NAME].objects.link(dupli)
+
         if object_color:
             dupli.color = object_color[i]
 
@@ -72,7 +80,7 @@ def animNeuronSpiking(func):
         logger.info(str(i) + "/" + str(no_timings))
 
         layer_name = neuronGroups[neuronGroupID][0]
-        frame = helper.projectTimeToFrames(fireTime)
+        frame = int(helper.projectTimeToFrames(fireTime))
         func(layer_name, neuronIDinGroup, frame)
 
 
@@ -87,10 +95,12 @@ def animNeuronScaling(layer_name, n_id, frame):
     animSpikeFadeout = bpy.context.scene.pam_anim_mesh.spikeFadeout
 
     neuron.keyframe_insert(data_path = 'scale', frame=frame - 1)
-    neuron.scale = (1.0, 1.0, 1.0)
-    neuron.keyframe_insert(data_path = 'scale', frame=frame + animSpikeFadeout)
+
     neuron.scale = (animSpikeScale, animSpikeScale, animSpikeScale)
     neuron.keyframe_insert(data_path = 'scale', frame=frame)
+
+    neuron.scale = (1.0, 1.0, 1.0)
+    neuron.keyframe_insert(data_path = 'scale', frame=frame + animSpikeFadeout)
 
 def setNeuronColor(neuronID, neuronGroupID, color):
     layer_name = model.NG_LIST[neuronGroupID][0]

@@ -49,7 +49,6 @@ class ConnectionCurve:
 
         This function calls visualizeOneConnection with it's IDs and saves the generated object in curveObject
         """
-        logger.info("Visualizing connection " + str((self.connectionID, self.sourceNeuronID, self.targetNeuronID)))
         try:
             self.curveObject = pam_vis.visualizeOneConnection(self.connectionID, self.sourceNeuronID, self.targetNeuronID)
             frameLength = timeToFrames(self.timeLength)
@@ -109,12 +108,14 @@ class SpikeObject:
         obj.color = self.color
         bpy.context.scene.objects.link(obj)
 
+        startTime = projectTimeToFrames(self.startTime)
+
         constraint = obj.constraints.new(type="FOLLOW_PATH")
         time = self.curve.curveObject.data["timeLength"]
-        constraint.offset = self.startTime / time * 100
+        constraint.offset = startTime / time * 100
         constraint.target = self.curve.curveObject
 
-        startFrame = int(self.startTime)
+        startFrame = int(startTime)
 
         obj.hide = True
         obj.keyframe_insert(data_path="hide", frame=startFrame - 2)
@@ -334,14 +335,17 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
     # This takes some time, so here's a loading bar!
     wm = bpy.context.window_manager
 
-    progress = 0.0
     total = len(SPIKE_OBJECTS)
-    step = 100 / total
+    i = 0
 
     logger.info("Generating " + str(total) + " objects")
 
     wm.progress_begin(0, 100)
     for (key, spike) in SPIKE_OBJECTS.items():
+        i += 1
+
+        wm.progress_update(int(i / total * 100))
+
         startFrame = projectTimeToFrames(spike.startTime)
 
         if startFrame < frameStart or startFrame > frameEnd:
@@ -357,11 +361,9 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
         if random.random() > showPercent / 100.0:
             continue
 
-
+        logger.info("Generating spike " + str(i) + "/" + str(total) + ": " + str((spike.timingID, spike.connectionID, spike.sourceNeuronID, spike.targetNeuronID)))
         spike.visualize(bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh], bpy.context.scene.pam_anim_orientation)
 
-        progress += step
-        wm.progress_update(int(progress))
 
     wm.progress_end()
 

@@ -7,6 +7,7 @@ import numpy
 
 from .. import pam_vis
 from .. import model
+from .. import pam
 from . import data
 from . import anim_spikes
 from . import anim_functions
@@ -317,7 +318,22 @@ def simulateColors(decayFunc=anim_functions.decay,
                 heapq.heappush(neuronUpdateQueue, (updateTime, i, layerValuesDecay))
 
 def simulateColorsByMask():
-    pass
+    """Paints all spikes originating from a neuron inside of a mask in a different color
+
+    Collects settings from the gui (Mask object, inside mask color, outside mask color)."""
+    maskObject = bpy.data.objects[bpy.context.scene.pam_anim_material.maskObject]
+    insideMaskColor = bpy.context.scene.pam_anim_material.insideMaskColor
+    outsideMaskColor = bpy.context.scene.pam_anim_material.outsideMaskColor
+    for spike in SPIKE_OBJECTS.values():
+        neuron_group = model.NG_LIST[model.CONNECTION_INDICES[spike.connectionID][1]]
+        layer_name = neuron_group[0]
+        particle_system_name = neuron_group[1]
+        particle = bpy.data.objects[layer_name].particle_systems[particle_system_name].particles[spike.sourceNeuronID]
+        if spike.object is not None:
+            if pam.checkPointInObject(maskObject, particle.location):
+                spike.object.color = insideMaskColor
+            else:
+                spike.object.color = outsideMaskColor
 
 def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent = 100.0, layerFilter = None):
     """Generates objects for all spikes matching criteria

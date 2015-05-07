@@ -307,6 +307,8 @@ def simulateColors(decayFunc=anim_functions.decay,
 
         for connectionID in connectionIDs:
             for index, i in enumerate(c[connectionID[0]]["c"][neuronID]):
+                if i == -1:
+                    continue
                 obj = SPIKE_OBJECTS[((connectionID[0], neuronID, i), timingID)]
                 color = applyColorFunc(layerValuesDecay, neuronID, neuronGroupID, model.NG_LIST)
                 if obj.object:
@@ -569,7 +571,10 @@ def colorizeAnimation():
         simulateColors(decayFunc, getInitialColorValuesFunc, mixLayerValuesFunc, applyColorValuesFunc)
 
     elif method == 'MASK':
-        simulateColorsByMask()
+        if bpy.context.scene.pam_anim_material.mixColors:
+            simulateColors(initialColorValuesFunc = anim_functions.getInitialColorValuesMask)
+        else:
+            simulateColorsByMask()
 
 
 class ClearPamAnimOperator(bpy.types.Operator):
@@ -650,7 +655,8 @@ class GenerateOperator(bpy.types.Operator):
         if bpy.context.scene.pam_anim_material.colorizingMethod != 'NONE':
             logger.info("Colorizing animation")
             colorizeAnimation()
-            
+        
+        logger.info("Visualization done")
         return {'FINISHED'}
 
     def invoke(self, context, event):

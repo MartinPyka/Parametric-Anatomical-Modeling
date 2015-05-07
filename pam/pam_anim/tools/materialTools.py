@@ -24,6 +24,8 @@ class MaterialProperty(bpy.types.PropertyGroup):
         default = 'NONE'
     )
 
+    mixColors = bpy.props.BoolProperty(name = "Mix colors", default = True)
+
     maskObject = bpy.props.StringProperty(name = "Mask")
     insideMaskColor = bpy.props.FloatVectorProperty(name = "Spike color inside", default = (1.0, 0.0, 0.0, 1.0), subtype = 'COLOR', size = 4, min = 0.0, max = 1.0)
     outsideMaskColor = bpy.props.FloatVectorProperty(name = "Spike color outside", default = (0.0, 1.0, 0.0, 1.0), subtype = 'COLOR', size = 4, min = 0.0, max = 1.0)

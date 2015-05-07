@@ -190,6 +190,9 @@ class PamAnimLayerPane(bpy.types.Panel):
 
         elif options.colorizingMethod == 'MASK':
             row = layout.row()
+            row.prop(options, "mixColors")
+            
+            row = layout.row()
             row.prop_search(options, "maskObject", bpy.data, "objects")
 
             row = layout.row()

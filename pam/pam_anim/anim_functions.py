@@ -1,4 +1,7 @@
+import bpy
+
 import numpy
+from .. import pam
 
 # CONSTANTS
 TAU = 20
@@ -110,3 +113,16 @@ def applyColorValues(layerValues, neuronID, neuronGroupID, neuronGroups):
     green = layerValues["green"]
 
     return (red, green, blue, 1.0)
+
+def getInitialColorValuesMask(neuronGroupID, neuronID, neuronGroups):
+    maskObject = bpy.data.objects[bpy.context.scene.pam_anim_material.maskObject]
+    insideMaskColor = bpy.context.scene.pam_anim_material.insideMaskColor
+    outsideMaskColor = bpy.context.scene.pam_anim_material.outsideMaskColor
+    neuron_group = neuronGroups[neuronGroupID]
+    layer_name = neuron_group[0]
+    particle_system_name = neuron_group[1]
+    particle = bpy.data.objects[layer_name].particle_systems[particle_system_name].particles[neuronID]
+    if pam.checkPointInObject(maskObject, particle.location):
+        return {"red": insideMaskColor[0], "green": insideMaskColor[1], "blue": insideMaskColor[2]}
+    else:
+        return {"red": outsideMaskColor[0], "green": outsideMaskColor[1], "blue": outsideMaskColor[2]}

@@ -424,8 +424,8 @@ def setAnimationSpeed(curve, animationSpeed):
     """
     curve.eval_time = 0
     curve.keyframe_insert(data_path="eval_time", frame=0)
-    curve.eval_time = 100
-    curve.keyframe_insert(data_path="eval_time", frame=int(animationSpeed))
+    curve.eval_time = 100 * 100 / animationSpeed
+    curve.keyframe_insert(data_path="eval_time", frame=100)
 
     # Set all the keyframes to linear interpolation to ensure a constant speed along the curve
     for key in curve.animation_data.action.fcurves[0].keyframe_points:

@@ -176,7 +176,8 @@ def simulateTiming(timingID):
     c = model.CONNECTION_RESULTS
 
     for connectionID in connectionIDs:
-        for index, i in enumerate(c[connectionID[0]]['c'][neuronID]):
+        for index, i in enumerate(c[connectionID[0]]['c'][neuronID][:data.noAvailableConnections]):
+            print(connectionID[0], neuronID, index)
             if i == -1 or data.DELAYS[connectionID[0]][neuronID][index] == 0:
                 continue
             simulateConnection(connectionID[0], neuronID, index, timingID)
@@ -306,7 +307,7 @@ def simulateColors(decayFunc=anim_functions.decay,
             layerValuesDecay = initialColorValuesFunc(neuronGroupID, neuronID, model.NG_LIST)
 
         for connectionID in connectionIDs:
-            for index, i in enumerate(c[connectionID[0]]["c"][neuronID]):
+            for index, i in enumerate(c[connectionID[0]]["c"][neuronID][:data.noAvailableConnections]):
                 if i == -1:
                     continue
                 obj = SPIKE_OBJECTS[((connectionID[0], neuronID, i), timingID)]
@@ -600,6 +601,16 @@ class RecolorSpikesOperator(bpy.types.Operator):
         colorizeAnimation()
         return {'FINISHED'}
 
+class ReadSimulationData(bpy.types.Operator):
+    """Operator for reading simulation data in data.py"""
+    bl_idname = "pam_anim.read_simulation_data"
+    bl_label = "Read simulation data"
+    bl_description = "Read simulation data from zip"
+
+    def execute(self, context):
+        data.readSimulationData(bpy.context.scene.pam_anim_data.simulationData)
+        return {'FINISHED'}
+
 class GenerateOperator(bpy.types.Operator):
     """Generates connections between neuron groups and objects representing the spiking activity.
 
@@ -669,9 +680,11 @@ def register():
     bpy.utils.register_class(GenerateOperator)
     bpy.utils.register_class(ClearPamAnimOperator)
     bpy.utils.register_class(RecolorSpikesOperator)
+    bpy.utils.register_class(ReadSimulationData)
 
 def unregister():
     """Unregisters the operators"""
     bpy.utils.unregister_class(GenerateOperator)
     bpy.utils.unregister_class(ClearPamAnimOperator)
     bpy.utils.unregister_class(RecolorSpikesOperator)
+    bpy.utils.unregister_class(ReadSimulationData)

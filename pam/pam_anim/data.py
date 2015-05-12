@@ -10,11 +10,12 @@ from .. import model
 
 DELAYS = []
 TIMINGS = []
+noAvailableConnections = 0
 
 # TODO(SK): Missing docstring
 def csv_read(data):
     reader = csv.reader(data, delimiter=";", quoting=csv.QUOTE_NONNUMERIC)
-    return [row for row in reader]
+    return [row for row in reader if len(row) > 0]
 
 
 # TODO(SK): Refactor, in general global variables are ugly and fault prone.
@@ -93,7 +94,7 @@ def readSimulationData(simulationFile):
     # read the data into the TIMINGS variable
     global TIMINGS
     timing_data = timingZip[fileName]
-    TIMINGS = [(int(row[0]), int(row[1]), float(row[2])) for row in timing_data]
+    TIMINGS = [(int(row[0]), int(row[1]), float(row[2])) for row in timing_data if len(row) == 3]
     global DELAYS
     DELAYS = []
     try:
@@ -101,3 +102,6 @@ def readSimulationData(simulationFile):
             DELAYS.append(timingZip[fileName + "_d" + str(i)])
     except:
         print('cannot find file: ' + fileName + '_d' + str(i) + '.csv')
+        
+    global noAvailableConnections
+    noAvailableConnections = len(DELAYS[0][0])

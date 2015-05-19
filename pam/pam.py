@@ -495,7 +495,6 @@ def computeMapping(layers, connections, distances, point, debug=False):
 
     # go through all connection-elements
     for i in range(0, len(connections)):
-        # print(i)
         # if euclidean mapping should be computed
         if connections[i] == MAP_euclid:
             # compute the point on the next intermediate layer

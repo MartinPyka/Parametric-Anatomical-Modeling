@@ -106,10 +106,6 @@ class PAMVisualizeKernel(bpy.types.Operator):
             alpha=True
         )
 
-        temp_texture = bpy.data.textures.new(
-            "temp_texture",
-            type="IMAGE"
-        )
 
         temp_material = bpy.data.materials.new("temp_material")
         # temp_material.use_shadeless = True
@@ -125,16 +121,28 @@ class PAMVisualizeKernel(bpy.types.Operator):
             kwargs
         )
 
-        temp_texture.image = temp_image
+        if context.scene.render.engine == 'CYCLES':
+            temp_material.use_nodes = True
+            diffuse_node = temp_material.node_tree.nodes['Diffuse BSDF']
+            texture_node = temp_material.node_tree.nodes.new(type = "ShaderNodeTexImage")
+            temp_material.node_tree.links.new(diffuse_node.inputs['Color'], texture_node.outputs['Color'])
+            texture_node.image = temp_image
 
-        tex_slot = temp_material.texture_slots.add()
-        tex_slot.texture = temp_texture
-        tex_slot.texture_coords = "UV"
-        tex_slot.mapping = "FLAT"
-        # tex_slot.use_map_color_diffuse = True
+        else:
+            temp_texture = bpy.data.textures.new(
+                "temp_texture",
+                type="IMAGE"
+            )
+            temp_texture.image = temp_image
 
-        temp_material.diffuse_intensity = 1.0
-        temp_material.specular_intensity = 0.0
+            tex_slot = temp_material.texture_slots.add()
+            tex_slot.texture = temp_texture
+            tex_slot.texture_coords = "UV"
+            tex_slot.mapping = "FLAT"
+            # tex_slot.use_map_color_diffuse = True
+
+            temp_material.diffuse_intensity = 1.0
+            temp_material.specular_intensity = 0.0
 
         active_obj.data.materials.clear(update_data=True)
         active_obj.data.materials.append(temp_material)

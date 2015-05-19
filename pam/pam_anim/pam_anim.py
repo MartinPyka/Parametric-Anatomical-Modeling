@@ -18,6 +18,9 @@ import logging
 logger = logging.getLogger(__package__)
 
 # CONSTANTS
+TAU = 60
+CURVES = {}
+SPIKE_OBJECTS = []
 DEFAULT_MAT_NAME = "SpikeMaterial"
 
 PATHS_GROUP_NAME = "PATHS"

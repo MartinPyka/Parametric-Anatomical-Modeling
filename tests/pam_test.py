@@ -2,43 +2,44 @@ import unittest
 import pam
 import bpy
 import numpy
-import mathutils
+import random
+import pickle
 
-CONNECTIONS = [([bpy.data.objects['Pre'], bpy.data.objects['Synapse'], bpy.data.objects['Post']],
-    'pam.neuron_group', 'pam.neuron_group', 1, [0, 0], [0, 0], 
-    pam.mapping.kernel.gauss, [1.0, 1.0, 0.0, 0.0], 
-    pam.mapping.kernel.gauss, [1.0, 1.0, 0.0, 0.0], 1)]
-
-CONNECTION_RESULTS_LENGTH = 1
-CONNECTION_RESULTS_LENGTH_C = 100
-CONNECTION_INDICES = [[0, 1, 0]]
-
-NG_DICT = {'Pre': {'pam.neuron_group': 1}, 'Post': {'pam.neuron_group': 0}}
-
-NG_LIST = [['Post', 'pam.neuron_group', 100], ['Pre', 'pam.neuron_group', 100]]
+SEED = 42
 
 class TestPamModelCreate(unittest.TestCase):
     def setUp(self):
+        # Import should-be pam model
+        snapshot = pickle.load(open(bpy.path.abspath("//model_test.pam"), "rb"))
+
+        self.NG_LIST = snapshot.NG_LIST
+        self.NG_DICT = snapshot.NG_DICT
+        self.CONNECTION_COUNTER = snapshot.CONNECTION_COUNTER
+        self.CONNECTION_INDICES = snapshot.CONNECTION_INDICES
+        self.CONNECTIONS = pam.model.Pickle2Connection(snapshot.CONNECTIONS)
+        self.CONNECTION_RESULTS = pam.model.convertArray2Vector(snapshot.CONNECTION_RESULTS)
+
+        # Seed the rng
+        random.seed(SEED)
+
+        # Compute mapping
         bpy.ops.pam.mapping_compute()
 
-    def testConnections(self):
-        """Test if correct objects, particle systems, kernel, etc. are saved in model.CONNECTIONS"""
-        self.assertEqual(CONNECTIONS, pam.model.CONNECTIONS)
+    def testModel(self):
+        """Test if the pam model generated is the same as a predefined model.
 
-    def testConnectionResults(self):
-        """Tests if the connection results have the correct length. 
-        Can only test the length of elements because the results are random."""
-        self.assertEqual(CONNECTION_RESULTS_LENGTH, len(pam.model.CONNECTION_RESULTS))
-        self.assertEqual(CONNECTION_RESULTS_LENGTH_C, len(pam.model.CONNECTION_RESULTS[0]['c']))
-
-    def testConnectionIndices(self):
-        """Test if connection indices are correct"""
-        self.assertEqual(CONNECTION_INDICES, pam.model.CONNECTION_INDICES)
-
-    def testNeuronGroups(self):
-        """Test if neuron groups have been correctly generated and if the connection between them is correct"""
-        self.assertEqual(NG_LIST, pam.model.NG_LIST)
-        self.assertEqual(NG_DICT, pam.model.NG_DICT)
+        Checks CONNECTIONS, CONNECTION_RESULTS, CONNECTION_INDICES, NG_LIST and NG_DICT"""
+        
+        self.assertEqual(self.CONNECTIONS, pam.model.CONNECTIONS, "Connections between neuron groups differ")
+        self.assertEqual(len(self.CONNECTION_RESULTS), len(pam.model.CONNECTION_RESULTS), "Connection results do not have the correct length")
+        for i in range(len(self.CONNECTION_RESULTS)):
+            with self.subTest(i=i):
+                numpy.testing.assert_array_equal(self.CONNECTION_RESULTS[i]['c'], pam.model.CONNECTION_RESULTS[i]['c'], "Connections are not equal in connection ID " + str(i))
+                numpy.testing.assert_array_equal(self.CONNECTION_RESULTS[i]['d'], pam.model.CONNECTION_RESULTS[i]['d'], "Distances between connections are incorrect in connection ID " + str(i))
+                self.assertEqual(self.CONNECTION_RESULTS[i]['s'], pam.model.CONNECTION_RESULTS[i]['s'], "Synapse vectors are incorrect for connection " + str(i))
+        self.assertEqual(self.CONNECTION_INDICES, pam.model.CONNECTION_INDICES, "Connection indices are incorrect")
+        self.assertEqual(self.NG_LIST, pam.model.NG_LIST, "Neuron group list is incorrect")
+        self.assertEqual(self.NG_DICT, pam.model.NG_DICT, "Neuron group dictionary is incorrect")
 
 if __name__ == '__main__':
-    unittest.main(exit = False)
+    unittest.main(exit = False, verbosity = 2)

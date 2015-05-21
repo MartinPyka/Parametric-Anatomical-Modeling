@@ -119,6 +119,30 @@ def computeUVScalingFactor(obj):
     # TODO (MP): compute scaling factor on the basis of all edges
     return numpy.mean(result), result
 
+def checkPointOnLine(p,a1,a2):
+    """Checks if a point p is on the line between the points a1 and a2
+    returns boolean
+
+    """
+    EPSILON = 0.0001     #tolerance value for being able to work with floats
+    d1 = p-a1
+    d2 = a2-p
+    dot = numpy.dot(d1,d2)
+    #print('dot',dot)
+    cross = numpy.cross(d1,d2)
+    #print('cross',cross)
+    norma1a2 = numpy.linalg.norm(a2-a1)
+    #print('norma1a2',norma1a2)
+    if numpy.linalg.norm(cross) > EPSILON:        #greater than 0, with tolerance
+        #print('First false')
+        return False
+    if dot < -EPSILON:                   #lesser than 0, with tolerance
+        #print('Second false')
+        return False
+    if dot > norma1a2*norma1a2+EPSILON:       #greater that squared norm, with tolerance
+        #print('Third false')
+        return False
+    return True
 
 # TODO(SK): Quads into triangles (indices)
 # TODO(SK): Rephrase docstring, add parameter/return values
@@ -156,7 +180,10 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
 
     # if the point is not within the first triangle, we have to repeat the calculation
     # for the second triangle
-    if (mathutils.geometry.intersect_point_tri_2d(p_uv.to_2d(), uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (len(uvs) == 4):
+    if (mathutils.geometry.intersect_point_tri_2d(p_uv.to_2d(), uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & \
+            (checkPointOnLine(p_uv.to_2d(),uvs[0].uv,uvs[1].uv) == False) & \
+            (checkPointOnLine(p_uv.to_2d(),uvs[0].uv,uvs[2].uv) == False) & \
+            (checkPointOnLine(p_uv.to_2d(),uvs[1].uv,uvs[2].uv) == False) & (len(uvs) == 4):
         A = obj.data.vertices[obj.data.polygons[f].vertices[0]].co
         B = obj.data.vertices[obj.data.polygons[f].vertices[2]].co
         C = obj.data.vertices[obj.data.polygons[f].vertices[3]].co

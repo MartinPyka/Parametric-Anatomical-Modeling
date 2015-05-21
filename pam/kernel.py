@@ -155,8 +155,8 @@ def gauss_v(uv, guv, origin_v=0.0, var_v=1.0):
     :return: gauss value at point uv in 2d space
     :rtype: float
 
-    ruv = guv - uv  # compute relative position
     """
+    ruv = guv - uv  # compute relative position
 
     return math.exp(-(1 / 2) * ((ruv[1] - origin_v) / var_v) ** 2)
 

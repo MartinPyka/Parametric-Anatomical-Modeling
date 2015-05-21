@@ -71,7 +71,7 @@ def Pickle2Connection(connections):
     for c in connections:
         new_c = [convertString2Object(c)]
         new_c = new_c + list(c[1:])
-        result.append(new_c)
+        result.append(tuple(new_c))
     return result
 
 

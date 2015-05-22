@@ -121,7 +121,7 @@ def computeUVScalingFactor(obj):
 
 def checkPointOnLine(p,a1,a2):
     """Checks if a point p is on the line between the points a1 and a2
-    returns boolean
+    returns the qualitative distance of the point from the line, 0 if the point is on the line with tolerance
 
     """
     EPSILON = 0.0001     #tolerance value for being able to work with floats
@@ -133,16 +133,19 @@ def checkPointOnLine(p,a1,a2):
     #print('cross',cross)
     norma1a2 = numpy.linalg.norm(a2-a1)
     #print('norma1a2',norma1a2)
-    if numpy.linalg.norm(cross) > EPSILON:        #greater than 0, with tolerance
+    delta = numpy.linalg.norm(cross) - EPSILON
+    if delta > 0:        #greater than 0, with tolerance
         #print('First false')
-        return False
-    if dot < -EPSILON:                   #lesser than 0, with tolerance
+        return delta
+    delta = -EPSILON-dot
+    if delta > 0:                   #lesser than 0, with tolerance
         #print('Second false')
-        return False
-    if dot > norma1a2*norma1a2+EPSILON:       #greater that squared norm, with tolerance
+        return delta
+    delta = dot-norma1a2*norma1a2+EPSILON
+    if delta > 0:       #greater that squared norm, with tolerance
         #print('Third false')
-        return False
-    return True
+        return delta
+    return 0
 
 # TODO(SK): Quads into triangles (indices)
 # TODO(SK): Rephrase docstring, add parameter/return values
@@ -178,12 +181,15 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
     # convert 3d-coordinates of point p to uv-coordinates
     p_uv = mathutils.geometry.barycentric_transform(p, A, B, C, U, V, W)
 
+    p_uv_2d = p_uv.to_2d()
+    delta1 = checkPointOnLine(p_uv_2d,uvs[0].uv,uvs[1].uv)
+    delta2 = checkPointOnLine(p_uv_2d,uvs[0].uv,uvs[2].uv)
+    delta3 = checkPointOnLine(p_uv_2d,uvs[1].uv,uvs[2].uv)
+    delta = min(delta1,delta2,delta3)
+
     # if the point is not within the first triangle, we have to repeat the calculation
     # for the second triangle
-    if (mathutils.geometry.intersect_point_tri_2d(p_uv.to_2d(), uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & \
-            (checkPointOnLine(p_uv.to_2d(),uvs[0].uv,uvs[1].uv) == False) & \
-            (checkPointOnLine(p_uv.to_2d(),uvs[0].uv,uvs[2].uv) == False) & \
-            (checkPointOnLine(p_uv.to_2d(),uvs[1].uv,uvs[2].uv) == False) & (len(uvs) == 4):
+    if (mathutils.geometry.intersect_point_tri_2d(p_uv_2d, uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (delta != 0) & (len(uvs) == 4):
         A = obj.data.vertices[obj.data.polygons[f].vertices[0]].co
         B = obj.data.vertices[obj.data.polygons[f].vertices[2]].co
         C = obj.data.vertices[obj.data.polygons[f].vertices[3]].co
@@ -192,9 +198,22 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
         V = uvs[2].uv.to_3d()
         W = uvs[3].uv.to_3d()
 
-        p_uv = mathutils.geometry.barycentric_transform(p, A, B, C, U, V, W)
+        p_uv_new = mathutils.geometry.barycentric_transform(p, A, B, C, U, V, W)
 
-    return p_uv.to_2d()
+    else:
+        return p_uv_2d
+
+    p_uv_2d_new = p_uv_new.to_2d()
+    delta1 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[1].uv)
+    delta2 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[2].uv)
+    delta3 = checkPointOnLine(p_uv_2d_new,uvs[1].uv,uvs[2].uv)
+    delta_new = min(delta1,delta2,delta3)
+
+    if (mathutils.geometry.intersect_point_tri_2d(p_uv_2d, uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (delta != 0) & (len(uvs) == 4):
+        if delta_new < delta:
+            return p_uv_2d_new
+        return p_uv_2d
+    return p_uv_2d_new
 
 
 # TODO(SK): Quads into triangles (indices)

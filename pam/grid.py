@@ -272,6 +272,7 @@ class UVGrid(object):
         if uv[0] >= self._u or uv[1] >= self._v or uv[0] < 0.0 or uv[1] < 0.0:
             uv[0] = min(self._u, max(0., uv[0]))
             uv[1] = min(self._v, max(0., uv[1]))
+            #print("UV adjusted")
         return uv
 
     def _uv_to_cell_index(self, u, v):

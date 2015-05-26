@@ -7,6 +7,10 @@ import pickle
 
 SEED = 42
 
+class TestAddon(unittest.TestCase):
+    def testAddonEnabled(self):
+        self.assertNotNone(pam.bl_info)
+
 class TestPamModelCreate(unittest.TestCase):
     def setUp(self):
         # Seed the rng
@@ -26,7 +30,7 @@ class TestPamModelCreate(unittest.TestCase):
 
         Checks CONNECTIONS, CONNECTION_RESULTS, CONNECTION_INDICES, NG_LIST and NG_DICT"""
         # Import should-be pam model
-        self.loadModel("//model_test.pam")
+        self.loadModel("//model.test.pam")
 
         # Compute mapping
         bpy.ops.pam.mapping_compute()
@@ -47,5 +51,5 @@ def run():
     suite.addTest(unittest.makeSuite(TestPamModelCreate))
     unittest.TextTestRunner(verbosity=2).run(suite)
 
-if __name__ == '__main__':
-    run()
+bpy.ops.wm.addon_enable(module='pam')
+run()

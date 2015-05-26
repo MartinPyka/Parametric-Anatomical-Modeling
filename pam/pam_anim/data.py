@@ -102,6 +102,7 @@ def readSimulationData(simulationFile):
             DELAYS.append(timingZip[fileName + "_d" + str(i)])
     except:
         print('cannot find file: ' + fileName + '_d' + str(i) + '.csv')
-        
+    
+    DELAYS = numpy.array(DELAYS)
     global noAvailableConnections
     noAvailableConnections = len(DELAYS[0][0])

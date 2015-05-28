@@ -11,7 +11,11 @@ from . import constants
 from . import grid
 from . import model
 
+import multiprocessing
+
 logger = logging.getLogger(__package__)
+
+THREADS = 1
 
 # key-values for the mapping-procedure
 MAP_euclid = 0
@@ -935,6 +939,11 @@ def updateMapping(index):
         's': result[2]
     }
 
+def wrapper(x):
+    layers = [bpy.data.objects[i] for i in x[1]]
+    result = computeMapping(layers, x[2], x[3], x[4])
+    print(result)
+    return (x[0], result[0], (result[1][0], result[1][1]), result[2])
 
 # TODO(SK): Rephrase docstring, fill in parameter/return values
 def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
@@ -983,16 +992,37 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
 
     logger.info("Compute Post-Mapping")
 
+    pool = multiprocessing.Pool(processes = THREADS)
+
     # fill uv_grid with post-neuron-links
-    for i in range(0, len(layers[-1].particle_systems[neuronset2].particles)):
-        post_p3d, post_p2d, post_d = computeMapping(layers[:(slayer - 1):-1],
-                                                    connections[:(slayer - 1):-1],
-                                                    distances[:(slayer - 1):-1],
-                                                    layers[-1].particle_systems[neuronset2].particles[i].location)
+    
+    layers_multi = [x.name for x in layers[:(slayer - 1):-1]]
+    connections_multi = connections[:(slayer - 1):-1]
+    distances_multi = distances[:(slayer - 1):-1]
+    # thread_mapping = [(layers_multi, 
+    #                     connections_multi, 
+    #                     distances_multi, 
+    #                     (layers[-1].particle_systems[neuronset2].particles[i].location[0],
+    #                         layers[-1].particle_systems[neuronset2].particles[i].location[1],
+    #                         layers[-1].particle_systems[neuronset2].particles[i].location[2]
+    #                         )) for i in range(0, len(layers[-1].particle_systems[neuronset2].particles))]
+
+    thread_mapping = [(i, layers_multi, connections_multi, 
+                        distances_multi, 
+                        (layers[-1].particle_systems[neuronset2].particles[i].location[0],
+                            layers[-1].particle_systems[neuronset2].particles[i].location[1],
+                            layers[-1].particle_systems[neuronset2].particles[i].location[2]
+                            )) for i in range(0, len(layers[-1].particle_systems[neuronset2].particles))]
+    
+    
+    # result = pool.map(foo, range(0, len(layers[-1].particle_systems[neuronset2].particles)))
+    result = pool.map(wrapper, thread_mapping)
+    print (result)
+
+    for i, post_p3d, post_p2d, post_d in result:
         if post_p3d is None:
             continue
-
-        uv_grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
+        uv_grid.insert_postNeuron(i, mathutils.Vector(post_p2d), post_p3d[-1], post_d)
 
     logger.info("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)

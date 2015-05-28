@@ -15,7 +15,7 @@ import multiprocessing
 
 logger = logging.getLogger(__package__)
 
-THREADS = 1
+THREADS = 4
 
 # key-values for the mapping-procedure
 MAP_euclid = 0
@@ -993,36 +993,25 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     logger.info("Compute Post-Mapping")
 
     pool = multiprocessing.Pool(processes = THREADS)
-
-    # fill uv_grid with post-neuron-links
     
-    layers_multi = [x.name for x in layers[:(slayer - 1):-1]]
-    connections_multi = connections[:(slayer - 1):-1]
-    distances_multi = distances[:(slayer - 1):-1]
-    # thread_mapping = [(layers_multi, 
-    #                     connections_multi, 
-    #                     distances_multi, 
-    #                     (layers[-1].particle_systems[neuronset2].particles[i].location[0],
-    #                         layers[-1].particle_systems[neuronset2].particles[i].location[1],
-    #                         layers[-1].particle_systems[neuronset2].particles[i].location[2]
-    #                         )) for i in range(0, len(layers[-1].particle_systems[neuronset2].particles))]
+    layers_threading = [x.name for x in layers[:(slayer - 1):-1]]
+    connections_threading = connections[:(slayer - 1):-1]
+    distances_threading = distances[:(slayer - 1):-1]
 
-    thread_mapping = [(i, layers_multi, connections_multi, 
-                        distances_multi, 
+    thread_mapping = [(i, layers_threading, connections_threading, 
+                        distances_threading, 
                         (layers[-1].particle_systems[neuronset2].particles[i].location[0],
                             layers[-1].particle_systems[neuronset2].particles[i].location[1],
                             layers[-1].particle_systems[neuronset2].particles[i].location[2]
                             )) for i in range(0, len(layers[-1].particle_systems[neuronset2].particles))]
     
-    
-    # result = pool.map(foo, range(0, len(layers[-1].particle_systems[neuronset2].particles)))
     result = pool.map(wrapper, thread_mapping)
-    print (result)
 
+    # fill uv_grid with post-neuron-links
     for i, post_p3d, post_p2d, post_d in result:
         if post_p3d is None:
             continue
-        uv_grid.insert_postNeuron(i, mathutils.Vector(post_p2d), post_p3d[-1], post_d)
+        uv_grid.insert_postNeuron(i, mathutils.Vector(post_p2d), mathutils.Vector(post_p3d[-1]), post_d)
 
     logger.info("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)

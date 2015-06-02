@@ -39,5 +39,7 @@ install:
   # this is important, because otherwhise blender would not be able to load the addon
   - sudo ln -s ${PWD}/pam ${PWD}/tmp/blender/2.74/scripts/addons/pam
 
+  - cd tests
+
 # Finally start our test runner passing it the blender executable from the downloaded blender release
-script: python tests/tests.py ./tmp/blender/blender
+script: python tests.py ./tmp/blender/blender

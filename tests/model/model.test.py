@@ -4,6 +4,7 @@ import bpy
 import numpy
 import random
 import pickle
+import sys
 
 SEED = 42
 
@@ -49,7 +50,9 @@ def run():
     """Run unittest"""
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(TestPamModelCreate))
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    runner = unittest.TextTestRunner(verbosity=2)
+    ret = not runner.run(suite).wasSuccessful()
+    sys.exit(ret)
 
 bpy.ops.wm.addon_enable(module='pam')
 run()

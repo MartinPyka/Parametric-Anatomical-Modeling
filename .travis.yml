@@ -42,4 +42,4 @@ install:
   - cd tests
 
 # Finally start our test runner passing it the blender executable from the downloaded blender release
-script: python tests.py ./tmp/blender/blender
+script: python tests.py ../tmp/blender/blender

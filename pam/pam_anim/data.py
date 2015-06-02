@@ -98,6 +98,11 @@ def readSimulationData(simulationFile):
 
     for row in timing_data:
         if len(row) == 3:
+            
+            # if start time point is not reached, simply continue
+            if (float(row[2]) < bpy.context.scene.pam_anim_animation.startTime):
+                continue
+            
             # only load data up to the prespecified time point
             if (float(row[2]) < bpy.context.scene.pam_anim_animation.endTime):
                 TIMINGS.append((int(row[0]), int(row[1]), float(row[2])))

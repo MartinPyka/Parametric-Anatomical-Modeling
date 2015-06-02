@@ -3,6 +3,7 @@ import zipfile
 import io
 import os
 import csv
+import bpy
 from bpy.path import abspath
 from bpy.path import display_name_from_filepath
 
@@ -94,7 +95,15 @@ def readSimulationData(simulationFile):
     # read the data into the TIMINGS variable
     global TIMINGS
     timing_data = timingZip[fileName]
-    TIMINGS = [(int(row[0]), int(row[1]), float(row[2])) for row in timing_data if len(row) == 3]
+
+    for row in timing_data:
+        if len(row) == 3:
+            # only load data up to the prespecified time point
+            if (float(row[2]) < bpy.context.scene.pam_anim_animation.endTime):
+                TIMINGS.append((int(row[0]), int(row[1]), float(row[2])))
+            else:
+                break
+
     global DELAYS
     DELAYS = []
     try:

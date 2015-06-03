@@ -411,10 +411,17 @@ def computeDistance_PreToSynapse(no_connection, pre_index):
                                              connections[0:slayer] + [connections[slayer]],
                                              distances[0:slayer] + [distances[slayer]],
                                              point)
-
+    
     if  pre_p3d:
-        path_length = compute_path_length(pre_p3d)
-    else:
+        if (distances[slayer] == DIS_normalUV) | (distances[slayer] == DIS_euclidUV):
+            uv_distances = []
+            for synapse in model.CONNECTION_RESULTS[no_connection]['s'][pre_index]:
+                uv_distance, _ = computeDistanceToSynapse(layers[slayer], layers[slayer], pre_p3d[-1], synapse, distances[slayer])
+                uv_distances.append(uv_distance)
+            path_length = compute_path_length(pre_p3d) + numpy.mean(uv_distances)
+        else:
+            path_length = compute_path_length(pre_p3d)
+    else: 
         path_length = 0.
 
     return path_length, pre_p3d

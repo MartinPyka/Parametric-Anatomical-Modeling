@@ -383,7 +383,7 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
             continue
 
         logger.info("Generating spike " + str(i) + "/" + str(total) + ": " + str((spike.timingID, spike.connectionID, spike.sourceNeuronID, spike.targetNeuronID)))
-        spike.visualize(bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh], bpy.context.scene.pam_anim_orientation)
+        spike.visualize(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh].data, bpy.context.scene.pam_anim_orientation)
 
 
     wm.progress_end()
@@ -516,7 +516,7 @@ def animateSpikePropagation():
     addObjectsToGroup(bpy.data.groups[SPIKE_GROUP_NAME], [obj.object for obj in SPIKE_OBJECTS.values() if obj.object is not None])
 
     # Apply material to mesh
-    mesh = bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh]
+    mesh = bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh].data
     mesh.materials.clear()
     mesh.materials.append(bpy.data.materials[bpy.context.scene.pam_anim_material.material])
 
@@ -626,7 +626,7 @@ class GenerateOperator(bpy.types.Operator):
     def poll(cls, context):
 
         # Check if a valid mesh has been selected
-        if context.scene.pam_anim_mesh.mesh not in bpy.data.meshes:
+        if context.scene.pam_anim_mesh.mesh not in bpy.data.objects:
             return False
 
         # Check if a model is loaded into pam

@@ -85,7 +85,7 @@ class PamAnimPathsPane(bpy.types.Panel):
         layout.active = options.animPaths
 
         row = layout.row()
-        row.prop_search(options, 'mesh', bpy.data, 'meshes')
+        row.prop_search(options, 'mesh', bpy.data, 'objects')
 
 class PamAnimSpikesPane(bpy.types.Panel):
     """A panel for choosing how to display spikes"""

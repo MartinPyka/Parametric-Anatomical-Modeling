@@ -13,6 +13,10 @@ from . import model
 
 import multiprocessing
 
+# Temp imports
+import pdb
+import time
+
 logger = logging.getLogger(__package__)
 
 THREADS = 4
@@ -945,6 +949,36 @@ def wrapper(x):
     print(result)
     return (x[0], result[0], (result[1][0], result[1][1]), result[2])
 
+def pre_neuron_wrapper(x):
+    i, conn, dist, syn, pre_p3d, pre_d, post_neurons, layer_names, slayer, distances, no_synapses = x
+
+    layers = [bpy.data.objects[name] for name in layer_names]
+
+    if (len(post_neurons) == 0):
+        for j in range(0, len(conn[i])):
+            conn[j] = -1
+        return
+    
+    for j, post_neuron in enumerate(post_neurons):
+        distance_pre, _ = computeDistanceToSynapse(
+            layers[slayer - 1], layers[slayer], mathutils.Vector(pre_p3d), mathutils.Vector(post_neuron[1]), distances[slayer - 1])
+        if distance_pre >= 0:
+            distance_post, _ = computeDistanceToSynapse(
+                layers[slayer + 1], layers[slayer], mathutils.Vector(post_neuron[0][2]), mathutils.Vector(post_neuron[1]), distances[slayer])
+            if distance_post >= 0:
+                conn[j] = post_neuron[0][0]      # the index of the post-neuron
+                dist[j] = pre_d + distance_pre + distance_post + post_neuron[0][3]      # the distance of the post-neuron
+                syn[j] = post_neuron[1]
+            else:
+                conn[j] = -1
+        else:
+            conn[j] = -1
+
+    for rest in range(j + 1, no_synapses):
+        conn[rest] = -1
+
+    return (conn, dist, syn)
+
 # TODO(SK): Rephrase docstring, fill in parameter/return values
 def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
                         distances, func_pre, args_pre, func_post, args_post,
@@ -1005,8 +1039,11 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
                             layers[-1].particle_systems[neuronset2].particles[i].location[2]
                             )) for i in range(0, len(layers[-1].particle_systems[neuronset2].particles))]
     
+    t1 = time.time()
+    
     result = pool.map(wrapper, thread_mapping)
-
+    t2 = time.time()
+    print(t1 - t2)
     # fill uv_grid with post-neuron-links
     for i, post_p3d, post_p2d, post_d in result:
         if post_p3d is None:
@@ -1015,6 +1052,9 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
 
     logger.info("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)
+
+    pre_mapping_multi = []
+
     for i in range(0, num_particles):
         pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer + 1)],
                                                  connections[0:slayer],
@@ -1030,28 +1070,18 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
 
         post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
 
-        if (len(post_neurons) == 0):
-            for j in range(0, len(conn[i])):
-                conn[i, j] = -1
-            continue
+        post_neurons_multi = [((x[0][0], x[0][1], x[0][2].to_tuple(), x[0][3]), x[1].to_tuple()) for x in post_neurons]
 
-        for j, post_neuron in enumerate(post_neurons):
-            distance_pre, _ = computeDistanceToSynapse(
-                layers[slayer - 1], layers[slayer], pre_p3d[-1], post_neuron[1], distances[slayer - 1])
-            if distance_pre >= 0:
-                distance_post, _ = computeDistanceToSynapse(
-                    layers[slayer + 1], layers[slayer], post_neuron[0][2], post_neuron[1], distances[slayer])
-                if distance_post >= 0:
-                    conn[i, j] = post_neuron[0][0]      # the index of the post-neuron
-                    dist[i, j] = pre_d + distance_pre + distance_post + post_neuron[0][3]      # the distance of the post-neuron
-                    syn[i][j] = post_neuron[1]
-                else:
-                    conn[i, j] = -1
-            else:
-                conn[i, j] = -1
+        pre_mapping_multi.append([i, conn[i], dist[i], syn[i], pre_p3d[-1].to_tuple(), pre_d, post_neurons_multi, [x.name for x in layers], slayer, distances, no_synapses])
 
-        for rest in range(j + 1, no_synapses):
-            conn[i, rest] = -1
+    t1 = time.time()
+    results = pool.map(pre_neuron_wrapper, pre_mapping_multi)
+    t2 = time.time()
+    print(t1 - t2)
+    for i, item in enumerate(results):
+        conn[i] = item[0]
+        dist[i] = item[1]
+        syn[i] = item[2]
 
     if create:
         model.CONNECTION_INDICES.append(

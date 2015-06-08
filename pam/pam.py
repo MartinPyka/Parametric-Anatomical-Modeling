@@ -10,6 +10,7 @@ import numpy
 from . import constants
 from . import grid
 from . import model
+from . import exceptions
 
 logger = logging.getLogger(__package__)
 
@@ -422,11 +423,15 @@ def computeDistance_PreToSynapse(no_connection, pre_index, synapses=[]):
                 
             for synapse in synapses:
                 #try:
-                s2d = model.CONNECTION_RESULTS[1]['s'][pre_index][synapse]
-                uv_distance, _ = computeDistanceToSynapse(layers[slayer], layers[slayer], pre_p3d[-1], s2d, distances[slayer])
-                uv_distances.append(uv_distance)
-                #except Exception:
-                #    print(Exception)
+                s2d = model.CONNECTION_RESULTS[no_connection]['s'][pre_index][synapse]
+                try:
+                    uv_distance, _ = computeDistanceToSynapse(layers[slayer], layers[slayer], pre_p3d[-1], s2d, distances[slayer])
+                    uv_distances.append(uv_distance)
+                except exception.MapUVError as e:
+                    logger.info("Message-pre-data: ", e)
+                except Exception as e:
+                    logger.info("A general error occured: ", e)
+
             path_length = compute_path_length(pre_p3d) + numpy.mean(uv_distances)
         else:
             path_length = compute_path_length(pre_p3d)
@@ -857,8 +862,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
     """
     s_3d = mapUVPointTo3d(slayer, [s_2d])
     if not any(s_3d):
-        logger.info("Need to exclude one connection")
-        return -1, -1
+        raise exceptions.MapUVError(slayer, dis, s_2d)
 
     if dis == DIS_euclid:
         return (p_3d - s_3d[0]).length, s_3d
@@ -893,7 +897,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
         p, n, f = slayers.closest_point_on_mesh(s_3d[0])
         t_3d = map3dPointTo3d(ilayers, ilayers, p, n)
         if t_3d is None:
-            return -1, -1
+            raise exceptions.MapUVError(slayer, dis, [p, n])
         path = [p_3d]
         path = path + interpolateUVTrackIn3D(p_3d, t_3d, ilayers)
         path.append(t_3d)
@@ -1033,18 +1037,26 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
             continue
 
         for j, post_neuron in enumerate(post_neurons):
-            distance_pre, _ = computeDistanceToSynapse(
-                layers[slayer - 1], layers[slayer], pre_p3d[-1], post_neuron[1], distances[slayer - 1])
-            if distance_pre >= 0:
-                distance_post, _ = computeDistanceToSynapse(
-                    layers[slayer + 1], layers[slayer], post_neuron[0][2], post_neuron[1], distances[slayer])
-                if distance_post >= 0:
+            try: 
+                distance_pre, _ = computeDistanceToSynapse(
+                    layers[slayer - 1], layers[slayer], pre_p3d[-1], post_neuron[1], distances[slayer - 1])
+                try: 
+                    distance_post, _ = computeDistanceToSynapse(
+                        layers[slayer + 1], layers[slayer], post_neuron[0][2], post_neuron[1], distances[slayer])
                     conn[i, j] = post_neuron[0][0]      # the index of the post-neuron
                     dist[i, j] = pre_d + distance_pre + distance_post + post_neuron[0][3]      # the distance of the post-neuron
                     syn[i][j] = post_neuron[1]
-                else:
+                except exception.MapUVError as e:
+                    logger.info("Message-post-data: ", e)
                     conn[i, j] = -1
-            else:
+                except Exception as e:
+                    logger.info("A general error occured: ", e)
+                    conn[i, j] = -1
+            except exception.MapUVError as e:
+                logger.info("Message-pre-data: ", e)
+                conn[i, j] = -1
+            except Exception as e:
+                logger.info("A general error occured: ", e)
                 conn[i, j] = -1
 
         for rest in range(j + 1, no_synapses):

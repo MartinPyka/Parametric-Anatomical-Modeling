@@ -394,10 +394,11 @@ def interpolateUVTrackIn3D(p1_3d, p2_3d, layer):
 
 
 # TODO(SK): Rephrase docstring, add parameter/return values
-def computeDistance_PreToSynapse(no_connection, pre_index):
+def computeDistance_PreToSynapse(no_connection, pre_index, synapses=[]):
     """Compute distance for a pre-synaptic neuron and a certain
     connection definition
-
+    synapses can be optionally be used to compute the distance for only a 
+    subset of synapses
     """
     layers = model.CONNECTIONS[no_connection][0]
     neuronset1 = model.CONNECTIONS[no_connection][1]
@@ -415,9 +416,17 @@ def computeDistance_PreToSynapse(no_connection, pre_index):
     if  pre_p3d:
         if (distances[slayer] == DIS_normalUV) | (distances[slayer] == DIS_euclidUV):
             uv_distances = []
-            for synapse in model.CONNECTION_RESULTS[no_connection]['s'][pre_index]:
-                uv_distance, _ = computeDistanceToSynapse(layers[slayer], layers[slayer], pre_p3d[-1], synapse, distances[slayer])
+            # if synapses is empty, simply calculate it for all synapses
+            if not synapses:
+                synapses = model.CONNECTION_RESULTS[no_connection]['s'][pre_index]
+                
+            for synapse in synapses:
+                #try:
+                s2d = model.CONNECTION_RESULTS[1]['s'][pre_index][synapse]
+                uv_distance, _ = computeDistanceToSynapse(layers[slayer], layers[slayer], pre_p3d[-1], s2d, distances[slayer])
                 uv_distances.append(uv_distance)
+                #except Exception:
+                #    print(Exception)
             path_length = compute_path_length(pre_p3d) + numpy.mean(uv_distances)
         else:
             path_length = compute_path_length(pre_p3d)
@@ -427,7 +436,7 @@ def computeDistance_PreToSynapse(no_connection, pre_index):
     return path_length, pre_p3d
 
 
-# TODO(SK): Rephrase docstring, add parameter/return values
+# TODO(SK): Rephrase docstring, add parameter/return valuesprint(slayer)
 def compute_path_length(path):
     """Compute for an array of 3d-vectors their length in space"""
     return sum([(path[i] - path[i - 1]).length for i in range(1, len(path))])

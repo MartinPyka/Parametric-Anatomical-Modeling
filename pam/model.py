@@ -15,6 +15,13 @@ CONNECTIONS = []
 CONNECTION_RESULTS = []
 
 
+def getPreIndicesOfPostIndex(c_index, post_index ):
+    """ returns for a given connection-index c_index and a given post-synaptic
+    neuron post_index the row-indices (index of the pre-synaptic neurons) and the
+    column-index (for identifying the synapse """
+    pre_indices, synapses = numpy.where(numpy.array(CONNECTION_RESULTS[c_index]['c']) == post_index)
+    return pre_indices, synapses
+
 # TODO(SK): Fill in docstring parameter/return values
 def convertObject2String(connection):
     """Takes a CONNECTION-struct and converts `bpy.objects` to

@@ -38,7 +38,7 @@ def generateLayerNeurons(layer, particle_system, obj, object_color=[],
 
     # generates linked duplicates of this mesh
     for i, p in enumerate(particles):
-        name = 'n' + '_' + layer.name + '_' + '%05d' % (i + 1)
+        name = 'n' + '_' + layer.name + '_' + particle_system + '_' + '%05d' % (i + 1)
         dupli = bpy.data.objects.new(name, obj.data)
         bpy.context.scene.objects.link(dupli)
         dupli.location = p.location
@@ -63,7 +63,6 @@ def generateLayerNeurons(layer, particle_system, obj, object_color=[],
 def generateNetworkNeurons(obj):
     for neurongroup in model.NG_LIST:
         layer = bpy.data.objects[neurongroup[0]]
-        print(layer.name)
         particle_system = neurongroup[1]
         generateLayerNeurons(layer, particle_system, obj)
 
@@ -79,7 +78,7 @@ def animNeuronSpiking(func):
     for i, (neuronIDinGroup, neuronGroupID, fireTime) in enumerate(timings):
         logger.info(str(i) + "/" + str(no_timings))
 
-        layer_name = neuronGroups[neuronGroupID][0]
+        layer_name = neuronGroups[neuronGroupID][0] + '_' + neuronGroups[neuronGroupID][1]
         frame = int(helper.projectTimeToFrames(fireTime))
         func(layer_name, neuronIDinGroup, frame)
 

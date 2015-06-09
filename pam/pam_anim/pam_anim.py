@@ -180,7 +180,6 @@ def simulateTiming(timingID):
 
     for connectionID in connectionIDs:
         for index, i in enumerate(c[connectionID[0]]['c'][neuronID][:data.noAvailableConnections]):
-            print(connectionID[0], neuronID, index)
             if i == -1 or data.DELAYS[connectionID[0]][neuronID][index] == 0:
                 continue
             simulateConnection(connectionID[0], neuronID, index, timingID)
@@ -386,7 +385,7 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
             continue
 
         logger.info("Generating spike " + str(i) + "/" + str(total) + ": " + str((spike.timingID, spike.connectionID, spike.sourceNeuronID, spike.targetNeuronID)))
-        spike.visualize(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh].data, bpy.context.scene.pam_anim_orientation)
+        spike.visualize(bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh], bpy.context.scene.pam_anim_orientation)
 
 
     wm.progress_end()
@@ -519,7 +518,7 @@ def animateSpikePropagation():
     addObjectsToGroup(bpy.data.groups[SPIKE_GROUP_NAME], [obj.object for obj in SPIKE_OBJECTS.values() if obj.object is not None])
 
     # Apply material to mesh
-    mesh = bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh].data
+    mesh = bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh]
     mesh.materials.clear()
     mesh.materials.append(bpy.data.materials[bpy.context.scene.pam_anim_material.material])
 
@@ -629,7 +628,7 @@ class GenerateOperator(bpy.types.Operator):
     def poll(cls, context):
 
         # Check if a valid mesh has been selected
-        if context.scene.pam_anim_mesh.mesh not in bpy.data.objects:
+        if context.scene.pam_anim_mesh.mesh not in bpy.data.meshes:
             return False
 
         # Check if a model is loaded into pam

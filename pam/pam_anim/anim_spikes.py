@@ -120,7 +120,8 @@ def setNeuronColorKeyframe(neuronID, neuronGroupID, frame, color):
 
 # TODO(SK): Rephrase docstring, purpose?
 def deleteNeurons():
-    """Delete all objects with the prefix `n_`"""
-    bpy.ops.object.select_all(action='DESELECT')
-    bpy.ops.object.select_pattern(pattern='n_*')
-    bpy.ops.object.delete(use_global=False)
+    """Delete all objects in the group specified in NEURON_GROUP_NAME"""
+    if NEURON_GROUP_NAME in bpy.data.groups:
+        for obj in bpy.data.groups[NEURON_GROUP_NAME].objects:
+            bpy.context.scene.objects.unlink(obj)
+            bpy.data.objects.remove(obj)

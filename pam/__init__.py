@@ -89,7 +89,6 @@ def register():
     pam_anim.tools.dataTools.register()
     pam_anim.tools.materialTools.register()
     pam_anim.tools.meshTools.register()
-    pam_anim.tools.orientationTools.register()
 
     pam_anim.pam_anim.register()
 

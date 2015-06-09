@@ -41,28 +41,6 @@ class PamAnimMaterialPane(bpy.types.Panel):
             row = layout.row()
             row.prop_search(context.scene.pam_anim_material, "material", bpy.data, "materials")
 
-
-class PamAnimOrientationPane(bpy.types.Panel):
-    """A panel for choosing object orientation"""
-
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS"
-    bl_context = "objectmode"
-    bl_label = "Object orientation"
-    bl_category = "PAM Animate"
-
-    def draw(self, context):
-        layout = self.layout
-
-        options = bpy.context.scene.pam_anim_orientation
-
-        row = layout.row()
-        row.prop(options, 'orientationType', expand=True)
-
-        if(options.orientationType == 'OBJECT'):
-            row = layout.row()
-            row.prop_search(options, 'orientationObject', bpy.data, "objects")
-
 class PamAnimPathsPane(bpy.types.Panel):
     """A panel for choosing how to display paths"""
 
@@ -86,6 +64,16 @@ class PamAnimPathsPane(bpy.types.Panel):
 
         row = layout.row()
         row.prop_search(options, 'mesh', bpy.data, 'objects')
+
+        row = layout.row()
+        row.label("Orientation:")
+
+        row = layout.row()
+        row.prop(options, 'orientationType', expand=True)
+
+        if(options.orientationType == 'OBJECT'):
+            row = layout.row()
+            row.prop_search(options, 'orientationObject', bpy.data, "objects")
 
 class PamAnimSpikesPane(bpy.types.Panel):
     """A panel for choosing how to display spikes"""

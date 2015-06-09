@@ -15,6 +15,16 @@ class MeshProperty(bpy.types.PropertyGroup):
     spikeUseLayerColor = bpy.props.BoolProperty(name = "Use layer color", default = False)
     spikeColor = bpy.props.FloatVectorProperty(name = "Spike color", default = (1.0, 0.0, 0.0, 1.0), subtype = 'COLOR', size = 4, min = 0.0, max = 1.0)
 
+    orientationType = bpy.props.EnumProperty(
+        name="materialOption",
+        items=(
+            ('NONE', 'None', 'Neuron orientation is not influenced'),
+            ('OBJECT', 'Object', 'The neurons are tracking a specific object, e.g. a camera'),
+            ('FOLLOW', 'Follow Curve', 'The neuron orientation is following the curve')
+        ),
+        default='NONE'
+    )
+    orientationObject = bpy.props.StringProperty(name="Orientation object")
 
 def register():
     """Registers the mesh properties"""

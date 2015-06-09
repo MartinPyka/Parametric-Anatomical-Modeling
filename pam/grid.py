@@ -2,12 +2,16 @@
 
 import logging
 import math
+import numpy
 
-import bpy
-import mathutils
+#import bpy
+#import mathutils
 
-from . import constants
-from . import helper
+#from . import constants
+#from . import helper
+
+import constants
+import helper
 
 logger = logging.getLogger(__package__)
 
@@ -64,7 +68,7 @@ def grid_dimension(u, v, res):
         u, v, row, col
     )
 
-    return row, col
+    return int(row), int(col)
 
 
 class UVGrid(object):
@@ -72,17 +76,17 @@ class UVGrid(object):
 
     def __init__(self, obj, resolution=constants.DEFAULT_RESOLUTION):
         self._obj = obj
-        self._scaling = obj['uv_scaling']
+        #self._scaling = obj['uv_scaling']
         self._resolution = resolution
 
-        self._u, self._v = uv_bounds(obj)
+        self._u, self._v = (1., 1.) # uv_bounds(obj)
         self._row, self._col = grid_dimension(
             self._u,
             self._v,
             self._resolution
         )
 
-        self._weights = [[[] for j in range(self._col)] for i in range(self._row)]
+        self.reset_weights()        
         self._uvcoords = [[[] for j in range(self._col)] for i in range(self._row)]
         self._gridmask = [[True for j in range(self._col)] for i in range(self._row)]
 
@@ -109,6 +113,9 @@ class UVGrid(object):
 
     def __len__(self):
         return any([len(c) for r in self._weights for c in r if any(c)])
+        
+    def reset_weights(self):
+        self._weights = [[[] for j in range(self._col)] for i in range(self._row)]
 
     # TODO(SK): Missing docstring
     @property
@@ -135,8 +142,8 @@ class UVGrid(object):
 
     def _compute_mask(self, mask, kernel, args):
 
-        elements = range(math.ceil(2 / self._resolution))
-        shift = math.floor(len(elements) / 2)
+        elements = range(int(math.ceil(2 / self._resolution)))
+        shift = int(math.floor(len(elements) / 2))
 
         for row in elements:
             for col in elements:
@@ -144,8 +151,8 @@ class UVGrid(object):
                 relative_col = col - shift
 
                 result = kernel(
-                    mathutils.Vector((0, 0)),
-                    mathutils.Vector((
+                    numpy.array((0, 0)),
+                    numpy.array((
                         relative_row * self._resolution,
                         relative_col * self._resolution
                     )),
@@ -279,8 +286,8 @@ class UVGrid(object):
             # u = min(self._u, max(0., u))
             # v = min(self._v, max(0., v))
 
-        row = math.floor(u / self._resolution)
-        col = math.floor(v / self._resolution)
+        row = int(math.floor(u / self._resolution))
+        col = int(math.floor(v / self._resolution))
 
         logger.debug("uv (%f, %f) to cell index [%d][%d]", u, v, row, col)
 
@@ -304,8 +311,8 @@ class UVGrid(object):
         for row in range(self._row):
             for col in range(self._col):
                 u, v = self._cell_index_to_uv(row, col)
-                self._uvcoords[row][col] = mathutils.Vector((u, v))
-                if self._onGrid(mathutils.Vector((u, v))) == 0:
+                self._uvcoords[row][col] = numpy.array((u, v))
+                if self._onGrid(numpy.array((u, v))) == 0:
                     self._gridmask[row][col] = False
 
     def _reset_weights(self):
@@ -320,6 +327,7 @@ class UVGrid(object):
         the closest_point_on_mesh operation is used
         """
 
+        return 1            # TODO: remove afterwards
         result = 0
         for p in self._obj.data.polygons:
             uvs = [self._obj.data.uv_layers.active.data[li] for li in p.loop_indices]

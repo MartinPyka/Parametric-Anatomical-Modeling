@@ -94,6 +94,7 @@ def readSimulationData(simulationFile):
     
     # read the data into the TIMINGS variable
     global TIMINGS
+    TIMINGS = []
     timing_data = timingZip[fileName]
 
     for row in timing_data:

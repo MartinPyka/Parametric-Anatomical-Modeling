@@ -9,8 +9,28 @@ import bpy
 import bpy_extras
 
 from .. import model
+from .. import pam
 
 logger = logging.getLogger(__package__)
+
+
+def getUVs(object, particle_system):
+    """ returns a numpy-array of uv - coordinates for a given particle-system 
+    on a given object """
+    locations = [p.location for p in object.particle_systems[particle_system].particles]
+    uvs = [pam.map3dPointToUV(object, object, loc) for loc in locations]
+    return np.array(uvs)
+
+def saveUVs(filename, object, particle_system):
+    """ saves the uv-coordinates of all particles for a given object and a given
+    particle_system id """
+    uvs = getUVs(object, particle_system)
+    f = open(filename, 'w')
+    writer = csv.writer(f, delimiter=";")
+    for uv in uvs:
+        writer.writerow([uv[0], uv[1]])
+        
+    f.close()
 
 
 def export_connections(filepath):

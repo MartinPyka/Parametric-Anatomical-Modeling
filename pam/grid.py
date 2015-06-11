@@ -151,13 +151,13 @@ class UVGrid(object):
                 relative_col = col - shift
 
                 result = kernel(
-                    numpy.array((0, 0)),
-                    numpy.array((
+                    numpy.array([[0, 0]]),
+                    numpy.array([[
                         relative_row * self._resolution,
                         relative_col * self._resolution
-                    )),
+                    ]]),
                     *args
-                )
+                )[0]
 
                 if result > constants.KERNEL_THRESHOLD:
                     self._masks[mask].append((
@@ -250,7 +250,7 @@ class UVGrid(object):
             return []
 
         weights = [item[2] for item in mask]
-        indices = numpy.random.choice(len(weights), quantity)
+        indices = numpy.random.choice(len(weights), size = quantity, p = weights / numpy.sum(weights))
         selected_cells = numpy.take(numpy.asarray(mask[:,:2], dtype = numpy.int), indices, axis = 0)
 
         selected = []

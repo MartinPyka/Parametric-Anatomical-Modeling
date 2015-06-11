@@ -31,8 +31,8 @@ def gauss(uv, guv, var_u=1.0, var_v=1.0, shift_u=0.0, shift_v=0.0):
     """
     ruv = guv - uv  # compute relative position
 
-    return np.exp(-((ruv[0] + shift_u) ** 2 / (2 * var_u ** 2) +
-                    (ruv[1] + shift_v) ** 2 / (2 * var_v ** 2)))
+    return np.exp(-((ruv[:,0] + shift_u) ** 2 / (2 * var_u ** 2) +
+                    (ruv[:,1] + shift_v) ** 2 / (2 * var_v ** 2)))
 
 
 # copied from:

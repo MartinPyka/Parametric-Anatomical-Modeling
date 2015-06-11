@@ -120,7 +120,7 @@ class UVGrid(object):
     # TODO(SK): Missing docstring
     @property
     def dimension(self):
-        return mathutils.Vector((self._row, self._col))
+        return (self._row, self._col)
 
     # TODO(SK): Missing docstring
     @property
@@ -245,13 +245,13 @@ class UVGrid(object):
         if row == -1:
             return []
 
-        mask = self.compute_intersect_premask_weights(row, col)
+        mask = numpy.asarray(self.compute_intersect_premask_weights(row, col))
         if len(mask) == 0:
             return []
 
         weights = [item[2] for item in mask]
-        indices = helper.random_select_indices(weights, quantity)
-        selected_cells = [mask[index] for index in indices]
+        indices = numpy.random.choice(len(weights), quantity)
+        selected_cells = numpy.take(numpy.asarray(mask[:,:2], dtype = numpy.int), indices, axis = 0)
 
         selected = []
 
@@ -259,8 +259,8 @@ class UVGrid(object):
             neurons = self._weights[int(row + cell[0])][int(col + cell[1])]
 
             n_weights = [neuron[1] for neuron in neurons]
-            n_indices = helper.random_select_indices(n_weights, 1)
-            selected.append((neurons[n_indices[0]], mathutils.Vector(self._cell_index_to_uv(row + cell[0], col + cell[1]))))
+            n_index = numpy.random.choice(len(neurons), p = n_weights / numpy.sum(n_weights))
+            selected.append((neurons[n_index], numpy.array(self._cell_index_to_uv(row + cell[0], col + cell[1]))))
 
         return selected
 

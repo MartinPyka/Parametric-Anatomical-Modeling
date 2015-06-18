@@ -91,8 +91,8 @@ class UVGrid(object):
         self._gridmask = [[True for j in range(self._col)] for i in range(self._row)]
 
         self._masks = {
-            "pre": [],
-            "post": []
+            "pre": [[[] for j in range(self._col)] for i in range(self._row)],
+            "post": [[[] for j in range(self._col)] for i in range(self._row)]
         }
 
         self._compute_uvcoords()
@@ -166,28 +166,22 @@ class UVGrid(object):
                         result
                     ))
 
+    def compute_grid(self, kernel):
+        # TODO: Calculate all cells correctly with fromfunction
+        grid = numpy.zeros((self._row, self._col, self._row, self._col))
+        for i in range(self._row):
+            for j in range(self._col):
+                for u in range(self._row):
+                    for v in range(self._col):
+                        grid[i][j][u][v] = kernel(numpy.array([[0, 0]]), numpy.array([[i-u, j-v]]))
+        self._grid = grid
+
     def insert_postNeuron(self, index, uv, p_3d, d):
-        """Computes weights with current registered kernel across the grid
-
-        :param int index:
-        :param uv: uv coordinates
-        :type uv: tuple (float, float)
-        :param p_3d:
-        :type p_3d:
-        :param d:
-        :type d:
-
-        """
         row, col = self._uv_to_cell_index(uv[0], uv[1])
-
         if row == -1:
             return
 
-        for cell in self._masks["post"]:
-            if (row + cell[0] >= 0) & (row + cell[0] < self._row) & (col + cell[1] >= 0) & (col + cell[1] < self._col):
-                if self._gridmask[row + cell[0]][col + cell[1]] is True:
-                    self._weights[int(row + cell[0])][int(col + cell[1])].append(
-                        (index, cell[2], p_3d, d))
+        self._masks['post'][row][col].append((index, uv, p_3d, d))
 
     def compute_intersect_premask_weights(self, row, col):
         """Computes the intersect between premask applied on row/col and
@@ -245,22 +239,19 @@ class UVGrid(object):
         if row == -1:
             return []
 
-        mask = numpy.asarray(self.compute_intersect_premask_weights(row, col))
+        mask = self._grid[row][col]
         if len(mask) == 0:
             return []
 
-        weights = [item[2] for item in mask]
+        weights = mask.flatten()
         indices = numpy.random.choice(len(weights), size = quantity, p = weights / numpy.sum(weights))
-        selected_cells = numpy.take(numpy.asarray(mask[:,:2], dtype = numpy.int), indices, axis = 0)
+        selected_cells = numpy.take([item for sublist in self._masks['post'] for item in sublist], indices, axis = 0)
 
         selected = []
 
         for cell in selected_cells:
-            neurons = self._weights[int(row + cell[0])][int(col + cell[1])]
-
-            n_weights = [neuron[1] for neuron in neurons]
-            n_index = numpy.random.choice(len(neurons), p = n_weights / numpy.sum(n_weights))
-            selected.append((neurons[n_index], numpy.array(self._cell_index_to_uv(row + cell[0], col + cell[1]))))
+            n_index = numpy.random.choice(len(cell))
+            selected.append(cell[n_index])
 
         return selected
 

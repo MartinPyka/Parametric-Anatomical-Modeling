@@ -423,7 +423,8 @@ def computeDistance_PreToSynapse(no_connection, pre_index, synapses=[]):
                 
             for synapse in synapses:
                 #try:
-                s2d = model.CONNECTION_RESULTS[no_connection]['s'][pre_index][synapse]
+                #print(synapse)
+                s2d = synapse # model.CONNECTION_RESULTS[no_connection]['s'][pre_index][synapse]
                 try:
                     uv_distance, _ = computeDistanceToSynapse(layers[slayer], layers[slayer], pre_p3d[-1], s2d, distances[slayer])
                     uv_distances.append(uv_distance)
@@ -911,6 +912,11 @@ def addConnection(*args):
 
     # returns the future index of the connection
     return (len(model.CONNECTIONS) - 1)
+
+def replaceMapping(index, *args):
+    """ Replaces a mapping with a given index by the arguments *args
+    """
+    model.CONNECTIONS[index] = args
 
 # TODO(SK): ??? closing brackets are switched
 

@@ -3,13 +3,14 @@
 import math
 import numpy as np
 
-
 KERNEL_TYPES = [
     ("gauss", "Gauss", "", 0),
     ("gauss_u", "Gauss (u)", "", 1),
     ("gauss_v", "Gauss (v)", "", 2),
     ("stripe_with_end", "Stripe with end", "", 3),
-    ("unity", "Unity", "", 4)
+    ("unity", "Unity", "", 4),
+    ("yu_kernel", "Yu Kernel", "", 5),
+    ("yu_kernel2", "Yu fixed Params", "", 6)
 ]
 
 
@@ -178,3 +179,138 @@ def unity(uv, guv, origin_u, origin_v):
 
     """
     return 1.0
+
+
+
+# TODO(SK): Rephrase docstring & fill in parameter values
+def yu_kernel(uv, guv, alpha_u = 0., alpha_v =  0., omega_u = 1.0, omega_v =1.0, ksi_u = 0., ksi_v = 0., tau = 0.):
+    """Computes distribution value in two dimensional Yu kernel
+
+    :param uv: uv coordinates
+    :type uv: tuple (float, float)
+    :param guv:    
+    :type guv: tuple (float, float)
+    :param float alpha_u: compression in u
+    :param float alpha_v: compression in v
+    :param float omega_u: scaling in u
+    :param float omega_v: scaling in v
+    :param float ksi_u: shift in u
+    :param float ksi_v: shift in v
+    :param float tau: rotation angle
+    :return: yu_kernel value at point uv in 2d space
+    :rtype: float
+     
+    """
+    # omega: Scaling by (omega * bins)
+    #         omega = ]0., ∞] (if = 0 => div 0)
+         
+    # alpha: Compression of function by unknown
+    #         alpha = [-∞, ∞]
+                
+    # ksi:   Shift by (ksi * bins)
+    #         ksi = [-∞, ∞]
+    
+    def phi(x):
+        return math.exp(-(x**2/2))/(math.sqrt(2*math.pi))
+    
+    def xhi(x):
+        return 0.5*(1+ math.erf(x/math.sqrt(2)))  
+      
+    taur = math.pi/180 * tau    # convert angle in radian
+    u = guv[0] - uv[0] - ksi_u # compute relative u coordinate 
+    v = guv[1] - uv[1] - ksi_v # compute relative u coordinate 
+    ruv = [( u * np.cos(taur) - v * np.sin(taur)), 
+           ( u * np.sin(taur) + v * np.cos(taur))] # compute rotation
+              
+    return (2/omega_v * phi(ruv[1]/ omega_v) * xhi (alpha_v * ruv[1]/ omega_v)*
+            2/omega_u * phi(ruv[0]/ omega_u) * xhi (alpha_u * ruv[0]/ omega_u)) / 20.
+
+
+# TODO(SK): Rephrase docstring & fill in parameter values
+def yu_kernel2(uv, guv):
+    """Computes distribution value in two dimensional Yu kernel
+
+    :param uv: uv coordinates
+    :type uv: tuple (float, float)
+    :param guv:    
+    :type guv: tuple (float, float)
+    :return: yu_kernel value at point uv in 2d space
+    :rtype: float
+     
+    """
+    # omega: Scaling by (omega * bins)
+    #         omega = ]0., ∞] (if = 0 => div 0)
+         
+    # alpha: Compression of function by unknown
+    #         alpha = [-∞, ∞]
+                
+    # ksi:   Shift by (ksi * bins)
+    #         ksi = [-∞, ∞]
+    
+    alpha_u = np.array ([ [ 0.5, 0.5, 0.5], [ 0.15, 0.15, 0.0], [-0.5 , 0.0, 0.0], 
+                          [-1.5, 0.0, 0.0], [-0.75, 0.0 , 0.0], [-0.25, 0.0, 0.0], 
+                          [0.0, 0.0, 0.0] ])
+    alpha_v = np.array ([ [2.0, 2.0, 2.0], [ 1.5,  1.5,  0.8], [ 0.5,  0.5,  0.5],  
+                          [0.0, 0.0, 0.0], [-0.5, -0.5, -0.5], [-1.5, -1.0, -1.5], 
+                          [-2.0, -1.5, -2.0] ])
+    omega_u = np.array ([ [0.3, 0.3, 0.5], [0.3, 0.3, 0.4], [0.4, 0.6, 0.45],  
+                          [0.5, 0.8, 0.5], [0.5, 0.7, 0.5], [0.4, 0.6, 0.4], 
+                          [0.3, 0.5, 0.3] ])
+    omega_v = np.array ([ [1.5, 1.5, 1.0], [1.7, 2.0, 1.7], [2.3, 3.5, 2.5],  
+                          [3.0, 5.0, 3.0], [2.2, 4.3, 2.2], [1.2, 2.0, 1.2], 
+                          [0.8, 1.5, 0.8] ])
+    ksi_u   = np.array ([ [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, -0.5, -0.5],  
+                          [0.0, 0.0, 0.0], [0.1, 0.1, 0.0], [0.2,  0.3,  0.0], 
+                          [0.3, 0.3, 0.0] ])
+    ksi_v   = np.array ([ [-0.5, -0.5, -0.4], [-0.5, -0.5, -0.5], [-0.5, -0.5, -0.5],  
+                          [-0.2,  0.0, -0.1], [-0.1, 0.05,  0.0], [ 0.1,  0.2,  0.1], 
+                          [0.2, 0.2, 0.1] ])
+    tau     = np.array ([ [-2., -2.,  0.], [ 5.,  5.,  5.], [40., 35., 30.],  
+                          [80., 60., 55.], [70., 55., 43.], [70., 48., 35.], 
+                          [70., 40., 20.] ])
+            
+
+    def interpolate (param, coor):            
+        u = np.array([0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0])/3
+        v = np.array([0.0, 5.0, 10.0])/10
+        
+        x2=np.where(u>=coor[0])[0][0]
+        x1=x2-1
+        y2=np.where(v>=coor[1])[0][0]
+        y1=y2-1
+        
+        a_x1=np.interp(coor[0], [u[x1],u[x2]],[param[x1][y1],param[x2][y1]])
+        a_x2=np.interp(coor[0], [u[x1],u[x2]],[param[x1][y2],param[x2][y2]])
+        a_y=np.interp(coor[1], [v[y1],v[y2]],[a_x1,a_x2])
+        
+        return a_y
+        
+
+    def phi(x):
+        return math.exp(-(x**2/2))/(math.sqrt(2*math.pi))
+     
+
+    def xhi(x):
+        return 0.5*(1+ math.erf(x/math.sqrt(2)))  
+        
+    u = guv[0] - uv[0] # compute relative u coordinate 
+    v = guv[1] - uv[1] # compute relative u coordinate 
+
+    a_u = interpolate(alpha_u, uv)
+    a_v = interpolate(alpha_v, uv)
+    o_u = interpolate(omega_u, uv)
+    o_v = interpolate(omega_v, uv)
+    k_u = interpolate(ksi_u, uv)
+    k_v = interpolate(ksi_v, uv)
+    t   = interpolate(tau, uv) 
+    
+    ux = u - k_u
+    vy = v - k_v
+    taur = math.pi/180 * t    # convert angle in radian
+    
+    ruv = [( ux * np.cos(taur) - vy * np.sin(taur)), 
+           ( ux * np.sin(taur) + vy * np.cos(taur))] # compute rotation
+               
+    return (2/o_v * phi(ruv[1]/ o_v) * xhi (a_v * ruv[1]/ o_v)*
+            2/o_u * phi(ruv[0]/ o_u) * xhi (a_u * ruv[0]/ o_u)) 
+            

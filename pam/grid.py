@@ -95,6 +95,8 @@ class UVGrid(object):
             "post": [[[] for j in range(self._col)] for i in range(self._row)]
         }
 
+        self._grid = {}
+
         self._compute_uvcoords()
 
     def __del__(self):
@@ -166,16 +168,17 @@ class UVGrid(object):
                         result
                     ))
 
-    def compute_grid(self, kernel):
-        # TODO: Feed correct data into kernel function
+    def compute_grid(self, mask, kernel, args = []):
         grid = numpy.zeros((self._row, self._col, self._row, self._col))
+        x = numpy.linspace(0., 1., self._row)
+        y = numpy.linspace(0., 1., self._col)
+        guvs = numpy.dstack(numpy.meshgrid(x, y))[...,::-1]
         for i in range(self._row):
             for j in range(self._col):
-                uvs = numpy.zeros((self._row, self._col, 2))
-                guvs = numpy.zeros((self._row, self._col, 2))
-                grid[i][j] = kernel(uvs, guvs)
-        print(grid.shape)
-        self._grid = grid
+                uvs = numpy.array([self._cell_index_to_uv(i, j)])
+                # Create array with uv-coords
+                grid[i][j] = kernel(uvs, guvs, *args)
+        self._grid[mask] = grid
 
     def insert_postNeuron(self, index, uv, p_3d, d):
         row, col = self._uv_to_cell_index(uv[0], uv[1])
@@ -240,7 +243,7 @@ class UVGrid(object):
         if row == -1:
             return []
 
-        mask = self._grid[row][col]
+        mask = self._grid['post'][row][col]
         if len(mask) == 0:
             return []
 

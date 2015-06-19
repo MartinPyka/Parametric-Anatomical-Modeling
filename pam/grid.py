@@ -76,10 +76,10 @@ class UVGrid(object):
 
     def __init__(self, obj, resolution=constants.DEFAULT_RESOLUTION):
         self._obj = obj
-        #self._scaling = obj['uv_scaling']
+        self._scaling = obj['uv_scaling']
         self._resolution = resolution
 
-        self._u, self._v = (1., 1.) # uv_bounds(obj)
+        self._u, self._v = uv_bounds(obj)
         self._row, self._col = grid_dimension(
             self._u,
             self._v,
@@ -143,32 +143,6 @@ class UVGrid(object):
         self.compute_grid("post", kernel, args)
         self._grid['post'] = [item for sublist in self._grid['post'][:,:] for item in sublist]
 
-    def _compute_mask(self, mask, kernel, args):
-
-        elements = range(int(math.ceil(2 / self._resolution)))
-        shift = int(math.floor(len(elements) / 2))
-
-        for row in elements:
-            for col in elements:
-                relative_row = row - shift
-                relative_col = col - shift
-
-                result = kernel(
-                    numpy.array([[0, 0]]),
-                    numpy.array([[
-                        relative_row * self._resolution,
-                        relative_col * self._resolution
-                    ]]),
-                    *args
-                )[0]
-
-                if result > constants.KERNEL_THRESHOLD:
-                    self._masks[mask].append((
-                        relative_row,
-                        relative_col,
-                        result
-                    ))
-
     def compute_grid(self, mask, kernel, args = []):
         grid = numpy.zeros((self._row, self._col, self._row, self._col))
         x = numpy.linspace(0., 1., self._row)
@@ -193,25 +167,6 @@ class UVGrid(object):
         done in select_random """
         self._masks['post'] = [item for sublist in self._masks['post'] for item in sublist]
 
-    def compute_intersect_premask_weights(self, row, col):
-        """Computes the intersect between premask applied on row/col and
-        weights-array
-
-        :param int row: row
-        :param int col: column
-        :return: intersect
-        :rtype: list
-
-        """
-        result = []
-        for cell in self._masks["pre"]:
-            # if we are in the bords of the grid
-            if (row + cell[0] >= 0) & (row + cell[0] < self._row) & (col + cell[1] >= 0) & (col + cell[1] < self._col):
-                # if the weight-cell has some entries
-                if len(self._weights[int(row + cell[0])][int(col + cell[1])]) > 0:
-                    result.append(cell)
-        return result
-
     def cell(self, u, v):
         """Returns cell for uv coordinate
 
@@ -225,11 +180,11 @@ class UVGrid(object):
         if row == -1:
             return []
 
-        cell = self._weights[row][col]
+        c = self._weights[row][col]
 
         logger.debug("cell at index [%d][%d]", row, col)
 
-        return cell
+        return c
 
     def select_random(self, uv, quantity):
         """Returns a set of randomly selected items from uv coordinate
@@ -265,9 +220,9 @@ class UVGrid(object):
         selected = []
         cell_indices = []
 
-        for i, cell in enumerate(selected_cells):
+        for i, c in enumerate(selected_cells):
             # compute weights for cell
-            weights = cell.flatten()
+            weights = c.flatten()
             # select with weighted probabilites one cell-index per cell
             cell_indices.append( numpy.random.choice(len(weights), size = 1, p = weights / numpy.sum(weights))[0] )
 
@@ -319,7 +274,6 @@ class UVGrid(object):
             "cell index [%d][%d] to center uv (%f, %f)",
             row, col, u, v
         )
-
         return u, v
 
     def _compute_uvcoords(self):

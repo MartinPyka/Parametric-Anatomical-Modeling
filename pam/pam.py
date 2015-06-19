@@ -990,7 +990,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
     syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
 
-    uv_grid = grid.UVGrid(layers[slayer], 0.02)
+    uv_grid = grid.UVGrid(layers[slayer], 0.1)
 
     # rescale arg-parameters
     args_pre = [i / layers[slayer]['uv_scaling'] for i in args_pre]
@@ -1011,9 +1011,13 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
                                                     layers[-1].particle_systems[neuronset2].particles[i].location)
         if post_p3d is None:
             continue
-
+        print(post_d)
         uv_grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
 
+
+    #uv_grid.convert_postNeuronStructure()
+    #for m in uv_grid._masks['post']:
+    #    print(len(m))
     logger.info("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)
     for i in range(0, num_particles):
@@ -1037,27 +1041,27 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
             continue
 
         for j, post_neuron in enumerate(post_neurons):
-            try: 
-                distance_pre, _ = computeDistanceToSynapse(
-                    layers[slayer - 1], layers[slayer], pre_p3d[-1], post_neuron[1], distances[slayer - 1])
-                try: 
-                    distance_post, _ = computeDistanceToSynapse(
-                        layers[slayer + 1], layers[slayer], post_neuron[0][2], post_neuron[1], distances[slayer])
-                    conn[i, j] = post_neuron[0][0]      # the index of the post-neuron
-                    dist[i, j] = pre_d + distance_pre + distance_post + post_neuron[0][3]      # the distance of the post-neuron
-                    syn[i][j] = post_neuron[1]
-                except exception.MapUVError as e:
-                    logger.info("Message-post-data: ", e)
-                    conn[i, j] = -1
-                except Exception as e:
-                    logger.info("A general error occured: ", e)
-                    conn[i, j] = -1
-            except exception.MapUVError as e:
-                logger.info("Message-pre-data: ", e)
-                conn[i, j] = -1
-            except Exception as e:
-                logger.info("A general error occured: ", e)
-                conn[i, j] = -1
+            #try:
+            distance_pre, _ = computeDistanceToSynapse(
+                layers[slayer - 1], layers[slayer], pre_p3d[-1], post_neuron[1], distances[slayer - 1])
+            #try: 
+            distance_post, _ = computeDistanceToSynapse(
+                layers[slayer + 1], layers[slayer], post_neuron[2], post_neuron[1], distances[slayer])
+            conn[i, j] = post_neuron[0]      # the index of the post-neuron
+            dist[i, j] = pre_d + distance_pre + distance_post + post_neuron[3]      # the distance of the post-neuron
+            syn[i][j] = post_neuron[1]
+            #except exception.MapUVError as e:
+            #    logger.info("Message-post-data: ", e)
+            #    conn[i, j] = -1
+            #except Exception as e:
+            #    logger.info("A general error occured: ", e)
+            #    conn[i, j] = -1
+            #except exceptions.MapUVError as e:
+            #    logger.info("Message-pre-data: ", e)
+            #    conn[i, j] = -1
+            #except Exception as e:
+            #    logger.info("A general error occured: ", e)
+            #    conn[i, j] = -1
 
         for rest in range(j + 1, no_synapses):
             conn[i, rest] = -1

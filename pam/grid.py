@@ -167,13 +167,14 @@ class UVGrid(object):
                     ))
 
     def compute_grid(self, kernel):
-        # TODO: Calculate all cells correctly with fromfunction
+        # TODO: Feed correct data into kernel function
         grid = numpy.zeros((self._row, self._col, self._row, self._col))
         for i in range(self._row):
             for j in range(self._col):
-                for u in range(self._row):
-                    for v in range(self._col):
-                        grid[i][j][u][v] = kernel(numpy.array([[0, 0]]), numpy.array([[i-u, j-v]]))
+                uvs = numpy.zeros((self._row, self._col, 2))
+                guvs = numpy.zeros((self._row, self._col, 2))
+                grid[i][j] = kernel(uvs, guvs)
+        print(grid.shape)
         self._grid = grid
 
     def insert_postNeuron(self, index, uv, p_3d, d):

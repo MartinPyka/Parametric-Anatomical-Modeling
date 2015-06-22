@@ -35,7 +35,7 @@ def create_uv_tree(obj, quantity, uv_center, mean = [0.0, 0.0], variance = [0.00
 
     if build_type == 'CURVE':
         curve_obj = mst_blender.buildTreeCurve(root_point)
-        curve_obj.data.bevel_depth = 0.001
+        curve_obj.data.bevel_depth = 0.002
     elif build_type == 'MESH':
         mesh_obj = mst_blender.buildTreeMesh(root_point)
 

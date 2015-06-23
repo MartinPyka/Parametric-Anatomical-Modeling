@@ -165,7 +165,7 @@ class UVGrid(object):
     def convert_postNeuronStructure(self):
         """ Needs to be called after all neurons have been inserted (usually, this is
         done in select_random """
-        self._masks['post'] = [item for sublist in self._masks['post'] for item in sublist]
+        self._masks['post'] = numpy.array([item for sublist in self._masks['post'] for item in sublist])
 
     def cell(self, u, v):
         """Returns cell for uv coordinate
@@ -223,6 +223,8 @@ class UVGrid(object):
         for i, c in enumerate(selected_cells):
             # compute weights for cell
             weights = c.flatten()
+            # Multiply by number of cells available
+            weights *= [len(cells) for cells in self._masks['post']]
             # select with weighted probabilites one cell-index per cell
             cell_indices.append( numpy.random.choice(len(weights), size = 1, p = weights / numpy.sum(weights))[0] )
 

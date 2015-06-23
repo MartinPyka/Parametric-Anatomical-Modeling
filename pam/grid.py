@@ -231,8 +231,11 @@ class UVGrid(object):
         :rtype: list
 
         """
-        if uv[0] >= self._u or uv[1] >= self._v or uv[0] < 0.0 or uv[1] < 0.0:
-            return []
+        #if uv[0] > self._u or uv[1] > self._v or uv[0] < 0.0 or uv[1] < 0.0:
+            #return []
+
+        uv = self.adjustUV(uv)    #if an error occurs in the 3d to uv mapping, it is because of float precision -> small error
+                                  #dealt with by just setting the deviating coordinate onto the border.
 
         row, col = self._uv_to_cell_index(uv[0], uv[1])
         if row == -1:
@@ -266,14 +269,15 @@ class UVGrid(object):
         :rtype: tuple (float, float)
 
         """
-        if uv[0] >= self._u or vv[1] >= self._v or uv[0] < 0.0 or vv[0] < 0.0:
+        if uv[0] >= self._u or uv[1] >= self._v or uv[0] < 0.0 or uv[1] < 0.0:
             uv[0] = min(self._u, max(0., uv[0]))
-            uv[1] = min(self._v, max(0., vv[0]))
+            uv[1] = min(self._v, max(0., uv[1]))
+            #print("UV adjusted")
         return uv
 
     def _uv_to_cell_index(self, u, v):
         """Returns cell index for a uv coordinate"""
-        if u >= self._u or v >= self._v or u < 0.0 or v < 0.0:
+        if u > self._u or v > self._v or u < 0.0 or v < 0.0:
             # logger.error("uv coordinate out of bounds (%f, %f)", u, v)
             return -1, -1
             # u = min(self._u, max(0., u))

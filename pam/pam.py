@@ -968,8 +968,8 @@ def post_neuron_wrapper(x):
     global layers
     global connections
     global distances
-    result = computeMapping(layers, connections, distances, x[1])
-    return (x[0], result[0], (result[1][0], result[1][1]), result[2])
+    result = computeMapping(layers, connections, distances, mathutils.Vector(x[1]))
+    return (x[0], [v[:] for v in result[0]], (result[1][0], result[1][1]), result[2])
 
 def post_neuron_initializer(players, pconnections, pdistances):
     """Initialization function for all threads in the threadpool for post neuron mapping.
@@ -996,7 +996,7 @@ def pre_neuron_wrapper(x):
     pre_p3d, pre_p2d, pre_d = computeMapping(layers[:-1],
                                                 connections[:-1],
                                                 distances[:-1],
-                                                particle)
+                                                mathutils.Vector(particle))
 
     conn = numpy.zeros(no_synapses)
     dist = numpy.zeros(no_synapses)
@@ -1011,7 +1011,6 @@ def pre_neuron_wrapper(x):
     
     for j, post_neuron in enumerate(post_neurons):
         #try:
-        # print(type(layers[-3]), type(layers[-2]), type(pre_p3d[-1]), type(mathutils.Vector(post_neuron[1])), type(distances[-2]))
 
         # The layers have been already sliced before being sent to the thread, so the last element is at slayer + 1
         distance_pre, _ = computeDistanceToSynapse(
@@ -1067,7 +1066,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
 
     """
     # connection matrix
-    conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses)).astype(int)
+    conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses), dtype = numpy.int)
 
     # distance matrix
     dist = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
@@ -1093,10 +1092,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
 
     # Collect particles for post-mapping
     particles = layers[-1].particle_systems[neuronset2].particles
-    thread_mapping = [(i,  (particles[i].location[0],
-                            particles[i].location[1],
-                            particles[i].location[2]))
-                            for i in range(0, len(particles))]
+    thread_mapping = [(i,  particles[i].location.to_tuple()) for i in range(0, len(particles))]
     
     # Execute the wrapper for multiprocessing
     # Calculates post neuron mappings
@@ -1108,8 +1104,10 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     uv_grid.compute_pre_mask(func_pre, args_pre)
     uv_grid.compute_post_mask(func_post, args_post)
 
+    logger.info("Finished Grid")
     # Block until the results for the post mapping are in
     result = result_async.get()
+    logger.info("Finished Post-Mapping")
     
     # fill uv_grid with post-neuron-links
     for i, post_p3d, post_p2d, post_d in result:
@@ -1131,10 +1129,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
 
     # Collect particles for pre-mapping
     particles = layers[0].particle_systems[neuronset2].particles
-    thread_mapping = [(i,  (particles[i].location[0],
-                            particles[i].location[1],
-                            particles[i].location[2]))
-                            for i in range(0, len(particles))]
+    thread_mapping = [(i,  particles[i].location.to_tuple()) for i in range(0, len(particles))]
 
     result = pool.map(pre_neuron_wrapper, thread_mapping)
 
@@ -1142,6 +1137,8 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
         conn[i] = item[0]
         dist[i] = item[1]
         syn[i] = item[2]
+
+    logger.info("Finished Pre-Mapping")
 
     if create:
         model.CONNECTION_INDICES.append(

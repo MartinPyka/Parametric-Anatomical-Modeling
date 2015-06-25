@@ -75,7 +75,7 @@ def generateLayerNeurons(layer, particle_system, obj, object_color=[],
             dupli.color = object_color[i]
 
 
-def getColors(colormap, v, interval=[], alpha=True):
+def getColors(colormap, v, interval=[], alpha=True, zeroDifferent=False, zeroColor=[0.0,0.0,0.0,1.0]):
     """Based on a colormaps, values in the vector are converted to colors
     from the colormap
 
@@ -85,20 +85,30 @@ def getColors(colormap, v, interval=[], alpha=True):
                           values are computed based on v
     """
     if not interval:
-        interval.append(min(v))
-        interval.append(max(v))
+        if not zeroDifferent:
+            interval.append(min(v))
+            interval.append(max(v))
+        else:
+            interval.append(min(i for i in v if i != 0))
+            interval.append(max(i for i in v if i != 0))
 
     l = len(colormap) - 1
     span = float(interval[1] - interval[0])
     colors = []
 
     for i in v:
-        ind = int(numpy.floor(((i - interval[0]) / span) * l))
-        ind = max(min(l, ind), 0)
-        if alpha:
-            colors.append(colormap[ind])
+        if (not zeroDifferent) | (i != 0):
+            ind = int(numpy.floor(((i - interval[0]) / span) * l))
+            ind = max(min(l, ind), 0)            
+            if alpha:
+                colors.append(colormap[ind])
+            else:
+                colors.append(colormap[ind][:3])
         else:
-            colors.append(colormap[ind][:3])
+            if alpha:
+                colors.append(zeroColor)
+            else:
+                colors.append(zeroColor[:3])
     return colors
 
 

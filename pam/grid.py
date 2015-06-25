@@ -147,6 +147,7 @@ class UVGrid(object):
 
     def compute_grid(self, mask, kernel, args = []):
         grid = numpy.zeros((self._row, self._col, self._row, self._col))
+        print(self._row, self._col)
         x = numpy.linspace(0., 1., self._row)
         y = numpy.linspace(0., 1., self._col)
         guvs = numpy.dstack(numpy.meshgrid(x, y))[...,::-1]

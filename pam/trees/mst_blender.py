@@ -42,8 +42,8 @@ def buildTreeCurve(root_node):
         point_index = len(spline.bezier_points) - 1
         point = spline.bezier_points[-1]
         point.co = mathutils.Vector(root_node.pos)
-        point.handle_left_type = 'AUTO'
-        point.handle_right_type = 'AUTO'
+        point.handle_left_type = 'VECTOR'
+        point.handle_right_type = 'VECTOR'
         if hasattr(root_node, 'thickness'):
             point.radius = root_node.thickness
 

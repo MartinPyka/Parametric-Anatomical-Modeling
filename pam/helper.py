@@ -2,7 +2,7 @@
 
 import random
 
-from . import constants
+from pam import constants
 
 
 def accumulate(items):

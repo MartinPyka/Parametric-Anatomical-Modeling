@@ -2,12 +2,16 @@
 
 import logging
 import math
+import numpy
 
 import bpy
 import mathutils
 
 from . import constants
 from . import helper
+
+#import constants
+#import helper
 
 logger = logging.getLogger(__package__)
 
@@ -64,7 +68,7 @@ def grid_dimension(u, v, res):
         u, v, row, col
     )
 
-    return row, col
+    return int(row), int(col)
 
 
 class UVGrid(object):
@@ -82,14 +86,16 @@ class UVGrid(object):
             self._resolution
         )
 
-        self._weights = [[[] for j in range(self._col)] for i in range(self._row)]
+        self.reset_weights()        
         self._uvcoords = [[[] for j in range(self._col)] for i in range(self._row)]
         self._gridmask = [[True for j in range(self._col)] for i in range(self._row)]
 
         self._masks = {
-            "pre": [],
-            "post": []
+            "pre": [[[] for j in range(self._col)] for i in range(self._row)],
+            "post": [[[] for j in range(self._col)] for i in range(self._row)]
         }
+
+        self._grid = {}
 
         self._compute_uvcoords()
 
@@ -109,11 +115,14 @@ class UVGrid(object):
 
     def __len__(self):
         return any([len(c) for r in self._weights for c in r if any(c)])
+        
+    def reset_weights(self):
+        self._weights = [[[] for j in range(self._col)] for i in range(self._row)]
 
     # TODO(SK): Missing docstring
     @property
     def dimension(self):
-        return mathutils.Vector((self._row, self._col))
+        return (self._row, self._col)
 
     # TODO(SK): Missing docstring
     @property
@@ -127,79 +136,36 @@ class UVGrid(object):
 
     # TODO(SK): Missing docstring
     def compute_pre_mask(self, kernel, args):
-        self._compute_mask("pre", kernel, args)
+        self.compute_grid("pre", kernel, args)
 
     # TODO(SK): Missing docstring
     def compute_post_mask(self, kernel, args):
-        self._compute_mask("post", kernel, args)
+        self.compute_grid("post", kernel, args)
+        self._grid['post'] = [item for sublist in self._grid['post'][:,:] for item in sublist]
 
-    def _compute_mask(self, mask, kernel, args):
-
-        elements = range(math.ceil(2 / self._resolution))
-        shift = math.floor(len(elements) / 2)
-
-        for row in elements:
-            for col in elements:
-                relative_row = row - shift
-                relative_col = col - shift
-
-                result = kernel(
-                    mathutils.Vector((0, 0)),
-                    mathutils.Vector((
-                        relative_row * self._resolution,
-                        relative_col * self._resolution
-                    )),
-                    *args
-                )
-
-                if result > constants.KERNEL_THRESHOLD:
-                    self._masks[mask].append((
-                        relative_row,
-                        relative_col,
-                        result
-                    ))
+    def compute_grid(self, mask, kernel, args = []):
+        grid = numpy.zeros((self._row, self._col, self._row, self._col))
+        x = numpy.linspace(0., 1., self._row)
+        y = numpy.linspace(0., 1., self._col)
+        guvs = numpy.dstack(numpy.meshgrid(x, y))[...,::-1]
+        for i in range(self._row):
+            for j in range(self._col):
+                uvs = numpy.array([self._cell_index_to_uv(i, j)])
+                # Create array with uv-coords
+                grid[i][j] = kernel(uvs, guvs, *args)
+        self._grid[mask] = grid
 
     def insert_postNeuron(self, index, uv, p_3d, d):
-        """Computes weights with current registered kernel across the grid
-
-        :param int index:
-        :param uv: uv coordinates
-        :type uv: tuple (float, float)
-        :param p_3d:
-        :type p_3d:
-        :param d:
-        :type d:
-
-        """
         row, col = self._uv_to_cell_index(uv[0], uv[1])
-
         if row == -1:
             return
 
-        for cell in self._masks["post"]:
-            if (row + cell[0] >= 0) & (row + cell[0] < self._row) & (col + cell[1] >= 0) & (col + cell[1] < self._col):
-                if self._gridmask[row + cell[0]][col + cell[1]] is True:
-                    self._weights[int(row + cell[0])][int(col + cell[1])].append(
-                        (index, cell[2], p_3d, d))
-
-    def compute_intersect_premask_weights(self, row, col):
-        """Computes the intersect between premask applied on row/col and
-        weights-array
-
-        :param int row: row
-        :param int col: column
-        :return: intersect
-        :rtype: list
-
-        """
-        result = []
-        for cell in self._masks["pre"]:
-            # if we are in the bords of the grid
-            if (row + cell[0] >= 0) & (row + cell[0] < self._row) & (col + cell[1] >= 0) & (col + cell[1] < self._col):
-                # if the weight-cell has some entries
-                if len(self._weights[int(row + cell[0])][int(col + cell[1])]) > 0:
-                    result.append(cell)
-        return result
+        self._masks['post'][row][col].append((index, uv, p_3d, d))
+        
+    def convert_postNeuronStructure(self):
+        """ Needs to be called after all neurons have been inserted (usually, this is
+        done in select_random """
+        self._masks['post'] = numpy.array([item for sublist in self._masks['post'] for item in sublist])
 
     def cell(self, u, v):
         """Returns cell for uv coordinate
@@ -214,11 +180,11 @@ class UVGrid(object):
         if row == -1:
             return []
 
-        cell = self._weights[row][col]
+        c = self._weights[row][col]
 
         logger.debug("cell at index [%d][%d]", row, col)
 
-        return cell
+        return c
 
     def select_random(self, uv, quantity):
         """Returns a set of randomly selected items from uv coordinate
@@ -237,23 +203,37 @@ class UVGrid(object):
         row, col = self._uv_to_cell_index(uv[0], uv[1])
         if row == -1:
             return []
+        
+        # check, whether ._mask['post'] has already been converted. If not, convert it
+        if len(self._masks['post']) < (self._row * self._col):
+            self.convert_postNeuronStructure()
 
-        mask = self.compute_intersect_premask_weights(row, col)
+        mask = self._grid['pre'][row][col]
         if len(mask) == 0:
             return []
 
-        weights = [item[2] for item in mask]
-        indices = helper.random_select_indices(weights, quantity)
-        selected_cells = [mask[index] for index in indices]
+        weights = mask.flatten()
+        indices = numpy.random.choice(len(weights), size = quantity, p = weights / numpy.sum(weights))
+        # select post-synaptic cell-array for synapse locations
+        selected_cells = numpy.take(self._grid['post'], indices, axis = 0)
 
         selected = []
+        cell_indices = []
 
-        for cell in selected_cells:
-            neurons = self._weights[int(row + cell[0])][int(col + cell[1])]
+        for i, c in enumerate(selected_cells):
+            # compute weights for cell
+            weights = c.flatten()
+            # Multiply by number of cells available
+            weights *= [len(cells) for cells in self._masks['post']]
+            # select with weighted probabilites one cell-index per cell
+            cell_indices.append( numpy.random.choice(len(weights), size = 1, p = weights / numpy.sum(weights))[0] )
 
-            n_weights = [neuron[1] for neuron in neurons]
-            n_indices = helper.random_select_indices(n_weights, 1)
-            selected.append((neurons[n_indices[0]], mathutils.Vector(self._cell_index_to_uv(row + cell[0], col + cell[1]))))
+        post_cells = numpy.take(self._masks['post'], cell_indices, axis = 0)
+        
+        # select randomly post-neurons
+        for p_cell in post_cells:
+            post_neuron = numpy.random.choice(len(p_cell))
+            selected.append(p_cell[post_neuron])    
 
         return selected
 
@@ -279,8 +259,8 @@ class UVGrid(object):
             # u = min(self._u, max(0., u))
             # v = min(self._v, max(0., v))
 
-        row = math.floor(u / self._resolution)
-        col = math.floor(v / self._resolution)
+        row = int(math.floor(u / self._resolution))
+        col = int(math.floor(v / self._resolution))
 
         logger.debug("uv (%f, %f) to cell index [%d][%d]", u, v, row, col)
 
@@ -296,7 +276,6 @@ class UVGrid(object):
             "cell index [%d][%d] to center uv (%f, %f)",
             row, col, u, v
         )
-
         return u, v
 
     def _compute_uvcoords(self):
@@ -304,8 +283,8 @@ class UVGrid(object):
         for row in range(self._row):
             for col in range(self._col):
                 u, v = self._cell_index_to_uv(row, col)
-                self._uvcoords[row][col] = mathutils.Vector((u, v))
-                if self._onGrid(mathutils.Vector((u, v))) == 0:
+                self._uvcoords[row][col] = numpy.array((u, v))
+                if self._onGrid(numpy.array((u, v))) == 0:
                     self._gridmask[row][col] = False
 
     def _reset_weights(self):
@@ -320,6 +299,7 @@ class UVGrid(object):
         the closest_point_on_mesh operation is used
         """
 
+        return 1            # TODO: remove afterwards
         result = 0
         for p in self._obj.data.polygons:
             uvs = [self._obj.data.uv_layers.active.data[li] for li in p.loop_indices]

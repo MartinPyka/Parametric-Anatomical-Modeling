@@ -10,6 +10,7 @@ import numpy
 from . import constants
 from . import grid
 from . import model
+from . import exceptions
 
 import multiprocessing
 
@@ -402,10 +403,11 @@ def interpolateUVTrackIn3D(p1_3d, p2_3d, layer):
 
 
 # TODO(SK): Rephrase docstring, add parameter/return values
-def computeDistance_PreToSynapse(no_connection, pre_index):
+def computeDistance_PreToSynapse(no_connection, pre_index, synapses=[]):
     """Compute distance for a pre-synaptic neuron and a certain
     connection definition
-
+    synapses can be optionally be used to compute the distance for only a 
+    subset of synapses
     """
     layers = model.CONNECTIONS[no_connection][0]
     neuronset1 = model.CONNECTIONS[no_connection][1]
@@ -419,16 +421,35 @@ def computeDistance_PreToSynapse(no_connection, pre_index):
                                              connections[0:slayer] + [connections[slayer]],
                                              distances[0:slayer] + [distances[slayer]],
                                              point)
-
+    
     if  pre_p3d:
-        path_length = compute_path_length(pre_p3d)
-    else:
+        if (distances[slayer] == DIS_normalUV) | (distances[slayer] == DIS_euclidUV):
+            uv_distances = []
+            # if synapses is empty, simply calculate it for all synapses
+            if not synapses:
+                synapses = model.CONNECTION_RESULTS[no_connection]['s'][pre_index]
+                
+            for synapse in synapses:
+                #try:
+                s2d = model.CONNECTION_RESULTS[no_connection]['s'][pre_index][synapse]
+                try:
+                    uv_distance, _ = computeDistanceToSynapse(layers[slayer], layers[slayer], pre_p3d[-1], s2d, distances[slayer])
+                    uv_distances.append(uv_distance)
+                except exception.MapUVError as e:
+                    logger.info("Message-pre-data: ", e)
+                except Exception as e:
+                    logger.info("A general error occured: ", e)
+
+            path_length = compute_path_length(pre_p3d) + numpy.mean(uv_distances)
+        else:
+            path_length = compute_path_length(pre_p3d)
+    else: 
         path_length = 0.
 
     return path_length, pre_p3d
 
 
-# TODO(SK): Rephrase docstring, add parameter/return values
+# TODO(SK): Rephrase docstring, add parameter/return valuesprint(slayer)
 def compute_path_length(path):
     """Compute for an array of 3d-vectors their length in space"""
     return sum([(path[i] - path[i - 1]).length for i in range(1, len(path))])
@@ -849,8 +870,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
     """
     s_3d = mapUVPointTo3d(slayer, [s_2d])
     if not any(s_3d):
-        logger.info("Need to exclude one connection")
-        return -1, -1
+        raise exceptions.MapUVError(slayer, dis, s_2d)
 
     if dis == DIS_euclid:
         return (p_3d - s_3d[0]).length, s_3d
@@ -885,7 +905,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
         p, n, f = slayers.closest_point_on_mesh(s_3d[0])
         t_3d = map3dPointTo3d(ilayers, ilayers, p, n)
         if t_3d is None:
-            return -1, -1
+            raise exceptions.MapUVError(slayer, dis, [p, n])
         path = [p_3d]
         path = path + interpolateUVTrackIn3D(p_3d, t_3d, ilayers)
         path.append(t_3d)
@@ -1013,7 +1033,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
     syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
 
-    uv_grid = grid.UVGrid(layers[slayer], 0.02)
+    uv_grid = grid.UVGrid(layers[slayer], 0.1)
 
     # rescale arg-parameters
     args_pre = [i / layers[slayer]['uv_scaling'] for i in args_pre]
@@ -1048,8 +1068,13 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     for i, post_p3d, post_p2d, post_d in result:
         if post_p3d is None:
             continue
-        uv_grid.insert_postNeuron(i, mathutils.Vector(post_p2d), mathutils.Vector(post_p3d[-1]), post_d)
+        print(post_d)
+        uv_grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
 
+
+    #uv_grid.convert_postNeuronStructure()
+    #for m in uv_grid._masks['post']:
+    #    print(len(m))
     logger.info("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)
 
@@ -1072,7 +1097,28 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
 
         post_neurons_multi = [((x[0][0], x[0][1], x[0][2].to_tuple(), x[0][3]), x[1].to_tuple()) for x in post_neurons]
 
-        pre_mapping_multi.append([i, conn[i], dist[i], syn[i], pre_p3d[-1].to_tuple(), pre_d, post_neurons_multi, [x.name for x in layers], slayer, distances, no_synapses])
+        for j, post_neuron in enumerate(post_neurons):
+            #try:
+            distance_pre, _ = computeDistanceToSynapse(
+                layers[slayer - 1], layers[slayer], pre_p3d[-1], post_neuron[1], distances[slayer - 1])
+            #try: 
+            distance_post, _ = computeDistanceToSynapse(
+                layers[slayer + 1], layers[slayer], post_neuron[2], post_neuron[1], distances[slayer])
+            conn[i, j] = post_neuron[0]      # the index of the post-neuron
+            dist[i, j] = pre_d + distance_pre + distance_post + post_neuron[3]      # the distance of the post-neuron
+            syn[i][j] = post_neuron[1]
+            #except exception.MapUVError as e:
+            #    logger.info("Message-post-data: ", e)
+            #    conn[i, j] = -1
+            #except Exception as e:
+            #    logger.info("A general error occured: ", e)
+            #    conn[i, j] = -1
+            #except exceptions.MapUVError as e:
+            #    logger.info("Message-pre-data: ", e)
+            #    conn[i, j] = -1
+            #except Exception as e:
+            #    logger.info("A general error occured: ", e)
+            #    conn[i, j] = -1
 
     t1 = time.time()
     results = pool.map(pre_neuron_wrapper, pre_mapping_multi)

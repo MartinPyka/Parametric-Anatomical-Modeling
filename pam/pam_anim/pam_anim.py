@@ -19,8 +19,6 @@ logger = logging.getLogger(__package__)
 
 # CONSTANTS
 TAU = 60
-CURVES = {}
-SPIKE_OBJECTS = []
 DEFAULT_MAT_NAME = "SpikeMaterial"
 
 PATHS_GROUP_NAME = "PATHS"
@@ -180,7 +178,6 @@ def simulateTiming(timingID):
 
     for connectionID in connectionIDs:
         for index, i in enumerate(c[connectionID[0]]['c'][neuronID][:data.noAvailableConnections]):
-            print(connectionID[0], neuronID, index)
             if i == -1 or data.DELAYS[connectionID[0]][neuronID][index] == 0:
                 continue
             simulateConnection(connectionID[0], neuronID, index, timingID)
@@ -386,7 +383,7 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
             continue
 
         logger.info("Generating spike " + str(i) + "/" + str(total) + ": " + str((spike.timingID, spike.connectionID, spike.sourceNeuronID, spike.targetNeuronID)))
-        spike.visualize(bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh], bpy.context.scene.pam_anim_orientation)
+        spike.visualize(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh].data, bpy.context.scene.pam_anim_mesh)
 
 
     wm.progress_end()
@@ -416,8 +413,8 @@ def clearVisualization():
 
     global CURVES
     global SPIKE_OBJECTS
-    CURVES = {}
-    SPIKE_OBJECTS = {}
+    CURVES.clear()
+    SPIKE_OBJECTS.clear()
 
 def setAnimationSpeed(curve, animationSpeed):
     """Set the animation speed of a Bezier-curve
@@ -519,7 +516,7 @@ def animateSpikePropagation():
     addObjectsToGroup(bpy.data.groups[SPIKE_GROUP_NAME], [obj.object for obj in SPIKE_OBJECTS.values() if obj.object is not None])
 
     # Apply material to mesh
-    mesh = bpy.data.meshes[bpy.context.scene.pam_anim_mesh.mesh]
+    mesh = bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh].data
     mesh.materials.clear()
     mesh.materials.append(bpy.data.materials[bpy.context.scene.pam_anim_material.material])
 
@@ -629,7 +626,7 @@ class GenerateOperator(bpy.types.Operator):
     def poll(cls, context):
 
         # Check if a valid mesh has been selected
-        if context.scene.pam_anim_mesh.mesh not in bpy.data.meshes:
+        if context.scene.pam_anim_mesh.mesh not in bpy.data.objects:
             return False
 
         # Check if a model is loaded into pam

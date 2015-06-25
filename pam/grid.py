@@ -7,6 +7,8 @@ import numpy
 import bpy
 import mathutils
 
+import pdb
+
 from . import constants
 from . import helper
 
@@ -150,7 +152,10 @@ class UVGrid(object):
         guvs = numpy.dstack(numpy.meshgrid(x, y))[...,::-1]
         for i in range(self._row):
             for j in range(self._col):
+                #import pdb; pdb.set_trace()
                 uvs = numpy.array([self._cell_index_to_uv(i, j)])
+                print(uvs.shape)
+                print(guvs.shape)
                 # Create array with uv-coords
                 grid[i][j] = kernel(uvs, guvs, *args)
         self._grid[mask] = grid

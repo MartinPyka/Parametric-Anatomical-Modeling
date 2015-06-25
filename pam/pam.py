@@ -963,41 +963,83 @@ def updateMapping(index):
         's': result[2]
     }
 
-def wrapper(x):
-    layers = [bpy.data.objects[i] for i in x[1]]
-    result = computeMapping(layers, x[2], x[3], x[4])
-    print(result)
+def post_neuron_wrapper(x):
+    """Wrapper for computing post neuron mapping. To be used with multithreading."""
+    global layers
+    global connections
+    global distances
+    result = computeMapping(layers, connections, distances, x[1])
     return (x[0], result[0], (result[1][0], result[1][1]), result[2])
 
+def post_neuron_initializer(players, pconnections, pdistances):
+    """Initialization function for all threads in the threadpool for post neuron mapping.
+
+    NOTE: globals are only available in the executing thread, so don't expect them 
+    to be available in the main thread."""
+    global layers
+    global connections
+    global distances
+    layers = [bpy.data.objects[i] for i in players]
+    connections = pconnections
+    distances = pdistances
+    
 def pre_neuron_wrapper(x):
-    i, conn, dist, syn, pre_p3d, pre_d, post_neurons, layer_names, slayer, distances, no_synapses = x
+    """Wrapper for computing pre neuron mapping. To be used with multithreading."""
+    i, particle = x
 
-    layers = [bpy.data.objects[name] for name in layer_names]
+    global uv_grid
+    global layers
+    global connections
+    global distances
+    global no_synapses
 
-    if (len(post_neurons) == 0):
+    pre_p3d, pre_p2d, pre_d = computeMapping(layers[:-1],
+                                                connections[:-1],
+                                                distances[:-1],
+                                                particle)
+
+    conn = numpy.zeros(no_synapses)
+    dist = numpy.zeros(no_synapses)
+    syn = [[] for j in range(no_synapses)]
+
+    if pre_p3d is None:
         for j in range(0, len(conn[i])):
             conn[j] = -1
-        return
+        return (conn, dist, syn)
+
+    post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
     
     for j, post_neuron in enumerate(post_neurons):
-        distance_pre, _ = computeDistanceToSynapse(
-            layers[slayer - 1], layers[slayer], mathutils.Vector(pre_p3d), mathutils.Vector(post_neuron[1]), distances[slayer - 1])
-        if distance_pre >= 0:
-            distance_post, _ = computeDistanceToSynapse(
-                layers[slayer + 1], layers[slayer], mathutils.Vector(post_neuron[0][2]), mathutils.Vector(post_neuron[1]), distances[slayer])
-            if distance_post >= 0:
-                conn[j] = post_neuron[0][0]      # the index of the post-neuron
-                dist[j] = pre_d + distance_pre + distance_post + post_neuron[0][3]      # the distance of the post-neuron
-                syn[j] = post_neuron[1]
-            else:
-                conn[j] = -1
-        else:
-            conn[j] = -1
+        #try:
+        # print(type(layers[-3]), type(layers[-2]), type(pre_p3d[-1]), type(mathutils.Vector(post_neuron[1])), type(distances[-2]))
 
-    for rest in range(j + 1, no_synapses):
-        conn[rest] = -1
+        # The layers have been already sliced before being sent to the thread, so the last element is at slayer + 1
+        distance_pre, _ = computeDistanceToSynapse(
+            layers[-3], layers[-2], mathutils.Vector(pre_p3d[-1]), mathutils.Vector(post_neuron[1]), distances[-2])
+        #try: 
+        distance_post, _ = computeDistanceToSynapse(
+            layers[-1], layers[-2], mathutils.Vector(post_neuron[2]), mathutils.Vector(post_neuron[1]), distances[-1])
+        conn[j] = post_neuron[0]      # the index of the post-neuron
+        dist[j] = pre_d + distance_pre + distance_post + post_neuron[3]      # the distance of the post-neuron
+        syn[j] = post_neuron[1]
 
     return (conn, dist, syn)
+
+def pre_neuron_initializer(players, pconnections, pdistances, puv_grid, pno_synapses):
+    """Initialization function for pre neuron mapping
+
+    NOTE: globals are only available in the executing thread, so don't expect them 
+    to be available in the main thread."""
+    global uv_grid
+    global layers
+    global connections
+    global distances
+    global no_synapses
+    uv_grid = puv_grid
+    layers = [bpy.data.objects[i] for i in players]
+    connections = pconnections
+    distances = pdistances
+    no_synapses = pno_synapses
 
 # TODO(SK): Rephrase docstring, fill in parameter/return values
 def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
@@ -1039,36 +1081,41 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     args_pre = [i / layers[slayer]['uv_scaling'] for i in args_pre]
     args_post = [i / layers[slayer]['uv_scaling'] for i in args_post]
 
+    logger.info("Compute Post-Mapping")
+    
+    layers_threading = [x.name for x in layers[:(slayer - 1)]]
+    connections_threading = connections[:(slayer - 1)]
+    distances_threading = distances[:(slayer - 1)]
+
+    pool = multiprocessing.Pool(processes = THREADS, 
+                                initializer = post_neuron_initializer, 
+                                initargs = ([x.name for x in layers[:(slayer - 1):-1]], connections[:(slayer - 1):-1], distances[:(slayer - 1):-1]))
+
+    # Collect particles for post-mapping
+    particles = layers[-1].particle_systems[neuronset2].particles
+    thread_mapping = [(i,  (particles[i].location[0],
+                            particles[i].location[1],
+                            particles[i].location[2]))
+                            for i in range(0, len(particles))]
+    
+    # Execute the wrapper for multiprocessing
+    # Calculates post neuron mappings
+    result_async = pool.map_async(post_neuron_wrapper, thread_mapping)
+
+    # While post neuron mapping is running, we can prepare the grid
     logger.info("Prepare Grid")
 
     uv_grid.compute_pre_mask(func_pre, args_pre)
     uv_grid.compute_post_mask(func_post, args_post)
 
-    logger.info("Compute Post-Mapping")
-
-    pool = multiprocessing.Pool(processes = THREADS)
+    # Block until the results for the post mapping are in
+    result = result_async.get()
     
-    layers_threading = [x.name for x in layers[:(slayer - 1):-1]]
-    connections_threading = connections[:(slayer - 1):-1]
-    distances_threading = distances[:(slayer - 1):-1]
-
-    thread_mapping = [(i, layers_threading, connections_threading, 
-                        distances_threading, 
-                        (layers[-1].particle_systems[neuronset2].particles[i].location[0],
-                            layers[-1].particle_systems[neuronset2].particles[i].location[1],
-                            layers[-1].particle_systems[neuronset2].particles[i].location[2]
-                            )) for i in range(0, len(layers[-1].particle_systems[neuronset2].particles))]
-    
-    t1 = time.time()
-    
-    result = pool.map(wrapper, thread_mapping)
-    t2 = time.time()
-    print(t1 - t2)
     # fill uv_grid with post-neuron-links
     for i, post_p3d, post_p2d, post_d in result:
         if post_p3d is None:
             continue
-        print(post_d)
+        # print(post_d)
         uv_grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
 
 
@@ -1078,53 +1125,20 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     logger.info("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)
 
-    pre_mapping_multi = []
+    pool = multiprocessing.Pool(processes = THREADS, 
+                                initializer = pre_neuron_initializer, 
+                                initargs = ([x.name for x in layers[0:(slayer + 2)]], connections[0:slayer + 1], distances[0:slayer + 1], uv_grid, no_synapses))
 
-    for i in range(0, num_particles):
-        pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer + 1)],
-                                                 connections[0:slayer],
-                                                 distances[0:slayer],
-                                                 layers[0].particle_systems[neuronset1].particles[i].location)
+    # Collect particles for pre-mapping
+    particles = layers[0].particle_systems[neuronset2].particles
+    thread_mapping = [(i,  (particles[i].location[0],
+                            particles[i].location[1],
+                            particles[i].location[2]))
+                            for i in range(0, len(particles))]
 
-        logger.info(str(round((i / num_particles) * 10000) / 100) + '%')
+    result = pool.map(pre_neuron_wrapper, thread_mapping)
 
-        if pre_p3d is None:
-            for j in range(0, len(conn[i])):
-                conn[i, j] = -1
-            continue
-
-        post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
-
-        post_neurons_multi = [((x[0][0], x[0][1], x[0][2].to_tuple(), x[0][3]), x[1].to_tuple()) for x in post_neurons]
-
-        for j, post_neuron in enumerate(post_neurons):
-            #try:
-            distance_pre, _ = computeDistanceToSynapse(
-                layers[slayer - 1], layers[slayer], pre_p3d[-1], post_neuron[1], distances[slayer - 1])
-            #try: 
-            distance_post, _ = computeDistanceToSynapse(
-                layers[slayer + 1], layers[slayer], post_neuron[2], post_neuron[1], distances[slayer])
-            conn[i, j] = post_neuron[0]      # the index of the post-neuron
-            dist[i, j] = pre_d + distance_pre + distance_post + post_neuron[3]      # the distance of the post-neuron
-            syn[i][j] = post_neuron[1]
-            #except exception.MapUVError as e:
-            #    logger.info("Message-post-data: ", e)
-            #    conn[i, j] = -1
-            #except Exception as e:
-            #    logger.info("A general error occured: ", e)
-            #    conn[i, j] = -1
-            #except exceptions.MapUVError as e:
-            #    logger.info("Message-pre-data: ", e)
-            #    conn[i, j] = -1
-            #except Exception as e:
-            #    logger.info("A general error occured: ", e)
-            #    conn[i, j] = -1
-
-    t1 = time.time()
-    results = pool.map(pre_neuron_wrapper, pre_mapping_multi)
-    t2 = time.time()
-    print(t1 - t2)
-    for i, item in enumerate(results):
+    for i, item in enumerate(result):
         conn[i] = item[0]
         dist[i] = item[1]
         syn[i] = item[2]

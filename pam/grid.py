@@ -147,7 +147,6 @@ class UVGrid(object):
 
     def compute_grid(self, mask, kernel, args = []):
         grid = numpy.zeros((self._row, self._col, self._row, self._col))
-        print(self._row, self._col)
         # Padding for uv coordinates is half the size of a cell to center the coordinate
         padding_horizontal = 1. / self._col / 2.
         padding_vertical = 1. / self._row / 2.
@@ -158,8 +157,6 @@ class UVGrid(object):
             for j in range(self._col):
                 #import pdb; pdb.set_trace()
                 uvs = numpy.array([self._cell_index_to_uv(i, j)])
-                print(uvs.shape)
-                print(guvs.shape)
                 # Create array with uv-coords
                 grid[i][j] = kernel(uvs, guvs, *args)
         self._grid[mask] = grid

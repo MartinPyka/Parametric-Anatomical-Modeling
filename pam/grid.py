@@ -148,8 +148,11 @@ class UVGrid(object):
     def compute_grid(self, mask, kernel, args = []):
         grid = numpy.zeros((self._row, self._col, self._row, self._col))
         print(self._row, self._col)
-        x = numpy.linspace(0., 1., self._row)
-        y = numpy.linspace(0., 1., self._col)
+        # Padding for uv coordinates is half the size of a cell to center the coordinate
+        padding_horizontal = 1. / self._col / 2.
+        padding_vertical = 1. / self._row / 2.
+        x = numpy.linspace(padding_horizontal, 1. - padding_horizontal, self._col)
+        y = numpy.linspace(padding_vertical, 1. - padding_vertical, self._row)
         guvs = numpy.dstack(numpy.meshgrid(x, y))[...,::-1]
         for i in range(self._row):
             for j in range(self._col):

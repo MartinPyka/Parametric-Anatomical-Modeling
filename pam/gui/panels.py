@@ -197,6 +197,24 @@ class PAMToolsPanel(bpy.types.Panel):
         )
         row.operator("pam_vis.visualize_clean", "Clear Visualizations")
 
+class PAMTracingPanel(bpy.types.Panel):
+    """A tools panel for conducting virtual tracer studies"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "Tracing"
+    bl_category = "PAM Modeling"
+    
+    def draw(self, context):
+        layout = self.layout
+        row = layout.column()
+
+        row = layout.row()
+        row.prop(context.scene.pam_visualize, "trace_method", expand=True)
+
+        row = layout.row()
+        row.prop(context.scene.pam_visualize, "radius", text="Injection radius")
 
 class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
     """A tools panel for visualization of kernel function """
@@ -250,7 +268,7 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         # row.template_preview(context.blend_data.textures.get("pam.temp_texture"))
 
         row = layout.row(align=True)
-        op = row.operator("pam.reset_params", text="Reset parameter")
+        op = row.operator("pam.reset_params", text="Reset parameters")
 
         layout.separator()
 

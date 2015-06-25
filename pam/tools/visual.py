@@ -29,6 +29,11 @@ MODE_LIST = [
     ("COORDINATES", "At uv", "", 1)
 ]
 
+TRACE_METHOD_LIST = [
+    ("ANTEROGRADE", "Anterograde", "", 0),
+    ("RETROGRADE", "Retrograde", "", 1)
+]
+
 
 # TODO(SK): rephrase descriptions
 # TODO(SK): missing docstring
@@ -457,6 +462,17 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
     mode = bpy.props.EnumProperty(
         name="Mode",
         items=MODE_LIST
+    )
+    trace_method = bpy.props.EnumProperty(
+        name="Tracing Method",
+        items=TRACE_METHOD_LIST
+    )
+    radius = bpy.props.FloatProperty(
+        name="Injection radius",
+        default=0.5,
+        min=0.0,
+        unit="LENGTH",
+        subtype="DISTANCE"
     )
     kernel = bpy.props.EnumProperty(
         name="Kernel function",

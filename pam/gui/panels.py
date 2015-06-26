@@ -208,13 +208,22 @@ class PAMTracingPanel(bpy.types.Panel):
     
     def draw(self, context):
         layout = self.layout
-        row = layout.column()
 
         row = layout.row()
-        row.prop(context.scene.pam_visualize, "trace_method", expand=True)
+        row.prop(context.scene.pam_visualize, "inj_method", text="Injection method", expand=True)
 
         row = layout.row()
         row.prop(context.scene.pam_visualize, "radius", text="Injection radius")
+
+        row = layout.row()
+        row.prop(context.scene.pam_visualize, "set_color", text="Fix injection color")
+
+        if context.scene.pam_visualize.set_color:
+            row = layout.row()
+            row.prop(context.scene.pam_visualize, "inj_color", text="Injection color")
+
+        row = layout.row()
+        op = row.operator("pam_vis.tracing", text="Perform tracing")
 
 class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
     """A tools panel for visualization of kernel function """

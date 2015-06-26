@@ -75,11 +75,9 @@ def visualizeNeuronsHitCount(hit_count_list, neural_objects):
        The larger the connection number the bigger the drawn sphere
 '''
     max_hit = max(max(hit_count_list))
-    print(max_hit)
     steps = max_hit-1
     range_h = MAX_FACTOR-1
     stepsize = min(range_h/steps,MAX_STEP_SIZE)
-    print(stepsize)
     for (obj_ind, hit_counts) in enumerate(hit_count_list):    #iterate through list
         post_obj = neural_objects[obj_ind]                     #and get object
         for (post_number, hit_count) in enumerate(hit_counts):              #for each object, iterate through neuron hit count list
@@ -107,7 +105,7 @@ def anterograde_tracing(location, radius, inj_color=None):
         hit_count_list.append([0]*o.particle_systems[0].settings.count)   #hit_count_list: 1 list for each object, containing a 0 for each neuron
 
     #CALCULATE HIT_COUNT_LIST
-    for (i, pre_obj) in enumerate(neural_objects):        #iterate through objects
+    for (i, pre_obj) in enumerate(neural_objects):        #iterate through pre objects
         pre_list = inj_neurons[i]
         #print(pre_list)
         for (i_c, conn_def) in enumerate(model.CONNECTIONS):     #iterate through all connection definitions in the model
@@ -120,6 +118,38 @@ def anterograde_tracing(location, radius, inj_color=None):
                     post_list = c[pre_number]               #get post_neurons for pre_neuron
                     for post_number in post_list:                #iterating through post_neurons
                         hit_count_list[post_obj_ind][post_number] += 1
+    #print(hit_count_list)
+                
+    #VISUALIZE LABELLED NEURONS
+    visualizeNeuronsHitCount(hit_count_list, neural_objects)
+
+def retrograde_tracing(location, radius, inj_color=None):
+    '''performs retrograde tracing at injection site with defined [radius] around given [location]
+'''
+    neural_objects = getNeuralObjects()
+    inj_neurons = getInjectionSiteNeurons(neural_objects, location, radius)
+    visualizeNeuronsColor(neural_objects, inj_neurons, inj_color)        #visualize injection site neurons
+
+    #PREDEFINE HIT_COUNT_LIST: Number of efferent connections to injection site for each neuron
+    hit_count_list = []
+    for o in neural_objects:
+        hit_count_list.append([0]*o.particle_systems[0].settings.count)   #hit_count_list: 1 list for each object, containing a 0 for each neuron
+
+    #CALCULATE HIT_COUNT_LIST
+    for (i, post_obj) in enumerate(neural_objects):        #iterate through post objects
+        inj_list = inj_neurons[i]
+        #print(pre_list)
+        for (i_c, conn_def) in enumerate(model.CONNECTIONS):     #iterate through all connection definitions in the model
+            #print(conn_def[0])
+            if post_obj == conn_def[0][-1]:                        #and continue for those ending with the current post_object
+                pre_obj = conn_def[0][0]                     #get pre_object
+                pre_obj_ind = neural_objects.index(pre_obj)  #and its index in neural_objects list
+                c = model.CONNECTION_RESULTS[i_c]['c']      #get list containing post_neuron list for each pre_neuron
+                for (pre_number, post_list) in enumerate(c):   #iterating through connection vectors. injection neurons are searched for in the post_lists
+                    for inj_number in inj_list:                  #iterating through injection neurons of current post_object
+                        hits = sum(post_list==inj_number)  #how many hits?
+                        hit_count_list[pre_obj_ind][pre_number] += hits     #add the number of connections to hit count list
+
     #print(hit_count_list)
                 
     #VISUALIZE LABELLED NEURONS

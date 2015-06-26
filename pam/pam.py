@@ -1113,13 +1113,10 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     for i, post_p3d, post_p2d, post_d in result:
         if post_p3d is None:
             continue
-        # print(post_d)
         uv_grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
 
 
     #uv_grid.convert_postNeuronStructure()
-    #for m in uv_grid._masks['post']:
-    #    print(len(m))
     logger.info("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)
 
@@ -1128,7 +1125,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
                                 initargs = ([x.name for x in layers[0:(slayer + 2)]], connections[0:slayer + 1], distances[0:slayer + 1], uv_grid, no_synapses))
 
     # Collect particles for pre-mapping
-    particles = layers[0].particle_systems[neuronset2].particles
+    particles = layers[0].particle_systems[neuronset1].particles
     thread_mapping = [(i,  particles[i].location.to_tuple()) for i in range(0, len(particles))]
 
     result = pool.map(pre_neuron_wrapper, thread_mapping)

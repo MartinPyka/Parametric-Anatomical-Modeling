@@ -64,10 +64,15 @@ class PAMPreferencesPane(bpy.types.AddonPreferences):
         items=log_level_items,
         update=utils.log.callback_properties_changed
     )
+    threads = bpy.props.IntProperty(
+        name = "Threads",
+        default = 0,
+        min = 0)
 
     def draw(self, context):
         layout = self.layout
         col = layout.column()
+        col.prop(self, "threads")
         col.label(text="Logging:")
         col.prop(self, "log_directory", text="Directory")
         col.prop(self, "log_filename", text="Filename")

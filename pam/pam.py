@@ -13,14 +13,9 @@ from . import model
 from . import exceptions
 
 import multiprocessing
-
-# Temp imports
-import pdb
-import time
+import os
 
 logger = logging.getLogger(__package__)
-
-THREADS = 4
 
 # key-values for the mapping-procedure
 MAP_euclid = 0
@@ -854,7 +849,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
         if i == (len(connections) - 1):
             p2d = map3dPointToUV(layers[i + 1], layers[i + 1], p3d_n)
 
-    return p3d, p2d, compute_path_length(p3d)
+    return [p3dv.to_tuple() for p3dv in p3d], p2d, compute_path_length(p3d)
 
 
 # TODO(SK): Rephrase docstring, add parameter/return values
@@ -1008,7 +1003,6 @@ def pre_neuron_wrapper(x):
         return (conn, dist, syn)
 
     post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
-    
     for j, post_neuron in enumerate(post_neurons):
         #try:
 
@@ -1043,7 +1037,7 @@ def pre_neuron_initializer(players, pconnections, pdistances, puv_grid, pno_syna
 # TODO(SK): Rephrase docstring, fill in parameter/return values
 def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
                         distances, func_pre, args_pre, func_post, args_post,
-                        no_synapses, create=True):
+                        no_synapses, create=True, threads = None):
     """Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
     with the given parameters
 
@@ -1063,8 +1057,19 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
                                of its corresponding position on the synapse layer
     :param int no_synapses: number of synapses for each pre-synaptic neuron
     :param bool create: if create == True, then create new connection, otherwise it is just updated
+    :param int threads: Number of threads to be used for multiprocessing. If None, Value in addon preferences is used.
+                        If 0, os.cpu_count() is used.
 
     """
+    # Determine number of threads
+    if threads == None:
+        threads = bpy.context.user_preferences.addons['pam'].preferences.threads
+    if threads < 1:
+        threads = os.cpu_count()
+    threads = 1
+    logger.info("Using " + str(threads) + " threads")
+
+
     # connection matrix
     conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses), dtype = numpy.int)
 
@@ -1086,7 +1091,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     connections_threading = connections[:(slayer - 1)]
     distances_threading = distances[:(slayer - 1)]
 
-    pool = multiprocessing.Pool(processes = THREADS, 
+    pool = multiprocessing.Pool(processes = threads, 
                                 initializer = post_neuron_initializer, 
                                 initargs = ([x.name for x in layers[:(slayer - 1):-1]], connections[:(slayer - 1):-1], distances[:(slayer - 1):-1]))
 
@@ -1119,8 +1124,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     #uv_grid.convert_postNeuronStructure()
     logger.info("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)
-
-    pool = multiprocessing.Pool(processes = THREADS, 
+    pool = multiprocessing.Pool(processes = threads, 
                                 initializer = pre_neuron_initializer, 
                                 initargs = ([x.name for x in layers[0:(slayer + 2)]], connections[0:slayer + 1], distances[0:slayer + 1], uv_grid, no_synapses))
 

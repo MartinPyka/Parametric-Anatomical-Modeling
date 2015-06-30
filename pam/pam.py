@@ -1066,9 +1066,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
         threads = bpy.context.user_preferences.addons['pam'].preferences.threads
     if threads < 1:
         threads = os.cpu_count()
-    threads = 1
     logger.info("Using " + str(threads) + " threads")
-
 
     # connection matrix
     conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses), dtype = numpy.int)

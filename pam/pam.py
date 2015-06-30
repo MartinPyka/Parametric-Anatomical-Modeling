@@ -1004,17 +1004,19 @@ def pre_neuron_wrapper(x):
 
     post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
     for j, post_neuron in enumerate(post_neurons):
-        #try:
-
-        # The layers have been already sliced before being sent to the thread, so the last element is at slayer + 1
-        distance_pre, _ = computeDistanceToSynapse(
-            layers[-3], layers[-2], mathutils.Vector(pre_p3d[-1]), mathutils.Vector(post_neuron[1]), distances[-2])
-        #try: 
-        distance_post, _ = computeDistanceToSynapse(
-            layers[-1], layers[-2], mathutils.Vector(post_neuron[2]), mathutils.Vector(post_neuron[1]), distances[-1])
-        conn[j] = post_neuron[0]      # the index of the post-neuron
-        dist[j] = pre_d + distance_pre + distance_post + post_neuron[3]      # the distance of the post-neuron
-        syn[j] = post_neuron[1]
+        try:
+            # The layers have been already sliced before being sent to the thread, so the last element is at slayer + 1
+            distance_pre, _ = computeDistanceToSynapse(
+                layers[-3], layers[-2], mathutils.Vector(pre_p3d[-1]), mathutils.Vector(post_neuron[1]), distances[-2])
+           
+            distance_post, _ = computeDistanceToSynapse(
+                layers[-1], layers[-2], mathutils.Vector(post_neuron[2]), mathutils.Vector(post_neuron[1]), distances[-1])
+           
+            conn[j] = post_neuron[0]      # the index of the post-neuron
+            dist[j] = pre_d + distance_pre + distance_post + post_neuron[3]      # the distance of the post-neuron
+            syn[j] = post_neuron[1]
+        except:
+            conn[j] = -1
 
     return (conn, dist, syn)
 

@@ -1002,6 +1002,7 @@ def pre_neuron_wrapper(x):
             conn[j] = -1
         return (conn, dist, syn)
 
+    numpy.random.seed(i)
     post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
     for j, post_neuron in enumerate(post_neurons):
         try:

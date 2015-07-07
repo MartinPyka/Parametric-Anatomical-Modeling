@@ -24,7 +24,7 @@ class TestPamModelCreate(unittest.TestCase):
         self.CONNECTION_COUNTER = snapshot.CONNECTION_COUNTER
         self.CONNECTION_INDICES = snapshot.CONNECTION_INDICES
         self.CONNECTIONS = pam.model.Pickle2Connection(snapshot.CONNECTIONS)
-        self.CONNECTION_RESULTS = pam.model.convertArray2Vector(snapshot.CONNECTION_RESULTS)
+        self.CONNECTION_RESULTS = snapshot.CONNECTION_RESULTS
 
     def testModels(self):
         """Test if the pam model generated using euclidean mapping method is the same as a predefined model.
@@ -41,7 +41,7 @@ class TestPamModelCreate(unittest.TestCase):
                 self.assertEqual(self.CONNECTIONS[i], pam.model.CONNECTIONS[i], "Connections between neuron groups differ")
                 numpy.testing.assert_array_equal(self.CONNECTION_RESULTS[i]['c'], pam.model.CONNECTION_RESULTS[i]['c'], "Connections are not equal in connection ID " + str(i))
                 numpy.testing.assert_array_equal(self.CONNECTION_RESULTS[i]['d'], pam.model.CONNECTION_RESULTS[i]['d'], "Distances between connections are incorrect in connection ID " + str(i))
-                self.assertEqual(self.CONNECTION_RESULTS[i]['s'], pam.model.CONNECTION_RESULTS[i]['s'], "Synapse vectors are incorrect for connection " + str(i))
+                numpy.testing.assert_array_equal(self.CONNECTION_RESULTS[i]['s'], pam.model.CONNECTION_RESULTS[i]['s'], "Synapse vectors are incorrect for connection " + str(i))
                 self.assertEqual(self.CONNECTION_INDICES[i], pam.model.CONNECTION_INDICES[i], "Connection indices are incorrect")
                 self.assertEqual(self.NG_LIST[i], pam.model.NG_LIST[i], "Neuron group list is incorrect")
             self.assertEqual(self.NG_DICT, pam.model.NG_DICT, "Neuron group dictionary is incorrect")

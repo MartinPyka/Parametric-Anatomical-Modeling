@@ -963,6 +963,7 @@ def post_neuron_wrapper(x):
     global layers
     global connections
     global distances
+    random.seed(x[0])
     result = computeMapping(layers, connections, distances, mathutils.Vector(x[1]))
     return (x[0], [v[:] for v in result[0]], (result[1][0], result[1][1]), result[2])
 
@@ -988,6 +989,7 @@ def pre_neuron_wrapper(x):
     global distances
     global no_synapses
 
+    random.seed(i)
     pre_p3d, pre_p2d, pre_d = computeMapping(layers[:-1],
                                                 connections[:-1],
                                                 distances[:-1],

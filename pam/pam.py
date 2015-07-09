@@ -958,6 +958,142 @@ def updateMapping(index):
         's': result[2]
     }
 
+def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
+                        distances, func_pre, args_pre, func_post, args_post,
+                        no_synapses, create=True, threads = None):
+    """Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
+    with the given parameters
+    :param list layers: list of layers connecting a pre- with a post-synaptic layer
+    :param str neuronset1: name of the neuronset (particle system) of the pre- and post-synaptic layer
+    :param str neuronset2: name of the neuronset (particle system) of the pre- and post-synaptic layer
+    :param index slayer: index in layers for the synaptic layer
+    :param list connections: values determining the type of layer-mapping
+    :param list distances: values determining the calculation of the distances between layers
+    :param function func_pre: pre-synaptic connectivity kernel, if func_pre is None
+                              only the mapping position of the pre-synaptic neuron on the synaptic layer
+                              is used
+    :param function args_pre:
+    :param function func_post:
+    :param function args_post: same, as for func_pre and and args_pre, but now for the post-synaptic neurons
+                               again, func_post can be None. Then a neuron is just assigned to the cell
+                               of its corresponding position on the synapse layer
+    :param int no_synapses: number of synapses for each pre-synaptic neuron
+    :param bool create: if create == True, then create new connection, otherwise it is just updated
+    :param int threads: If not -1, computeConnectivityThreaded is called instead with number of given threads.
+                        If None, addon preferences are used. If 0, os.cpu_count() is used.
+    """
+    # Determine if threading is to be used
+    if threads == None:
+        if bpy.context.user_preferences.addons['pam'].preferences.use_threading:
+            return computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connections,
+                        distances, func_pre, args_pre, func_post, args_post,
+                        no_synapses, create, threads)
+    elif threads != -1:
+        return computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connections,
+                        distances, func_pre, args_pre, func_post, args_post,
+                        no_synapses, create, threads)
+
+    # connection matrix
+    conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses)).astype(int)
+
+    # distance matrix
+    dist = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
+
+    # synapse mattrx (matrix, with the uv-coordinates of the synapses)
+    syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
+
+    uv_grid = grid.UVGrid(layers[slayer], 0.1)
+
+    # rescale arg-parameters
+    args_pre = [i / layers[slayer]['uv_scaling'] for i in args_pre]
+    args_post = [i / layers[slayer]['uv_scaling'] for i in args_post]
+
+    logger.info("Prepare Grid")
+
+    uv_grid.compute_pre_mask(func_pre, args_pre)
+    uv_grid.compute_post_mask(func_post, args_post)
+
+    logger.info("Compute Post-Mapping")
+
+    # fill uv_grid with post-neuron-links
+    for i in range(0, len(layers[-1].particle_systems[neuronset2].particles)):
+        random.seed(i)
+        post_p3d, post_p2d, post_d = computeMapping(layers[:(slayer - 1):-1],
+                                                    connections[:(slayer - 1):-1],
+                                                    distances[:(slayer - 1):-1],
+                                                    layers[-1].particle_systems[neuronset2].particles[i].location)
+        if post_p3d is None:
+            continue
+        
+        uv_grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
+
+
+    #uv_grid.convert_postNeuronStructure()
+    #for m in uv_grid._masks['post']:
+    #    print(len(m))
+    logger.info("Compute Pre-Mapping")
+    num_particles = len(layers[0].particle_systems[neuronset1].particles)
+    for i in range(0, num_particles):
+        random.seed(i)
+        pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer + 1)],
+                                                 connections[0:slayer],
+                                                 distances[0:slayer],
+                                                 layers[0].particle_systems[neuronset1].particles[i].location)
+
+        logger.info(str(round((i / num_particles) * 10000) / 100) + '%')
+
+        if pre_p3d is None:
+            for j in range(0, len(conn[i])):
+                conn[i, j] = -1
+            continue
+
+        numpy.random.seed(i)
+
+        post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
+
+        if (len(post_neurons) == 0):
+            for j in range(0, len(conn[i])):
+                conn[i, j] = -1
+            continue
+
+        for j, post_neuron in enumerate(post_neurons):
+            try:
+                distance_pre, _ = computeDistanceToSynapse(
+                    layers[slayer - 1], layers[slayer], mathutils.Vector(pre_p3d[-1]), mathutils.Vector(post_neuron[1]), distances[slayer - 1])
+                try: 
+                    distance_post, _ = computeDistanceToSynapse(
+                        layers[slayer + 1], layers[slayer], mathutils.Vector(post_neuron[2]), mathutils.Vector(post_neuron[1]), distances[slayer])
+                    conn[i, j] = post_neuron[0]      # the index of the post-neuron
+                    dist[i, j] = pre_d + distance_pre + distance_post + post_neuron[3]      # the distance of the post-neuron
+                    syn[i][j] = post_neuron[1]
+                except exceptions.MapUVError as e:
+                   logger.info("Message-post-data: " + str(e))
+                   conn[i, j] = -1
+                except Exception as e:
+                   logger.info("A general error occured: " + str(e))
+                   conn[i, j] = -1
+            except exceptions.MapUVError as e:
+               logger.info("Message-pre-data: " + str(e))
+               conn[i, j] = -1
+            except Exception as e:
+               logger.info("A general error occured: " + str(e))
+               conn[i, j] = -1
+
+        for rest in range(j + 1, no_synapses):
+            conn[i, rest] = -1
+
+    if create:
+        model.CONNECTION_INDICES.append(
+            [
+                model.CONNECTION_COUNTER,
+                model.NG_DICT[layers[0].name][neuronset1],
+                model.NG_DICT[layers[-1].name][neuronset2]
+            ]
+        )
+        model.CONNECTION_COUNTER += 1
+
+    return conn, dist, syn, uv_grid
+
 def post_neuron_wrapper(x):
     """Wrapper for computing post neuron mapping. To be used with multithreading."""
     global layers
@@ -1024,7 +1160,7 @@ def pre_neuron_wrapper(x):
     return (conn, dist, syn)
 
 def pre_neuron_initializer(players, pconnections, pdistances, puv_grid, pno_synapses):
-    """Initialization function for pre neuron mapping
+    """Initialization function for pre neuron mapping for multithreading
 
     NOTE: globals are only available in the executing thread, so don't expect them 
     to be available in the main thread."""
@@ -1040,10 +1176,11 @@ def pre_neuron_initializer(players, pconnections, pdistances, puv_grid, pno_syna
     no_synapses = pno_synapses
 
 # TODO(SK): Rephrase docstring, fill in parameter/return values
-def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
+def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connections,
                         distances, func_pre, args_pre, func_post, args_post,
                         no_synapses, create=True, threads = None):
-    """Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
+    """Multithreaded version of computeConnectivity()
+    Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
     with the given parameters
 
     :param list layers: list of layers connecting a pre- with a post-synaptic layer

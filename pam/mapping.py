@@ -290,6 +290,7 @@ class PAMMap(bpy.types.PropertyGroup):
         default=1,
         min=1,
     )
+    seed = bpy.props.IntProperty(name = "Seed")
 
 
 class PAMMappingUp(bpy.types.Operator):

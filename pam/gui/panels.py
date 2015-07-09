@@ -133,6 +133,7 @@ class PAMMappingToolsPanel(bpy.types.Panel):
         col.operator("pam.mapping_update", icon="SCRIPTWIN", text="Update mapping")
         col.operator("pam.mapping_compute", icon="SCRIPTWIN", text="Compute mapping")
         col.operator("pam.mapping_compute_sel", icon="SCRIPTWIN", text="Compute selected mapping")
+        col.prop(m, "seed")
 
 
 class PAMModelDataPanel(bpy.types.Panel):

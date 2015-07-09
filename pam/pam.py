@@ -32,6 +32,7 @@ DIS_UVjump = 3
 DIS_normalUV = 4
 DIS_UVnormal = 5
 
+SEED = 0
 
 # TODO(SK): Missing docstring
 def computePoint(v1, v2, v3, v4, x1, x2):
@@ -1017,7 +1018,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
 
     # fill uv_grid with post-neuron-links
     for i in range(0, len(layers[-1].particle_systems[neuronset2].particles)):
-        random.seed(i)
+        random.seed(i + SEED)
         post_p3d, post_p2d, post_d = computeMapping(layers[:(slayer - 1):-1],
                                                     connections[:(slayer - 1):-1],
                                                     distances[:(slayer - 1):-1],
@@ -1034,7 +1035,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     logger.info("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)
     for i in range(0, num_particles):
-        random.seed(i)
+        random.seed(i + SEED)
         pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer + 1)],
                                                  connections[0:slayer],
                                                  distances[0:slayer],
@@ -1047,7 +1048,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
                 conn[i, j] = -1
             continue
 
-        numpy.random.seed(i)
+        numpy.random.seed(i + SEED)
 
         post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
 
@@ -1099,7 +1100,7 @@ def post_neuron_wrapper(x):
     global layers
     global connections
     global distances
-    random.seed(x[0])
+    random.seed(x[0] + SEED)
     result = computeMapping(layers, connections, distances, mathutils.Vector(x[1]))
     return (x[0], [v[:] for v in result[0]], (result[1][0], result[1][1]), result[2])
 
@@ -1125,7 +1126,7 @@ def pre_neuron_wrapper(x):
     global distances
     global no_synapses
 
-    random.seed(i)
+    random.seed(i + SEED)
     pre_p3d, pre_p2d, pre_d = computeMapping(layers[:-1],
                                                 connections[:-1],
                                                 distances[:-1],
@@ -1140,7 +1141,7 @@ def pre_neuron_wrapper(x):
             conn[j] = -1
         return (conn, dist, syn)
 
-    numpy.random.seed(i)
+    numpy.random.seed(i + SEED)
     post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
     for j, post_neuron in enumerate(post_neurons):
         try:
@@ -1483,6 +1484,8 @@ def resetOrigins():
 
 def initialize3D():
     """Prepare necessary steps for the computation of connections"""
+
+    SEED = bpy.context.scene.pam_mapping.seed
 
     logger.info("reset model")
     model.reset()

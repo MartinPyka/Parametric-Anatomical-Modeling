@@ -1101,8 +1101,12 @@ def post_neuron_wrapper(x):
     global connections
     global distances
     random.seed(x[0] + SEED)
-    result = computeMapping(layers, connections, distances, mathutils.Vector(x[1]))
-    return (x[0], [v[:] for v in result[0]], (result[1][0], result[1][1]), result[2])
+    p3d, p2d, dis = computeMapping(layers, connections, distances, mathutils.Vector(x[1]))
+    if p3d is not None:
+        p3d = [v[:] for v in p3d]
+    if p2d is not None:
+        p2d = (p2d[0], p2d[1])
+    return (x[0], p3d, p2d, dis)
 
 def post_neuron_initializer(players, pconnections, pdistances):
     """Initialization function for all threads in the threadpool for post neuron mapping.
@@ -1137,7 +1141,7 @@ def pre_neuron_wrapper(x):
     syn = [[] for j in range(no_synapses)]
 
     if pre_p3d is None:
-        for j in range(0, len(conn[i])):
+        for j in range(0, no_synapses):
             conn[j] = -1
         return (conn, dist, syn)
 

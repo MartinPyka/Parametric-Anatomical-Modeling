@@ -108,9 +108,10 @@ def stripe_with_end(uv, guv, vec_u=1.0, vec_v=0.0, shift_u=0.0, shift_v=0.0,
         [np.cos(-angle), -np.sin(-angle)],
         [np.sin(-angle), np.cos(-angle)]
     ])
-    rot_vec = np.dot(rotMatrix, np.array(ruv))
-    rot_vec[0] = rot_vec[0] - shift_u
-    rot_vec[1] = rot_vec[1] - shift_v
+    rot_vec = np.dot(rotMatrix, ruv[...,np.newaxis])
+    rot_vec = np.swapaxes(rot_vec, 0, -1)[0]
+    rot_vec[...,0] -= shift_u
+    rot_vec[...,1] -= shift_v
     if (rot_vec[0] < 0):
         return 0.0
     else:

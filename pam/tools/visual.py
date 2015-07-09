@@ -497,6 +497,7 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
     )
     set_color = bpy.props.BoolProperty(
         name="Fix color for injection",
+        description="Check to color the injection site neurons in a color different from the object color",
         default=False
     )
     inj_color = bpy.props.FloatVectorProperty(

@@ -51,7 +51,7 @@ def getInjectionSiteNeurons(obj_list, location, radius):
         neuronsPerObject.append(templist)                       #when all neurons of an object are processed, add templist to return list
     return neuronsPerObject
 
-def visualizeNeuronsColor(neural_objects, inj_neurons, inj_color=None):
+def visualizeNeuronsColor(neural_objects, inj_neurons, inj_color=None, dupli_obj=None):
     '''Visualizes all neurons given by list as returned by getInjectionSiteNeurons.
     The color is either the color of the objet the neuron is contained in or [inj_color], if specified
 '''
@@ -64,12 +64,12 @@ def visualizeNeuronsColor(neural_objects, inj_neurons, inj_color=None):
         neural_obj = neural_objects[ind_obj]                  #get corresponding object
         obj_col = getObjectColor(neural_obj, inj_color)
         for ne in neuron_list:                                #iterate through object's neurons
-            pam_vis.visualizePoint(neural_obj.particle_systems[0].particles[ne].location)  #visualize neuron and color it in
+            pam_vis.visualizePoint(neural_obj.particle_systems[0].particles[ne].location, dupli_obj)  #visualize neuron and color it in
             obj = bpy.context.selected_objects[0]
             obj.active_material = mat
             obj.color = obj_col
 
-def visualizeNeuronsHitCount(hit_count_list, neural_objects):
+def visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj=None):
     '''Visualizes neurons from a hit count list containing a neuron list for each object.
        Each neuron list contains the number of connections for each neuron
        The larger the connection number the bigger the drawn sphere
@@ -82,7 +82,7 @@ def visualizeNeuronsHitCount(hit_count_list, neural_objects):
         post_obj = neural_objects[obj_ind]                     #and get object
         for (post_number, hit_count) in enumerate(hit_counts):              #for each object, iterate through neuron hit count list
             if hit_count:                                              #if 0 hits do nothing
-                pam_vis.visualizePoint(post_obj.particle_systems[0].particles[post_number].location)
+                pam_vis.visualizePoint(post_obj.particle_systems[0].particles[post_number].location, dupli_obj)
                 resize_factor = 1+(hit_count-1)*stepsize
                 bpy.ops.transform.resize(value=(numpy.sqrt(resize_factor), numpy.sqrt(resize_factor), numpy.sqrt(resize_factor))) #resize neuron according to hit count
                 obj_col = getObjectColor(post_obj)
@@ -92,12 +92,12 @@ def visualizeNeuronsHitCount(hit_count_list, neural_objects):
                 obj.color = obj_col
 
 
-def anterograde_tracing(location, radius, inj_color=None):
+def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None):
     '''performs anterograde tracing at injection site with defined [radius] around given [location]
 '''
     neural_objects = getNeuralObjects()
     inj_neurons = getInjectionSiteNeurons(neural_objects, location, radius)
-    visualizeNeuronsColor(neural_objects, inj_neurons, inj_color)        #visualize injection site neurons
+    visualizeNeuronsColor(neural_objects, inj_neurons, inj_color, dupli_obj)        #visualize injection site neurons
 
     #PREDEFINE HIT_COUNT_LIST: Number of afferent connections from injection site for each neuron
     hit_count_list = []
@@ -121,14 +121,14 @@ def anterograde_tracing(location, radius, inj_color=None):
     #print(hit_count_list)
                 
     #VISUALIZE LABELLED NEURONS
-    visualizeNeuronsHitCount(hit_count_list, neural_objects)
+    visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj)
 
-def retrograde_tracing(location, radius, inj_color=None):
+def retrograde_tracing(location, radius, inj_color=None, dupli_obj=None):
     '''performs retrograde tracing at injection site with defined [radius] around given [location]
 '''
     neural_objects = getNeuralObjects()
     inj_neurons = getInjectionSiteNeurons(neural_objects, location, radius)
-    visualizeNeuronsColor(neural_objects, inj_neurons, inj_color)        #visualize injection site neurons
+    visualizeNeuronsColor(neural_objects, inj_neurons, inj_color, dupli_obj)        #visualize injection site neurons
 
     #PREDEFINE HIT_COUNT_LIST: Number of efferent connections to injection site for each neuron
     hit_count_list = []
@@ -153,4 +153,4 @@ def retrograde_tracing(location, radius, inj_color=None):
     #print(hit_count_list)
                 
     #VISUALIZE LABELLED NEURONS
-    visualizeNeuronsHitCount(hit_count_list, neural_objects)
+    visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj)

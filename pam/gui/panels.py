@@ -216,6 +216,9 @@ class PAMTracingPanel(bpy.types.Panel):
         row.prop(context.scene.pam_visualize, "radius", text="Injection radius")
 
         row = layout.row()
+        row.prop_search(context.scene.pam_visualize, 'mesh', bpy.data, 'objects')
+        
+        row = layout.row()
         row.prop(context.scene.pam_visualize, "set_color", text="Fix injection color")
 
         if context.scene.pam_visualize.set_color:

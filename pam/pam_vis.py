@@ -129,12 +129,20 @@ def visualizeNeuronProjLength(no_connection, obj):
     generateLayerNeurons(layers, neuronset1, obj, colors)
 
 
-def visualizePoint(point):
-    """Visualize a point in 3d by creating a small sphere"""
+def visualizePoint(point, obj=None):
+    """Visualize a point in 3d by creating a small sphere
+    providing an onject as the obj argument duplicates the object instead of creating a sphere"""
     global vis_objects
-    #bpy.context.space_data.pivot_point = 'ACTIVE_ELEMENT'    #pivot point to make sure resizing is done relative to object center
-    bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location=point, layers=(True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
-    bpy.ops.transform.resize(value=(0.05, 0.05, 0.05))
+    
+    if not obj:
+        bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location=point, layers=(True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+        bpy.ops.transform.resize(value=(0.05, 0.05, 0.05))
+    else:
+        bpy.ops.object.select_all(action='DESELECT')
+        obj.select = True
+        bpy.ops.object.duplicate(linked=True, mode='INIT')
+        bpy.context.selected_objects[0].location = point
+        
     bpy.context.selected_objects[0].name = "visualization.%03d" % vis_objects
     vis_objects = vis_objects + 1
 

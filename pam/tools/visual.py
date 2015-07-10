@@ -362,16 +362,19 @@ class PamVisualizeTracing(bpy.types.Operator):
     def execute(self, context):
         pv = context.scene.pam_visualize
         cursor = context.scene.cursor_location
+        obj = None
+        if pv.mesh != "":
+            obj = bpy.data.objects[pv.mesh]
         if pv.inj_method == "ANTEROGRADE":
             if pv.set_color:
-                tracing.anterograde_tracing(location=cursor, radius=pv.radius, inj_color=pv.inj_color)
+                tracing.anterograde_tracing(location=cursor, radius=pv.radius, inj_color=pv.inj_color, dupli_obj=obj)
             else:
-                tracing.anterograde_tracing(location=cursor, radius=pv.radius)
+                tracing.anterograde_tracing(location=cursor, radius=pv.radius, dupli_obj=obj)
         else:
             if pv.set_color:
-                tracing.retrograde_tracing(location=cursor, radius=pv.radius, inj_color=pv.inj_color)
+                tracing.retrograde_tracing(location=cursor, radius=pv.radius, inj_color=pv.inj_color, dupli_obj=obj)
             else:
-                tracing.retrograde_tracing(location=cursor, radius=pv.radius)
+                tracing.retrograde_tracing(location=cursor, radius=pv.radius, dupli_obj=obj)
         return {'FINISHED'}
 
 # TODO(SK): missing docstring
@@ -475,6 +478,7 @@ class PamVisualizeKernelFloatProperties(bpy.types.PropertyGroup):
 
 # TODO(SK): missing docstring
 class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
+    mesh = bpy.props.StringProperty(name="Mesh", description="Object to duplicate for use as neuron visualization. Using spheres when left empty.")
     view = bpy.props.EnumProperty(
         name="View mode",
         items=VIEW_LIST,

@@ -29,9 +29,9 @@ def getObjectColor(obj, force_color=None):
     if not obj.active_material:
         col = obj.color
         return [col[0], col[1], col[2], col[3]]
-    if obj.active_material.use_object_color:
-        col = obj.color
-        return [col[0], col[1], col[2], col[3]]
+    #if obj.active_material.use_object_color:
+        #col = obj.color
+        #return [col[0], col[1], col[2], col[3]]
     col = obj.active_material.diffuse_color
     return [col[0], col[1], col[2], 1.0]
 

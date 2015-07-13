@@ -474,7 +474,7 @@ def computeDistance_PreToSynapse(no_connection, pre_index, synapses=[]):
                 try:
                     uv_distance, _ = computeDistanceToSynapse(layers[slayer], layers[slayer], pre_p3d[-1], s2d, distances[slayer])
                     uv_distances.append(uv_distance)
-                except exception.MapUVError as e:
+                except exceptions.MapUVError as e:
                     logger.info("Message-pre-data: ", e)
                 except Exception as e:
                     logger.info("A general error occured: ", e)

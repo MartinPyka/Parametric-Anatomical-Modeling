@@ -465,19 +465,18 @@ def computeDistance_PreToSynapse(no_connection, pre_index, synapses=[]):
             uv_distances = []
             # if synapses is empty, simply calculate it for all synapses
             if not synapses:
-                synapses = model.CONNECTION_RESULTS[no_connection]['s'][pre_index]
+                s2ds = model.CONNECTION_RESULTS[no_connection]['s'][pre_index]
+            else:
+                s2ds = [model.CONNECTION_RESULTS[no_connection]['s'][pre_index][s] for s in synapses]
                 
-            for synapse in synapses:
+            for s2d in s2ds:
                 #try:
-                #print(synapse)
-                s2d = synapse # model.CONNECTION_RESULTS[no_connection]['s'][pre_index][synapse]
-                try:
-                    uv_distance, _ = computeDistanceToSynapse(layers[slayer], layers[slayer], pre_p3d[-1], s2d, distances[slayer])
-                    uv_distances.append(uv_distance)
-                except exceptions.MapUVError as e:
-                    logger.info("Message-pre-data: ", e)
-                except Exception as e:
-                    logger.info("A general error occured: ", e)
+                uv_distance, _ = computeDistanceToSynapse(layers[slayer], layers[slayer], pre_p3d[-1], s2d, distances[slayer])
+                uv_distances.append(uv_distance)
+                #except exceptions.MapUVError as e:
+                #    logger.info("Message-pre-data: ", e)
+                #except Exception as e:
+                #    logger.info("A general error occured: ", e)
 
             path_length = compute_path_length(pre_p3d) + numpy.mean(uv_distances)
         else:

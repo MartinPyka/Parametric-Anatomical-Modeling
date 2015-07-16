@@ -46,10 +46,45 @@ class TestPamModelCreate(unittest.TestCase):
                 self.assertEqual(self.NG_LIST[i], pam.model.NG_LIST[i], "Neuron group list is incorrect")
             self.assertEqual(self.NG_DICT, pam.model.NG_DICT, "Neuron group dictionary is incorrect")
 
+class TestPamModelThreaded(unittest.TestCase):
+    def setUp(self):
+        bpy.context.user_preferences.addons['pam'].preferences.use_threading = True
+        bpy.context.user_preferences.addons['pam'].preferences.threads = 4
+
+    def loadModel(self, path):
+        snapshot = pickle.load(open(bpy.path.abspath(path), "rb"))
+        self.NG_LIST = snapshot.NG_LIST
+        self.NG_DICT = snapshot.NG_DICT
+        self.CONNECTION_COUNTER = snapshot.CONNECTION_COUNTER
+        self.CONNECTION_INDICES = snapshot.CONNECTION_INDICES
+        self.CONNECTIONS = pam.model.Pickle2Connection(snapshot.CONNECTIONS)
+        self.CONNECTION_RESULTS = snapshot.CONNECTION_RESULTS
+
+    def testModels(self):
+        """Test if the pam model generated using euclidean mapping method is the same as a predefined model when using multiple threads.
+
+        Checks CONNECTIONS, CONNECTION_RESULTS, CONNECTION_INDICES, NG_LIST and NG_DICT"""
+        # Import should-be pam model
+        self.loadModel("//model.test.pam")
+
+        # Compute mapping
+        bpy.ops.pam.mapping_compute()
+
+        for i in range(len(self.CONNECTIONS)):
+            with self.subTest(i = i):
+                self.assertEqual(self.CONNECTIONS[i], pam.model.CONNECTIONS[i], "Connections between neuron groups differ")
+                numpy.testing.assert_array_equal(self.CONNECTION_RESULTS[i]['c'], pam.model.CONNECTION_RESULTS[i]['c'], "Connections are not equal in connection ID " + str(i))
+                numpy.testing.assert_array_equal(self.CONNECTION_RESULTS[i]['d'], pam.model.CONNECTION_RESULTS[i]['d'], "Distances between connections are incorrect in connection ID " + str(i))
+                numpy.testing.assert_array_equal(self.CONNECTION_RESULTS[i]['s'], pam.model.CONNECTION_RESULTS[i]['s'], "Synapse vectors are incorrect for connection " + str(i))
+                self.assertEqual(self.CONNECTION_INDICES[i], pam.model.CONNECTION_INDICES[i], "Connection indices are incorrect")
+                self.assertEqual(self.NG_LIST[i], pam.model.NG_LIST[i], "Neuron group list is incorrect")
+            self.assertEqual(self.NG_DICT, pam.model.NG_DICT, "Neuron group dictionary is incorrect")
+
 def run():
     """Run unittest"""
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(TestPamModelCreate))
+    suite.addTest(unittest.makeSuite(TestPamModelThreaded))
     runner = unittest.TextTestRunner(verbosity=2)
     ret = not runner.run(suite).wasSuccessful()
     sys.exit(ret)

@@ -174,6 +174,57 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
 
     return p_uv.to_2d()
 
+class Quadtree_node:
+    def __init__(self, left, top, right, bottom):
+        self.left = left
+        self.right = right
+        self.top = top
+        self.bottom = bottom
+        self.children = [None, None, None, None]
+        self.polygons = []
+
+    def addPolygon(self, polygon):
+        if self.children[0]:
+            if self.children[0].addPolygon(polygon):
+                return True
+            if self.children[1].addPolygon(polygon):
+                return True
+            if self.children[2].addPolygon(polygon):
+                return True
+            if self.children[3].addPolygon(polygon):
+                return True
+        for p in polygon[0]:
+            if p[0] < self.left or p[0] > self.right or p[1] < self.top or p[1] > self.bottom:
+                return False
+        self.polygons.append(polygon)
+        return True
+
+    def getPolygons(self, point):
+        p = point
+        if p[0] < self.left or p[0] > self.right or p[1] < self.top or p[1] > self.bottom:
+            return []
+        else:
+            result = list(self.polygons)
+            if all(self.children):
+                result.extend(self.children[0].getPolygons(p))
+                result.extend(self.children[1].getPolygons(p))
+                result.extend(self.children[2].getPolygons(p))
+                result.extend(self.children[3].getPolygons(p))
+            return result
+
+def buildQuadtree(depth = 3, left = 0.0, top = 0.0, right = 1.0, bottom = 1.0):
+    node = Quadtree_node(left, top, right, bottom)
+    if depth > 0:
+        v = (top + bottom) / 2
+        h = (left + right) / 2
+        node.children[0] = buildQuadtree(depth - 1, left, top, h, v)
+        node.children[1] = buildQuadtree(depth - 1, h, top, right, v)
+        node.children[2] = buildQuadtree(depth - 1, left, v, h, bottom)
+        node.children[3] = buildQuadtree(depth - 1, h, v, right, bottom)
+    return node
+
+# Caches the uv-maps for each object
+quadtrees = {}
 
 # TODO(SK): Quads into triangles (indices)
 # TODO(SK): Rephrase docstring, add parameter/return values
@@ -187,71 +238,64 @@ def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
 
     """
 
-    uv_polygons = []
-
     uv_list_range_container = range(len(uv_list))
 
     points_3d = [[] for _ in uv_list_range_container]
-    unseen = [i for i in uv_list_range_container]
+    point_indices = [i for i in uv_list_range_container]
+    global quadtrees
+    # Build new quadtree to cache objects if no chache exists
+    if obj_uv.name not in quadtrees:
+        quadtree = buildQuadtree(2)
 
-    for p in obj_uv.data.polygons:
-        uvs = [obj_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
+        for p in obj_uv.data.polygons:
+            uvs = ([obj_uv.data.uv_layers.active.data[li].uv for li in p.loop_indices], [obj_uv.data.vertices[p.vertices[i]].co for i in range(len(p.loop_indices))])
+            quadtree.addPolygon(uvs)
+        quadtrees[obj_uv.name] = quadtree
+    else:
+        quadtree = quadtrees[obj_uv.name]
 
-        source_0 = uvs[0].uv.to_3d()
-        source_1 = uvs[1].uv.to_3d()
-        source_2 = uvs[2].uv.to_3d()
-        source_3 = uvs[3].uv.to_3d()
-        vertex_0 = obj_uv.data.vertices[p.vertices[0]].co
-        vertex_1 = obj_uv.data.vertices[p.vertices[1]].co
-        vertex_2 = obj_uv.data.vertices[p.vertices[2]].co
-        vertex_3 = obj_uv.data.vertices[p.vertices[3]].co
-
-        for i in list(unseen):
-            point = uv_list[i].to_3d()
+    for i in point_indices:
+        point = uv_list[i]
+        polygons = quadtree.getPolygons(point)
+        for polygon in polygons:
+            uvs = polygon[0]
+            p3ds = polygon[1]
 
             result = mathutils.geometry.intersect_point_tri_2d(
                 uv_list[i],
-                uvs[0].uv,
-                uvs[1].uv,
-                uvs[2].uv
+                uvs[0],
+                uvs[1],
+                uvs[2]
             )
 
             if (result != 0):
                 points_3d[i] = mathutils.geometry.barycentric_transform(
-                    point,
-                    source_0,
-                    source_1,
-                    source_2,
-                    vertex_0,
-                    vertex_1,
-                    vertex_2
+                    point.to_3d(),
+                    uvs[0].to_3d(),
+                    uvs[1].to_3d(),
+                    uvs[2].to_3d(),
+                    p3ds[0],
+                    p3ds[1],
+                    p3ds[2]
                 )
-                uv_polygons.append(p)
-                unseen.remove(i)
 
             else:
                 result = mathutils.geometry.intersect_point_tri_2d(
                     uv_list[i],
-                    uvs[0].uv,
-                    uvs[2].uv,
-                    uvs[3].uv
+                    uvs[0],
+                    uvs[2],
+                    uvs[3]
                 )
                 if (result != 0):
                     points_3d[i] = mathutils.geometry.barycentric_transform(
-                        point,
-                        source_0,
-                        source_2,
-                        source_3,
-                        vertex_0,
-                        vertex_2,
-                        vertex_3
+                        point.to_3d(),
+                        uvs[0].to_3d(),
+                        uvs[2].to_3d(),
+                        uvs[3].to_3d(),
+                        p3ds[0],
+                        p3ds[2],
+                        p3ds[3]
                     )
-
-                    uv_polygons.append(p)
-                    unseen.remove(i)
-
-            if len(unseen) == 0:
-                return points_3d
 
     if cleanup:
         points_3d = [p for p in points_3d if p]

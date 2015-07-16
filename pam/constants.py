@@ -24,6 +24,10 @@ RAY_FAC = 0.3
 
 INTERPOLATION_QUALITY = 10
 
+# Number of subdivisions for the quadtree cache
+# Use higher numbers if uv-maps have a lot of small polygons
+CACHE_QUADTREE_DEPTH = 2
+
 #DEFAULT_LOCATION = mathutils.Vector((0.0, 0.0, 0.0))
 #DEFAULT_SCALE = mathutils.Vector((1.0, 1.0, 1.0))
 #DEFAULT_ROTATION = mathutils.Euler((0.0, 0.0, 0.0), "XYZ")

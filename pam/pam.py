@@ -34,6 +34,9 @@ DIS_UVnormal = 5
 
 SEED = 0
 
+# Caches for the uv-maps of each object
+quadtrees = {}
+
 # TODO(SK): Missing docstring
 def computePoint(v1, v2, v3, v4, x1, x2):
     # computes an average point on the polygon depending on x1 and x2
@@ -174,6 +177,10 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
 
     return p_uv.to_2d()
 
+def clearQuadtreeCache():
+    global quadtrees
+    quadtrees = {}
+
 class Quadtree_node:
     def __init__(self, left, top, right, bottom):
         self.left = left
@@ -212,7 +219,7 @@ class Quadtree_node:
                 result.extend(self.children[3].getPolygons(p))
             return result
 
-def buildQuadtree(depth = 3, left = 0.0, top = 0.0, right = 1.0, bottom = 1.0):
+def buildQuadtree(depth = 2, left = 0.0, top = 0.0, right = 1.0, bottom = 1.0):
     node = Quadtree_node(left, top, right, bottom)
     if depth > 0:
         v = (top + bottom) / 2
@@ -222,9 +229,6 @@ def buildQuadtree(depth = 3, left = 0.0, top = 0.0, right = 1.0, bottom = 1.0):
         node.children[2] = buildQuadtree(depth - 1, left, v, h, bottom)
         node.children[3] = buildQuadtree(depth - 1, h, v, right, bottom)
     return node
-
-# Caches the uv-maps for each object
-quadtrees = {}
 
 # TODO(SK): Quads into triangles (indices)
 # TODO(SK): Rephrase docstring, add parameter/return values
@@ -245,7 +249,7 @@ def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
     global quadtrees
     # Build new quadtree to cache objects if no chache exists
     if obj_uv.name not in quadtrees:
-        quadtree = buildQuadtree(2)
+        quadtree = buildQuadtree(constants.CACHE_QUADTREE_DEPTH)
 
         for p in obj_uv.data.polygons:
             uvs = ([obj_uv.data.uv_layers.active.data[li].uv for li in p.loop_indices], [obj_uv.data.vertices[p.vertices[i]].co for i in range(len(p.loop_indices))])
@@ -1534,6 +1538,7 @@ def initialize3D():
     """Prepare necessary steps for the computation of connections"""
 
     SEED = bpy.context.scene.pam_mapping.seed
+    clearQuadtreeCache()
 
     logger.info("reset model")
     model.reset()

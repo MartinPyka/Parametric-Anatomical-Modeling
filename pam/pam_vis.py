@@ -75,7 +75,7 @@ def generateLayerNeurons(layer, particle_system, obj, object_color=[],
             dupli.color = object_color[i]
 
 
-def getColors(colormap, v, interval=[], alpha=True, zeroDifferent=False, zeroColor=[0.0,0.0,0.0,1.0]):
+def getColors(colormap, v, interval=[], alpha=True):
     """Based on a colormaps, values in the vector are converted to colors
     from the colormap
 
@@ -85,30 +85,20 @@ def getColors(colormap, v, interval=[], alpha=True, zeroDifferent=False, zeroCol
                           values are computed based on v
     """
     if not interval:
-        if not zeroDifferent:
-            interval.append(min(v))
-            interval.append(max(v))
-        else:
-            interval.append(min(i for i in v if i != 0))
-            interval.append(max(i for i in v if i != 0))
+        interval.append(min(v))
+        interval.append(max(v))
 
     l = len(colormap) - 1
     span = float(interval[1] - interval[0])
     colors = []
 
     for i in v:
-        if (not zeroDifferent) | (i != 0):
-            ind = int(numpy.floor(((i - interval[0]) / span) * l))
-            ind = max(min(l, ind), 0)            
-            if alpha:
-                colors.append(colormap[ind])
-            else:
-                colors.append(colormap[ind][:3])
+        ind = int(numpy.floor(((i - interval[0]) / span) * l))
+        ind = max(min(l, ind), 0)
+        if alpha:
+            colors.append(colormap[ind])
         else:
-            if alpha:
-                colors.append(zeroColor)
-            else:
-                colors.append(zeroColor[:3])
+            colors.append(colormap[ind][:3])
     return colors
 
 
@@ -132,7 +122,6 @@ def visualizeNeuronProjLength(no_connection, obj):
 def visualizePoint(point):
     """Visualize a point in 3d by creating a small sphere"""
     global vis_objects
-    #bpy.context.space_data.pivot_point = 'ACTIVE_ELEMENT'    #pivot point to make sure resizing is done relative to object center
     bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location=point, layers=(True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
     bpy.ops.transform.resize(value=(0.05, 0.05, 0.05))
     bpy.context.selected_objects[0].name = "visualization.%03d" % vis_objects
@@ -518,3 +507,24 @@ def computeAxonLengths(no_connection, pre_index, visualize=False):
                 if visualize:
                     visualizePath(pre_p3d + pre_path)
     return result
+
+
+def hideAllLayers():
+    """ Hide all layers involved in all mappings. If a layer occurs multiple times
+    it is also called here multiple times """
+    for m in model.CONNECTIONS:
+        for layer in m[0]:
+            layer.hide = True
+            
+def showMappingLayers(index):
+    """ shows for a given mapping all layers involved in but hides everything else """
+    hideAllLayers()
+    for layer in model.CONNECTIONS[index][0]:
+        layer.hide = False
+        
+def showPrePostLayers():
+    """ shows for all mappings all the pre- and post-layers and hides everything else """
+    hideAllLayers()
+    for m in model.CONNECTIONS:
+        m[0][0].hide = False
+        m[0][-1].hide = False

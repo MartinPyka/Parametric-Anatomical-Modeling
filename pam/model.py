@@ -13,7 +13,7 @@ CONNECTION_COUNTER = 0
 CONNECTION_INDICES = []
 CONNECTIONS = []
 CONNECTION_RESULTS = []
-
+CONNECTION_ERRORS = []
 
 def getPreIndicesOfPostIndex(c_index, post_index ):
     """ returns for a given connection-index c_index and a given post-synaptic
@@ -173,6 +173,7 @@ def load(path):
     CONNECTION_INDICES = snapshot.CONNECTION_INDICES
     CONNECTIONS = Pickle2Connection(snapshot.CONNECTIONS)
     CONNECTION_RESULTS = convertArray2Vector(snapshot.CONNECTION_RESULTS)
+    CONNECTION_ERRORS = []
 
 
 def compare(path1, path2):
@@ -201,6 +202,7 @@ def reset():
     CONNECTION_INDICES = []
     CONNECTIONS = []
     CONNECTION_RESULTS = []
+    CONNECTION_ERRORS = []
 
 
 class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):

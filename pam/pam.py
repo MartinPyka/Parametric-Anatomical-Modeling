@@ -843,7 +843,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
         if i == (len(connections) - 1):
             p2d = map3dPointToUV(layers[i + 1], layers[i + 1], p3d_n)
 
-    return [p3dv.to_tuple() for p3dv in p3d], p2d, compute_path_length(p3d)
+    return p3d, p2d, compute_path_length(p3d)
 
 
 # TODO(SK): Rephrase docstring, add parameter/return values
@@ -1019,7 +1019,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
         if post_p3d is None:
             continue
         
-        uv_grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
+        uv_grid.insert_postNeuron(i, post_p2d, post_p3d[-1].to_tuple(), post_d)
 
 
     #uv_grid.convert_postNeuronStructure()
@@ -1053,7 +1053,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
         for j, post_neuron in enumerate(post_neurons):
             try:
                 distance_pre, _ = computeDistanceToSynapse(
-                    layers[slayer - 1], layers[slayer], mathutils.Vector(pre_p3d[-1]), mathutils.Vector(post_neuron[1]), distances[slayer - 1])
+                    layers[slayer - 1], layers[slayer], pre_p3d[-1], mathutils.Vector(post_neuron[1]), distances[slayer - 1])
                 try: 
                     distance_post, _ = computeDistanceToSynapse(
                         layers[slayer + 1], layers[slayer], mathutils.Vector(post_neuron[2]), mathutils.Vector(post_neuron[1]), distances[slayer])
@@ -1144,7 +1144,7 @@ def pre_neuron_wrapper(x):
         try:
             # The layers have been already sliced before being sent to the thread, so the last element is at slayer + 1
             distance_pre, _ = computeDistanceToSynapse(
-                layers[-3], layers[-2], mathutils.Vector(pre_p3d[-1]), mathutils.Vector(post_neuron[1]), distances[-2])
+                layers[-3], layers[-2], pre_p3d[-1], mathutils.Vector(post_neuron[1]), distances[-2])
            
             distance_post, _ = computeDistanceToSynapse(
                 layers[-1], layers[-2], mathutils.Vector(post_neuron[2]), mathutils.Vector(post_neuron[1]), distances[-1])

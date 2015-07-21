@@ -11,7 +11,7 @@ from . import constants
 from . import grid
 from . import model
 from . import exceptions
-from . import quadtree
+from .utils import quadtree
 
 import multiprocessing
 import os
@@ -191,17 +191,17 @@ def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
 
     points_3d = [[] for _ in uv_list_range_container]
     point_indices = [i for i in uv_list_range_container]
-    quadtrees = quadtree.quadtrees
+
     # Build new quadtree to cache objects if no chache exists
-    if obj_uv.name not in quadtrees:
+    if obj_uv.name not in model.QUADTREE_CACHE:
         qtree = quadtree.buildQuadtree(constants.CACHE_QUADTREE_DEPTH)
 
         for p in obj_uv.data.polygons:
             uvs = ([obj_uv.data.uv_layers.active.data[li].uv for li in p.loop_indices], [obj_uv.data.vertices[p.vertices[i]].co for i in range(len(p.loop_indices))])
             qtree.addPolygon(uvs)
-        quadtrees[obj_uv.name] = qtree
+        model.QUADTREE_CACHE[obj_uv.name] = qtree
     else:
-        qtree = quadtrees[obj_uv.name]
+        qtree = model.QUADTREE_CACHE[obj_uv.name]
 
     for i in point_indices:
         point = uv_list[i]
@@ -1491,7 +1491,7 @@ def initialize3D():
     """Prepare necessary steps for the computation of connections"""
 
     SEED = bpy.context.scene.pam_mapping.seed
-    quadtree.clearQuadtreeCache()
+    model.clearQuadtreeCache()
 
     logger.info("reset model")
     model.reset()

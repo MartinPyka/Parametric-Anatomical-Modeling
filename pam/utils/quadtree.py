@@ -59,9 +59,3 @@ def buildQuadtree(depth = 2, left = 0.0, top = 0.0, right = 1.0, bottom = 1.0):
         node.children[2] = buildQuadtree(depth - 1, left, v, h, bottom)
         node.children[3] = buildQuadtree(depth - 1, h, v, right, bottom)
     return node
-
-def clearQuadtreeCache():
-    """Clears the quadtree cache. 
-    Has to be called each time a uv-map has changed."""
-    global quadtrees
-    quadtrees = {}

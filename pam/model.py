@@ -7,6 +7,8 @@ import bpy_extras
 import mathutils
 import numpy
 
+from .utils import quadtree
+
 NG_LIST = []
 NG_DICT = {}
 CONNECTION_COUNTER = 0
@@ -14,6 +16,8 @@ CONNECTION_INDICES = []
 CONNECTIONS = []
 CONNECTION_RESULTS = []
 CONNECTION_ERRORS = []
+
+QUADTREE_CACHE = {}
 
 def getPreIndicesOfPostIndex(c_index, post_index ):
     """ returns for a given connection-index c_index and a given post-synaptic
@@ -203,7 +207,13 @@ def reset():
     CONNECTIONS = []
     CONNECTION_RESULTS = []
     CONNECTION_ERRORS = []
+    clearQuadtreeCache()
 
+def clearQuadtreeCache():
+    """Clears the quadtree cache. 
+    Has to be called each time a uv-map has changed."""
+    global quadtrees
+    quadtrees = {}
 
 class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """Load a model"""

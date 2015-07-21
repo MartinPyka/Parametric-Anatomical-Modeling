@@ -11,6 +11,7 @@ from . import constants
 from . import grid
 from . import model
 from . import exceptions
+from . import quadtree
 
 import multiprocessing
 import os
@@ -33,9 +34,6 @@ DIS_normalUV = 4
 DIS_UVnormal = 5
 
 SEED = 0
-
-# Caches for the uv-maps of each object
-quadtrees = {}
 
 # TODO(SK): Missing docstring
 def computePoint(v1, v2, v3, v4, x1, x2):
@@ -177,59 +175,6 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
 
     return p_uv.to_2d()
 
-def clearQuadtreeCache():
-    global quadtrees
-    quadtrees = {}
-
-class Quadtree_node:
-    def __init__(self, left, top, right, bottom):
-        self.left = left
-        self.right = right
-        self.top = top
-        self.bottom = bottom
-        self.children = [None, None, None, None]
-        self.polygons = []
-
-    def addPolygon(self, polygon):
-        if self.children[0]:
-            if self.children[0].addPolygon(polygon):
-                return True
-            if self.children[1].addPolygon(polygon):
-                return True
-            if self.children[2].addPolygon(polygon):
-                return True
-            if self.children[3].addPolygon(polygon):
-                return True
-        for p in polygon[0]:
-            if p[0] < self.left or p[0] > self.right or p[1] < self.top or p[1] > self.bottom:
-                return False
-        self.polygons.append(polygon)
-        return True
-
-    def getPolygons(self, point):
-        p = point
-        if p[0] < self.left or p[0] > self.right or p[1] < self.top or p[1] > self.bottom:
-            return []
-        else:
-            result = list(self.polygons)
-            if all(self.children):
-                result.extend(self.children[0].getPolygons(p))
-                result.extend(self.children[1].getPolygons(p))
-                result.extend(self.children[2].getPolygons(p))
-                result.extend(self.children[3].getPolygons(p))
-            return result
-
-def buildQuadtree(depth = 2, left = 0.0, top = 0.0, right = 1.0, bottom = 1.0):
-    node = Quadtree_node(left, top, right, bottom)
-    if depth > 0:
-        v = (top + bottom) / 2
-        h = (left + right) / 2
-        node.children[0] = buildQuadtree(depth - 1, left, top, h, v)
-        node.children[1] = buildQuadtree(depth - 1, h, top, right, v)
-        node.children[2] = buildQuadtree(depth - 1, left, v, h, bottom)
-        node.children[3] = buildQuadtree(depth - 1, h, v, right, bottom)
-    return node
-
 # TODO(SK): Quads into triangles (indices)
 # TODO(SK): Rephrase docstring, add parameter/return values
 def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
@@ -246,21 +191,21 @@ def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
 
     points_3d = [[] for _ in uv_list_range_container]
     point_indices = [i for i in uv_list_range_container]
-    global quadtrees
+    quadtrees = quadtree.quadtrees
     # Build new quadtree to cache objects if no chache exists
     if obj_uv.name not in quadtrees:
-        quadtree = buildQuadtree(constants.CACHE_QUADTREE_DEPTH)
+        qtree = quadtree.buildQuadtree(constants.CACHE_QUADTREE_DEPTH)
 
         for p in obj_uv.data.polygons:
             uvs = ([obj_uv.data.uv_layers.active.data[li].uv for li in p.loop_indices], [obj_uv.data.vertices[p.vertices[i]].co for i in range(len(p.loop_indices))])
-            quadtree.addPolygon(uvs)
-        quadtrees[obj_uv.name] = quadtree
+            qtree.addPolygon(uvs)
+        quadtrees[obj_uv.name] = qtree
     else:
-        quadtree = quadtrees[obj_uv.name]
+        qtree = quadtrees[obj_uv.name]
 
     for i in point_indices:
         point = uv_list[i]
-        polygons = quadtree.getPolygons(point)
+        polygons = qtree.getPolygons(point)
         for polygon in polygons:
             uvs = polygon[0]
             p3ds = polygon[1]
@@ -1538,7 +1483,7 @@ def initialize3D():
     """Prepare necessary steps for the computation of connections"""
 
     SEED = bpy.context.scene.pam_mapping.seed
-    clearQuadtreeCache()
+    quadtree.clearQuadtreeCache()
 
     logger.info("reset model")
     model.reset()

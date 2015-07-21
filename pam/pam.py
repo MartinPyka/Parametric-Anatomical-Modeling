@@ -1241,6 +1241,9 @@ def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connecti
     # Calculates post neuron mappings
     result_async = pool.map_async(post_neuron_wrapper, thread_mapping)
 
+    pool.close()
+    pool.join()
+
     # While post neuron mapping is running, we can prepare the grid
     logger.info("Prepare Grid")
 
@@ -1272,6 +1275,9 @@ def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connecti
 
     result = pool.map(pre_neuron_wrapper, thread_mapping)
 
+    pool.close()
+    pool.join()
+    
     for i, item in enumerate(result):
         conn[i] = item[0]
         dist[i] = item[1]

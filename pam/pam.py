@@ -209,9 +209,9 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
         return p_uv_2d
 
     p_uv_2d_new = p_uv_new.to_2d()
-    delta1 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[1].uv)
-    delta2 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[2].uv)
-    delta3 = checkPointOnLine(p_uv_2d_new,uvs[1].uv,uvs[2].uv)
+    delta1 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[2].uv)
+    delta2 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[3].uv)
+    delta3 = checkPointOnLine(p_uv_2d_new,uvs[2].uv,uvs[3].uv)
     delta_new = min(delta1,delta2,delta3)
 
     if (mathutils.geometry.intersect_point_tri_2d(p_uv_2d, uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (delta != 0) & (len(uvs) == 4):

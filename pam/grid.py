@@ -265,8 +265,8 @@ class UVGrid(object):
             # u = min(self._u, max(0., u))
             # v = min(self._v, max(0., v))
 
-        row = int(math.floor(u / self._resolution))
-        col = int(math.floor(v / self._resolution))
+        row = int(math.floor(u * self._row))
+        col = int(math.floor(v * self._col))
 
         logger.debug("uv (%f, %f) to cell index [%d][%d]", u, v, row, col)
 
@@ -274,9 +274,10 @@ class UVGrid(object):
 
     def _cell_index_to_uv(self, row, col):
         """Returns uv coordinate from the center of a cell"""
-        center = self._resolution / 2
-        u = row * self._resolution + center
-        v = col * self._resolution + center
+        center_u = 1. / self._row / 2.
+        center_v = 1. / self._col / 2.
+        u = row / self._row + center_u
+        v = col / self._col + center_v
 
         logger.debug(
             "cell index [%d][%d] to center uv (%f, %f)",

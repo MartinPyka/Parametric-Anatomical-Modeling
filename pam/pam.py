@@ -1109,16 +1109,20 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
                     logger.info("Message-post-data: " + str(e))
                     model.CONNECTION_ERRORS.append(e)
                     conn[i, j] = -1
+                    syn[i][j] = mathutils.Vector((0, 0))
                 except Exception as e:
                     logger.info("A general error occured: " + str(e))
                     conn[i, j] = -1
+                    syn[i][j] = mathutils.Vector((0, 0))
             except exceptions.MapUVError as e:
                 logger.info("Message-pre-data: " + str(e))
                 model.CONNECTION_ERRORS.append(e)
                 conn[i, j] = -1
+                syn[i][j] = mathutils.Vector((0, 0))
             except Exception as e:
                 logger.info("A general error occured: " + str(e))
                 conn[i, j] = -1
+                syn[i][j] = mathutils.Vector((0, 0))
 
         for rest in range(j + 1, no_synapses):
             conn[i, rest] = -1

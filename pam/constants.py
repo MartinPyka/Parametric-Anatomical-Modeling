@@ -28,6 +28,10 @@ INTERPOLATION_QUALITY = 10
 # Use higher numbers if uv-maps have a lot of small polygons
 CACHE_QUADTREE_DEPTH = 2
 
+# Threshold when converting from uv to 3d
+# For when points seem to be outside of the uv mesh due to floating point errors
+UV_THRESHOLD = 1e-8
+
 #DEFAULT_LOCATION = mathutils.Vector((0.0, 0.0, 0.0))
 #DEFAULT_SCALE = mathutils.Vector((1.0, 1.0, 1.0))
 #DEFAULT_ROTATION = mathutils.Euler((0.0, 0.0, 0.0), "XYZ")

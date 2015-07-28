@@ -256,7 +256,7 @@ def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
             p3ds = polygon[1]
 
             result = mathutils.geometry.intersect_point_tri_2d(
-                uv_list[i],
+                point,
                 uvs[0],
                 uvs[1],
                 uvs[2]
@@ -272,10 +272,11 @@ def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
                     p3ds[1],
                     p3ds[2]
                 )
+                break
 
             else:
                 result = mathutils.geometry.intersect_point_tri_2d(
-                    uv_list[i],
+                    point,
                     uvs[0],
                     uvs[2],
                     uvs[3]
@@ -290,6 +291,20 @@ def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
                         p3ds[2],
                         p3ds[3]
                     )
+                    break
+
+            # Sometimes the point is directly on the edge of a tri and intersect_point_tri_2d doesn't recognize it
+            # So we check for all possible edges
+            edges = [(0, 1),
+                     (1, 2),
+                     (2, 3),
+                     (3, 0),
+                     (0, 2)]
+            for edge in edges:
+                point_on_line, percentage = mathutils.geometry.intersect_point_line(point, uvs[edge[0]], uvs[edge[1]])
+                if (point_on_line - point).length <= constants.UV_THRESHOLD and percentage >= 0. and percentage <= 1.:
+                    points_3d[i] = p3ds[edge[0]].lerp(p3ds[edge[1]], percentage)
+                    break
 
     if cleanup:
         points_3d = [p for p in points_3d if p]
@@ -975,7 +990,6 @@ def addConnection(*args):
 def computeAllConnections():
     for c in model.CONNECTIONS:
         logger.info(c[0][0].name + ' - ' + c[0][-1].name)
-
         result = computeConnectivity(*c)
         model.CONNECTION_RESULTS.append(
             {

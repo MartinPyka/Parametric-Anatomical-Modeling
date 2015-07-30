@@ -7,8 +7,6 @@ import numpy
 import bpy
 import mathutils
 
-import pdb
-
 from . import constants
 from . import helper
 
@@ -97,6 +95,8 @@ class UVGrid(object):
             "post": [[[] for j in range(self._col)] for i in range(self._row)]
         }
 
+        self._converted = False
+
         self._grid = {}
 
         self._compute_uvcoords()
@@ -155,7 +155,6 @@ class UVGrid(object):
         guvs = numpy.dstack(numpy.meshgrid(x, y))[...,::-1]
         for i in range(self._row):
             for j in range(self._col):
-                #import pdb; pdb.set_trace()
                 uvs = numpy.array([self._cell_index_to_uv(i, j)])
                 # Create array with uv-coords
                 grid[i][j] = kernel(uvs, guvs, *args)
@@ -166,12 +165,36 @@ class UVGrid(object):
         if row == -1:
             return
 
-        self._masks['post'][row][col].append((index, uv, p_3d, d))
+        if self._gridmask[row][col]:
+            self._masks['post'][row][col].append((index, self._cell_index_to_uv(row, col), p_3d, d))
         
-    def convert_postNeuronStructure(self):
+    def convert_data_structures(self):
         """ Needs to be called after all neurons have been inserted (usually, this is
         done in select_random """
+        self.convert_postNeuronStructure()
+        self.convert_pre_neuron_structure()
+        self._converted = True
+
+    def convert_postNeuronStructure(self):
+        """Converts post neuron structure to a flattened numpy array"""
         self._masks['post'] = numpy.array([item for sublist in self._masks['post'] for item in sublist])
+
+    def convert_pre_neuron_structure(self):
+        """Converts all cells in the grid to a flattened array, deletes weights that are outside 
+        of the grid and normalizes the weights"""
+        weights = numpy.array([len(cell) for cell in self._masks['post']])
+        numpy.clip(weights, 0, 1, weights)
+        
+        grid = [[None] * self._col for _ in range(self._row)]
+        for row in range(self._row):
+            for col in range(self._col):
+                g = self._grid['pre'][row][col].flatten() * weights
+                weight_sum = numpy.sum(g)
+                if weight_sum == 0:
+                    continue
+                g /= weight_sum
+                grid[row][col] = numpy.array(g)
+        self._grid['pre'] = grid
 
     def cell(self, u, v):
         """Returns cell for uv coordinate
@@ -210,18 +233,24 @@ class UVGrid(object):
         if row == -1:
             return []
         
-        # check, whether ._mask['post'] has already been converted. If not, convert it
-        if len(self._masks['post']) < (self._row * self._col):
-            self.convert_postNeuronStructure()
+        # check, whether data structures have already been converted. If not, convert them
+        if not self._converted:
+            self.convert_data_structures()
 
-        mask = self._grid['pre'][row][col]
-        if len(mask) == 0:
+        weights = self._grid['pre'][row][col]
+        if weights is None:
             return []
 
-        weights = mask.flatten()
-        indices = numpy.random.choice(len(weights), size = quantity, p = weights / numpy.sum(weights))
+        indices = numpy.random.choice(len(weights), size = quantity, p = weights)
         # select post-synaptic cell-array for synapse locations
         selected_cells = numpy.take(self._grid['post'], indices, axis = 0)
+
+        synapse_coords = []
+        # Get uv coordinate for selected indices
+        for index in indices:
+            row = index // self._col
+            col = index % self._col
+            synapse_coords.append(self._cell_index_to_uv(row, col))
 
         selected = []
         cell_indices = []
@@ -237,9 +266,9 @@ class UVGrid(object):
         post_cells = numpy.take(self._masks['post'], cell_indices, axis = 0)
         
         # select randomly post-neurons
-        for p_cell in post_cells:
+        for p_index, p_cell in enumerate(post_cells):
             post_neuron = numpy.random.choice(len(p_cell))
-            selected.append(p_cell[post_neuron])    
+            selected.append((p_cell[post_neuron], synapse_coords[p_index]))
 
         return selected
 
@@ -306,7 +335,6 @@ class UVGrid(object):
         the closest_point_on_mesh operation is used
         """
 
-        return 1            # TODO: remove afterwards
         result = 0
         for p in self._obj.data.polygons:
             uvs = [self._obj.data.uv_layers.active.data[li] for li in p.loop_indices]

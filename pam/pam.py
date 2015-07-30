@@ -1115,9 +1115,9 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
                     layers[slayer - 1], layers[slayer], pre_p3d[-1], mathutils.Vector(post_neuron[1]), distances[slayer - 1])
                 try: 
                     distance_post, _ = computeDistanceToSynapse(
-                        layers[slayer + 1], layers[slayer], mathutils.Vector(post_neuron[2]), mathutils.Vector(post_neuron[1]), distances[slayer])
-                    conn[i, j] = post_neuron[0]      # the index of the post-neuron
-                    dist[i, j] = pre_d + distance_pre + distance_post + post_neuron[3]      # the distance of the post-neuron
+                        layers[slayer + 1], layers[slayer], mathutils.Vector(post_neuron[0][2]), mathutils.Vector(post_neuron[1]), distances[slayer])
+                    conn[i, j] = post_neuron[0][0]      # the index of the post-neuron
+                    dist[i, j] = pre_d + distance_pre + distance_post + post_neuron[0][3]      # the distance of the post-neuron
                     syn[i][j] = post_neuron[1]
                 except exceptions.MapUVError as e:
                     logger.info("Message-post-data: " + str(e))

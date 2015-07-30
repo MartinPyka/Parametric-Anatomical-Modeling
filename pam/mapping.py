@@ -851,7 +851,7 @@ class PAMMappingUpdate(bpy.types.Operator):
             mapping_funcs.append(MAPPING_DICT[mapping.function])
             distance_funcs.append(DISTANCE_DICT[mapping.distance])
 
-        pam.updateConnection(
+        pam.replaceMapping(
             m.active_set,
             layers,
             pre_neurons, post_neurons,

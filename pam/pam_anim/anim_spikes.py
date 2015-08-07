@@ -75,9 +75,8 @@ def animNeuronSpiking(func):
     no_timings = len(timings)
 
     logger.info('Animate spiking data')
-    for i, (neuronIDinGroup, neuronGroupID, fireTime) in enumerate(timings):
+    for i, (neuronGroupID, neuronIDinGroup, fireTime) in enumerate(timings):
         logger.info(str(i) + "/" + str(no_timings))
-
         layer_name = neuronGroups[neuronGroupID][0] + '_' + neuronGroups[neuronGroupID][1]
         frame = int(helper.projectTimeToFrames(fireTime))
         func(layer_name, neuronIDinGroup, frame)

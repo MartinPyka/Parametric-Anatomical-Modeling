@@ -168,8 +168,8 @@ def simulateTiming(timingID):
 
     timing = data.TIMINGS[timingID]
 
-    neuronID = timing[0]
-    neuronGroupID = timing[1]
+    neuronGroupID = timing[0]
+    neuronID = timing[1]
     fireTime = timing[2]
 
     connectionIDs = [x for x in model.CONNECTION_INDICES if x[1] == neuronGroupID]

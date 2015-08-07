@@ -301,7 +301,7 @@ def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0):
         return []
 
 
-def visualizeOneConnection(no_connection, pre_index, post_index):
+def visualizeOneConnection(no_connection, pre_index, post_index, smoothing=0):
     """ Visualizes all connections between a given pre-synaptic and a given post-synaptic
     no_connection       : connection/mapping-id
     pre_index           : index of pre-synaptic neuron
@@ -333,7 +333,7 @@ def visualizeOneConnection(no_connection, pre_index, post_index):
                                                     distances[:(slayer - 1):-1],
                                                     layers[-1].particle_systems[neuronset2].particles[post_index].location)
     if synapses is None:
-        return visualizePath(pre_p3d + post_p3d[::-1])
+        return visualizePath(pre_p3d + post_p3d[::-1], smoothing)
     else:
         distances_pre, pre_path = pam.computeDistanceToSynapse(
             layers[slayer - 1], layers[slayer], pre_p3d[-1], synapses[post_list_index], distances[slayer - 1])
@@ -341,7 +341,7 @@ def visualizeOneConnection(no_connection, pre_index, post_index):
             distances_post, post_path = pam.computeDistanceToSynapse(
                 layers[slayer + 1], layers[slayer], post_p3d[-1], synapses[post_list_index], distances[slayer])
             if distances_post >= 0:
-                return visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1])
+                return visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1], smoothing)
 
 
 def visualizeNeuronSpread(connections, neuron):

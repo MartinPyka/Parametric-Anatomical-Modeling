@@ -52,7 +52,7 @@ class ConnectionCurve:
         This function calls visualizeOneConnection with it's IDs and saves the generated object in curveObject
         """
         try:
-            self.curveObject = pam_vis.visualizeOneConnection(self.connectionID, self.sourceNeuronID, self.targetNeuronID)
+            self.curveObject = pam_vis.visualizeOneConnection(self.connectionID, self.sourceNeuronID, self.targetNeuronID, bpy.context.scene.pam_visualize.smoothing)
             frameLength = timeToFrames(self.timeLength)
 
             setAnimationSpeed(self.curveObject.data, frameLength)

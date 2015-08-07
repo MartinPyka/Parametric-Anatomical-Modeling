@@ -90,7 +90,6 @@ def readSimulationData(simulationFile):
     # Open timing file (output.csv)
     neuronTimingPath = abspath(simulationFile)
     fileName = display_name_from_filepath(simulationFile)
-    print('neuronTimingPath: ' + neuronTimingPath)
     timingZip = import_model_from_zip(neuronTimingPath)
     
     # read the data into the TIMINGS variable

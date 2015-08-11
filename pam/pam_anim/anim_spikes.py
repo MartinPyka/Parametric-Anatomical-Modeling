@@ -81,6 +81,21 @@ def animNeuronSpiking(func):
         frame = int(helper.projectTimeToFrames(fireTime))
         func(layer_name, neuronIDinGroup, frame)
 
+def generateSpikingTexture(layer_id):
+    timings = data.TIMINGS
+    neuronGroups = model.NG_LIST
+    layer = neuronGroups[layer_id]
+    neuron_count = layer[2]
+    frames = bpy.context.scene.pam_anim_animation.endFrame
+    image = bpy.data.images.new(name = layer[0] + "_spikeTexture",
+        width = frames, 
+        height = neuron_count,
+        alpha = False)
+    for i, (neuronIDinGroup, neuronGroupID, fireTime) in enumerate(timings):
+        if layer_id == neuronGroupID:
+            frame = int(helper.projectTimeToFrames(fireTime))
+            tex_pos = neuronIDinGroup * frames + frame
+            image.pixels[tex_pos * 4: (tex_pos + 1) * 4] = [1.0, 1.0, 1.0, 1.0]
 
 # TODO(SK): Fill in docstring parameters/return values
 def animNeuronScaling(layer_name, n_id, frame):

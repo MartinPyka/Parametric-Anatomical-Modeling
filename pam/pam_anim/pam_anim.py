@@ -88,13 +88,13 @@ class SpikeObject:
         self.targetNeuronIndex = targetNeuronIndex
         self.timingID = timingID
 
-    def visualize(self, meshData, orientationOptions = {'orientationType': 'NONE'}):
+    def visualize(self, meshObject, orientationOptions = {'orientationType': 'NONE'}):
         """Generates an object for this spike
 
         This function generates a curve object for it's connection if there is none.
         The generated object is saved in self.object.
 
-        :param bpy.types.Mesh meshData: The mesh that will be used for this object
+        :param bpy.types.Object meshObject: The mesh that will be used for this object
         :param dict orientationOptions: Options for orientation:
             orientationType: {'NONE', 'OBJECT', 'FOLLOW'}
             orientationObject: bpy.types.Object, Only used for orientationType OBJECT
@@ -106,8 +106,9 @@ class SpikeObject:
             logger.error("No curve object to attatch to for spike " + str((self.connectionID, self.sourceNeuronID, self.targetNeuronID, self.timingID)) + "!")
             return
 
-        obj = bpy.data.objects.new("Spike_" + "_" + str(self.timingID) + "_" + str(self.connectionID) + "_" + str(self.sourceNeuronID) + "_" + str(self.targetNeuronID), meshData)
+        obj = bpy.data.objects.new("Spike_" + "_" + str(self.timingID) + "_" + str(self.connectionID) + "_" + str(self.sourceNeuronID) + "_" + str(self.targetNeuronID), meshObject.data)
         obj.color = self.color
+
         bpy.context.scene.objects.link(obj)
 
         startTime = projectTimeToFrames(self.startTime)
@@ -383,7 +384,7 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
             continue
 
         logger.info("Generating spike " + str(i) + "/" + str(total) + ": " + str((spike.timingID, spike.connectionID, spike.sourceNeuronID, spike.targetNeuronID)))
-        spike.visualize(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh].data, bpy.context.scene.pam_anim_mesh)
+        spike.visualize(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh], bpy.context.scene.pam_anim_mesh)
 
 
     wm.progress_end()
@@ -467,6 +468,55 @@ def createDefaultMaterial():
         mat.use_object_color = True
         options.material = mat.name
 
+def copyModifiers(source_object, target_objects):
+    """Copies all modifiers from source_object to all objects in target_objects"""
+    for obj in target_objects:
+        for mSrc in source_object.modifiers:
+            mDst = obj.modifiers.get(mSrc.name, None)
+            if not mDst:
+                mDst = obj.modifiers.new(mSrc.name, mSrc.type)
+
+            # collect names of writable properties
+            properties = [p.identifier for p in mSrc.bl_rna.properties
+                          if not p.is_readonly]
+
+            # copy those properties
+            for prop in properties:
+                setattr(mDst, prop, getattr(mSrc, prop))
+
+def copyDrivers(source_object, target_objects):
+    """Copies all drivers from source_object to all objects in target_objects"""
+    for obj in target_objects:
+        if not source_object.animation_data is None:
+            for dr in source_object.animation_data.drivers:
+                copyDriver(dr, obj, source_object, obj)
+        if not source_object.data.animation_data is None:
+            for dr in source_object.data.animation_data.drivers:
+                copyDriver(dr, obj.data, source_object, obj)
+
+def copyDriver(src, tgt, replace_src = "", replace_tgt = ""):
+    """Copies driver src to object tgt
+    Replaces any values in variables that equal replace_src with replace_tgt"""
+    if tgt.animation_data is None:
+        tgt.animation_data_create()
+    # if isArrayPath(src.data_path):
+    #     d2 = tgt.driver_add(src.data_path, src.array_index)
+    # else:
+    d2 = tgt.driver_add(src.data_path)
+
+    d2.driver.expression = src.driver.expression
+    for v1 in src.driver.variables:
+        v2 = d2.driver.variables.new()
+        v2.type = v1.type
+        v2.name = v1.name
+        for i, target in enumerate(v1.targets):
+            v2.targets[i].data_path = target.data_path
+            # v2.targets[i].id_type = target.id_type
+            v2.targets[i].id = target.id
+            if target.id == replace_src:
+                v2.targets[i].id = replace_tgt
+        # except:
+        #     print("Could not copy driver varible, %s %s"%(src, v1) )
 
 # TODO(SK): Rephrase docstring
 # TODO(SK): max 80 characters per line
@@ -514,6 +564,10 @@ def animateSpikePropagation():
     # Insert objects into groups
     addObjectsToGroup(bpy.data.groups[PATHS_GROUP_NAME], [obj.curveObject for obj in CURVES.values() if obj.curveObject is not None])
     addObjectsToGroup(bpy.data.groups[SPIKE_GROUP_NAME], [obj.object for obj in SPIKE_OBJECTS.values() if obj.object is not None])
+
+    # Copy modifiers and drivers
+    copyModifiers(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh], [spike.object for spike in SPIKE_OBJECTS.values() if spike.object is not None])
+    copyDrivers(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh], [spike.object for spike in SPIKE_OBJECTS.values() if spike.object is not None])
 
     # Apply material to mesh
     mesh = bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh].data
@@ -673,6 +727,19 @@ class GenerateOperator(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 
+class GenerateNeuronSpikingTexture(bpy.types.Operator):
+    bl_idname = "pam_anim.generate_spiking_texture"
+    bl_label = "Generate spiking texture"
+    bl_description = "Generates a spiking activity texture, time on the x-axis, neuron_id on the y-axis"
+
+    def execute(self, context):
+        active_obj = bpy.context.active_object
+        if active_obj.name not in model.NG_DICT:
+            return {'CANCELLED'}
+        layer_id = model.NG_DICT[active_obj.name][active_obj.particle_systems[0].name]
+        anim_spikes.generateSpikingTexture(layer_id)
+        return {'FINISHED'}
+
 def register():
     """Registers the operators"""
     # Custom property for the length of a curve for easy accessibility
@@ -681,6 +748,7 @@ def register():
     bpy.utils.register_class(ClearPamAnimOperator)
     bpy.utils.register_class(RecolorSpikesOperator)
     bpy.utils.register_class(ReadSimulationData)
+    bpy.utils.register_class(GenerateNeuronSpikingTexture)
 
 def unregister():
     """Unregisters the operators"""
@@ -688,3 +756,4 @@ def unregister():
     bpy.utils.unregister_class(ClearPamAnimOperator)
     bpy.utils.unregister_class(RecolorSpikesOperator)
     bpy.utils.unregister_class(ReadSimulationData)
+    bpy.utils.unregister_class(GenerateNeuronSpikingTexture)

@@ -91,7 +91,7 @@ def generateSpikingTexture(layer_id):
         width = frames, 
         height = neuron_count,
         alpha = False)
-    for i, (neuronIDinGroup, neuronGroupID, fireTime) in enumerate(timings):
+    for i, (neuronGroupID, neuronIDinGroup, fireTime) in enumerate(timings):
         if layer_id == neuronGroupID:
             frame = int(helper.projectTimeToFrames(fireTime))
             tex_pos = neuronIDinGroup * frames + frame

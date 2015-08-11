@@ -88,13 +88,13 @@ class SpikeObject:
         self.targetNeuronIndex = targetNeuronIndex
         self.timingID = timingID
 
-    def visualize(self, meshData, orientationOptions = {'orientationType': 'NONE'}):
+    def visualize(self, meshObject, orientationOptions = {'orientationType': 'NONE'}):
         """Generates an object for this spike
 
         This function generates a curve object for it's connection if there is none.
         The generated object is saved in self.object.
 
-        :param bpy.types.Mesh meshData: The mesh that will be used for this object
+        :param bpy.types.Object meshObject: The mesh that will be used for this object
         :param dict orientationOptions: Options for orientation:
             orientationType: {'NONE', 'OBJECT', 'FOLLOW'}
             orientationObject: bpy.types.Object, Only used for orientationType OBJECT
@@ -106,8 +106,9 @@ class SpikeObject:
             logger.error("No curve object to attatch to for spike " + str((self.connectionID, self.sourceNeuronID, self.targetNeuronID, self.timingID)) + "!")
             return
 
-        obj = bpy.data.objects.new("Spike_" + "_" + str(self.timingID) + "_" + str(self.connectionID) + "_" + str(self.sourceNeuronID) + "_" + str(self.targetNeuronID), meshData)
+        obj = bpy.data.objects.new("Spike_" + "_" + str(self.timingID) + "_" + str(self.connectionID) + "_" + str(self.sourceNeuronID) + "_" + str(self.targetNeuronID), meshObject.data)
         obj.color = self.color
+
         bpy.context.scene.objects.link(obj)
 
         startTime = projectTimeToFrames(self.startTime)
@@ -383,7 +384,7 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
             continue
 
         logger.info("Generating spike " + str(i) + "/" + str(total) + ": " + str((spike.timingID, spike.connectionID, spike.sourceNeuronID, spike.targetNeuronID)))
-        spike.visualize(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh].data, bpy.context.scene.pam_anim_mesh)
+        spike.visualize(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh], bpy.context.scene.pam_anim_mesh)
 
 
     wm.progress_end()
@@ -467,6 +468,20 @@ def createDefaultMaterial():
         mat.use_object_color = True
         options.material = mat.name
 
+def copyModifiers(source_object, target_objects):
+    for obj in target_objects:
+        for mSrc in source_object.modifiers:
+            mDst = obj.modifiers.get(mSrc.name, None)
+            if not mDst:
+                mDst = obj.modifiers.new(mSrc.name, mSrc.type)
+
+            # collect names of writable properties
+            properties = [p.identifier for p in mSrc.bl_rna.properties
+                          if not p.is_readonly]
+
+            # copy those properties
+            for prop in properties:
+                setattr(mDst, prop, getattr(mSrc, prop))
 
 # TODO(SK): Rephrase docstring
 # TODO(SK): max 80 characters per line
@@ -514,6 +529,9 @@ def animateSpikePropagation():
     # Insert objects into groups
     addObjectsToGroup(bpy.data.groups[PATHS_GROUP_NAME], [obj.curveObject for obj in CURVES.values() if obj.curveObject is not None])
     addObjectsToGroup(bpy.data.groups[SPIKE_GROUP_NAME], [obj.object for obj in SPIKE_OBJECTS.values() if obj.object is not None])
+
+    # Copy modifiers
+    copyModifiers(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh], [spike.object for spike in SPIKE_OBJECTS.values() if spike.object is not None])
 
     # Apply material to mesh
     mesh = bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh].data

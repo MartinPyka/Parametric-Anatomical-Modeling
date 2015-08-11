@@ -469,6 +469,7 @@ def createDefaultMaterial():
         options.material = mat.name
 
 def copyModifiers(source_object, target_objects):
+    """Copies all modifiers from source_object to all objects in target_objects"""
     for obj in target_objects:
         for mSrc in source_object.modifiers:
             mDst = obj.modifiers.get(mSrc.name, None)
@@ -482,6 +483,40 @@ def copyModifiers(source_object, target_objects):
             # copy those properties
             for prop in properties:
                 setattr(mDst, prop, getattr(mSrc, prop))
+
+def copyDrivers(source_object, target_objects):
+    """Copies all drivers from source_object to all objects in target_objects"""
+    for obj in target_objects:
+        if not source_object.animation_data is None:
+            for dr in source_object.animation_data.drivers:
+                copyDriver(dr, obj, source_object, obj)
+        if not source_object.data.animation_data is None:
+            for dr in source_object.data.animation_data.drivers:
+                copyDriver(dr, obj.data, source_object, obj)
+
+def copyDriver(src, tgt, replace_src = "", replace_tgt = ""):
+    """Copies driver src to object tgt
+    Replaces any values in variables that equal replace_src with replace_tgt"""
+    if tgt.animation_data is None:
+        tgt.animation_data_create()
+    # if isArrayPath(src.data_path):
+    #     d2 = tgt.driver_add(src.data_path, src.array_index)
+    # else:
+    d2 = tgt.driver_add(src.data_path)
+
+    d2.driver.expression = src.driver.expression
+    for v1 in src.driver.variables:
+        v2 = d2.driver.variables.new()
+        v2.type = v1.type
+        v2.name = v1.name
+        for i, target in enumerate(v1.targets):
+            v2.targets[i].data_path = target.data_path
+            # v2.targets[i].id_type = target.id_type
+            v2.targets[i].id = target.id
+            if target.id == replace_src:
+                v2.targets[i].id = replace_tgt
+        # except:
+        #     print("Could not copy driver varible, %s %s"%(src, v1) )
 
 # TODO(SK): Rephrase docstring
 # TODO(SK): max 80 characters per line
@@ -530,8 +565,9 @@ def animateSpikePropagation():
     addObjectsToGroup(bpy.data.groups[PATHS_GROUP_NAME], [obj.curveObject for obj in CURVES.values() if obj.curveObject is not None])
     addObjectsToGroup(bpy.data.groups[SPIKE_GROUP_NAME], [obj.object for obj in SPIKE_OBJECTS.values() if obj.object is not None])
 
-    # Copy modifiers
+    # Copy modifiers and drivers
     copyModifiers(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh], [spike.object for spike in SPIKE_OBJECTS.values() if spike.object is not None])
+    copyDrivers(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh], [spike.object for spike in SPIKE_OBJECTS.values() if spike.object is not None])
 
     # Apply material to mesh
     mesh = bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh].data

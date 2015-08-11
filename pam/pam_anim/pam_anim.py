@@ -735,6 +735,7 @@ class GenerateNeuronSpikingTexture(bpy.types.Operator):
     def execute(self, context):
         active_obj = bpy.context.active_object
         if active_obj.name not in model.NG_DICT:
+            print("Please select a pre- or post-synaptic layer, for which the spiking texture should be generated")
             return {'CANCELLED'}
         layer_id = model.NG_DICT[active_obj.name][active_obj.particle_systems[0].name]
         anim_spikes.generateSpikingTexture(layer_id)

@@ -54,7 +54,7 @@ def readSimulationData(simulationFile):
     # read the data into the TIMINGS variable
     global TIMINGS
     TIMINGS = []
-    timing_data = timingZip[fileName]
+    timing_data = timingZip['spikes']
 
     for row in timing_data:
         if len(row) == 3:
@@ -73,9 +73,9 @@ def readSimulationData(simulationFile):
     DELAYS = []
     try:
         for i in range(0, len(model.CONNECTIONS)):
-            DELAYS.append(timingZip[fileName + "_d" + str(i)])
+            DELAYS.append(timingZip["delay_" + str(i)])
     except:
-        print('cannot find file: ' + fileName + '_d' + str(i) + '.csv')
+        print('cannot find file: ' + 'delay_' + str(i) + '.csv')
     
     DELAYS = numpy.array(DELAYS)
     global noAvailableConnections

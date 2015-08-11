@@ -727,6 +727,19 @@ class GenerateOperator(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 
+class GenerateNeuronSpikingTexture(bpy.types.Operator):
+    bl_idname = "pam_anim.generate_spiking_texture"
+    bl_label = "Generate spiking texture"
+    bl_description = "Generates a spiking activity texture, time on the x-axis, neuron_id on the y-axis"
+
+    def execute(self, context):
+        active_obj = bpy.context.active_object
+        if active_obj.name not in model.NG_DICT:
+            return {'CANCELLED'}
+        layer_id = model.NG_DICT[active_obj.name][active_obj.particle_systems[0].name]
+        anim_spikes.generateSpikingTexture(layer_id)
+        return {'FINISHED'}
+
 def register():
     """Registers the operators"""
     # Custom property for the length of a curve for easy accessibility
@@ -735,6 +748,7 @@ def register():
     bpy.utils.register_class(ClearPamAnimOperator)
     bpy.utils.register_class(RecolorSpikesOperator)
     bpy.utils.register_class(ReadSimulationData)
+    bpy.utils.register_class(GenerateNeuronSpikingTexture)
 
 def unregister():
     """Unregisters the operators"""
@@ -742,3 +756,4 @@ def unregister():
     bpy.utils.unregister_class(ClearPamAnimOperator)
     bpy.utils.unregister_class(RecolorSpikesOperator)
     bpy.utils.unregister_class(ReadSimulationData)
+    bpy.utils.unregister_class(GenerateNeuronSpikingTexture)

@@ -192,6 +192,9 @@ class PamAnimLayerPane(bpy.types.Panel):
         row = layout.row()
         row.operator("pam_anim.recolor_spikes")
 
+        row = layout.row()
+        row.operator("pam_anim.generate_spiking_texture")
+
 
 class PamAnimGeneratePanel(bpy.types.Panel):
     """A panel for all operators for pam_anim"""

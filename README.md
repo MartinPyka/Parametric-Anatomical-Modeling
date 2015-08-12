@@ -47,9 +47,11 @@ Installation
 
 1. Download the latest official release ([a complete list can be found here](https://bitbucket.org/rub-hippo/parametric-anatomical-modeling/downloads)) or get a snapshot of [this GIT repository](https://bitbucket.org/rub-hippo/parametric-anatomical-modeling/src)
 
-2. Install PAM as Add-On in Blender ([how to install an Add-On](http://wiki.blender.org/index.php/Doc:2.6/Manual/Extensions/Python/Add-Ons)). If you downloaded the ZIP-file, you can directly select the ZIP-file in Blender to install the Add-On.
+2. Install the pam-folder as Add-On in Blender ([how to install an Add-On](http://wiki.blender.org/index.php/Doc:2.6/Manual/Extensions/Python/Add-Ons)). You can, for example, copy the pam-folder into the 2.X/scripts/addon-folder of your Blender version. If you downloaded the ZIP-file, you must only install the pam-folder as addon for Blender
 
-3. In the 3d view a new panel should appear on the left side, called "PAM". This panel contains function to load and save connectivity data and to visualize them.
+3. In Blender, go to preferences - addons, search for PAM and activate it (optionally click on 'Save Preferences')
+
+4. In the 3d view a new panel should appear on the left side, called "PAM". This panel contains function to load and save connectivity data and to visualize them.
 
 
 Usage

@@ -33,6 +33,7 @@ class PAMMappingToolsPanel(bpy.types.Panel):
     bl_label = "Mapping"
     bl_category = "PAM Mapping"
 
+
     def draw(self, context):
         active_obj = context.active_object
         m = context.scene.pam_mapping
@@ -133,6 +134,21 @@ class PAMMappingToolsPanel(bpy.types.Panel):
         col.operator("pam.mapping_update", icon="SCRIPTWIN", text="Update mapping")
         col.operator("pam.mapping_compute", icon="SCRIPTWIN", text="Compute mapping")
         col.operator("pam.mapping_compute_sel", icon="SCRIPTWIN", text="Compute selected mapping")
+
+class PAMColorizePanel(bpy.types.Panel):
+    """A panel for colorizing layer distances"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "Visualize"
+    bl_category = "PAM Mapping"
+
+    
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column(align=True)
+        col.operator("pam.mapping_color_layer", icon = "SCRIPTWIN", text = "Colorize Distances")
 
 
 class PAMModelDataPanel(bpy.types.Panel):

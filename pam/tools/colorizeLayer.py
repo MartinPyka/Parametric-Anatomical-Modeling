@@ -10,7 +10,6 @@ from pam import pam_vis as pv
 from pam import colormaps as cm
 from pam import pam
 
-O = bpy.data.objects
 m_gray = 'Gray'
 m_vc = 'Vertex_Color'
 

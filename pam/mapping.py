@@ -925,7 +925,7 @@ class PAMMappingColorizeLayer(bpy.types.Operator):
         
         CL.colorizeLayer(pre, np.take(distances_pre, pre_indices), [min_percent, max_percent])
         CL.colorizeLayer(post, np.take(distances_post, post_indices), [min_percent, max_percent])
-        
+        return {'FINISHED'}
         
 
 def register():

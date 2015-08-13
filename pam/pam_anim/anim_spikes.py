@@ -129,6 +129,8 @@ def generateSpikingTexture(layer_id, fadeoutFrames, colors = None):
                 # Avoid drawing fade to next line or out of bounds
                 fadeEnd = min(fadeoutFrames, frames - frame - 1)
                 image.pixels[(tex_pos + 1) * 4: (tex_pos + fadeEnd + 1) * 4] = fade[:fadeEnd*4]
+    # Pack image so its preserved after saving
+    image.pack(as_png = True)
 
 # TODO(SK): Fill in docstring parameters/return values
 def animNeuronScaling(layer_name, n_id, frame):

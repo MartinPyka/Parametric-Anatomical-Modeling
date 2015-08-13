@@ -94,8 +94,6 @@ class PamAnimSpikesPane(bpy.types.Panel):
 
         options = bpy.context.scene.pam_anim_mesh
 
-        layout.active = options.animSpikes
-
         row = layout.row()
         row.prop_search(options, 'neuron_object', bpy.data, 'objects')
 
@@ -111,6 +109,9 @@ class PamAnimSpikesPane(bpy.types.Panel):
         row = layout.row()
         row.active = not options.spikeUseLayerColor
         row.prop(options, 'spikeColor')
+
+        row = layout.row()
+        row.operator("pam_anim.generate_spiking_texture")
 
 
 class PamAnimAnimPane(bpy.types.Panel):
@@ -191,10 +192,6 @@ class PamAnimLayerPane(bpy.types.Panel):
 
         row = layout.row()
         row.operator("pam_anim.recolor_spikes")
-
-        row = layout.row()
-        row.operator("pam_anim.generate_spiking_texture")
-
 
 class PamAnimGeneratePanel(bpy.types.Panel):
     """A panel for all operators for pam_anim"""

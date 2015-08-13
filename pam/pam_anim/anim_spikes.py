@@ -10,6 +10,15 @@ from . import helper
 logger = logging.getLogger(__package__)
 
 NEURON_GROUP_NAME = "NEURONS"
+NEURON_SPIKES = {}
+
+class NeuronSpike():
+    def __init__(self, neuronID, neuronGroupID, position):
+        self.neuronID = neuronID
+        self.neuronGroupID = neuronGroupID
+        self.position = position
+        self.fireTimes = []
+        self.color = [1.0, 1.0, 1.0, 1.0]
 
 # TODO(SK): Missing docstring
 def readSpikeData(filename):
@@ -81,7 +90,7 @@ def animNeuronSpiking(func):
         frame = int(helper.projectTimeToFrames(fireTime))
         func(layer_name, neuronIDinGroup, frame)
 
-def generateSpikingTexture(layer_id, fadeoutFrames):
+def generateSpikingTexture(layer_id, fadeoutFrames, colors = None):
     timings = data.TIMINGS
     neuronGroups = model.NG_LIST
     layer = neuronGroups[layer_id]
@@ -96,14 +105,30 @@ def generateSpikingTexture(layer_id, fadeoutFrames):
         fadeAmount = 1 - fadeStep / fadeoutFrames
         fade[fadeStep*4:(fadeStep+1)*4] = [fadeAmount, fadeAmount, fadeAmount, 1.0]
 
-    for i, (neuronGroupID, neuronIDinGroup, fireTime) in enumerate(timings):
-        if layer_id == neuronGroupID and fireTime < bpy.context.scene.pam_anim_animation.endTime:
-            frame = int(helper.projectTimeToFrames(fireTime))
-            tex_pos = neuronIDinGroup * frames + frame
-            image.pixels[tex_pos * 4: (tex_pos + 1) * 4] = [1.0, 1.0, 1.0, 1.0]
-            # Avoid drawing fade to next line or out of bounds
-            fadeEnd = min(fadeoutFrames, frames - frame - 1)
-            image.pixels[(tex_pos + 1) * 4: (tex_pos + fadeEnd + 1) * 4] = fade[:fadeEnd*4]
+    if colors is not None and len(colors) == len(timings):
+        for i, (neuronGroupID, neuronIDinGroup, fireTime) in enumerate(timings):
+            if layer_id == neuronGroupID and fireTime < bpy.context.scene.pam_anim_animation.endTime:
+                frame = int(helper.projectTimeToFrames(fireTime))
+                tex_pos = neuronIDinGroup * frames + frame
+                
+                color = [colors[i][0], colors[i][1], colors[i][2], 1.0]
+                image.pixels[tex_pos * 4: (tex_pos + 1) * 4] = color
+                
+                # Avoid drawing fade to next line or out of bounds
+                fadeEnd = min(fadeoutFrames, frames - frame - 1)
+                colorFade = [fade[f] * color[f % 4] for f in range(len(fade))]
+                
+                image.pixels[(tex_pos + 1) * 4: (tex_pos + fadeEnd + 1) * 4] = colorFade[:fadeEnd*4]
+    else:
+        for i, (neuronGroupID, neuronIDinGroup, fireTime) in enumerate(timings):
+            if layer_id == neuronGroupID and fireTime < bpy.context.scene.pam_anim_animation.endTime:
+                frame = int(helper.projectTimeToFrames(fireTime))
+                tex_pos = neuronIDinGroup * frames + frame
+                image.pixels[tex_pos * 4: (tex_pos + 1) * 4] = [1.0, 1.0, 1.0, 1.0]
+                
+                # Avoid drawing fade to next line or out of bounds
+                fadeEnd = min(fadeoutFrames, frames - frame - 1)
+                image.pixels[(tex_pos + 1) * 4: (tex_pos + fadeEnd + 1) * 4] = fade[:fadeEnd*4]
 
 # TODO(SK): Fill in docstring parameters/return values
 def animNeuronScaling(layer_name, n_id, frame):
@@ -137,8 +162,6 @@ def setNeuronColorKeyframe(neuronID, neuronGroupID, frame, color):
         neuron = bpy.data.objects[neuron_name]
         neuron.color = color
         neuron.keyframe_insert(data_path = 'color', frame = frame)
-
-
 
 # TODO(SK): Rephrase docstring, purpose?
 def deleteNeurons():

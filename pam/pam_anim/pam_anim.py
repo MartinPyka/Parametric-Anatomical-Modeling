@@ -26,6 +26,7 @@ SPIKE_GROUP_NAME = "SPIKES"
 
 SPIKE_OBJECTS = {}
 CURVES = {}
+TIMING_COLORS = []
 
 class ConnectionCurve:
     """Class for holding connection information
@@ -215,6 +216,8 @@ def simulateColorsByLayer(source = "MATERIAL"):
 
     :param {"OBJECT", "MATERIAL", "MATERIAL_CYCLES"} source: From where the color should be taken, object color, material diffuse color or cycles diffuse color"""
 
+    global TIMING_COLORS
+    TIMING_COLORS = [[1.0, 1.0, 1.0]] * len(data.TIMINGS)
     for spike in SPIKE_OBJECTS.values():
         connectionID = spike.connectionID
         neuronGroupID = model.CONNECTION_INDICES[connectionID][1]
@@ -245,7 +248,7 @@ def simulateColorsByLayer(source = "MATERIAL"):
         spike.color = groupColor
         if spike.object is not None:
             spike.object.color = groupColor
-
+        TIMING_COLORS[spike.timingID] = groupColor
 
 def simulateColors(decayFunc=anim_functions.decay,
                    initialColorValuesFunc=anim_functions.getInitialColorValues,
@@ -268,9 +271,13 @@ def simulateColors(decayFunc=anim_functions.decay,
     neuronValues = {}
     neuronUpdateQueue = []
 
+    global TIMING_COLORS
+    TIMING_COLORS = [[1.0, 1.0, 1.0]] * len(t)
+    print(len(TIMING_COLORS), len(t))
+
     for timingID, timing in enumerate(t):
-        neuronID = timing[0]
-        neuronGroupID = timing[1]
+        neuronID = timing[1]
+        neuronGroupID = timing[0]
         fireTime = timing[2]
 
         connectionIDs = [x for x in model.CONNECTION_INDICES if x[1] == neuronGroupID]
@@ -307,12 +314,13 @@ def simulateColors(decayFunc=anim_functions.decay,
         else:
             layerValuesDecay = initialColorValuesFunc(neuronGroupID, neuronID, model.NG_LIST)
 
+        color = applyColorFunc(layerValuesDecay, neuronID, neuronGroupID, model.NG_LIST)
+        TIMING_COLORS[timingID] = color
         for connectionID in connectionIDs:
             for index, i in enumerate(c[connectionID[0]]["c"][neuronID][:data.noAvailableConnections]):
                 if i == -1:
                     continue
                 obj = SPIKE_OBJECTS[((connectionID[0], neuronID, i), timingID)]
-                color = applyColorFunc(layerValuesDecay, neuronID, neuronGroupID, model.NG_LIST)
                 if obj.object:
                     obj.object.color = color
                 anim_spikes.setNeuronColorKeyframe(neuronID, neuronGroupID, fireTime, color)
@@ -328,6 +336,10 @@ def simulateColorsByMask():
     maskObject = bpy.data.objects[bpy.context.scene.pam_anim_material.maskObject]
     insideMaskColor = bpy.context.scene.pam_anim_material.insideMaskColor
     outsideMaskColor = bpy.context.scene.pam_anim_material.outsideMaskColor
+
+    global TIMING_COLORS
+    TIMING_COLORS = [[1.0, 1.0, 1.0]] * len(data.TIMINGS)
+
     for spike in SPIKE_OBJECTS.values():
         neuron_group = model.NG_LIST[model.CONNECTION_INDICES[spike.connectionID][1]]
         layer_name = neuron_group[0]
@@ -335,9 +347,12 @@ def simulateColorsByMask():
         particle = bpy.data.objects[layer_name].particle_systems[particle_system_name].particles[spike.sourceNeuronID]
         if spike.object is not None:
             if pam.checkPointInObject(maskObject, particle.location):
+                spike.color = insideMaskColor
                 spike.object.color = insideMaskColor
             else:
+                spike.color = outsideMaskColor
                 spike.object.color = outsideMaskColor
+            TIMING_COLORS[spike.timingID] = spike.color
 
 def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent = 100.0, layerFilter = None):
     """Generates objects for all spikes matching criteria
@@ -739,7 +754,15 @@ class GenerateNeuronSpikingTexture(bpy.types.Operator):
             return {'CANCELLED'}
         data.readSimulationData(bpy.context.scene.pam_anim_data.simulationData)
         layer_id = model.NG_DICT[active_obj.name][active_obj.particle_systems[0].name]
-        anim_spikes.generateSpikingTexture(layer_id, bpy.context.scene.pam_anim_mesh.spikeFadeout)
+
+        colors = None
+        if bpy.context.scene.pam_anim_material.colorizingMethod != 'NONE': # Using color simulation
+            simulate()
+            colorizeAnimation()
+            global TIMING_COLORS
+            colors = TIMING_COLORS
+
+        anim_spikes.generateSpikingTexture(layer_id, bpy.context.scene.pam_anim_mesh.spikeFadeout, colors)
         return {'FINISHED'}
 
 def register():

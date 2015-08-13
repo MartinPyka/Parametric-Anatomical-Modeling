@@ -580,6 +580,11 @@ def animateSpikePropagation():
     addObjectsToGroup(bpy.data.groups[PATHS_GROUP_NAME], [obj.curveObject for obj in CURVES.values() if obj.curveObject is not None])
     addObjectsToGroup(bpy.data.groups[SPIKE_GROUP_NAME], [obj.object for obj in SPIKE_OBJECTS.values() if obj.object is not None])
 
+    # Apply material to paths
+    if bpy.context.scene.pam_anim_material.pathMaterial in bpy.data.materials:
+        for curveObj in CURVES.values():
+            curveObj.curveObject.active_material = bpy.data.materials[bpy.context.scene.pam_anim_material.pathMaterial]
+
     # Copy modifiers and drivers
     copyModifiers(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh], [spike.object for spike in SPIKE_OBJECTS.values() if spike.object is not None])
     copyDrivers(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh], [spike.object for spike in SPIKE_OBJECTS.values() if spike.object is not None])

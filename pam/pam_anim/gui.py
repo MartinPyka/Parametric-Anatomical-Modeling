@@ -41,6 +41,9 @@ class PamAnimMaterialPane(bpy.types.Panel):
             row = layout.row()
             row.prop_search(context.scene.pam_anim_material, "material", bpy.data, "materials")
 
+        row = layout.row()
+        row.prop_search(options, 'pathMaterial', bpy.data, 'materials')
+
 class PamAnimPathsPane(bpy.types.Panel):
     """A panel for choosing how to display paths"""
 

@@ -141,14 +141,15 @@ class PAMColorizePanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "Visualize"
+    bl_label = "Distances"
     bl_category = "PAM Mapping"
 
     
     def draw(self, context):
         layout = self.layout
         col = layout.column(align=True)
-        col.operator("pam.mapping_color_layer", icon = "SCRIPTWIN", text = "Colorize Distances")
+        col.operator("pam.mapping_color_layer", icon = "SCRIPTWIN", text = "Colorize")
+        col.operator("pam.mapping_distance_csv", text = "Export CSV")
 
 
 class PAMModelDataPanel(bpy.types.Panel):

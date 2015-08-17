@@ -5,6 +5,7 @@ import inspect
 import random
 
 import bpy
+import bpy_extras
 
 import numpy as np
 
@@ -874,7 +875,24 @@ class PAMMappingUpdate(bpy.types.Operator):
 
         return {'FINISHED'}
 
+
+class PAMMappingSaveDistances(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
+    """Exports pre and post distances as CSV file"""
+    bl_idname = "pam.mapping_distance_csv"
+    bl_label = "Export distances"
+    bl_description = "Exports pre and post distances as CSV file"
     
+    def execute(self, context):
+        obj = bpy.context.active_object
+        mapping_id = bpy.context.scene.pam_mapping.active_set  # ['sets'] = all sets
+        name = obj.name
+        particle_sys = obj.particle_systems[0]
+        
+        CL.saveUVDistance(self.filepath, name, particle_sys, mapping_id)
+        
+        return {'FINISHED'}
+        
+
 
 class PAMMappingColorizeLayer(bpy.types.Operator):
     """Colorizes the layers for a given mapping with color coded distances"""
@@ -937,6 +955,7 @@ def register():
     bpy.utils.register_class(PAMMapSet)
     bpy.utils.register_class(PAMMap)
     bpy.utils.register_class(PAMMappingColorizeLayer)
+    bpy.utils.register_class(PAMMappingSaveDistances)
     bpy.types.Scene.pam_mapping = bpy.props.PointerProperty(
         type=PAMMap
     )

@@ -16,6 +16,7 @@ from . import pam
 
 from pam import pam_vis as pv
 from pam.tools import colorizeLayer as CL
+from bpy_extras import io_utils
 
 logger = logging.getLogger(__package__)
 
@@ -882,23 +883,26 @@ class PAMMappingSaveDistances(bpy.types.Operator, bpy_extras.io_utils.ExportHelp
     bl_label = "Export distances"
     bl_description = "Exports pre and post distances as CSV file"
     
+    filename_ext = ".csv"
+    
     def execute(self, context):
-        obj = bpy.context.active_object
-        mapping_id = bpy.context.scene.pam_mapping.active_set  # ['sets'] = all sets
-        name = obj.name
-        particle_sys = obj.particle_systems[0]
+        pre = bpy.context.active_object
+        mapping_id = bpy.context.scene.pam_mapping.active_set       
+        particle_sys = pre.particle_systems[0].active_particle_target_index
         
-        CL.saveUVDistance(self.filepath, name, particle_sys, mapping_id)
+        CL.saveUVDistance(self.filepath, pre.name, particle_sys, mapping_id)
+        #CL.saveUVDistanceForPost(self.filepath, post.name, particle_sys, mapping_id)
         
         return {'FINISHED'}
-        
+    
+   
 
 
 class PAMMappingColorizeLayer(bpy.types.Operator):
     """Colorizes the layers for a given mapping with color coded distances"""
     bl_idname = "pam.mapping_color_layer"
     bl_label = "Colorize Layer"
-    bl_description = ""
+    bl_description = "Colorizes the distances on each layer"
     
     def execute(self, context):
         mapping_id = bpy.context.scene.pam_mapping.active_set

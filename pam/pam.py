@@ -222,7 +222,7 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
 
 # TODO(SK): Quads into triangles (indices)
 # TODO(SK): Rephrase docstring, add parameter/return values
-def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
+def mapUVPointTo3d(obj_uv, uv_list, check_edges = False, cleanup=True):
     """Convert a list of uv-points into 3d. This function is mostly
     used by interpolateUVTrackIn3D. Note, that therefore, not all points
     can and have to be converted to 3d points. The return list can therefore
@@ -239,11 +239,7 @@ def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
 
     # Build new quadtree to cache objects if no chache exists
     if obj_uv.name not in model.QUADTREE_CACHE:
-        qtree = quadtree.buildQuadtree(constants.CACHE_QUADTREE_DEPTH)
-
-        for p in obj_uv.data.polygons:
-            uvs = ([obj_uv.data.uv_layers.active.data[li].uv for li in p.loop_indices], [obj_uv.data.vertices[p.vertices[i]].co for i in range(len(p.loop_indices))])
-            qtree.addPolygon(uvs)
+        qtree = quadtree.buildUVQuadtreeFromObject(obj_uv, constants.CACHE_QUADTREE_DEPTH)
         model.QUADTREE_CACHE[obj_uv.name] = qtree
     else:
         qtree = model.QUADTREE_CACHE[obj_uv.name]
@@ -292,19 +288,19 @@ def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
                         p3ds[3]
                     )
                     break
-
-            # Sometimes the point is directly on the edge of a tri and intersect_point_tri_2d doesn't recognize it
-            # So we check for all possible edges
-            edges = [(0, 1),
-                     (1, 2),
-                     (2, 3),
-                     (3, 0),
-                     (0, 2)]
-            for edge in edges:
-                point_on_line, percentage = mathutils.geometry.intersect_point_line(point, uvs[edge[0]], uvs[edge[1]])
-                if (point_on_line - point).length <= constants.UV_THRESHOLD and percentage >= 0. and percentage <= 1.:
-                    points_3d[i] = p3ds[edge[0]].lerp(p3ds[edge[1]], percentage)
-                    break
+            if check_edges:
+                # Sometimes the point is directly on the edge of a tri and intersect_point_tri_2d doesn't recognize it
+                # So we check for all possible edges
+                edges = [(0, 1),
+                         (1, 2),
+                         (2, 3),
+                         (3, 0),
+                         (0, 2)]
+                for edge in edges:
+                    point_on_line, percentage = mathutils.geometry.intersect_point_line(point, uvs[edge[0]], uvs[edge[1]])
+                    if (point_on_line - point).length <= constants.UV_THRESHOLD and percentage >= 0. and percentage <= 1.:
+                        points_3d[i] = p3ds[edge[0]].lerp(p3ds[edge[1]], percentage)
+                        break
 
     if cleanup:
         points_3d = [p for p in points_3d if p]

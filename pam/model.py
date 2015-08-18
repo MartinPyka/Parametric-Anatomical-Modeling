@@ -212,8 +212,8 @@ def reset():
 def clearQuadtreeCache():
     """Clears the quadtree cache. 
     Has to be called each time a uv-map has changed."""
-    global quadtrees
-    quadtrees = {}
+    global QUADTREE_CACHE
+    QUADTREE_CACHE = {}
 
 class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """Load a model"""

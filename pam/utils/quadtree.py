@@ -59,3 +59,23 @@ def buildQuadtree(depth = 2, left = 0.0, top = 0.0, right = 1.0, bottom = 1.0):
         node.children[2] = buildQuadtree(depth - 1, left, v, h, bottom)
         node.children[3] = buildQuadtree(depth - 1, h, v, right, bottom)
     return node
+
+def buildUVQuadtreeFromObject(obj, depth = 2):
+    left  = 0.0
+    right = 1.0
+    top = 0.0
+    bot = 1.0
+
+    polygons = []
+    for p in obj.data.polygons:
+        uvs = ([obj.data.uv_layers.active.data[li].uv for li in p.loop_indices], [obj.data.vertices[p.vertices[i]].co for i in range(len(p.loop_indices))])
+        polygons.append(uvs)
+        for uv in uvs[0]:
+            left = min(left, uv[0])
+            right = max(right, uv[0])
+            top = min(top, uv[1])
+            bot = max(bot, uv[1])
+    qtree = buildQuadtree(depth, left = left, right = right, top = top, bottom = bot)
+    for polygon in polygons:
+        qtree.addPolygon(polygon)
+    return qtree

@@ -319,7 +319,7 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
             # if ng_index is the pre-synaptic layer in a certain mapping
             if ci[1] == ng_index:
                 # visualize the connections
-                pam_vis.visualizeConnectionsForNeuron(ci[0], p_index, smoothing)
+                pam_vis.visualizeConnectionsForNeuron(ci[0], p_index, smoothing, True)
 
         bpy.context.scene.objects.active = object
         return {'FINISHED'}

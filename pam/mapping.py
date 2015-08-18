@@ -727,6 +727,8 @@ class PAMAddNeuronSet(bpy.types.Operator):
         pset.physics_type = "NO"
         pset.particle_size = 1.0
 
+        pset['delay'] = 1.0
+
         bpy.ops.object.select_all(action="DESELECT")
 
         context.scene.update()

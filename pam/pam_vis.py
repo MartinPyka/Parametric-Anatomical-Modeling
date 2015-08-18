@@ -327,6 +327,7 @@ def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0, print_s
         path_lengthes = numpy.array(path_lengthes)
         delay = layers[0].particle_systems[neuronset1].settings.get('delay', 1.0)
         print("Using a delay modifier of ", delay)
+        path_lengths *= delay
 
         average_path_length = numpy.mean(path_lengthes)
         standard_deviation = numpy.std(path_lengthes)

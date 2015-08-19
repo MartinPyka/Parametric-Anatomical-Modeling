@@ -887,12 +887,12 @@ class PAMMappingSaveDistances(bpy.types.Operator, bpy_extras.io_utils.ExportHelp
 
     
     def execute(self, context):
-        pre = bpy.context.active_object
         mapping_id = bpy.context.scene.pam_mapping.active_set       
-        particle_sys = pre.particle_systems[0].active_particle_target_index
-        
-        CL.saveUVDistance(self.filepath + '_Pre.csv', pre.name, particle_sys, mapping_id)
-        CL.saveUVDistanceForPost(self.filepath + '_Post.csv', bpy.data.objects['Post'].name, particle_sys, mapping_id)       
+        pre = model.CONNECTIONS[mapping_id][0][0]
+        post = model.CONNECTIONS[mapping_id][0][-1]
+       
+        CL.saveUVDistance(self.filepath + '_Pre.csv', pre.name, pre.particle_systems[0].active_particle_target_index, mapping_id)
+        CL.saveUVDistanceForPost(self.filepath + '_Post.csv', post.name, post.particle_systems[0].active_particle_target_index, mapping_id)       
   
         return {'FINISHED'}   
    

@@ -76,7 +76,7 @@ def visualizeNeuronsColor(neural_objects, inj_neurons, inj_color=None, dupli_obj
             obj.active_material = mat
             obj.color = obj_col
 
-def visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj=None):
+def visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj=None, different_neurons=None, different_color=None):
     '''Visualizes neurons from a hit count list containing a neuron list for each object.
        Each neuron list contains the number of connections for each neuron
        The larger the connection number the bigger the drawn sphere
@@ -108,11 +108,18 @@ def visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj=None):
                     output_save_counter = 1
                 else:
                     output_save_counter += 1
+                    
+                dif_list = []
+                if different_neurons:
+                    dif_list = different_neurons[obj_ind]
                 
                 pam_vis.visualizePoint(post_obj.particle_systems[0].particles[post_number].location, dupli_obj)
                 resize_factor = 1+(hit_count-1)*stepsize
                 bpy.ops.transform.resize(value=(numpy.sqrt(resize_factor), numpy.sqrt(resize_factor), numpy.sqrt(resize_factor))) #resize neuron according to hit count
                 obj_col = getObjectColor(post_obj)
+                if different_neurons:
+                    if post_number in dif_list:
+                        obj_col = getObjectColor(post_obj, different_color)
                 obj = bpy.context.selected_objects[0]
                 mat = bpy.data.materials['color_mat']
                 obj.active_material = mat
@@ -176,7 +183,7 @@ def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None):
     #VISUALIZE LABELLED NEURONS
     logger.info("Visualizing neurons")
     
-    visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj)
+    visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj, different_neurons=inj_neurons, different_color=inj_color)
 
 def retrograde_tracing(location, radius, inj_color=None, dupli_obj=None):
     '''performs retrograde tracing at injection site with defined [radius] around given [location]
@@ -235,4 +242,4 @@ def retrograde_tracing(location, radius, inj_color=None, dupli_obj=None):
     #VISUALIZE LABELLED NEURONS
     logger.info("Visualizing neurons")
     
-    visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj)
+    visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj, different_neurons=inj_neurons, different_color=inj_color)

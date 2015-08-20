@@ -1206,14 +1206,24 @@ def pre_neuron_wrapper(x):
             # The layers have been already sliced before being sent to the thread, so the last element is at slayer + 1
             distance_pre, _ = computeDistanceToSynapse(
                 layers[-3], layers[-2], pre_p3d[-1], mathutils.Vector(post_neuron[1]), distances[-2])
-           
-            distance_post, _ = computeDistanceToSynapse(
-                layers[-1], layers[-2], mathutils.Vector(post_neuron[2]), mathutils.Vector(post_neuron[1]), distances[-1])
-           
-            conn[j] = post_neuron[0]      # the index of the post-neuron
-            dist[j] = pre_d + distance_pre + distance_post + post_neuron[3]      # the distance of the post-neuron
-            syn[j] = post_neuron[1]
-        except:
+            try:
+                distance_post, _ = computeDistanceToSynapse(
+                    layers[-1], layers[-2], mathutils.Vector(post_neuron[0][2]), mathutils.Vector(post_neuron[1]), distances[-1])
+               
+                conn[j] = post_neuron[0][0]      # the index of the post-neuron
+                dist[j] = pre_d + distance_pre + distance_post + post_neuron[0][3]      # the distance of the post-neuron
+                syn[j] = post_neuron[1]
+            except exceptions.MapUVError as e:
+                print("Post mapping error:", i, str(e))
+                conn[j] = -1
+            except Exception as e:
+                print("General error in post:", i, str(e))
+                conn[j] = -1
+        except exceptions.MapUVError as e:
+            print("Pre mapping error:", i, str(e))
+            conn[j] = -1
+        except Exception as e:
+            print("General error in pre:", i, str(e))
             conn[j] = -1
 
     return (conn, dist, syn)
@@ -1278,7 +1288,7 @@ def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connecti
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
     syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
 
-    uv_grid = grid.UVGrid(layers[slayer], 0.1)
+    uv_grid = grid.UVGrid(layers[slayer], 0.02)
 
     # rescale arg-parameters
     args_pre = [i / layers[slayer]['uv_scaling'] for i in args_pre]

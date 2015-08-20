@@ -260,7 +260,7 @@ class UVGrid(object):
         for index in indices:
             row = index % self._row
             col = index // self._row
-            synapse_coords.append(self._cell_index_to_uv(col, row))
+            synapse_coords.append(self._uvcoords[col][row])
 
         selected = []
         cell_indices = []

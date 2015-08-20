@@ -1051,7 +1051,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
     syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
 
-    uv_grid = grid.UVGrid(layers[slayer], 0.1)
+    uv_grid = grid.UVGrid(layers[slayer], 0.02)
 
     # rescale arg-parameters
     args_pre = [i / layers[slayer]['uv_scaling'] for i in args_pre]

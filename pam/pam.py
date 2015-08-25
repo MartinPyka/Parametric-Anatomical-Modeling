@@ -1280,7 +1280,7 @@ def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connecti
     logger.info("Using " + str(threads) + " threads")
 
     # connection matrix
-    conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses), dtype = numpy.int)
+    conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses), dtype = numpy.int32)
 
     # distance matrix
     dist = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
@@ -1313,7 +1313,6 @@ def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connecti
     result_async = pool.map_async(post_neuron_wrapper, thread_mapping)
 
     pool.close()
-    pool.join()
 
     # While post neuron mapping is running, we can prepare the grid
     logger.info("Prepare Grid")
@@ -1324,6 +1323,7 @@ def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connecti
     logger.info("Finished Grid")
     # Block until the results for the post mapping are in
     result = result_async.get()
+    pool.join()
     logger.info("Finished Post-Mapping")
     
     # fill uv_grid with post-neuron-links
@@ -1332,6 +1332,7 @@ def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connecti
             continue
         uv_grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
 
+    uv_grid.convert_data_structures()
 
     #uv_grid.convert_postNeuronStructure()
     logger.info("Compute Pre-Mapping")

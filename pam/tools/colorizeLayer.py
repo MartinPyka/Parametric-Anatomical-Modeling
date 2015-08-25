@@ -10,13 +10,10 @@ from pam import pam_vis as pv
 from pam import colormaps as cm
 from pam import pam
 
-O = bpy.data.objects
 m_gray = 'Gray'
 m_vc = 'Vertex_Color'
 
 logger = logging.getLogger(__package__)
-
-EXPORT_PATH = '/home/martin/ownCloud/work/Projekte/hippocampal_model/results/'
 
 def delayModel_delayDistribLogNormal(delay, sd):
     """ Simple log-normal distribution of delays. Skips the part with the axon
@@ -66,7 +63,7 @@ def saveUVDistance(filename, name, p_index, c_index):
     no_particles = len(bpy.data.objects[name].particle_systems[p_index].particles)
     axon_length = [pam.computeDistance_PreToSynapse(c_index, i)[0] for i in range(no_particles)]
 
-    f = open(EXPORT_PATH + filename, 'w')
+    f = open(filename, 'w')
     writer = csv.writer(
         f,
         delimiter=";",
@@ -102,7 +99,7 @@ def saveUVDistanceForPost(filename, name, p_index, c_index):
         distances.append(np.mean(distance))
         axon_lengths.append(np.mean(axon_length))
         
-    f = open(EXPORT_PATH + filename, 'w')
+    f = open(filename, 'w')
     writer = csv.writer(
         f,
         delimiter=";",

@@ -509,6 +509,8 @@ def colorize_vertices(obj, v, interval=[]):
                      based on v
 
     """
+    
+    
     colors = getColors(colormaps.standard, v, interval, alpha=False)
     color_vertices(obj, colors)
 

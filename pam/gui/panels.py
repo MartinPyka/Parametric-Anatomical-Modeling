@@ -169,6 +169,9 @@ class PAMToolsPanel(bpy.types.Panel):
             "smoothing",
             text="Smoothing"
         )
+        row.prop_search(context.scene.pam_visualize,
+            "connection_material",
+            bpy.data, "materials")
         row.operator(
             "pam_vis.visualize_connections_for_neuron",
             "Connections at Cursor"

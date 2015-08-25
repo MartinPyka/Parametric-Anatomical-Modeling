@@ -541,3 +541,5 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
     )
     u = bpy.props.FloatProperty()
     v = bpy.props.FloatProperty()
+
+    connection_material = bpy.props.StringProperty(name="Material")

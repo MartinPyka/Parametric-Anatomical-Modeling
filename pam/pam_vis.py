@@ -177,6 +177,11 @@ def visualizePath(pointlist, smoothing=0):
 
     vis_objects = vis_objects + 1
 
+    # apply material if given
+    material = bpy.data.materials.get(bpy.context.scene.pam_visualize.connection_material, None)
+    if material is not None:
+        curve.active_material = material
+
     # apply smoothing if requested
     if smoothing > 0:
         bpy.ops.object.editmode_toggle()

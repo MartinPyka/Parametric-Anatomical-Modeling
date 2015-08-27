@@ -1183,6 +1183,12 @@ def pre_neuron_wrapper(x):
     global connections
     global distances
     global no_synapses
+    global connf
+    global distf
+    global synf
+
+    if i % 10 == 0:
+        print(i, "done")
 
     random.seed(i + SEED)
     pre_p3d, pre_p2d, pre_d = computeMapping(layers[:-1],
@@ -1226,9 +1232,11 @@ def pre_neuron_wrapper(x):
             print("General error in pre:", i, str(e))
             conn[j] = -1
 
-    return (conn, dist, syn)
+    connf[i] = conn
+    distf[i] = dist
+    synf[i] = syn
 
-def pre_neuron_initializer(players, pconnections, pdistances, puv_grid, pno_synapses):
+def pre_neuron_initializer(players, pconnections, pdistances, puv_grid, pno_synapses, pconn, pdist, psyn):
     """Initialization function for pre neuron mapping for multithreading
 
     NOTE: globals are only available in the executing thread, so don't expect them 
@@ -1238,11 +1246,17 @@ def pre_neuron_initializer(players, pconnections, pdistances, puv_grid, pno_syna
     global connections
     global distances
     global no_synapses
+    global connf
+    global distf
+    global synf
     uv_grid = puv_grid
     layers = [bpy.data.objects[i] for i in players]
     connections = pconnections
     distances = pdistances
     no_synapses = pno_synapses
+    connf = pconn
+    distf = pdist
+    synf = psyn
 
 # TODO(SK): Rephrase docstring, fill in parameter/return values
 def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connections,
@@ -1279,14 +1293,19 @@ def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connecti
         threads = os.cpu_count()
     logger.info("Using " + str(threads) + " threads")
 
+    import os
+    directory = "/tmp/pam/"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
     # connection matrix
-    conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses), dtype = numpy.int32)
+    conn = numpy.memmap(directory + "conn.dat", mode = "w+", shape = (len(layers[0].particle_systems[neuronset1].particles), no_synapses), dtype = numpy.int32)
 
     # distance matrix
-    dist = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
+    dist = numpy.memmap(directory + "dist.dat", mode = "w+", shape = (len(layers[0].particle_systems[neuronset1].particles), no_synapses), dtype = numpy.float32)
 
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
-    syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
+    syn = numpy.memmap(directory + "syn.dat", mode = "w+", shape = (len(layers[0].particle_systems[neuronset1].particles), no_synapses, 2), dtype = numpy.float32)
 
     uv_grid = grid.UVGrid(layers[slayer], 0.02)
 
@@ -1339,22 +1358,18 @@ def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connecti
     num_particles = len(layers[0].particle_systems[neuronset1].particles)
     pool = multiprocessing.Pool(processes = threads, 
                                 initializer = pre_neuron_initializer, 
-                                initargs = ([x.name for x in layers[0:(slayer + 2)]], connections[0:slayer + 1], distances[0:slayer + 1], uv_grid, no_synapses))
+                                initargs = ([x.name for x in layers[0:(slayer + 2)]], connections[0:slayer + 1], distances[0:slayer + 1], uv_grid, no_synapses, conn, dist, syn))
 
     # Collect particles for pre-mapping
     particles = layers[0].particle_systems[neuronset1].particles
-    thread_mapping = [(i,  particles[i].location.to_tuple()) for i in range(0, len(particles))]
+    logger.info("Number of particles: " + str(len(particles)))
+    thread_mapping = [(i, particles[i].location.to_tuple()) for i in range(0, len(particles))]
 
-    result = pool.map(pre_neuron_wrapper, thread_mapping)
+    pool.map(pre_neuron_wrapper, thread_mapping)
 
     pool.close()
     pool.join()
     
-    for i, item in enumerate(result):
-        conn[i] = item[0]
-        dist[i] = item[1]
-        syn[i] = item[2]
-
     logger.info("Finished Pre-Mapping")
 
     if create:

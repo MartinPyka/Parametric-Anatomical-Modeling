@@ -1302,10 +1302,10 @@ def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connecti
     conn = numpy.memmap(directory + "conn.dat", mode = "w+", shape = (len(layers[0].particle_systems[neuronset1].particles), no_synapses), dtype = numpy.int32)
 
     # distance matrix
-    dist = numpy.memmap(directory + "dist.dat", mode = "w+", shape = (len(layers[0].particle_systems[neuronset1].particles), no_synapses), dtype = numpy.float32)
+    dist = numpy.memmap(directory + "dist.dat", mode = "w+", shape = (len(layers[0].particle_systems[neuronset1].particles), no_synapses), dtype = numpy.float64)
 
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
-    syn = numpy.memmap(directory + "syn.dat", mode = "w+", shape = (len(layers[0].particle_systems[neuronset1].particles), no_synapses, 2), dtype = numpy.float32)
+    syn = numpy.memmap(directory + "syn.dat", mode = "w+", shape = (len(layers[0].particle_systems[neuronset1].particles), no_synapses, 2), dtype = numpy.float64)
 
     uv_grid = grid.UVGrid(layers[slayer], 0.02)
 

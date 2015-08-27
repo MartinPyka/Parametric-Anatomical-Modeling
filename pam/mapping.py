@@ -5,10 +5,18 @@ import inspect
 import random
 
 import bpy
+import bpy_extras
+
+import numpy as np
+
 
 from . import kernel
 from . import model
 from . import pam
+
+from pam import pam_vis as pv
+from pam.tools import colorizeLayer as CL
+from bpy_extras import io_utils
 
 logger = logging.getLogger(__package__)
 
@@ -615,8 +623,7 @@ class PAMMappingCompute(bpy.types.Operator):
         pam.computeAllConnections()
 
         return {'FINISHED'}
-
-
+    
 class PAMMappingComputeSelected(bpy.types.Operator):
     """Compute active mapping"""
     bl_idname = "pam.mapping_compute_sel"
@@ -873,6 +880,79 @@ class PAMMappingUpdate(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class PAMMappingSaveDistances(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
+    """Exports pre and post distances as CSV file"""
+    bl_idname = "pam.mapping_distance_csv"
+    bl_label = "Export distances"
+    bl_description = "Exports pre and post distances as CSV file"
+    
+    filename_ext = ""
+
+    
+    def execute(self, context):
+        mapping_id = bpy.context.scene.pam_mapping.active_set       
+        pre = model.CONNECTIONS[mapping_id][0][0]
+        post = model.CONNECTIONS[mapping_id][0][-1]
+       
+        CL.saveUVDistance(self.filepath + '_Pre.csv', pre.name, pre.particle_systems[0].active_particle_target_index, mapping_id)
+        CL.saveUVDistanceForPost(self.filepath + '_Post.csv', post.name, post.particle_systems[0].active_particle_target_index, mapping_id)       
+  
+        return {'FINISHED'}   
+   
+
+
+class PAMMappingColorizeLayer(bpy.types.Operator):
+    """Colorizes the layers for a given mapping with color coded distances"""
+    bl_idname = "pam.mapping_color_layer"
+    bl_label = "Colorize Layer"
+    bl_description = "Colorizes the distances on each layer"
+    
+    def execute(self, context):
+        mapping_id = bpy.context.scene.pam_mapping.active_set
+        pre = model.CONNECTIONS[mapping_id][0][0]
+        post = model.CONNECTIONS[mapping_id][0][-1]
+        #neuron = bpy.data.objects['Neuron_Sphere']
+
+        distances_pre = CL.getDistancesPerParticle(model.CONNECTION_RESULTS[mapping_id]['d'])
+        pre_indices = CL.getParticleIndicesForVertices(pre, 0)
+
+        for i, p_ind in enumerate(pre_indices):
+            if distances_pre[p_ind] == 0:
+                pv.visualizePoint(pre.particle_systems[0].particles[p_ind].location)
+        
+        distances_post = []
+        post_indices = CL.getParticleIndicesForVertices(post, 0)
+        
+        for i, p in enumerate(post.particle_systems[0].particles):
+            pre_neurons, synapses = model.getPreIndicesOfPostIndex(mapping_id, i)
+            distance = []
+            for j in range(len(pre_neurons)):
+                distance.append(model.CONNECTION_RESULTS[mapping_id]['d'][pre_neurons[j]][synapses[j]])
+                
+            mean = np.mean(distance)
+            if np.isnan(mean):
+                distances_post.append(0)
+            else:
+                distances_post.append(mean)
+        
+        for i, p_ind in enumerate(post_indices):
+            if distances_post[p_ind] == 0:
+                pv.visualizePoint(post.particle_systems[0].particles[p_ind].location)
+
+        print(distances_post)
+        print(type(distances_pre))
+        print(type(distances_post))
+        mean_d = np.mean(list(distances_pre) + distances_post)
+        min_percent = np.min(list(distances_pre) + distances_post) / mean_d
+        max_percent = np.max(list(distances_pre) + distances_post) / mean_d
+        distances_pre = distances_pre / mean_d
+        distances_post = np.array(distances_post) / mean_d    
+        
+        CL.colorizeLayer(pre, np.take(distances_pre, pre_indices), [min_percent, max_percent])
+        CL.colorizeLayer(post, np.take(distances_post, post_indices), [min_percent, max_percent])
+        return {'FINISHED'}
+        
+
 def register():
     """Call on module register"""
     bpy.utils.register_class(PAMKernelValues)
@@ -881,6 +961,8 @@ def register():
     bpy.utils.register_class(PAMLayer)
     bpy.utils.register_class(PAMMapSet)
     bpy.utils.register_class(PAMMap)
+    bpy.utils.register_class(PAMMappingColorizeLayer)
+    bpy.utils.register_class(PAMMappingSaveDistances)
     bpy.types.Scene.pam_mapping = bpy.props.PointerProperty(
         type=PAMMap
     )

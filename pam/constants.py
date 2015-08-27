@@ -1,6 +1,6 @@
 """Constants"""
 
-import mathutils
+#import mathutils
 
 # config files with many hard-coded variables, used in
 # in other parts of PAM, primarily in pam.py
@@ -24,9 +24,17 @@ RAY_FAC = 0.3
 
 INTERPOLATION_QUALITY = 10
 
-DEFAULT_LOCATION = mathutils.Vector((0.0, 0.0, 0.0))
-DEFAULT_SCALE = mathutils.Vector((1.0, 1.0, 1.0))
-DEFAULT_ROTATION = mathutils.Euler((0.0, 0.0, 0.0), "XYZ")
+# Number of subdivisions for the quadtree cache
+# Use higher numbers if uv-maps have a lot of small polygons
+CACHE_QUADTREE_DEPTH = 2
+
+# Threshold when converting from uv to 3d
+# For when points seem to be outside of the uv mesh due to floating point errors
+UV_THRESHOLD = 1e-8
+
+#DEFAULT_LOCATION = mathutils.Vector((0.0, 0.0, 0.0))
+#DEFAULT_SCALE = mathutils.Vector((1.0, 1.0, 1.0))
+#DEFAULT_ROTATION = mathutils.Euler((0.0, 0.0, 0.0), "XYZ")
 
 DEFAULT_RESOLUTION = 0.05
 KERNEL_THRESHOLD = 0.05

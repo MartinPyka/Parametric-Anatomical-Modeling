@@ -4,6 +4,7 @@ import logging
 
 import bpy
 import numpy
+import mathutils
 
 from . import pam
 from . import model
@@ -317,10 +318,10 @@ def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0, print_s
         else:
             if (len(synapses[i]) > 0):
                 distances_pre, pre_path = pam.computeDistanceToSynapse(
-                    layers[slayer - 1], layers[slayer], pre_p3d[-1], synapses[i], distances[slayer - 1])
+                    layers[slayer - 1], layers[slayer], pre_p3d[-1], mathutils.Vector(synapses[i]), distances[slayer - 1])
                 if distances_pre >= 0:
                     distances_post, post_path = pam.computeDistanceToSynapse(
-                        layers[slayer + 1], layers[slayer], post_p3d[-1], synapses[i], distances[slayer])
+                        layers[slayer + 1], layers[slayer], post_p3d[-1], mathutils.Vector(synapses[i]), distances[slayer])
                     if (distances_post >= 0):
                         if first_item:
                             curve = visualizePath(pre_p3d, smoothing, material = material)

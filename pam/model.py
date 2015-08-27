@@ -7,13 +7,17 @@ import bpy_extras
 import mathutils
 import numpy
 
+from .utils import quadtree
+
 NG_LIST = []
 NG_DICT = {}
 CONNECTION_COUNTER = 0
 CONNECTION_INDICES = []
 CONNECTIONS = []
 CONNECTION_RESULTS = []
+CONNECTION_ERRORS = []
 
+QUADTREE_CACHE = {}
 
 def getPreIndicesOfPostIndex(c_index, post_index ):
     """ returns for a given connection-index c_index and a given post-synaptic
@@ -173,6 +177,7 @@ def load(path):
     CONNECTION_INDICES = snapshot.CONNECTION_INDICES
     CONNECTIONS = Pickle2Connection(snapshot.CONNECTIONS)
     CONNECTION_RESULTS = convertArray2Vector(snapshot.CONNECTION_RESULTS)
+    CONNECTION_ERRORS = []
 
 
 def compare(path1, path2):
@@ -201,7 +206,14 @@ def reset():
     CONNECTION_INDICES = []
     CONNECTIONS = []
     CONNECTION_RESULTS = []
+    CONNECTION_ERRORS = []
+    clearQuadtreeCache()
 
+def clearQuadtreeCache():
+    """Clears the quadtree cache. 
+    Has to be called each time a uv-map has changed."""
+    global QUADTREE_CACHE
+    QUADTREE_CACHE = {}
 
 class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """Load a model"""

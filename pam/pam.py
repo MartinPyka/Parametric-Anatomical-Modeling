@@ -11,6 +11,10 @@ from . import constants
 from . import grid
 from . import model
 from . import exceptions
+from .utils import quadtree
+
+import multiprocessing
+import os
 
 logger = logging.getLogger(__package__)
 
@@ -29,6 +33,7 @@ DIS_UVjump = 3
 DIS_normalUV = 4
 DIS_UVnormal = 5
 
+SEED = 0
 
 # TODO(SK): Missing docstring
 def computePoint(v1, v2, v3, v4, x1, x2):
@@ -119,11 +124,9 @@ def computeUVScalingFactor(obj):
 
     # TODO (MP): compute scaling factor on the basis of all edges
     return numpy.mean(result), result
-
 def checkPointOnLine(p,a1,a2):
     """Checks if a point p is on the line between the points a1 and a2
     returns the qualitative distance of the point from the line, 0 if the point is on the line with tolerance
-
     """
     EPSILON = 0.0001     #tolerance value for being able to work with floats
     d1 = p-a1
@@ -216,10 +219,21 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
         return p_uv_2d
     return p_uv_2d_new
 
+    p_uv_2d_new = p_uv_new.to_2d()
+    delta1 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[2].uv)
+    delta2 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[3].uv)
+    delta3 = checkPointOnLine(p_uv_2d_new,uvs[2].uv,uvs[3].uv)
+    delta_new = min(delta1,delta2,delta3)
+
+    if (mathutils.geometry.intersect_point_tri_2d(p_uv_2d, uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (delta != 0) & (len(uvs) == 4):
+        if delta_new < delta:
+            return p_uv_2d_new
+        return p_uv_2d
+    return p_uv_2d_new
 
 # TODO(SK): Quads into triangles (indices)
 # TODO(SK): Rephrase docstring, add parameter/return values
-def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
+def mapUVPointTo3d(obj_uv, uv_list, check_edges = False, cleanup=True):
     """Convert a list of uv-points into 3d. This function is mostly
     used by interpolateUVTrackIn3D. Note, that therefore, not all points
     can and have to be converted to 3d points. The return list can therefore
@@ -229,71 +243,75 @@ def mapUVPointTo3d(obj_uv, uv_list, cleanup=True):
 
     """
 
-    uv_polygons = []
-
     uv_list_range_container = range(len(uv_list))
 
     points_3d = [[] for _ in uv_list_range_container]
-    unseen = [i for i in uv_list_range_container]
+    point_indices = [i for i in uv_list_range_container]
 
-    for p in obj_uv.data.polygons:
-        uvs = [obj_uv.data.uv_layers.active.data[li] for li in p.loop_indices]
+    # Build new quadtree to cache objects if no chache exists
+    if obj_uv.name not in model.QUADTREE_CACHE:
+        qtree = quadtree.buildUVQuadtreeFromObject(obj_uv, constants.CACHE_QUADTREE_DEPTH)
+        model.QUADTREE_CACHE[obj_uv.name] = qtree
+    else:
+        qtree = model.QUADTREE_CACHE[obj_uv.name]
 
-        source_0 = uvs[0].uv.to_3d()
-        source_1 = uvs[1].uv.to_3d()
-        source_2 = uvs[2].uv.to_3d()
-        source_3 = uvs[3].uv.to_3d()
-        vertex_0 = obj_uv.data.vertices[p.vertices[0]].co
-        vertex_1 = obj_uv.data.vertices[p.vertices[1]].co
-        vertex_2 = obj_uv.data.vertices[p.vertices[2]].co
-        vertex_3 = obj_uv.data.vertices[p.vertices[3]].co
-
-        for i in list(unseen):
-            point = uv_list[i].to_3d()
+    for i in point_indices:
+        point = uv_list[i]
+        polygons = qtree.getPolygons(point)
+        for polygon in polygons:
+            uvs = polygon[0]
+            p3ds = polygon[1]
 
             result = mathutils.geometry.intersect_point_tri_2d(
-                uv_list[i],
-                uvs[0].uv,
-                uvs[1].uv,
-                uvs[2].uv
+                point,
+                uvs[0],
+                uvs[1],
+                uvs[2]
             )
 
             if (result != 0):
                 points_3d[i] = mathutils.geometry.barycentric_transform(
-                    point,
-                    source_0,
-                    source_1,
-                    source_2,
-                    vertex_0,
-                    vertex_1,
-                    vertex_2
+                    point.to_3d(),
+                    uvs[0].to_3d(),
+                    uvs[1].to_3d(),
+                    uvs[2].to_3d(),
+                    p3ds[0],
+                    p3ds[1],
+                    p3ds[2]
                 )
-                uv_polygons.append(p)
-                unseen.remove(i)
+                break
 
             else:
                 result = mathutils.geometry.intersect_point_tri_2d(
-                    uv_list[i],
-                    uvs[0].uv,
-                    uvs[2].uv,
-                    uvs[3].uv
+                    point,
+                    uvs[0],
+                    uvs[2],
+                    uvs[3]
                 )
                 if (result != 0):
                     points_3d[i] = mathutils.geometry.barycentric_transform(
-                        point,
-                        source_0,
-                        source_2,
-                        source_3,
-                        vertex_0,
-                        vertex_2,
-                        vertex_3
+                        point.to_3d(),
+                        uvs[0].to_3d(),
+                        uvs[2].to_3d(),
+                        uvs[3].to_3d(),
+                        p3ds[0],
+                        p3ds[2],
+                        p3ds[3]
                     )
-
-                    uv_polygons.append(p)
-                    unseen.remove(i)
-
-            if len(unseen) == 0:
-                return points_3d
+                    break
+            if check_edges:
+                # Sometimes the point is directly on the edge of a tri and intersect_point_tri_2d doesn't recognize it
+                # So we check for all possible edges
+                edges = [(0, 1),
+                         (1, 2),
+                         (2, 3),
+                         (3, 0),
+                         (0, 2)]
+                for edge in edges:
+                    point_on_line, percentage = mathutils.geometry.intersect_point_line(point, uvs[edge[0]], uvs[edge[1]])
+                    if (point_on_line - point).length <= constants.UV_THRESHOLD and percentage >= 0. and percentage <= 1.:
+                        points_3d[i] = p3ds[edge[0]].lerp(p3ds[edge[1]], percentage)
+                        break
 
     if cleanup:
         points_3d = [p for p in points_3d if p]
@@ -984,7 +1002,6 @@ def replaceMapping(index, *args):
 def computeAllConnections():
     for c in model.CONNECTIONS:
         logger.info(c[0][0].name + ' - ' + c[0][-1].name)
-
         result = computeConnectivity(*c)
         model.CONNECTION_RESULTS.append(
             {
@@ -1006,14 +1023,11 @@ def updateMapping(index):
         's': result[2]
     }
 
-
-# TODO(SK): Rephrase docstring, fill in parameter/return values
 def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
                         distances, func_pre, args_pre, func_post, args_post,
-                        no_synapses, create=True):
+                        no_synapses, create=True, threads = None):
     """Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
     with the given parameters
-
     :param list layers: list of layers connecting a pre- with a post-synaptic layer
     :param str neuronset1: name of the neuronset (particle system) of the pre- and post-synaptic layer
     :param str neuronset2: name of the neuronset (particle system) of the pre- and post-synaptic layer
@@ -1030,8 +1044,20 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
                                of its corresponding position on the synapse layer
     :param int no_synapses: number of synapses for each pre-synaptic neuron
     :param bool create: if create == True, then create new connection, otherwise it is just updated
-
+    :param int threads: If not -1, computeConnectivityThreaded is called instead with number of given threads.
+                        If None, addon preferences are used. If 0, os.cpu_count() is used.
     """
+    # Determine if threading is to be used
+    if threads == None:
+        if bpy.context.user_preferences.addons['pam'].preferences.use_threading:
+            return computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connections,
+                        distances, func_pre, args_pre, func_post, args_post,
+                        no_synapses, create, threads)
+    elif threads != -1:
+        return computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connections,
+                        distances, func_pre, args_pre, func_post, args_post,
+                        no_synapses, create, threads)
+
     # connection matrix
     conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses)).astype(int)
 
@@ -1056,18 +1082,24 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
 
     # fill uv_grid with post-neuron-links
     for i in range(0, len(layers[-1].particle_systems[neuronset2].particles)):
+        random.seed(i + SEED)
         post_p3d, post_p2d, post_d = computeMapping(layers[:(slayer - 1):-1],
                                                     connections[:(slayer - 1):-1],
                                                     distances[:(slayer - 1):-1],
                                                     layers[-1].particle_systems[neuronset2].particles[i].location)
         if post_p3d is None:
             continue
+        
+        uv_grid.insert_postNeuron(i, post_p2d, post_p3d[-1].to_tuple(), post_d)
 
-        uv_grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
 
+    #uv_grid.convert_postNeuronStructure()
+    #for m in uv_grid._masks['post']:
+    #    print(len(m))
     logger.info("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)
     for i in range(0, num_particles):
+        random.seed(i + SEED)
         pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer + 1)],
                                                  connections[0:slayer],
                                                  distances[0:slayer],
@@ -1080,6 +1112,8 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
                 conn[i, j] = -1
             continue
 
+        numpy.random.seed(i + SEED)
+
         post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
 
         if (len(post_neurons) == 0):
@@ -1088,30 +1122,256 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
             continue
 
         for j, post_neuron in enumerate(post_neurons):
-            try: 
+            try:
                 distance_pre, _ = computeDistanceToSynapse(
-                    layers[slayer - 1], layers[slayer], pre_p3d[-1], post_neuron[1], distances[slayer - 1])
+                    layers[slayer - 1], layers[slayer], pre_p3d[-1], mathutils.Vector(post_neuron[1]), distances[slayer - 1])
                 try: 
                     distance_post, _ = computeDistanceToSynapse(
-                        layers[slayer + 1], layers[slayer], post_neuron[0][2], post_neuron[1], distances[slayer])
+                        layers[slayer + 1], layers[slayer], mathutils.Vector(post_neuron[0][2]), mathutils.Vector(post_neuron[1]), distances[slayer])
                     conn[i, j] = post_neuron[0][0]      # the index of the post-neuron
                     dist[i, j] = pre_d + distance_pre + distance_post + post_neuron[0][3]      # the distance of the post-neuron
                     syn[i][j] = post_neuron[1]
-                except exception.MapUVError as e:
-                    logger.info("Message-post-data: ", e)
+                except exceptions.MapUVError as e:
+                    logger.info("Message-post-data: " + str(e))
+                    model.CONNECTION_ERRORS.append(e)
                     conn[i, j] = -1
+                    syn[i][j] = mathutils.Vector((0, 0))
                 except Exception as e:
-                    logger.info("A general error occured: ", e)
+                    logger.info("A general error occured: " + str(e))
                     conn[i, j] = -1
-            except exception.MapUVError as e:
-                logger.info("Message-pre-data: ", e)
+                    syn[i][j] = mathutils.Vector((0, 0))
+            except exceptions.MapUVError as e:
+                logger.info("Message-pre-data: " + str(e))
+                model.CONNECTION_ERRORS.append(e)
                 conn[i, j] = -1
+                syn[i][j] = mathutils.Vector((0, 0))
             except Exception as e:
-                logger.info("A general error occured: ", e)
+                logger.info("A general error occured: " + str(e))
                 conn[i, j] = -1
+                syn[i][j] = mathutils.Vector((0, 0))
 
         for rest in range(j + 1, no_synapses):
             conn[i, rest] = -1
+
+    if create:
+        model.CONNECTION_INDICES.append(
+            [
+                model.CONNECTION_COUNTER,
+                model.NG_DICT[layers[0].name][neuronset1],
+                model.NG_DICT[layers[-1].name][neuronset2]
+            ]
+        )
+        model.CONNECTION_COUNTER += 1
+
+    return conn, dist, syn, uv_grid
+
+def post_neuron_wrapper(x):
+    """Wrapper for computing post neuron mapping. To be used with multithreading."""
+    global layers
+    global connections
+    global distances
+    random.seed(x[0] + SEED)
+    p3d, p2d, dis = computeMapping(layers, connections, distances, mathutils.Vector(x[1]))
+    if p3d is not None:
+        p3d = [v[:] for v in p3d]
+    if p2d is not None:
+        p2d = (p2d[0], p2d[1])
+    return (x[0], p3d, p2d, dis)
+
+def post_neuron_initializer(players, pconnections, pdistances):
+    """Initialization function for all threads in the threadpool for post neuron mapping.
+
+    NOTE: globals are only available in the executing thread, so don't expect them 
+    to be available in the main thread."""
+    global layers
+    global connections
+    global distances
+    layers = [bpy.data.objects[i] for i in players]
+    connections = pconnections
+    distances = pdistances
+    
+def pre_neuron_wrapper(x):
+    """Wrapper for computing pre neuron mapping. To be used with multithreading."""
+    i, particle = x
+
+    global uv_grid
+    global layers
+    global connections
+    global distances
+    global no_synapses
+
+    random.seed(i + SEED)
+    pre_p3d, pre_p2d, pre_d = computeMapping(layers[:-1],
+                                                connections[:-1],
+                                                distances[:-1],
+                                                mathutils.Vector(particle))
+
+    conn = numpy.zeros(no_synapses)
+    dist = numpy.zeros(no_synapses)
+    syn = [[] for j in range(no_synapses)]
+
+    if pre_p3d is None:
+        for j in range(0, no_synapses):
+            conn[j] = -1
+        return (conn, dist, syn)
+
+    numpy.random.seed(i + SEED)
+    post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
+    for j, post_neuron in enumerate(post_neurons):
+        try:
+            # The layers have been already sliced before being sent to the thread, so the last element is at slayer + 1
+            distance_pre, _ = computeDistanceToSynapse(
+                layers[-3], layers[-2], pre_p3d[-1], mathutils.Vector(post_neuron[1]), distances[-2])
+            try:
+                distance_post, _ = computeDistanceToSynapse(
+                    layers[-1], layers[-2], mathutils.Vector(post_neuron[0][2]), mathutils.Vector(post_neuron[1]), distances[-1])
+               
+                conn[j] = post_neuron[0][0]      # the index of the post-neuron
+                dist[j] = pre_d + distance_pre + distance_post + post_neuron[0][3]      # the distance of the post-neuron
+                syn[j] = post_neuron[1]
+            except exceptions.MapUVError as e:
+                print("Post mapping error:", i, str(e))
+                conn[j] = -1
+            except Exception as e:
+                print("General error in post:", i, str(e))
+                conn[j] = -1
+        except exceptions.MapUVError as e:
+            print("Pre mapping error:", i, str(e))
+            conn[j] = -1
+        except Exception as e:
+            print("General error in pre:", i, str(e))
+            conn[j] = -1
+
+    return (conn, dist, syn)
+
+def pre_neuron_initializer(players, pconnections, pdistances, puv_grid, pno_synapses):
+    """Initialization function for pre neuron mapping for multithreading
+
+    NOTE: globals are only available in the executing thread, so don't expect them 
+    to be available in the main thread."""
+    global uv_grid
+    global layers
+    global connections
+    global distances
+    global no_synapses
+    uv_grid = puv_grid
+    layers = [bpy.data.objects[i] for i in players]
+    connections = pconnections
+    distances = pdistances
+    no_synapses = pno_synapses
+
+# TODO(SK): Rephrase docstring, fill in parameter/return values
+def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connections,
+                        distances, func_pre, args_pre, func_post, args_post,
+                        no_synapses, create=True, threads = None):
+    """Multithreaded version of computeConnectivity()
+    Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
+    with the given parameters
+
+    :param list layers: list of layers connecting a pre- with a post-synaptic layer
+    :param str neuronset1: name of the neuronset (particle system) of the pre- and post-synaptic layer
+    :param str neuronset2: name of the neuronset (particle system) of the pre- and post-synaptic layer
+    :param index slayer: index in layers for the synaptic layer
+    :param list connections: values determining the type of layer-mapping
+    :param list distances: values determining the calculation of the distances between layers
+    :param function func_pre: pre-synaptic connectivity kernel, if func_pre is None
+                              only the mapping position of the pre-synaptic neuron on the synaptic layer
+                              is used
+    :param function args_pre:
+    :param function func_post:
+    :param function args_post: same, as for func_pre and and args_pre, but now for the post-synaptic neurons
+                               again, func_post can be None. Then a neuron is just assigned to the cell
+                               of its corresponding position on the synapse layer
+    :param int no_synapses: number of synapses for each pre-synaptic neuron
+    :param bool create: if create == True, then create new connection, otherwise it is just updated
+    :param int threads: Number of threads to be used for multiprocessing. If None, Value in addon preferences is used.
+                        If 0, os.cpu_count() is used.
+
+    """
+    # Determine number of threads
+    if threads == None:
+        threads = bpy.context.user_preferences.addons['pam'].preferences.threads
+    if threads < 1:
+        threads = os.cpu_count()
+    logger.info("Using " + str(threads) + " threads")
+
+    # connection matrix
+    conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses), dtype = numpy.int32)
+
+    # distance matrix
+    dist = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
+
+    # synapse mattrx (matrix, with the uv-coordinates of the synapses)
+    syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
+
+    uv_grid = grid.UVGrid(layers[slayer], 0.02)
+
+    # rescale arg-parameters
+    args_pre = [i / layers[slayer]['uv_scaling'] for i in args_pre]
+    args_post = [i / layers[slayer]['uv_scaling'] for i in args_post]
+
+    logger.info("Compute Post-Mapping")
+    
+    layers_threading = [x.name for x in layers[:(slayer - 1)]]
+    connections_threading = connections[:(slayer - 1)]
+    distances_threading = distances[:(slayer - 1)]
+
+    pool = multiprocessing.Pool(processes = threads, 
+                                initializer = post_neuron_initializer, 
+                                initargs = ([x.name for x in layers[:(slayer - 1):-1]], connections[:(slayer - 1):-1], distances[:(slayer - 1):-1]))
+
+    # Collect particles for post-mapping
+    particles = layers[-1].particle_systems[neuronset2].particles
+    thread_mapping = [(i,  particles[i].location.to_tuple()) for i in range(0, len(particles))]
+    
+    # Execute the wrapper for multiprocessing
+    # Calculates post neuron mappings
+    result_async = pool.map_async(post_neuron_wrapper, thread_mapping)
+
+    pool.close()
+
+    # While post neuron mapping is running, we can prepare the grid
+    logger.info("Prepare Grid")
+
+    uv_grid.compute_pre_mask(func_pre, args_pre)
+    uv_grid.compute_post_mask(func_post, args_post)
+
+    logger.info("Finished Grid")
+    # Block until the results for the post mapping are in
+    result = result_async.get()
+    pool.join()
+    logger.info("Finished Post-Mapping")
+    
+    # fill uv_grid with post-neuron-links
+    for i, post_p3d, post_p2d, post_d in result:
+        if post_p3d is None:
+            continue
+        uv_grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
+
+    uv_grid.convert_data_structures()
+
+    #uv_grid.convert_postNeuronStructure()
+    logger.info("Compute Pre-Mapping")
+    num_particles = len(layers[0].particle_systems[neuronset1].particles)
+    pool = multiprocessing.Pool(processes = threads, 
+                                initializer = pre_neuron_initializer, 
+                                initargs = ([x.name for x in layers[0:(slayer + 2)]], connections[0:slayer + 1], distances[0:slayer + 1], uv_grid, no_synapses))
+
+    # Collect particles for pre-mapping
+    particles = layers[0].particle_systems[neuronset1].particles
+    thread_mapping = [(i,  particles[i].location.to_tuple()) for i in range(0, len(particles))]
+
+    result = pool.map(pre_neuron_wrapper, thread_mapping)
+
+    pool.close()
+    pool.join()
+    
+    for i, item in enumerate(result):
+        conn[i] = item[0]
+        dist[i] = item[1]
+        syn[i] = item[2]
+
+    logger.info("Finished Pre-Mapping")
 
     if create:
         model.CONNECTION_INDICES.append(
@@ -1315,6 +1575,9 @@ def resetOrigins():
 
 def initialize3D():
     """Prepare necessary steps for the computation of connections"""
+
+    SEED = bpy.context.scene.pam_mapping.seed
+    model.clearQuadtreeCache()
 
     logger.info("reset model")
     model.reset()

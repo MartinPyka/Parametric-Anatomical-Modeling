@@ -32,8 +32,8 @@ def gauss(uv, guv, var_u=1.0, var_v=1.0, shift_u=0.0, shift_v=0.0):
     """
     ruv = guv - uv  # compute relative position
 
-    return math.exp(-((ruv[0] + shift_u) ** 2 / (2 * var_u ** 2) +
-                    (ruv[1] + shift_v) ** 2 / (2 * var_v ** 2)))
+    return np.exp(-((ruv[...,0] + shift_u) ** 2 / (2 * var_u ** 2) +
+                    (ruv[...,1] + shift_v) ** 2 / (2 * var_v ** 2)))
 
 
 # copied from:
@@ -109,14 +109,20 @@ def stripe_with_end(uv, guv, vec_u=1.0, vec_v=0.0, shift_u=0.0, shift_v=0.0,
         [np.cos(-angle), -np.sin(-angle)],
         [np.sin(-angle), np.cos(-angle)]
     ])
-    rot_vec = np.dot(rotMatrix, np.array(ruv))
-    rot_vec[0] = rot_vec[0] - shift_u
-    rot_vec[1] = rot_vec[1] - shift_v
-    if (rot_vec[0] < 0):
-        return 0.0
+    rot_vec = np.dot(rotMatrix, ruv[...,np.newaxis])
+    rot_vec = np.swapaxes(rot_vec, 0, -1)[0]
+    rot_vec[...,0] -= shift_u
+    rot_vec[...,1] -= shift_v
+    
+    result = np.exp(-(rot_vec[...,1]**2 / (2 * var_v**2)))
+    if type(result) is not np.ndarray:
+        if rot_vec[0] < 0:
+            return 0.0
+        else:
+            return result
     else:
-        return math.exp(-(rot_vec[1]**2 / (2 * var_v**2)))
-
+        np.place(result, rot_vec[...,0] < 0.0, 0.0)
+        return result
 
 # TODO(SK): Rephrase docstring & fill in parameter values
 def gauss_u(uv, guv, origin_u=0.0, var_u=1.0):
@@ -313,4 +319,3 @@ def yu_kernel2(uv, guv):
                
     return (2/o_v * phi(ruv[1]/ o_v) * xhi (a_v * ruv[1]/ o_v)*
             2/o_u * phi(ruv[0]/ o_u) * xhi (a_u * ruv[0]/ o_u)) 
-            

@@ -10,6 +10,7 @@ from . import utils
 from . import tools
 from . import mapping
 from . import pam_anim
+from . import trees
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +106,8 @@ def register():
 
     pam_anim.pam_anim.register()
 
+    trees.register()
+
     bpy.utils.register_module(__name__)
     logger.debug("Register addon")
 
@@ -116,6 +119,8 @@ def unregister():
     tools.visual.unregister()
     mapping.unregister()
     gui.menus.unregister()
+
+    trees.unregister()
 
     bpy.utils.unregister_module(__name__)
     logger.debug("Unregister addon")

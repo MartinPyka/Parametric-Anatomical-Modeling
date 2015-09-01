@@ -4,6 +4,8 @@ import bpy
 
 from .. import mapping
 
+# Version where pie menus have been implemented
+MINIMUM_VERSION = "2.72 (sub 0)"
 
 class PAMMappingMenu(bpy.types.Menu):
     """Mapping menu"""
@@ -20,10 +22,9 @@ class PAMMappingMenu(bpy.types.Menu):
 
         pie.operator("pam.mapping_self_inhibition", "Add layer as self-inhibition mapping")
 
-
 def register():
     """Call upon module register"""
-    if not bpy.app.background:
+    if not bpy.app.background and bpy.app.version_string >= MINIMUM_VERSION:
         wm = bpy.context.window_manager
         km = wm.keyconfigs.addon.keymaps.new(name="3D View Generic", space_type="VIEW_3D")
         kmi = km.keymap_items.new("wm.call_menu_pie", "SPACE", "PRESS", shift=True, ctrl=True)
@@ -32,7 +33,7 @@ def register():
 
 def unregister():
     """Call upon module unregister"""
-    if not bpy.app.background:
+    if not bpy.app.background and bpy.app.version_string >= MINIMUM_VERSION:
         wm = bpy.context.window_manager
         km = wm.keyconfigs.addon.keymaps.find(name="3D View Generic", space_type="VIEW_3D")
         kmi = km.keymap_items["wm.call_menu_pie"]

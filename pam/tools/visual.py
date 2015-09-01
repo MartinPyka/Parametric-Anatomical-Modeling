@@ -11,6 +11,7 @@ from .. import kernel
 from .. import model
 from .. import pam
 from .. import pam_vis
+from .. import tracing
 from ..utils import colors
 from ..utils import p
 
@@ -27,6 +28,11 @@ VIEW_LIST = [
 MODE_LIST = [
     ("CURSOR", "At cursor", "", 0),
     ("COORDINATES", "At uv", "", 1)
+]
+
+INJ_METHOD_LIST = [
+    ("ANTEROGRADE", "Anterograde", "", 0),
+    ("RETROGRADE", "Retrograde", "", 1)
 ]
 
 
@@ -313,7 +319,7 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
             # if ng_index is the pre-synaptic layer in a certain mapping
             if ci[1] == ng_index:
                 # visualize the connections
-                pam_vis.visualizeConnectionsForNeuron(ci[0], p_index, smoothing)
+                pam_vis.visualizeConnectionsForNeuron(ci[0], p_index, smoothing, True)
 
         bpy.context.scene.objects.active = object
         return {'FINISHED'}
@@ -347,6 +353,29 @@ class PamVisualizeForwardConnection(bpy.types.Operator):
         bpy.context.scene.objects.active = object
         return {'FINISHED'}
 
+class PamVisualizeTracing(bpy.types.Operator):
+    bl_idname = "pam_vis.tracing"
+    bl_label = "Visualize tracing for injection site at Cursor"
+    bl_description = "Performs an anterograde or retrograde tracing originating from the area around the cursor"
+    bl_options = {'UNDO'}
+
+    def execute(self, context):
+        pv = context.scene.pam_visualize
+        cursor = context.scene.cursor_location
+        obj = None
+        if pv.mesh != "":
+            obj = bpy.data.objects[pv.mesh]
+        if pv.inj_method == "ANTEROGRADE":
+            if pv.set_color:
+                tracing.anterograde_tracing(location=cursor, radius=pv.radius, inj_color=pv.inj_color, dupli_obj=obj)
+            else:
+                tracing.anterograde_tracing(location=cursor, radius=pv.radius, dupli_obj=obj)
+        else:
+            if pv.set_color:
+                tracing.retrograde_tracing(location=cursor, radius=pv.radius, inj_color=pv.inj_color, dupli_obj=obj)
+            else:
+                tracing.retrograde_tracing(location=cursor, radius=pv.radius, dupli_obj=obj)
+        return {'FINISHED'}
 
 # TODO(SK): missing docstring
 @p.profiling
@@ -449,6 +478,7 @@ class PamVisualizeKernelFloatProperties(bpy.types.PropertyGroup):
 
 # TODO(SK): missing docstring
 class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
+    mesh = bpy.props.StringProperty(name="Mesh", description="Object to duplicate for use as neuron visualization. Using spheres when left empty.")
     view = bpy.props.EnumProperty(
         name="View mode",
         items=VIEW_LIST,
@@ -457,6 +487,26 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
     mode = bpy.props.EnumProperty(
         name="Mode",
         items=MODE_LIST
+    )
+    inj_method = bpy.props.EnumProperty(
+        name="Injection Method",
+        items=INJ_METHOD_LIST
+    )
+    radius = bpy.props.FloatProperty(
+        name="Injection radius",
+        default=0.5,
+        min=0.0,
+        unit="LENGTH",
+        subtype="DISTANCE"
+    )
+    set_color = bpy.props.BoolProperty(
+        name="Fix color for injection",
+        description="Check to color the injection site neurons in a color different from the object color",
+        default=False
+    )
+    inj_color = bpy.props.FloatVectorProperty(
+        name="Injection color",
+        subtype="COLOR"
     )
     kernel = bpy.props.EnumProperty(
         name="Kernel function",
@@ -491,3 +541,5 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
     )
     u = bpy.props.FloatProperty()
     v = bpy.props.FloatProperty()
+
+    connection_material = bpy.props.StringProperty(name="Material")

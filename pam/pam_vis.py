@@ -120,16 +120,25 @@ def visualizeNeuronProjLength(no_connection, obj):
     generateLayerNeurons(layers, neuronset1, obj, colors)
 
 
-def visualizePoint(point):
-    """Visualize a point in 3d by creating a small sphere"""
+def visualizePoint(point, obj=None):
+    """Visualize a point in 3d by creating a small sphere
+    providing an onject as the obj argument duplicates the object instead of creating a sphere"""
     global vis_objects
-    bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location=point, layers=(True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
-    bpy.ops.transform.resize(value=(0.05, 0.05, 0.05))
+    
+    if not obj:
+        bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location=point, layers=(True, True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+        bpy.ops.transform.resize(value=(0.05, 0.05, 0.05))
+    else:
+        bpy.ops.object.select_all(action='DESELECT')
+        obj.select = True
+        bpy.ops.object.duplicate(linked=True, mode='INIT')
+        bpy.context.selected_objects[0].location = point
+        
     bpy.context.selected_objects[0].name = "visualization.%03d" % vis_objects
     vis_objects = vis_objects + 1
 
 
-def visualizePath(pointlist, smoothing=0):
+def visualizePath(pointlist, smoothing=0, material=None):
     """Create path for a given point list
 
     :param list pointlist: 3d-vectors that are converted to a path
@@ -169,6 +178,10 @@ def visualizePath(pointlist, smoothing=0):
 
     vis_objects = vis_objects + 1
 
+    # apply material if given
+    if material is not None:
+        curve.active_material = material
+
     # apply smoothing if requested
     if smoothing > 0:
         bpy.ops.object.editmode_toggle()
@@ -179,6 +192,23 @@ def visualizePath(pointlist, smoothing=0):
 
     return curve
 
+def calculatePathLength(curveObject):
+    """Calculates the length of the path of a curve. 
+    Does not take bezier interpolation into account, only distance between points
+    :param bpy.types.Object curveObject: The curve
+    :return float: The length of the curve"""
+    if type(curveObject) == bpy.types.Object:
+        data = curveObject.data
+    elif type(curveObject) == bpy.types.Curve:
+        data = curveObject
+    else:
+        raise ValueError("curveObject needs to be an Object or a Curve")
+    length = 0.0
+    for spline in data.splines:
+        for i in range(len(spline.bezier_points) - 1):
+            dist = spline.bezier_points[i].co - spline.bezier_points[i - 1].co
+            length += dist.length
+    return length
 
 def visualizeForwardMapping(no_connection, pre_index):
     """This is a debugging routine. The procedure tries to visualize the maximal
@@ -193,6 +223,8 @@ def visualizeForwardMapping(no_connection, pre_index):
     connections = model.CONNECTIONS[no_connection][4]
     distances = model.CONNECTIONS[no_connection][5]
 
+    material = bpy.data.materials.get(bpy.context.scene.pam_visualize.connection_material, None)
+
     for s in range(2, (slayer + 1)):
         pre_p3d, pre_p2d, pre_d = pam.computeMapping(
             layers[0:s],
@@ -205,7 +237,7 @@ def visualizeForwardMapping(no_connection, pre_index):
         logger.debug(pre_p3d)
         logger.debug(pre_p2d)
         logger.debug(pre_d)
-        visualizePath(pre_p3d)
+        visualizePath(pre_p3d, material = material)
 
 
 def visualizeBackwardMapping(no_connection, post_index):
@@ -221,6 +253,8 @@ def visualizeBackwardMapping(no_connection, post_index):
     connections = model.CONNECTIONS[no_connection][4]
     distances = model.CONNECTIONS[no_connection][5]
 
+    material = bpy.data.materials.get(bpy.context.scene.pam_visualize.connection_material, None)
+
     for s in range(len(layers), slayer, -1):
         post_p3d, post_p2d, post_d = pam.computeMapping(layers[:(slayer - 1):-1],
                                                         connections[:(slayer - 1):-1],
@@ -228,10 +262,10 @@ def visualizeBackwardMapping(no_connection, post_index):
                                                         layers[-1].particle_systems[neuronset2].particles[post_index].location)
         logger.debug(s)
         logger.debug(post_p3d)
-        visualizePath(post_p3d)
+        visualizePath(post_p3d, material)
 
 
-def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0):
+def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0, print_statistics = False):
     """ Visualizes all connections between a given pre-synaptic neuron and its connections
     to all post-synaptic neurons
     layers              : list of layers connecting a pre- with a post-synaptic layer
@@ -255,6 +289,9 @@ def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0):
     post_indices = model.CONNECTION_RESULTS[no_connection]['c'][pre_index]
     synapses = model.CONNECTION_RESULTS[no_connection]['s'][pre_index]
 
+    if print_statistics:
+        print("Visualizing connections for neuron", pre_index, "from", " -> ".join([l.name for l in layers]))
+
     # path of the presynaptic neuron to the synaptic layer
     pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer + 1)],
                                                  connections[0:slayer],
@@ -262,6 +299,10 @@ def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0):
                                                  layers[0].particle_systems[neuronset1].particles[pre_index].location)
 
     first_item = True
+    first_item_distance = 0.0
+    path_lengthes = []
+
+    material = bpy.data.materials.get(bpy.context.scene.pam_visualize.connection_material, None)
 
     for i in range(0, len(post_indices)):
         if post_indices[i] == -1:
@@ -271,7 +312,9 @@ def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0):
                                                         distances[:(slayer - 1):-1],
                                                         layers[-1].particle_systems[neuronset2].particles[int(post_indices[i])].location)
         if synapses is None:
-            visualizePath(pre_p3d + post_p3d[::-1])
+            curve = visualizePath(pre_p3d + post_p3d[::-1], material = material)
+            distance = calculatePathLength(curve)
+            path_lengthes.append(distance)
         else:
             if (len(synapses[i]) > 0):
                 distances_pre, pre_path = pam.computeDistanceToSynapse(
@@ -281,11 +324,28 @@ def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0):
                         layers[slayer + 1], layers[slayer], post_p3d[-1], mathutils.Vector(synapses[i]), distances[slayer])
                     if (distances_post >= 0):
                         if first_item:
-                            visualizePath(pre_p3d, smoothing)
-                            visualizePath([pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1], smoothing)
+                            curve = visualizePath(pre_p3d, smoothing, material = material)
+                            first_item_distance = calculatePathLength(curve)
+                            curve = visualizePath([pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1], smoothing, material = material)
+                            first_item_distance += calculatePathLength(curve)
                             first_item = False
                         else:
-                            visualizePath([pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1], smoothing)
+                            curve = visualizePath([pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1], smoothing, material = material)
+                            distance = calculatePathLength(curve) + first_item_distance
+                            path_lengthes.append(distance)
+    
+    if print_statistics:
+        path_lengthes = numpy.array(path_lengthes)
+        delay = layers[0].particle_systems[neuronset1].settings.get('delay', 1.0)
+        print("Using a delay modifier of ", delay)
+        path_lengthes *= delay
+
+        average_path_length = numpy.mean(path_lengthes)
+        standard_deviation = numpy.std(path_lengthes)
+        print("Average connection length:", average_path_length)
+        print("Standard deviation:       ", standard_deviation)
+        print("Maximum connection length:", numpy.amax(path_lengthes))
+        print("Minimum connection length:", numpy.amin(path_lengthes))
 
     if not first_item:
         return [pre_p3d[-1]] + pre_path + post_path[::-1] + post_p3d[::-1]
@@ -293,7 +353,7 @@ def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0):
         return []
 
 
-def visualizeOneConnection(no_connection, pre_index, post_index):
+def visualizeOneConnection(no_connection, pre_index, post_index, smoothing=0):
     """ Visualizes all connections between a given pre-synaptic and a given post-synaptic
     no_connection       : connection/mapping-id
     pre_index           : index of pre-synaptic neuron
@@ -314,6 +374,8 @@ def visualizeOneConnection(no_connection, pre_index, post_index):
         model.CONNECTION_RESULTS[no_connection]['c'][pre_index] == post_index
     )[0][0]
 
+    material = bpy.data.materials.get(bpy.context.scene.pam_visualize.connection_material, None)
+
     # path of the presynaptic neuron to the synaptic layer
     pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer + 1)],
                                                  connections[0:slayer],
@@ -325,7 +387,7 @@ def visualizeOneConnection(no_connection, pre_index, post_index):
                                                     distances[:(slayer - 1):-1],
                                                     layers[-1].particle_systems[neuronset2].particles[post_index].location)
     if synapses is None:
-        return visualizePath(pre_p3d + post_p3d[::-1])
+        return visualizePath(pre_p3d + post_p3d[::-1], smoothing, material = material)
     else:
         distances_pre, pre_path = pam.computeDistanceToSynapse(
             layers[slayer - 1], layers[slayer], pre_p3d[-1], synapses[post_list_index], distances[slayer - 1])
@@ -333,7 +395,7 @@ def visualizeOneConnection(no_connection, pre_index, post_index):
             distances_post, post_path = pam.computeDistanceToSynapse(
                 layers[slayer + 1], layers[slayer], post_p3d[-1], synapses[post_list_index], distances[slayer])
             if distances_post >= 0:
-                return visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1])
+                return visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1], smoothing, material = material)
 
 
 def visualizeNeuronSpread(connections, neuron):
@@ -448,6 +510,8 @@ def colorize_vertices(obj, v, interval=[]):
                      based on v
 
     """
+    
+    
     colors = getColors(colormaps.standard, v, interval, alpha=False)
     color_vertices(obj, colors)
 
@@ -508,3 +572,24 @@ def computeAxonLengths(no_connection, pre_index, visualize=False):
                 if visualize:
                     visualizePath(pre_p3d + pre_path)
     return result
+
+
+def hideAllLayers():
+    """ Hide all layers involved in all mappings. If a layer occurs multiple times
+    it is also called here multiple times """
+    for m in model.CONNECTIONS:
+        for layer in m[0]:
+            layer.hide = True
+            
+def showMappingLayers(index):
+    """ shows for a given mapping all layers involved in but hides everything else """
+    hideAllLayers()
+    for layer in model.CONNECTIONS[index][0]:
+        layer.hide = False
+        
+def showPrePostLayers():
+    """ shows for all mappings all the pre- and post-layers and hides everything else """
+    hideAllLayers()
+    for m in model.CONNECTIONS:
+        m[0][0].hide = False
+        m[0][-1].hide = False

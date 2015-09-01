@@ -24,6 +24,8 @@ class MaterialProperty(bpy.types.PropertyGroup):
         default = 'NONE'
     )
 
+    pathMaterial = bpy.props.StringProperty(name="Path material", description = "Material applied to paths. Leave blank for no material.")
+
     mixColors = bpy.props.BoolProperty(name = "Mix colors", default = True)
 
     maskObject = bpy.props.StringProperty(name = "Mask")

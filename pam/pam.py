@@ -127,7 +127,6 @@ def computeUVScalingFactor(obj):
 def checkPointOnLine(p,a1,a2):
     """Checks if a point p is on the line between the points a1 and a2
     returns the qualitative distance of the point from the line, 0 if the point is on the line with tolerance
-
     """
     EPSILON = 0.0001     #tolerance value for being able to work with floats
     d1 = p-a1
@@ -209,6 +208,7 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
         return p_uv_2d
 
     p_uv_2d_new = p_uv_new.to_2d()
+    
     delta1 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[2].uv)
     delta2 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[3].uv)
     delta3 = checkPointOnLine(p_uv_2d_new,uvs[2].uv,uvs[3].uv)
@@ -472,18 +472,18 @@ def computeDistance_PreToSynapse(no_connection, pre_index, synapses=[]):
             uv_distances = []
             # if synapses is empty, simply calculate it for all synapses
             if not synapses:
-                synapses = model.CONNECTION_RESULTS[no_connection]['s'][pre_index]
+                s2ds = model.CONNECTION_RESULTS[no_connection]['s'][pre_index]
+            else:
+                s2ds = [model.CONNECTION_RESULTS[no_connection]['s'][pre_index][s] for s in synapses]
                 
-            for synapse in synapses:
+            for s2d in s2ds:
                 #try:
-                s2d = model.CONNECTION_RESULTS[no_connection]['s'][pre_index][synapse]
-                try:
-                    uv_distance, _ = computeDistanceToSynapse(layers[slayer], layers[slayer], pre_p3d[-1], s2d, distances[slayer])
-                    uv_distances.append(uv_distance)
-                except exception.MapUVError as e:
-                    logger.info("Message-pre-data: ", e)
-                except Exception as e:
-                    logger.info("A general error occured: ", e)
+                uv_distance, _ = computeDistanceToSynapse(layers[slayer], layers[slayer], pre_p3d[-1], s2d, distances[slayer])
+                uv_distances.append(uv_distance)
+                #except exceptions.MapUVError as e:
+                #    logger.info("Message-pre-data: ", e)
+                #except Exception as e:
+                #    logger.info("A general error occured: ", e)
 
             path_length = compute_path_length(pre_p3d) + numpy.mean(uv_distances)
         else:
@@ -964,6 +964,11 @@ def addConnection(*args):
 
     # returns the future index of the connection
     return (len(model.CONNECTIONS) - 1)
+
+def replaceMapping(index, *args):
+    """ Replaces a mapping with a given index by the arguments *args
+    """
+    model.CONNECTIONS[index] = args
 
 # TODO(SK): ??? closing brackets are switched
 

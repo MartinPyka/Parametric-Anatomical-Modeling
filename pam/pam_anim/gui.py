@@ -41,6 +41,9 @@ class PamAnimMaterialPane(bpy.types.Panel):
             row = layout.row()
             row.prop_search(context.scene.pam_anim_material, "material", bpy.data, "materials")
 
+        row = layout.row()
+        row.prop_search(options, 'pathMaterial', bpy.data, 'materials')
+
 class PamAnimPathsPane(bpy.types.Panel):
     """A panel for choosing how to display paths"""
 
@@ -94,8 +97,6 @@ class PamAnimSpikesPane(bpy.types.Panel):
 
         options = bpy.context.scene.pam_anim_mesh
 
-        layout.active = options.animSpikes
-
         row = layout.row()
         row.prop_search(options, 'neuron_object', bpy.data, 'objects')
 
@@ -111,6 +112,9 @@ class PamAnimSpikesPane(bpy.types.Panel):
         row = layout.row()
         row.active = not options.spikeUseLayerColor
         row.prop(options, 'spikeColor')
+
+        row = layout.row()
+        row.operator("pam_anim.generate_spiking_texture")
 
 
 class PamAnimAnimPane(bpy.types.Panel):
@@ -191,7 +195,6 @@ class PamAnimLayerPane(bpy.types.Panel):
 
         row = layout.row()
         row.operator("pam_anim.recolor_spikes")
-
 
 class PamAnimGeneratePanel(bpy.types.Panel):
     """A panel for all operators for pam_anim"""

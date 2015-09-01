@@ -33,6 +33,7 @@ class PAMMappingToolsPanel(bpy.types.Panel):
     bl_label = "Mapping"
     bl_category = "PAM Mapping"
 
+
     def draw(self, context):
         active_obj = context.active_object
         m = context.scene.pam_mapping
@@ -135,6 +136,22 @@ class PAMMappingToolsPanel(bpy.types.Panel):
         col.operator("pam.mapping_compute_sel", icon="SCRIPTWIN", text="Compute selected mapping")
         col.prop(m, "seed")
 
+class PAMColorizePanel(bpy.types.Panel):
+    """A panel for colorizing layer distances"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "Distances"
+    bl_category = "PAM Mapping"
+
+    
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column(align=True)
+        col.operator("pam.mapping_color_layer", icon = "SCRIPTWIN", text = "Colorize")
+        col.operator("pam.mapping_distance_csv", text = "Export CSV")
+
 
 class PAMModelDataPanel(bpy.types.Panel):
     """A panel for loading and saving model data"""
@@ -170,6 +187,9 @@ class PAMToolsPanel(bpy.types.Panel):
             "smoothing",
             text="Smoothing"
         )
+        row.prop_search(context.scene.pam_visualize,
+            "connection_material",
+            bpy.data, "materials")
         row.operator(
             "pam_vis.visualize_connections_for_neuron",
             "Connections at Cursor"
@@ -198,6 +218,36 @@ class PAMToolsPanel(bpy.types.Panel):
         )
         row.operator("pam_vis.visualize_clean", "Clear Visualizations")
 
+class PAMTracingPanel(bpy.types.Panel):
+    """A tools panel for conducting virtual tracer studies"""
+
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "Tracing"
+    bl_category = "PAM Modeling"
+    
+    def draw(self, context):
+        layout = self.layout
+
+        row = layout.row()
+        row.prop(context.scene.pam_visualize, "inj_method", text="Injection method", expand=True)
+
+        row = layout.row()
+        row.prop(context.scene.pam_visualize, "radius", text="Injection radius")
+
+        row = layout.row()
+        row.prop_search(context.scene.pam_visualize, 'mesh', bpy.data, 'objects')
+        
+        row = layout.row()
+        row.prop(context.scene.pam_visualize, "set_color", text="Fix injection color")
+
+        if context.scene.pam_visualize.set_color:
+            row = layout.row()
+            row.prop(context.scene.pam_visualize, "inj_color", text="Injection color")
+
+        row = layout.row()
+        op = row.operator("pam_vis.tracing", text="Perform tracing")
 
 class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
     """A tools panel for visualization of kernel function """
@@ -251,7 +301,7 @@ class PAMVisualizeKernelToolsPanel(bpy.types.Panel):
         # row.template_preview(context.blend_data.textures.get("pam.temp_texture"))
 
         row = layout.row(align=True)
-        op = row.operator("pam.reset_params", text="Reset parameter")
+        op = row.operator("pam.reset_params", text="Reset parameters")
 
         layout.separator()
 

@@ -274,7 +274,6 @@ def simulateColors(decayFunc=anim_functions.decay,
 
     global TIMING_COLORS
     TIMING_COLORS = [[1.0, 1.0, 1.0]] * len(t)
-    print(len(TIMING_COLORS), len(t))
 
     for timingID, timing in enumerate(t):
         neuronID = timing[1]
@@ -317,7 +316,6 @@ def simulateColors(decayFunc=anim_functions.decay,
 
         color = applyColorFunc(layerValuesDecay, neuronID, neuronGroupID, model.NG_LIST)
         TIMING_COLORS[timingID] = color
-        print(timingID, color)
         anim_spikes.setNeuronColorKeyframe(neuronID, neuronGroupID, fireTime, color)
         for connectionID in connectionIDs:
             for index, i in enumerate(c[connectionID[0]]["c"][neuronID][:data.noAvailableConnections]):
@@ -329,7 +327,6 @@ def simulateColors(decayFunc=anim_functions.decay,
 
                 # Queue an update to the connected neuron
                 updateTime = fireTime + d[connectionID[0]][neuronID][index]
-                print(updateTime)
                 heapq.heappush(neuronUpdateQueue, (updateTime, connectionID[2], i, layerValuesDecay))
 
 def simulateColorsByMask():
@@ -758,7 +755,7 @@ class GenerateNeuronSpikingTexture(bpy.types.Operator):
     def execute(self, context):
         active_obj = bpy.context.active_object
         if active_obj.name not in model.NG_DICT:
-            print("Please select a pre- or post-synaptic layer, for which the spiking texture should be generated")
+            logger.info("Please select a pre- or post-synaptic layer, for which the spiking texture should be generated")
             return {'CANCELLED'}
         data.readSimulationData(bpy.context.scene.pam_anim_data.simulationData)
         layer_id = model.NG_DICT[active_obj.name][active_obj.particle_systems[0].name]

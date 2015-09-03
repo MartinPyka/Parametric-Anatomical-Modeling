@@ -47,7 +47,7 @@ def generateLayerNeurons(layer, particle_system, obj, object_color=[],
 
     # generates linked duplicates of this mesh
     for i, p in enumerate(particles):
-        name = 'n' + '_' + layer.name + '_' + particle_system + '_' + '%05d' % (i + 1)
+        name = 'n' + '_' + layer.name + '_' + particle_system + '_' + '%05d' % (i)
         dupli = bpy.data.objects.new(name, obj.data)
         bpy.context.scene.objects.link(dupli)
         dupli.location = p.location
@@ -86,7 +86,7 @@ def animNeuronSpiking(func):
     logger.info('Animate spiking data')
     for i, (neuronGroupID, neuronIDinGroup, fireTime) in enumerate(timings):
         logger.info(str(i) + "/" + str(no_timings))
-        layer_name = neuronGroups[neuronGroupID][0] + '_' + neuronGroups[neuronGroupID][1]
+        layer_name = neuronGroups[neuronGroupID][0] + '_' + neuronGroups[neuronGroupID][1] + '_%05d' % (neuronIDinGroup)
         frame = int(helper.projectTimeToFrames(fireTime))
         func(layer_name, neuronIDinGroup, frame)
 
@@ -136,7 +136,7 @@ def generateSpikingTexture(layer_id, fadeoutFrames, colors = None):
 def animNeuronScaling(layer_name, n_id, frame):
     """Animate neuron spiking for a given neuron defined by
     layer_name, neuron-id and a given frame"""
-    neuron = bpy.data.objects['n_' + layer_name + '_%05d' % (n_id + 1)]
+    neuron = bpy.data.objects['n_' + layer_name]
 
     # define the animation
     animSpikeScale = bpy.context.scene.pam_anim_mesh.spikeScale
@@ -152,18 +152,22 @@ def animNeuronScaling(layer_name, n_id, frame):
 
 def setNeuronColor(neuronID, neuronGroupID, color):
     layer_name = model.NG_LIST[neuronGroupID][0]
-    neuron_name = 'n_' + layer_name + '_%05d' % (neuronID + 1)
+    neuron_name = 'n_' + layer_name + '_%05d' % (neuronID)
     if neuron_name in bpy.data.objects:
         neuron = bpy.data.objects[neuron_name]
         neuron.color = color
 
-def setNeuronColorKeyframe(neuronID, neuronGroupID, frame, color):
+def setNeuronColorKeyframe(neuronID, neuronGroupID, fireTime, color):
     layer_name = model.NG_LIST[neuronGroupID][0]
-    neuron_name = 'n_' + layer_name + '_%05d' % (neuronID + 1)
+    neuron_name = 'n_' + layer_name + "_" + model.NG_LIST[neuronGroupID][1]+ '_%05d' % (neuronID)
     if neuron_name in bpy.data.objects:
+        frame = int(helper.projectTimeToFrames(fireTime))
         neuron = bpy.data.objects[neuron_name]
+        neuron.keyframe_insert(data_path = 'color', frame = frame - 1)
         neuron.color = color
         neuron.keyframe_insert(data_path = 'color', frame = frame)
+    else:
+        logger.info("No neuron spiking object found for " + neuron_name)
 
 # TODO(SK): Rephrase docstring, purpose?
 def deleteNeurons():

@@ -199,6 +199,7 @@ def simulateConnection(connectionID, sourceNeuronID, targetNeuronIndex, timingID
     :attribute int timingID: The ID (line in the timing file) of the timing that has fired
 
     """
+    global SPIKE_OBJECTS
     targetNeuronID = model.CONNECTION_RESULTS[connectionID]['c'][sourceNeuronID][targetNeuronIndex]
     curveKey = (connectionID, sourceNeuronID, targetNeuronID)
     if curveKey in CURVES:
@@ -286,8 +287,8 @@ def simulateColors(decayFunc=anim_functions.decay,
         poppedValues = getQueueValues(neuronUpdateQueue, fireTime)
         for elem in poppedValues:
             updateTime = elem[0]
-            key = elem[1]
-            newLayerValues = elem[2]
+            key = (elem[1], elem[2])
+            newLayerValues = elem[3]
 
             # If the key already has values, we have to calculate the decay of the values and then mix them with the incoming values
             if key in neuronValues:
@@ -302,20 +303,22 @@ def simulateColors(decayFunc=anim_functions.decay,
             else:
                 neuronValues[key] = (newLayerValues, updateTime)
 
-        if neuronID in neuronValues:
+        if (neuronGroupID, neuronID) in neuronValues:
             # Update this neuron
-            layerValues = neuronValues[neuronID][0]
-            lastUpdateTime = neuronValues[neuronID][1]
+            layerValues = neuronValues[(neuronGroupID, neuronID)][0]
+            lastUpdateTime = neuronValues[(neuronGroupID, neuronID)][1]
             layerValuesDecay = calculateDecay(layerValues, fireTime - lastUpdateTime, decayFunc)
 
             # Now that the neuron has fired, its values go back down to zero
-            del(neuronValues[neuronID])
+            del(neuronValues[(neuronGroupID, neuronID)])
 
         else:
             layerValuesDecay = initialColorValuesFunc(neuronGroupID, neuronID, model.NG_LIST)
 
         color = applyColorFunc(layerValuesDecay, neuronID, neuronGroupID, model.NG_LIST)
         TIMING_COLORS[timingID] = color
+        print(timingID, color)
+        anim_spikes.setNeuronColorKeyframe(neuronID, neuronGroupID, fireTime, color)
         for connectionID in connectionIDs:
             for index, i in enumerate(c[connectionID[0]]["c"][neuronID][:data.noAvailableConnections]):
                 if i == -1:
@@ -323,11 +326,11 @@ def simulateColors(decayFunc=anim_functions.decay,
                 obj = SPIKE_OBJECTS[((connectionID[0], neuronID, i), timingID)]
                 if obj.object:
                     obj.object.color = color
-                anim_spikes.setNeuronColorKeyframe(neuronID, neuronGroupID, fireTime, color)
 
                 # Queue an update to the connected neuron
                 updateTime = fireTime + d[connectionID[0]][neuronID][index]
-                heapq.heappush(neuronUpdateQueue, (updateTime, i, layerValuesDecay))
+                print(updateTime)
+                heapq.heappush(neuronUpdateQueue, (updateTime, connectionID[2], i, layerValuesDecay))
 
 def simulateColorsByMask():
     """Paints all spikes originating from a neuron inside of a mask in a different color

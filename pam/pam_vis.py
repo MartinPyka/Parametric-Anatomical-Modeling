@@ -390,10 +390,10 @@ def visualizeOneConnection(no_connection, pre_index, post_index, smoothing=0):
         return visualizePath(pre_p3d + post_p3d[::-1], smoothing, material = material)
     else:
         distances_pre, pre_path = pam.computeDistanceToSynapse(
-            layers[slayer - 1], layers[slayer], pre_p3d[-1], synapses[post_list_index], distances[slayer - 1])
+            layers[slayer - 1], layers[slayer], pre_p3d[-1], mathutils.Vector(synapses[post_list_index]), distances[slayer - 1])
         if distances_pre >= 0:
             distances_post, post_path = pam.computeDistanceToSynapse(
-                layers[slayer + 1], layers[slayer], post_p3d[-1], synapses[post_list_index], distances[slayer])
+                layers[slayer + 1], layers[slayer], post_p3d[-1], mathutils.Vector(synapses[post_list_index]), distances[slayer])
             if distances_post >= 0:
                 return visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1], smoothing, material = material)
 

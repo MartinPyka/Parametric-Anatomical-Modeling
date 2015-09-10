@@ -26,6 +26,8 @@ class MeshProperty(bpy.types.PropertyGroup):
     )
     orientationObject = bpy.props.StringProperty(name="Orientation object")
 
+    path_bevel_resolution = bpy.props.IntProperty(name = "Path resolution", min = 0, default = 8)
+
 def register():
     """Registers the mesh properties"""
     bpy.utils.register_class(MeshProperty)

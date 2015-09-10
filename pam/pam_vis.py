@@ -138,7 +138,7 @@ def visualizePoint(point, obj=None):
     vis_objects = vis_objects + 1
 
 
-def visualizePath(pointlist, smoothing=0, material=None):
+def visualizePath(pointlist, smoothing=0, material=None, bevel_resolution = 0):
     """Create path for a given point list
 
     :param list pointlist: 3d-vectors that are converted to a path
@@ -160,8 +160,8 @@ def visualizePath(pointlist, smoothing=0, material=None):
     bpy.context.scene.objects.link(curve)
 
     # render ready curve
-    tracer.resolution_u = 8
-    tracer.bevel_resolution = 8  # Set bevel resolution from Panel options
+    tracer.resolution_u = 1
+    tracer.bevel_resolution = bevel_resolution  # Set bevel resolution from Panel options
     tracer.fill_mode = 'FULL'
     tracer.bevel_depth = 0.005  # Set bevel depth from Panel options
 

@@ -19,6 +19,38 @@ class PamAnimDataPane(bpy.types.Panel):
         row = layout.column()
         row.prop(context.scene.pam_anim_data, "simulationData")
 
+class PamAnimAnimPane(bpy.types.Panel):
+    """A panel for selecting the frames and speed"""
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_context = "objectmode"
+    bl_label = "Animation"
+    bl_category = "PAM Animate"
+
+    def draw(self, context):
+        layout = self.layout
+
+        options = bpy.context.scene.pam_anim_animation
+
+        row = layout.row()
+        col = row.column()
+        sub = col.column(align=True)
+        sub.label(text="Frames:")
+        sub.prop(options, "startFrame")
+        sub.prop(options, "endFrame")
+
+        row = layout.row()
+        col = row.column()
+        sub = col.column(align=True)
+        sub.label(text="Time:")
+        sub.prop(options, "startTime")
+        sub.prop(options, "endTime")
+
+        row = layout.row()
+        row.prop(options, "connNumber")
+
+        row = layout.row()
+        row.prop(options, "showPercent")
 
 class PamAnimMaterialPane(bpy.types.Panel):
     """A panel for choosing materials"""
@@ -69,6 +101,9 @@ class PamAnimPathsPane(bpy.types.Panel):
         row.prop_search(options, 'mesh', bpy.data, 'objects')
 
         row = layout.row()
+        row.prop(options, 'path_bevel_resolution')
+
+        row = layout.row()
         row.label("Orientation:")
 
         row = layout.row()
@@ -115,41 +150,6 @@ class PamAnimSpikesPane(bpy.types.Panel):
 
         row = layout.row()
         row.operator("pam_anim.generate_spiking_texture")
-
-
-class PamAnimAnimPane(bpy.types.Panel):
-    """A panel for selecting the frames and speed"""
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "TOOLS"
-    bl_context = "objectmode"
-    bl_label = "Animation"
-    bl_category = "PAM Animate"
-
-    def draw(self, context):
-        layout = self.layout
-
-        options = bpy.context.scene.pam_anim_animation
-
-        row = layout.row()
-        col = row.column()
-        sub = col.column(align=True)
-        sub.label(text="Frames:")
-        sub.prop(options, "startFrame")
-        sub.prop(options, "endFrame")
-
-        row = layout.row()
-        col = row.column()
-        sub = col.column(align=True)
-        sub.label(text="Time:")
-        sub.prop(options, "startTime")
-        sub.prop(options, "endTime")
-
-        row = layout.row()
-        row.prop(options, "connNumber")
-
-        row = layout.row()
-        row.prop(options, "showPercent")
-
 
 class PamAnimLayerPane(bpy.types.Panel):
     """A panel for choosing layer colors"""

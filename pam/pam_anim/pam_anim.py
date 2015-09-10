@@ -53,14 +53,16 @@ class ConnectionCurve:
         This function calls visualizeOneConnection with it's IDs and saves the generated object in curveObject
         """
         try:
-            self.curveObject = pam_vis.visualizeOneConnection(self.connectionID, self.sourceNeuronID, self.targetNeuronID, bpy.context.scene.pam_visualize.smoothing)
+            self.curveObject = pam_vis.visualizeOneConnection(self.connectionID, self.sourceNeuronID, self.targetNeuronID, 
+                bpy.context.scene.pam_visualize.smoothing)
+            self.curveObject.resolution_u = bpy.context.scene.pam_anim_mesh.path_bevel_resolution
             frameLength = timeToFrames(self.timeLength)
 
             setAnimationSpeed(self.curveObject.data, frameLength)
             self.curveObject.data["timeLength"] = frameLength
-        except:
+        except Exception as e:
+            logger.error(e)
             logger.error("Failed to visualize connection " + str((self.connectionID, self.sourceNeuronID, self.targetNeuronID)))
-
 
 
 class SpikeObject:

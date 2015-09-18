@@ -46,7 +46,7 @@ def map_via_uv(origin, target):
     origin          : mesh to map
     target          : mesh-form that is targeted
     """
-
+    
     if not origin.type == "MESH":
         raise Exception("Origin object is not a mesh")
 
@@ -64,7 +64,7 @@ def map_via_uv(origin, target):
 
     if len(t_3d) != len(o_2d):
         raise Exception(
-            "One of the points is not in the UV-grid of the target object"
+            "One of the points is not in the UV-grid of the target object: " + str(len(t_3d)) + '/' + str(len(o_2d))
         )
 
     for i in range(len(t_3d)):

@@ -923,6 +923,8 @@ class PAMMappingColorizeLayer(bpy.types.Operator):
         distances_post = []
         post_indices = CL.getParticleIndicesForVertices(post, 0)
         
+        valid_post_indices = []  # list of post indices with valid distance values
+        
         for i, p in enumerate(post.particle_systems[0].particles):
             pre_neurons, synapses = model.getPreIndicesOfPostIndex(mapping_id, i)
             distance = []
@@ -934,6 +936,7 @@ class PAMMappingColorizeLayer(bpy.types.Operator):
                 distances_post.append(0)
             else:
                 distances_post.append(mean)
+                valid_post_indices.append(i)
         
         for i, p_ind in enumerate(post_indices):
             if distances_post[p_ind] == 0:
@@ -942,9 +945,10 @@ class PAMMappingColorizeLayer(bpy.types.Operator):
         print(distances_post)
         print(type(distances_pre))
         print(type(distances_post))
-        mean_d = np.mean(list(distances_pre) + distances_post)
-        min_percent = np.min(list(distances_pre) + distances_post) / mean_d
-        max_percent = np.max(list(distances_pre) + distances_post) / mean_d
+        distances_post_valid = list(np.take(distances_post, valid_post_indices))
+        mean_d = np.mean(list(distances_pre) + distances_post_valid)
+        min_percent = np.min(list(distances_pre) + distances_post_valid) / mean_d
+        max_percent = np.max(list(distances_pre) + distances_post_valid) / mean_d
         distances_pre = distances_pre / mean_d
         distances_post = np.array(distances_post) / mean_d    
         

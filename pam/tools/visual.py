@@ -263,9 +263,10 @@ class PamVisualizeAllConnections(bpy.types.Operator):
 
     def execute(self, context):
         connections = context.scene.pam_visualize.connections
+        smoothing = context.scene.pam_visualize.smoothing
         for j in range(0, model.CONNECTION_COUNTER):
             for i in range(0, connections):
-                pam_vis.visualizeConnectionsForNeuron(j, i)
+                pam_vis.visualizeConnectionsForNeuron(j, i, smoothing)
 
         return {'FINISHED'}
 
@@ -313,6 +314,8 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
         ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
         p_index = pam.map3dPointToParticle(object, 0, cursor)
         print('Neuron Number: ' + str(p_index))
+        
+        pam_vis.visualizePoint(object.particle_systems[0].particles[p_index].location)
 
         smoothing = context.scene.pam_visualize.smoothing
         for ci in model.CONNECTION_INDICES:
@@ -321,6 +324,7 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
                 # visualize the connections
                 pam_vis.visualizeConnectionsForNeuron(ci[0], p_index, smoothing, True)
 
+        object.select = True
         bpy.context.scene.objects.active = object
         return {'FINISHED'}
 

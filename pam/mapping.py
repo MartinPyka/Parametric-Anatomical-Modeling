@@ -13,6 +13,7 @@ import numpy as np
 from . import kernel
 from . import model
 from . import pam
+from . import debug
 
 from pam import pam_vis as pv
 from pam.tools import colorizeLayer as CL
@@ -879,6 +880,16 @@ class PAMMappingUpdate(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class PAMMappingDebug(bpy.types.Operator):
+    """"""
+    bl_idname = "pam.mapping_debug"
+    bl_label = "Debug Mapping"
+    bl_description = "Checks where unconnected neurons failed"
+
+    def execute(self, context):
+        debug.debugMapping(context.scene.pam_mapping.active_set)
+
+        return {'FINISHED'}
 
 class PAMMappingSaveDistances(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     """Exports pre and post distances as CSV file"""
@@ -967,6 +978,7 @@ def register():
     bpy.utils.register_class(PAMMap)
     bpy.utils.register_class(PAMMappingColorizeLayer)
     bpy.utils.register_class(PAMMappingSaveDistances)
+    bpy.utils.register_class(PAMMappingDebug)
     bpy.types.Scene.pam_mapping = bpy.props.PointerProperty(
         type=PAMMap
     )

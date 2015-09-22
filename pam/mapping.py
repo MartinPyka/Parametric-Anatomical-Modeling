@@ -887,7 +887,8 @@ class PAMMappingDebug(bpy.types.Operator):
     bl_description = "Checks where unconnected neurons failed"
 
     def execute(self, context):
-        debug.debugMapping(context.scene.pam_mapping.active_set)
+        debug.debugPreMapping(context.scene.pam_mapping.active_set)
+        debug.debugPostMapping(context.scene.pam_mapping.active_set)
 
         return {'FINISHED'}
 

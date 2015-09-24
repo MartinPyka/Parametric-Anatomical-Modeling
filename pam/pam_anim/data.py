@@ -69,6 +69,9 @@ def readSimulationData(simulationFile):
             else:
                 break
 
+    # Sort by fire time
+    TIMINGS.sort(key = lambda x: x[2])
+
     global DELAYS
     DELAYS = []
     try:

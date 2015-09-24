@@ -55,7 +55,7 @@ class ConnectionCurve:
         try:
             self.curveObject = pam_vis.visualizeOneConnection(self.connectionID, self.sourceNeuronID, self.targetNeuronID, 
                 bpy.context.scene.pam_visualize.smoothing)
-            self.curveObject.resolution_u = bpy.context.scene.pam_anim_mesh.path_bevel_resolution
+            self.curveObject.data.resolution_u = bpy.context.scene.pam_anim_mesh.path_bevel_resolution
             frameLength = timeToFrames(self.timeLength)
 
             setAnimationSpeed(self.curveObject.data, frameLength)

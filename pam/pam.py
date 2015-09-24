@@ -1298,7 +1298,7 @@ def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connecti
         threads = os.cpu_count()
     logger.info("Using " + str(threads) + " threads")
 
-    directory = "/tmp/pam/"
+    directory = bpy.path.abspath(bpy.context.user_preferences.addons['pam'].preferences.offload_directory)
     if not os.path.exists(directory):
         os.makedirs(directory)
 

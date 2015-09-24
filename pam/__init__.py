@@ -74,6 +74,11 @@ class PAMPreferencesPane(bpy.types.AddonPreferences):
         default = 0,
         min = 0
     )
+    offload_directory = bpy.props.StringProperty(
+        name = "Memory offload directory",
+        default = "/tmp/pam/",
+        subtype="DIR_PATH"
+    )
 
     def draw(self, context):
         layout = self.layout
@@ -81,6 +86,7 @@ class PAMPreferencesPane(bpy.types.AddonPreferences):
         col.prop(self, "use_threading")
         row = col.row()
         row.prop(self, "threads")
+        row.prop(self, "offload_directory")
         row.enabled = self.use_threading
         col.label(text="Logging:")
         col.prop(self, "log_directory", text="Directory")

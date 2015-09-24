@@ -66,8 +66,6 @@ def readSimulationData(simulationFile):
             # only load data up to the prespecified time point
             if (float(row[2]) < bpy.context.scene.pam_anim_animation.endTime):
                 TIMINGS.append((int(row[0]), int(row[1]), float(row[2])))
-            else:
-                break
 
     # Sort by fire time
     TIMINGS.sort(key = lambda x: x[2])

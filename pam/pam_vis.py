@@ -9,6 +9,7 @@ import mathutils
 from . import pam
 from . import model
 from . import colormaps
+from . import constants
 
 logger = logging.getLogger(__package__)
 
@@ -163,7 +164,7 @@ def visualizePath(pointlist, smoothing=0, material=None, bevel_resolution = 0):
     tracer.resolution_u = 1
     tracer.bevel_resolution = bevel_resolution  # Set bevel resolution from Panel options
     tracer.fill_mode = 'FULL'
-    tracer.bevel_depth = 0.005  # Set bevel depth from Panel options
+    tracer.bevel_depth = constants.PATH_BEVEL_DEPTH # Set bevel depth from Panel options
 
     # move nodes to objects
     for i in range(0, len(pointlist)):
@@ -262,7 +263,7 @@ def visualizeBackwardMapping(no_connection, post_index):
                                                         layers[-1].particle_systems[neuronset2].particles[post_index].location)
         logger.debug(s)
         logger.debug(post_p3d)
-        visualizePath(post_p3d, material)
+        visualizePath(post_p3d, material = material)
 
 
 def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0, print_statistics = False):

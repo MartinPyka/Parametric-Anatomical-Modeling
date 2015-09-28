@@ -55,10 +55,11 @@ def debugPreNeuron(no_connection, pre_index):
             layers[0].particle_systems[neuronset1].particles[pre_index].location,
             debug=True
         )
-        logger.info("Layer: " + str(s))
+        logger.info("Layer: " + layers[s-1].name)
         logger.info("   pre_p3d: " + str(pre_p3d))
         logger.info("   pre_p2d: " + str(pre_p2d))
         logger.info("   pre_d: " + str(pre_d))
+    logger.info("==========================")
 
 def debugPostMapping(no_connection):
     layers = model.CONNECTIONS[no_connection][0]
@@ -105,3 +106,4 @@ def debugPostNeuron(no_connection, post_index):
         logger.info("   post_p3d: " + str(post_p3d))
         logger.info("   post_p2d: " + str(post_p2d))
         logger.info("   post_d: " + str(post_d))
+    logger.info("==========================")

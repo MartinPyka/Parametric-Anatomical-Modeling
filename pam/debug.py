@@ -59,6 +59,8 @@ def debugPreNeuron(no_connection, pre_index):
         logger.info("   pre_p3d: " + str(pre_p3d))
         logger.info("   pre_p2d: " + str(pre_p2d))
         logger.info("   pre_d: " + str(pre_d))
+        if pre_d is None:
+            break
     logger.info("==========================")
 
 def debugPostMapping(no_connection):
@@ -106,4 +108,6 @@ def debugPostNeuron(no_connection, post_index):
         logger.info("   post_p3d: " + str(post_p3d))
         logger.info("   post_p2d: " + str(post_p2d))
         logger.info("   post_d: " + str(post_d))
+        if post_d is None:
+            break
     logger.info("==========================")

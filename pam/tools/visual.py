@@ -367,14 +367,14 @@ class PamVisualizeTracing(bpy.types.Operator):
             obj = bpy.data.objects[pv.mesh]
         if pv.inj_method == "ANTEROGRADE":
             if pv.set_color:
-                tracing.anterograde_tracing(location=cursor, radius=pv.radius, inj_color=pv.inj_color, dupli_obj=obj)
+                tracing.anterograde_tracing(location=cursor, radius=pv.radius, inj_color=pv.inj_color, dupli_obj=obj, draw_paths=pv.draw_paths)
             else:
-                tracing.anterograde_tracing(location=cursor, radius=pv.radius, dupli_obj=obj)
+                tracing.anterograde_tracing(location=cursor, radius=pv.radius, dupli_obj=obj, draw_paths=pv.draw_paths)
         else:
             if pv.set_color:
-                tracing.retrograde_tracing(location=cursor, radius=pv.radius, inj_color=pv.inj_color, dupli_obj=obj)
+                tracing.retrograde_tracing(location=cursor, radius=pv.radius, inj_color=pv.inj_color, dupli_obj=obj, draw_paths=pv.draw_paths)
             else:
-                tracing.retrograde_tracing(location=cursor, radius=pv.radius, dupli_obj=obj)
+                tracing.retrograde_tracing(location=cursor, radius=pv.radius, dupli_obj=obj, draw_paths=pv.draw_paths)
         return {'FINISHED'}
 
 # TODO(SK): missing docstring
@@ -502,6 +502,11 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
     set_color = bpy.props.BoolProperty(
         name="Fix color for injection",
         description="Check to color the injection site neurons in a color different from the object color",
+        default=False
+    )
+    draw_paths = bpy.props.BoolProperty(
+        name="Draw connection paths",
+        description="Check to draw connection paths between labelled neurons",
         default=False
     )
     inj_color = bpy.props.FloatVectorProperty(

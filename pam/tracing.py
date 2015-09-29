@@ -6,10 +6,17 @@ from . import pam
 from . import pam_vis
 from . import model
 
+from enum import Enum
+
 MAX_FACTOR = 5
 MAX_STEP_SIZE = 1
 
 logger = logging.getLogger(__package__)
+
+class PATH_OPT(Enum):
+    no_path = 0
+    ant_path = 1 #anterograde path drawing
+    ret_path = 2 #retrograde path drawing
 
 def getNeuralObjects():
     '''returns all objects that are used in PAM connections and have a particle system
@@ -76,7 +83,7 @@ def visualizeNeuronsColor(neural_objects, inj_neurons, inj_color=None, dupli_obj
             obj.active_material = mat
             obj.color = obj_col
 
-def visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj=None, different_neurons=None, different_color=None):
+def visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj=None, different_neurons=None, different_color=None, path=PATH_OPT.no_path):
     '''Visualizes neurons from a hit count list containing a neuron list for each object.
        Each neuron list contains the number of connections for each neuron
        The larger the connection number the bigger the drawn sphere
@@ -124,9 +131,19 @@ def visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj=None, dif
                 mat = bpy.data.materials['color_mat']
                 obj.active_material = mat
                 obj.color = obj_col
+                
+                #draw paths
+                if (path and not path=PATH_OPT.no_path):
+                    if path = PATH_OPT.ant_path:
+                        #anterograde path drawing
+                        
+                    else:
+                        #retrograde path drawing#
+                        
+                
 
 
-def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None):
+def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_paths=False):
     '''performs anterograde tracing at injection site with defined [radius] around given [location]
 '''
     neural_objects = getNeuralObjects()
@@ -183,9 +200,14 @@ def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None):
     #VISUALIZE LABELLED NEURONS
     logger.info("Visualizing neurons")
     
-    visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj, different_neurons=inj_neurons, different_color=inj_color)
+    if draw_paths:
+        paths = PATH_OPT.ant_path
+    else:
+        paths = PATH_OPT.no_path
+    
+    visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj, different_neurons=inj_neurons, different_color=inj_color, path = paths)
 
-def retrograde_tracing(location, radius, inj_color=None, dupli_obj=None):
+def retrograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_paths=False):
     '''performs retrograde tracing at injection site with defined [radius] around given [location]
 '''
     neural_objects = getNeuralObjects()
@@ -242,4 +264,9 @@ def retrograde_tracing(location, radius, inj_color=None, dupli_obj=None):
     #VISUALIZE LABELLED NEURONS
     logger.info("Visualizing neurons")
     
-    visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj, different_neurons=inj_neurons, different_color=inj_color)
+    if draw_paths:
+        paths = PATH_OPT.ret_path
+    else:
+        paths = PATH_OPT.no_path
+    
+    visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj, different_neurons=inj_neurons, different_color=inj_color, path = paths)

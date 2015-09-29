@@ -12,6 +12,7 @@ from .. import model
 from .. import pam
 from .. import pam_vis
 from .. import tracing
+from .. import constants
 from ..utils import colors
 from ..utils import p
 
@@ -547,3 +548,5 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
     v = bpy.props.FloatProperty()
 
     connection_material = bpy.props.StringProperty(name="Material")
+
+    bevel_depth = bpy.props.FloatProperty(name = "Curve Bevel Depth", min = 0.0, default = constants.PATH_BEVEL_DEPTH)

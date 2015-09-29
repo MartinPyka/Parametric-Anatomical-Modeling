@@ -164,7 +164,7 @@ def visualizePath(pointlist, smoothing=0, material=None, bevel_resolution = 0):
     tracer.resolution_u = 1
     tracer.bevel_resolution = bevel_resolution  # Set bevel resolution from Panel options
     tracer.fill_mode = 'FULL'
-    tracer.bevel_depth = constants.PATH_BEVEL_DEPTH # Set bevel depth from Panel options
+    tracer.bevel_depth = bpy.context.scene.pam_visualize.bevel_depth # Set bevel depth from Panel options
 
     # move nodes to objects
     for i in range(0, len(pointlist)):

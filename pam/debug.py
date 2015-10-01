@@ -8,6 +8,10 @@ import logging
 logger = logging.getLogger(__package__)
 
 def getUniqueUVMapErrors():
+    """Returns a list of unique connection errors that occur during uv-mapping phase.
+
+    :return: list of failed UV-Mappings
+    :rtype: list of exceptions.UVMapError"""
     errors = {}
     for err in model.CONNECTION_ERRORS:
         if str(err) not in errors:
@@ -15,6 +19,13 @@ def getUniqueUVMapErrors():
     return list(errors.values())
 
 def showErrorOnUVMap(err):
+    """Displays an UVMapping error in an Image panel
+
+    The specified UV Mapping error is displayed in an Image panel and the 2D cursor 
+    position is set to the position of the mapping error
+
+    :param err: The Mapping error to be displayed
+    :type err: exceptions.UVMapError"""
     bpy.context.scene.objects.active = err.layer
     err.layer.select = True
     bpy.ops.object.mode_set()
@@ -28,6 +39,12 @@ def showErrorOnUVMap(err):
     print("Displaying error " + str(err))
 
 def debugPreMapping(no_connection):
+    """Debugs a specified pre-mapping for unconnected neurons
+
+    Checks all pre-neurons of a connection that do not connect to a different neuron
+    using the debug mode of pam.computeMapping()
+    :param no_connection: The connection index of the mapping
+    :type no_connection: int"""
     rows, cols = numpy.where(model.CONNECTION_RESULTS[no_connection]['c'] == -1)
     neuronIDs = numpy.unique(rows)
     logger.info("Checking pre mapping " + str(model.CONNECTIONS[no_connection][0][0].name) + " -> " + str(model.CONNECTIONS[no_connection][0][-1].name))
@@ -40,6 +57,15 @@ def debugPreMapping(no_connection):
         logger.info("No unconnected neurons")
 
 def debugPreNeuron(no_connection, pre_index):
+    """Debugs a single neuron on the pre layer of a single mapping
+
+    Tries to map the neuron step by step up to the synapse layer, stopping as soon as it fails to connect.
+    Prints information about every step while doing so.
+
+    :param no_connection: The connection index of the mapping
+    :type no_connection: int
+    :param pre_index: The pre-index of the neuron
+    :type pre_index: int"""
     layers = model.CONNECTIONS[no_connection][0]
     neuronset1 = model.CONNECTIONS[no_connection][1]
     neuronset2 = model.CONNECTIONS[no_connection][2]
@@ -64,6 +90,12 @@ def debugPreNeuron(no_connection, pre_index):
     logger.info("==========================")
 
 def debugPostMapping(no_connection):
+    """Debugs a specified post-mapping for unconnected neurons
+
+    Checks all post-neurons of a connection that do not connect to a different neuron
+    using the debug mode of pam.computeMapping()
+    :param no_connection: The connection index of the mapping
+    :type no_connection: int"""
     layers = model.CONNECTIONS[no_connection][0]
     neuronset1 = model.CONNECTIONS[no_connection][1]
     neuronset2 = model.CONNECTIONS[no_connection][2]
@@ -92,6 +124,15 @@ def debugPostMapping(no_connection):
         debugPostNeuron(no_connection, neuronID)
 
 def debugPostNeuron(no_connection, post_index):
+    """Debugs a single neuron on the post layer of a single mapping
+
+    Tries to map the neuron step by step up to the synapse layer, stopping as soon as it fails to connect.
+    Prints information about every step while doing so.
+
+    :param no_connection: The connection index of the mapping
+    :type no_connection: int
+    :param post_index: The post-index of the neuron
+    :type post_index: int"""
     layers = model.CONNECTIONS[no_connection][0]
     neuronset1 = model.CONNECTIONS[no_connection][1]
     neuronset2 = model.CONNECTIONS[no_connection][2]

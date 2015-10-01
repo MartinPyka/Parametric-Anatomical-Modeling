@@ -35,9 +35,12 @@ DIS_UVnormal = 5
 
 SEED = 0
 
-# TODO(SK): Missing docstring
 def computePoint(v1, v2, v3, v4, x1, x2):
-    # computes an average point on the polygon depending on x1 and x2
+    """Interpolates point on a quad
+    :param v1, v2, v3, v4: Vertices of the quad
+    :type v1, v2, v3, v4: mathutils.Vector
+    :param x1, x2: The interpolation values
+    :type x1, x2: float [0..1]"""
     mv12_co = v1.co * x1 + v2.co * (1 - x1)
     mv34_co = v3.co * (1 - x1) + v4.co * x1
     mv_co = mv12_co * x2 + mv34_co * (1 - x2)
@@ -45,8 +48,11 @@ def computePoint(v1, v2, v3, v4, x1, x2):
     return mv_co
 
 
-# TODO(SK): Missing docstring
 def selectRandomPoint(obj):
+    """Selects a random point on the mesh of an object
+
+    :param obj: The object from which to select
+    :type obj: bpy.types.Object"""
     # select a random polygon
     p_select = random.random() * obj['area_sum']
     polygon = obj.data.polygons[
@@ -69,10 +75,14 @@ def checkPointInObject(obj, point):
 
     Uses a ray casting algorithm to count intersections
 
-    :param bpy.types.Object obj: The object whose geometry will be used to check
-    :param mathutils.Vector point: The point to be checked
+    :param obj: The object whose geometry will be used to check
+    :type obj: bpy.types.Object 
+    :param point: The point to be checked
+    :type point: mathutils.Vector (should be 3d)
 
-    :return bool: True if the point is inside of the geometry, False if outside"""
+    :return: True if the point is inside of the geometry, False if outside
+    :rtype: bool"""
+
     m = obj.data
     ray = mathutils.Vector((0.0,0.0,1.0))
 
@@ -151,14 +161,21 @@ def checkPointOnLine(p,a1,a2):
         return delta
     return 0
 
-# TODO(SK): Quads into triangles (indices)
-# TODO(SK): Rephrase docstring, add parameter/return values
 def map3dPointToUV(obj, obj_uv, point, normal=None):
     """Convert a given 3d-point into uv-coordinates,
     obj for the 3d point and obj_uv must have the same topology
     if normal is not None, the normal is used to detect the point on obj, otherwise
     the closest_point_on_mesh operation is used
 
+    :param obj: The source 3d-object on which to project the point before mapping
+    :type obj: bpy.types.Object
+    :param obj_uv: The object with the uv-map on which to project the point
+    :type obj_uv: bpy.types.Object
+    :param point: The 3d point which to project onto uv
+    :type point: mathutils.Vector (should be 3d)
+
+    :return: The transformed point in uv-space
+    :rtype: mathutils.Vector (2d)
     """
 
     if normal:
@@ -220,16 +237,31 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
         return p_uv_2d
     return p_uv_2d_new
 
-# TODO(SK): Quads into triangles (indices)
-# TODO(SK): Rephrase docstring, add parameter/return values
 def mapUVPointTo3d(obj_uv, uv_list, check_edges = False, cleanup=True):
-    """Convert a list of uv-points into 3d. This function is mostly
-    used by interpolateUVTrackIn3D. Note, that therefore, not all points
-    can and have to be converted to 3d points. The return list can therefore
-    have less points than the uv-list. This cleanup can be deactivated
-    by setting cleanup = False. Then, the return-list may contain
-    some [] elements.
+    """Convert a list of uv-points into 3d. 
+    This function is mostly used by interpolateUVTrackIn3D. Note, that 
+    therefore, not all points can and have to be converted to 3d points. 
+    The return list can therefore have less points than the uv-list. 
+    This cleanup can be deactivated by setting cleanup = False. Then, 
+    the return-list may contain some [] elements.
 
+    This function makes use of a quadtree cache managed in pam.model.
+
+    :param obj_uv: The object with the uv-map
+    :type obj_uv: bpy.types.Object
+    :param uv_list: The list of uv-coordinates to convert
+    :type uv_list: List of mathutils.Vector (Vectors should be 2d)
+    :param check_edges: If set to True, the edges of the mesh are 
+        specifically checked again to ensure accuracy when points 
+        are directly on the edge of a mesh. This slows the function 
+        down, so use with care.
+    :type check_edges: bool
+    :param cleanup: If set to False, unmapped uv-coordinates are 
+        removed from the return list
+    :type cleanup: bool
+
+    :return: List of converted 3d-points
+    :rtype: list of mathutils.Vector (Vectors are 3d) or []
     """
 
     uv_list_range_container = range(len(uv_list))
@@ -310,11 +342,23 @@ def mapUVPointTo3d(obj_uv, uv_list, check_edges = False, cleanup=True):
 
 # TODO(MP): triangle check could be made more efficient
 # TODO(MP): check the correct triangle order !!!
-# TODO(SK): Rephrase docstring, add parameter/return values
 def map3dPointTo3d(o1, o2, point, normal=None):
     """Map a 3d-point on a given object on another object. Both objects must have the
-    same topology
+    same topology. The closest point on the mesh of the first object is projected onto 
+    the mesh of the second object.
 
+    :param o1: The source object
+    :type o1: bpy.types.Object
+    :param o2: The target object
+    :type o2: bpy.types.Object
+    :param point: The point to transform
+    :type point: mathutils.Vector
+    :param normal: If a normal is given, the point on the target mesh is not determined 
+        by the closest point on the mesh, but by raycast along the normal
+    :type normal: mathutils.Vector
+
+    :return: The transformed point
+    :rtype: mathutils.Vector
     """
 
     # if normal is None, we don't worry about orthogonal projections
@@ -368,11 +412,19 @@ def map3dPointTo3d(o1, o2, point, normal=None):
     return p_new
 
 
-# TODO(SK): Rephrase docstring, add parameter/return values
 def map3dPointToParticle(obj, particle_system, location):
     """Determine based on a 3d-point location (e.g. given by the cursor
     position) the index of the closest particle on an object
 
+    :param obj: The object from which to choose
+    :type obj: bpy.types.Object
+    :param particle_system: The name of the particle system
+    :type particle_system: str
+    :param location: The 3d point
+    :type location: mathutils.Vector
+
+    :return: The index of the closest particle
+    :rtype: int
     """
 
     index = -1

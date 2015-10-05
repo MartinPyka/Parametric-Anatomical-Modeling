@@ -125,7 +125,7 @@ def visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj=None, dif
                 obj.active_material = mat
                 obj.color = obj_col
 
-def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_paths=False):
+def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_paths=False, smoothing=0):
     '''performs anterograde tracing at injection site with defined [radius] around given [location]
 '''
     neural_objects = getNeuralObjects()
@@ -185,7 +185,7 @@ def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_p
                             # if ng_index is the pre-synaptic layer in a certain mapping
                             if ci[1] == ng_index:
                                 # visualize the connections
-                                pam_vis.visualizeConnectionsForNeuron(ci[0], pre_number, smoothing=5)
+                                pam_vis.visualizeConnectionsForNeuron(ci[0], pre_number, smoothing)
     #print(hit_count_list)
                 
     #VISUALIZE LABELLED NEURONS
@@ -193,7 +193,7 @@ def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_p
     
     visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj, different_neurons=inj_neurons, different_color=inj_color)
 
-def retrograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_paths=False):
+def retrograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_paths=False, smoothing=0):
     '''performs retrograde tracing at injection site with defined [radius] around given [location]
 '''
     neural_objects = getNeuralObjects()
@@ -246,7 +246,7 @@ def retrograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_pa
                         hit_count_list[pre_obj_ind][pre_number] += hits     #add the number of connections to hit count list
                         #draw paths
                         if draw_paths:
-                            pam_vis.visualizeOneConnection(i_c, pre_number, inj_number)
+                            pam_vis.visualizeOneConnection(i_c, pre_number, inj_number, smoothing)
 
     #print(hit_count_list)
                 

@@ -367,14 +367,14 @@ class PamVisualizeTracing(bpy.types.Operator):
             obj = bpy.data.objects[pv.mesh]
         if pv.inj_method == "ANTEROGRADE":
             if pv.set_color:
-                tracing.anterograde_tracing(location=cursor, radius=pv.radius, inj_color=pv.inj_color, dupli_obj=obj, draw_paths=pv.draw_paths)
+                tracing.anterograde_tracing(location=cursor, radius=pv.radius, inj_color=pv.inj_color, dupli_obj=obj, draw_paths=pv.draw_paths, smoothing=pv.smoothing)
             else:
-                tracing.anterograde_tracing(location=cursor, radius=pv.radius, dupli_obj=obj, draw_paths=pv.draw_paths)
+                tracing.anterograde_tracing(location=cursor, radius=pv.radius, dupli_obj=obj, draw_paths=pv.draw_paths, smoothing=pv.smoothing)
         else:
             if pv.set_color:
-                tracing.retrograde_tracing(location=cursor, radius=pv.radius, inj_color=pv.inj_color, dupli_obj=obj, draw_paths=pv.draw_paths)
+                tracing.retrograde_tracing(location=cursor, radius=pv.radius, inj_color=pv.inj_color, dupli_obj=obj, draw_paths=pv.draw_paths, smoothing=pv.smoothing)
             else:
-                tracing.retrograde_tracing(location=cursor, radius=pv.radius, dupli_obj=obj, draw_paths=pv.draw_paths)
+                tracing.retrograde_tracing(location=cursor, radius=pv.radius, dupli_obj=obj, draw_paths=pv.draw_paths, smoothing=pv.smoothing)
         return {'FINISHED'}
 
 # TODO(SK): missing docstring

@@ -314,7 +314,7 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
         p_index = pam.map3dPointToParticle(object, 0, cursor)
         print('Neuron Number: ' + str(p_index))
 
-        smoothing = contexmodel.t.scene.pam_visualize.smoothing
+        smoothing = context.scene.pam_visualize.smoothing
         for ci in model.CONNECTION_INDICES:
             # if ng_index is the pre-synaptic layer in a certain mapping
             if ci[1] == ng_index:

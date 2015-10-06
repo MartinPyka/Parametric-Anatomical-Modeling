@@ -250,6 +250,13 @@ class PAMTracingPanel(bpy.types.Panel):
         if context.scene.pam_visualize.set_color:
             row = layout.row()
             row.prop(context.scene.pam_visualize, "inj_color", text="Injection color")
+            
+        row = layout.row()
+        row.prop(context.scene.pam_visualize, "draw_paths", text="Draw connections paths")
+        
+        if context.scene.pam_visualize.draw_paths:
+            row = layout.row()
+            row.prop(context.scene.pam_visualize, "smoothing", text="Smoothing")
 
         row = layout.row()
         op = row.operator("pam_vis.tracing", text="Perform tracing")

@@ -76,7 +76,7 @@ def visualizeNeuronsColor(neural_objects, inj_neurons, inj_color=None, dupli_obj
             obj.active_material = mat
             obj.color = obj_col
 
-def visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj=None):
+def visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj=None, different_neurons=None, different_color=None):
     '''Visualizes neurons from a hit count list containing a neuron list for each object.
        Each neuron list contains the number of connections for each neuron
        The larger the connection number the bigger the drawn sphere
@@ -108,18 +108,24 @@ def visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj=None):
                     output_save_counter = 1
                 else:
                     output_save_counter += 1
+                    
+                dif_list = []
+                if different_neurons:
+                    dif_list = different_neurons[obj_ind]
                 
                 pam_vis.visualizePoint(post_obj.particle_systems[0].particles[post_number].location, dupli_obj)
                 resize_factor = 1+(hit_count-1)*stepsize
                 bpy.ops.transform.resize(value=(numpy.sqrt(resize_factor), numpy.sqrt(resize_factor), numpy.sqrt(resize_factor))) #resize neuron according to hit count
                 obj_col = getObjectColor(post_obj)
+                if different_neurons:
+                    if post_number in dif_list:
+                        obj_col = getObjectColor(post_obj, different_color)
                 obj = bpy.context.selected_objects[0]
                 mat = bpy.data.materials['color_mat']
                 obj.active_material = mat
                 obj.color = obj_col
 
-
-def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None):
+def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_paths=False, smoothing=0):
     '''performs anterograde tracing at injection site with defined [radius] around given [location]
 '''
     neural_objects = getNeuralObjects()
@@ -171,14 +177,23 @@ def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None):
                     post_list = c[pre_number]               #get post_neurons for pre_neuron
                     for post_number in post_list:                #iterating through post_neurons
                         hit_count_list[post_obj_ind][post_number] += 1
+                        
+                    #draw paths
+                    if draw_paths:
+                        ng_index = model.NG_DICT[pre_obj.name][pre_obj.particle_systems[0].name]
+                        for ci in model.CONNECTION_INDICES:
+                            # if ng_index is the pre-synaptic layer in a certain mapping
+                            if ci[1] == ng_index:
+                                # visualize the connections
+                                pam_vis.visualizeConnectionsForNeuron(ci[0], pre_number, smoothing)
     #print(hit_count_list)
                 
     #VISUALIZE LABELLED NEURONS
     logger.info("Visualizing neurons")
     
-    visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj)
+    visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj, different_neurons=inj_neurons, different_color=inj_color)
 
-def retrograde_tracing(location, radius, inj_color=None, dupli_obj=None):
+def retrograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_paths=False, smoothing=0):
     '''performs retrograde tracing at injection site with defined [radius] around given [location]
 '''
     neural_objects = getNeuralObjects()
@@ -229,10 +244,13 @@ def retrograde_tracing(location, radius, inj_color=None, dupli_obj=None):
                     for inj_number in inj_list:                  #iterating through injection neurons of current post_object
                         hits = sum(post_list==inj_number)  #how many hits?
                         hit_count_list[pre_obj_ind][pre_number] += hits     #add the number of connections to hit count list
+                        #draw paths
+                        if draw_paths:
+                            pam_vis.visualizeOneConnection(i_c, pre_number, inj_number, smoothing)
 
     #print(hit_count_list)
                 
     #VISUALIZE LABELLED NEURONS
     logger.info("Visualizing neurons")
     
-    visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj)
+    visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj, different_neurons=inj_neurons, different_color=inj_color)

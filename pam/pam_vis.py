@@ -363,6 +363,11 @@ def visualizeOneConnection(no_connection, pre_index, post_index, smoothing=0):
     synapses            : optional list of coordinates for synapses
     """
 
+    where_list = numpy.where(model.CONNECTION_RESULTS[no_connection]['c'][pre_index] == post_index)[0]
+    if len(where_list)==0:
+        return None
+    post_list_index = where_list[0]
+    
     layers = model.CONNECTIONS[no_connection][0]
     neuronset1 = model.CONNECTIONS[no_connection][1]
     neuronset2 = model.CONNECTIONS[no_connection][2]
@@ -371,9 +376,6 @@ def visualizeOneConnection(no_connection, pre_index, post_index, smoothing=0):
     distances = model.CONNECTIONS[no_connection][5]
 
     synapses = model.CONNECTION_RESULTS[no_connection]['s'][pre_index]
-    post_list_index = numpy.where(
-        model.CONNECTION_RESULTS[no_connection]['c'][pre_index] == post_index
-    )[0][0]
 
     material = bpy.data.materials.get(bpy.context.scene.pam_visualize.connection_material, None)
 

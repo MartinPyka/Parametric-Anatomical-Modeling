@@ -1562,7 +1562,10 @@ def initializeUVs():
     for obj in bpy.data.objects:
         if obj.type == 'MESH':
             if any(obj.data.uv_layers):
-                obj['uv_scaling'], _ = computeUVScalingFactor(obj)
+                try:
+                    obj['uv_scaling'], _ = computeUVScalingFactor(obj)
+                except:
+                    logger.error('Could not creaet uv_scaling-factor for ' + obj.name)
 
             ''' area size of each polygon '''
             p_areas = []

@@ -13,13 +13,24 @@ class Mesh():
         nodes = self.octree.listNodes()
         p = numpy.array(point)
         closest_node = nodes[0]
-        node_distance = scipy.spatial.distance.euclidean(p, nodes[0].center)
+        node_distance = distance_sqr(p, nodes[0].center)
         for n in nodes:
-            d = scipy.spatial.distance.euclidean(p, n.center)
+            d = distance_sqr(p, n.center)
             if d < node_distance:
                 closest_node = n
                 node_distance = d
-        print(closest_node.center)
+        polygons = closest_node.polygons
+        closest_distance = numpy.inf
+        closest_point = None
+        for poly_index in polygons:
+            active_poly = self.polygons[poly_index]
+            triangle_point = closestPointOnTriangle(point, active_poly[...,0], active_poly[...,1], active_poly[...,2])
+            d = distance_sqr(triangle_point, point)
+            if d < closest_distance:
+                closest_distance = d
+                polygon_index = poly_index
+                closest_point = triangle_point
+        print(closest_point)
 
 class Octree():
     """[INSERT DOCSTRING HERE]
@@ -131,9 +142,6 @@ def pointInBounds(point, bounds):
         return False
     return True
 
-mat_s = None
-mat_s_inv = None
-
 def closestPointOnTriangle(point, t1, t2, t3):
     # http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.104.4264&rep=rep1&type=pdf
 
@@ -151,7 +159,7 @@ def closestPointOnTriangle(point, t1, t2, t3):
 
     polygon_point = getClosestPointOnPolygon2d(point_plane, p1, p2, p3)
     point_3d = numpy.dot(numpy.linalg.inv(mat), [[0.], [polygon_point[0]], [polygon_point[1]], [1.]])[:3]
-    return point_3d
+    return point_3d.reshape(-1)
 
 def getClosestPointOnPolygon2d(point, p1, p2, p3):
     p1 = p1.reshape(-1)
@@ -169,21 +177,19 @@ def getClosestPointOnPolygon2d(point, p1, p2, p3):
     p3p2_p = _edge_distance_perpendicular(point, p3, p2)
     p3p1_p = _edge_distance_perpendicular(point, p3, p1)
     p1p3_p = _edge_distance_perpendicular(point, p1, p3)
-    if p1p2 < 0:
-        if p1p2_p < 0 and p2p1_p < 0:
-            return getClosestPointOnLine(point, p1, p2)
-        elif p1p2_p > 0 and p1p3_p < 0:
-            return numpy.array(p1)
-    if p2p3 < 0:
-        if p2p3_p < 0 and p3p2_p < 0:
-            return getClosestPointOnLine(point, p2, p3)
-        elif p2p3_p > 0 and p2p1_p < 0:
-            return numpy.array(p2)
-    if p3p1 < 0:
-        if p3p1_p < 0 and p1p3_p < 0:
-            return getClosestPointOnLine(point, p3, p1)
-        elif p3p1_p > 0 and p3p2_p < 0:
-            return numpy.array(p3)
+
+    if p1p2 < 0 and p1p2_p < 0 and p2p1_p < 0:
+        return getClosestPointOnLine(point, p1, p2)
+    elif p2p3 < 0 and p2p3_p < 0 and p3p2_p < 0:
+        return getClosestPointOnLine(point, p2, p3)
+    elif p3p1 < 0 and p3p1_p < 0 and p1p3_p < 0:
+        return getClosestPointOnLine(point, p3, p1)
+    elif p1p2_p > 0 and p1p3_p > 0:
+        return numpy.array(p1)
+    elif p2p3_p > 0 and p2p1_p > 0:
+        return numpy.array(p2)
+    elif p3p1_p > 0 and p3p2_p > 0:
+        return numpy.array(p3)
     return None
 
 def getClosestPointOnLine(point, p1, p2):
@@ -227,15 +233,31 @@ def calculatePlaneTransformation(t1, t2, t3):
     a /= numpy.linalg.norm(a)
     b = numpy.array((1,0,0))
     v = numpy.cross(a, b)
-    v_len = numpy.linalg.norm(v)
+    v_len_2 = numpy.dot(v,v)
+    if v_len_2 == 0:
+        return translation_matrix
     c = numpy.dot(a, b)
-    vx = numpy.matrix([[0, -v[2], v[1]],[v[2], 0, -v[0]],[-v[1], v[0], 0]])
-    r = numpy.identity(3) + vx + numpy.dot(vx,vx) * ((1-c)/(v_len**2))
+    vx = numpy.matrix([[0, -v[2], v[1]],[v[2], 0, 0],[-v[1], 0, 0]])
+    r = numpy.identity(3) + vx + numpy.dot(vx,vx) * ((1-c)/(v_len_2))
     rotation_matrix = numpy.identity(4)
     rotation_matrix[0:3, 0:3] = r
 
     mat = numpy.dot(rotation_matrix, translation_matrix)
     return mat
+
+def toBarycentricCoordinates(point, t1, t2, t3):
+    det = ((t2[1] - t3[1]) * (t1[0] - t3[0]) + (t3[0] - t2[0]) * (t1[1] - t3[1]))
+    l1 = ((t2[1] - t3[1]) * (point[0] - t3[0]) + (t3[0] - t2[0]) * (point[1] - t3[1])) / det
+    l2 = ((t3[1] - t1[1]) * (point[0] - t3[0]) + (t1[0] - t3[0]) * (point[1] - t3[1])) / det
+    l3 = 1 - l1 - l2
+    return (l1, l2, l3)
+
+def fromBarycentricCoordinates(l1, l2, l3, t1, t2, t3):
+    return l1 * t1 + l2 * t2 + l3 * t3
+
+def distance_sqr(p1, p2):
+    p = p2 - p1
+    return numpy.dot(p, p)
 
 def test():
     # Testing
@@ -249,11 +271,29 @@ def test():
     # a /= a[3]
     # print(mat, a, sep=('\n'))
     # m.findClosestPointOnMesh((-1,-1,-1))
-    print(closestPointOnTriangle((7,6,10), p1, p2, p3))
+    # print(closestPointOnTriangle((7,6,10), p1, p2, p3))
+    m.findClosestPointOnMesh((7,6,10))
     # import bpy
     # import mathutils
     # mat = calculatePlaneTransformation(p1, p2, p3)
     # bpy.context.active_object.matrix_world = mathutils.Matrix(mat)
 
+def runtime_test():
+    p1 = (2,2,3)
+    p2 = numpy.array((3.208115816116333, 2.262561798095703, 2.304555892944336))
+    p3 = numpy.array((2.2930221557617188, 0.4895104169845581, 4.062463760375977))
+    for i in range(10000):
+        closestPointOnTriangle((7,6,10), p1, p2, p3)
+
+def blenderTest():
+    import bpy
+    import mathutils
+    p1 = (2,2,3)
+    p2 = numpy.array((3.208115816116333, 2.262561798095703, 2.304555892944336))
+    p3 = numpy.array((2.2930221557617188, 0.4895104169845581, 4.062463760375977))
+    bpy.context.scene.cursor_location = mathutils.Vector(closestPointOnTriangle(bpy.context.scene.cursor_location.to_tuple(), p1, p2, p3))
+
+# import cProfile
 if __name__ == "__main__":
     test()
+    # cProfile.run('runtime_test()')

@@ -301,6 +301,33 @@ class PAMMap(bpy.types.PropertyGroup):
     )
     seed = bpy.props.IntProperty(name = "Seed")
 
+class PAMMappingVisibility(bpy.types.Operator):
+    """Make only objects involved in this mapping visible. Hides every other object that is set to be selectable."""
+    bl_idname = "pam.mapping_visibility"
+    bl_label = "Make objects visible"
+    bl_description = "Make only objects involved in this mapping visible"
+    bl_options = {"UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        set = bpy.context.scene.pam_mapping.sets[bpy.context.scene.pam_mapping.active_set]
+        
+        layers = []
+        
+        for i, layer in enumerate(set.layers):
+            layers.append(bpy.data.objects[layer.object])
+            
+        for obj in bpy.data.objects:
+            if not obj.hide_select:
+                obj.hide  = True
+        
+        for obj in layers:
+            obj.hide = False
+            
+        return {'FINISHED'}
 
 class PAMMappingUp(bpy.types.Operator):
     """Move active mapping index up"""
@@ -653,7 +680,7 @@ class PAMMappingComputeSelected(bpy.types.Operator):
         synapse_layer = -1
         synapse_count = 0
         layers = []
-
+        
         # collect all
         for i, layer in enumerate(set.layers):
             layers.append(bpy.data.objects[layer.object])

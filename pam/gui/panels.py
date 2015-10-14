@@ -56,6 +56,7 @@ class PAMMappingToolsPanel(bpy.types.Panel):
         col.operator("pam.mapping_delete_set", icon="ZOOMOUT", text="")
         col.operator("pam.mapping_up", icon="TRIA_UP", text="")
         col.operator("pam.mapping_down", icon="TRIA_DOWN", text="")
+        col.operator("pam.mapping_visibility", icon="RESTRICT_VIEW_OFF", text="")
 
         active_set = None
 

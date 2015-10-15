@@ -19,18 +19,24 @@ class Mesh():
             if d < node_distance:
                 closest_node = n
                 node_distance = d
-        polygons = closest_node.polygons
+        polygons = closest_node.getPolygonsUpwards()
+        node_distance_extended = numpy.square(numpy.sqrt(node_distance) + numpy.sqrt(distance_sqr(numpy.array((closest_node.bounds[0], closest_node.bounds[2], closest_node.bounds[4])), closest_node.center)))
+        for n in nodes:
+            if distance_sqr(p, n.center) < node_distance_extended:
+                polygons.extend(n.getPolygonsUpwards())
+        polygons = numpy.unique(polygons)
         closest_distance = numpy.inf
         closest_point = None
         for poly_index in polygons:
             active_poly = self.polygons[poly_index]
-            triangle_point = closestPointOnTriangle(point, active_poly[...,0], active_poly[...,1], active_poly[...,2])
+            triangle_point = closestPointOnTriangle(point, active_poly[0,:3], active_poly[1,:3], active_poly[2,:3])
             d = distance_sqr(triangle_point, point)
             if d < closest_distance:
                 closest_distance = d
                 polygon_index = poly_index
                 closest_point = triangle_point
-        print(closest_point)
+        print(len(polygons), '/', len(self.polygons), 'polygons checked')
+        return closest_point
 
 class Octree():
     """[INSERT DOCSTRING HERE]
@@ -107,6 +113,14 @@ class Octree():
             if node is not None:
                 l.extend(node.listNodes())
         return l
+
+    def getPolygonsUpwards(self):
+        if self.parent is not None:
+            l = list(self.polygons)
+            l.extend(self.parent.getPolygonsUpwards())
+            return l
+        else:
+            return self.polygons
 
     @staticmethod
     def buildOctree(polygons):
@@ -192,6 +206,15 @@ def getClosestPointOnPolygon2d(point, p1, p2, p3):
         return numpy.array(p3)
     return None
 
+def intersectPointTri2d(point, t1, t2, t3):
+    p1p2 = edge_distance(point, p1, p2)
+    p2p3 = edge_distance(point, p2, p3)
+    p3p1 = edge_distance(point, p3, p1)
+    if p1p2 > 0 and p2p3 > 0 and p3p1 > 0:
+        return True
+    else:
+        return False
+
 def getClosestPointOnLine(point, p1, p2):
     p1_point = point - p1
     p1_p2 = p2 - p1
@@ -272,7 +295,7 @@ def test():
     # print(mat, a, sep=('\n'))
     # m.findClosestPointOnMesh((-1,-1,-1))
     # print(closestPointOnTriangle((7,6,10), p1, p2, p3))
-    m.findClosestPointOnMesh((7,6,10))
+    m.findClosestPointOnMesh((0,0,0))
     # import bpy
     # import mathutils
     # mat = calculatePlaneTransformation(p1, p2, p3)

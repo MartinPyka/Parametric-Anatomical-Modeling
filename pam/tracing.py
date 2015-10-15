@@ -84,9 +84,15 @@ def visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj=None, dif
     if len(hit_count_list) == 0:
         return
     max_hit = max(max(hit_count_list))
-    steps = max_hit-1
-    range_h = MAX_FACTOR-1
-    stepsize = min(range_h/steps,MAX_STEP_SIZE)
+    if max_hit == 0:
+        logger.info("no hits")
+        return
+    if max_hit == 1:
+        stepsize = 0
+    else:
+        steps = max_hit-1
+        range_h = MAX_FACTOR-1
+        stepsize = min(range_h/steps,MAX_STEP_SIZE)
     for (obj_ind, hit_counts) in enumerate(hit_count_list):    #iterate through list
         post_obj = neural_objects[obj_ind]                     #and get object
         

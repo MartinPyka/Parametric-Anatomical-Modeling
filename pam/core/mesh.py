@@ -3,12 +3,11 @@ import numpy
 
 class Mesh():
 
-    def __init__(self, polygons, name = ''):
+    def __init__(self, polygons):
         self.polygons = numpy.array(polygons)
         self.uv_quadtree = Quadtree.buildUVQuadtreeFromMesh(self.polygons)
         self.octree = Octree.buildOctree(self.polygons)
         self.polygon_transformation_cache = [None] * len(self.polygons)
-        self.name = name
 
     def findClosestPointOnMesh(self, point):
         # Find closest node

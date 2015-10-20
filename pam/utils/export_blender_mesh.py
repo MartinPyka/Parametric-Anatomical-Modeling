@@ -24,6 +24,14 @@ def export_object(obj):
     
     return pymesh
 
+def write(pymesh, path):
+    with open(path, mode = 'w') as f:
+        for i, polygon in enumerate(pymesh):
+            f.write(str(i) + ':\n')
+            for co in polygon:
+                f.write(','.join([str(i) for i in co]))
+                f.write('\n')
+
 
 if __name__ == "__main__":
-    print(export_object(bpy.context.active_object))
+    write(export_object(bpy.context.active_object), bpy.path.abspath('//' + bpy.context.active_object.name + '.m'))

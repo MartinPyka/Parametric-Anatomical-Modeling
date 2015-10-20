@@ -65,6 +65,8 @@ def Connection2Pickle(connections):
     for c in connections:
         new_c = [convertObject2String(c)]
         new_c = new_c + list(c[1:])
+        new_c[6] = c[6].__name__
+        new_c[8] = c[8].__name__
         result.append(new_c)
     return result
 
@@ -126,26 +128,20 @@ def convertArray2Vector(connection_results):
         result.append({'c': c['c'], 'd': c['d'], 's': temp})
     return result
 
-
-class ModelSnapshot(object):
-    """Represents a snapshot of the current model"""
-    def __init__(self):
-        global NG_LIST
-        global NG_DICT
-        global CONNECTION_COUNTER
-        global CONNECTION_INDICES
-        global CONNECTIONS
-        global CONNECTION_RESULTS
-        self.NG_LIST = NG_LIST
-        self.NG_DICT = NG_DICT
-        self.CONNECTION_COUNTER = CONNECTION_COUNTER
-        self.CONNECTION_INDICES = CONNECTION_INDICES
-        self.CONNECTIONS = Connection2Pickle(CONNECTIONS)
-        self.CONNECTION_RESULTS = convertVector2Array(CONNECTION_RESULTS)
-
-    def __eq__(self, other):
-        return str(self.__dict__) == str(other.__dict__)
-
+def createModelSnapshot():
+    global NG_LIST
+    global NG_DICT
+    global CONNECTION_COUNTER
+    global CONNECTION_INDICES
+    global CONNECTIONS
+    global CONNECTION_RESULTS
+    l = []
+    l.append(NG_LIST)
+    l.append(NG_DICT)
+    l.append(CONNECTION_COUNTER)
+    l.append(CONNECTION_INDICES)
+    l.append(Connection2Pickle(CONNECTIONS))
+    return l
 
 def save(path):
     """Save current model via pickle to given path
@@ -153,7 +149,7 @@ def save(path):
     :param str path: filepath
 
     """
-    snapshot = ModelSnapshot()
+    snapshot = createModelSnapshot()
     pickle.dump(snapshot, open(path, "wb"))
 
 

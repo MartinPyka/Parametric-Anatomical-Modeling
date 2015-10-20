@@ -24,7 +24,7 @@ def export_object(obj):
     
     return pymesh
 
-def write(pymesh, path):
+def writeMesh(pymesh, path):
     with open(path, mode = 'w') as f:
         for i, polygon in enumerate(pymesh):
             f.write(str(i) + ':\n')
@@ -32,6 +32,12 @@ def write(pymesh, path):
                 f.write(','.join([str(i) for i in co]))
                 f.write('\n')
 
+def writeParticles(particles, path):
+    with open(path, 'w') as f:
+        for particle in particles:
+            co = particle.location.to_tuple()
+            f.write(','.join([str(x) for x in co]) + '\n')
+
 
 if __name__ == "__main__":
-    write(export_object(bpy.context.active_object), bpy.path.abspath('//' + bpy.context.active_object.name + '.m'))
+    writeMesh(export_object(bpy.context.active_object), bpy.path.abspath('//' + bpy.context.active_object.name + '.m'))

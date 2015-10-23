@@ -4,11 +4,10 @@ import logging
 import math
 import numpy
 
-import bpy
-import mathutils
+# import mathutils
 
-from . import constants
-from . import helper
+import constants
+import helper
 
 #import constants
 #import helper

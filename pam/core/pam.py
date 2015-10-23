@@ -3,15 +3,13 @@
 import logging
 import random
 
-import bpy
-import mathutils
 import numpy
 
-from . import constants
-from . import grid
-from . import model
-from . import exceptions
-from .utils import quadtree
+import constants
+import grid
+import pam_model
+from mesh import *
+import exceptions
 
 import multiprocessing
 import os
@@ -160,185 +158,6 @@ def checkPointOnLine(p,a1,a2):
         #print('Third false')
         return delta
     return 0
-
-def map3dPointToUV(obj, obj_uv, point, normal=None):
-    """Convert a given 3d-point into uv-coordinates,
-    obj for the 3d point and obj_uv must have the same topology
-    if normal is not None, the normal is used to detect the point on obj, otherwise
-    the closest_point_on_mesh operation is used
-
-    :param obj: The source 3d-object on which to project the point before mapping
-    :type obj: bpy.types.Object
-    :param obj_uv: The object with the uv-map on which to project the point
-    :type obj_uv: bpy.types.Object
-    :param point: The 3d point which to project onto uv
-    :type point: mathutils.Vector (should be 3d)
-
-    :return: The transformed point in uv-space
-    :rtype: mathutils.Vector (2d)
-    """
-
-    if normal:
-        normal_scaled = normal * constants.RAY_FAC
-        p, n, f = obj.ray_cast(point + normal_scaled, point - normal_)
-        # if no collision could be detected, return None
-        if f == -1:
-            return None
-    else:
-        # get point, normal and face of closest point to a given point
-        p, n, f = obj.closest_point_on_mesh(point)
-
-    # get the uv-coordinate of the first triangle of the polygon
-    A = obj.data.vertices[obj.data.polygons[f].vertices[0]].co
-    B = obj.data.vertices[obj.data.polygons[f].vertices[1]].co
-    C = obj.data.vertices[obj.data.polygons[f].vertices[2]].co
-
-    # and the uv-coordinates of the first triangle
-    uvs = [obj_uv.data.uv_layers.active.data[li] for li in obj_uv.data.polygons[f].loop_indices]
-    U = uvs[0].uv.to_3d()
-    V = uvs[1].uv.to_3d()
-    W = uvs[2].uv.to_3d()
-
-    # convert 3d-coordinates of point p to uv-coordinates
-    p_uv = mathutils.geometry.barycentric_transform(p, A, B, C, U, V, W)
-
-    p_uv_2d = p_uv.to_2d()
-    delta1 = checkPointOnLine(p_uv_2d,uvs[0].uv,uvs[1].uv)
-    delta2 = checkPointOnLine(p_uv_2d,uvs[0].uv,uvs[2].uv)
-    delta3 = checkPointOnLine(p_uv_2d,uvs[1].uv,uvs[2].uv)
-    delta = min(delta1,delta2,delta3)
-
-    # if the point is not within the first triangle, we have to repeat the calculation
-    # for the second triangle
-    if (mathutils.geometry.intersect_point_tri_2d(p_uv_2d, uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (delta != 0) & (len(uvs) == 4):
-        A = obj.data.vertices[obj.data.polygons[f].vertices[0]].co
-        B = obj.data.vertices[obj.data.polygons[f].vertices[2]].co
-        C = obj.data.vertices[obj.data.polygons[f].vertices[3]].co
-
-        U = uvs[0].uv.to_3d()
-        V = uvs[2].uv.to_3d()
-        W = uvs[3].uv.to_3d()
-
-        p_uv_new = mathutils.geometry.barycentric_transform(p, A, B, C, U, V, W)
-
-    else:
-        return p_uv_2d
-
-    p_uv_2d_new = p_uv_new.to_2d()
-    
-    delta1 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[2].uv)
-    delta2 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[3].uv)
-    delta3 = checkPointOnLine(p_uv_2d_new,uvs[2].uv,uvs[3].uv)
-    delta_new = min(delta1,delta2,delta3)
-
-    if (mathutils.geometry.intersect_point_tri_2d(p_uv_2d, uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (delta != 0) & (len(uvs) == 4):
-        if delta_new < delta:
-            return p_uv_2d_new
-        return p_uv_2d
-    return p_uv_2d_new
-
-def mapUVPointTo3d(obj_uv, uv_list, check_edges = False, cleanup=True):
-    """Convert a list of uv-points into 3d. 
-    This function is mostly used by interpolateUVTrackIn3D. Note, that 
-    therefore, not all points can and have to be converted to 3d points. 
-    The return list can therefore have less points than the uv-list. 
-    This cleanup can be deactivated by setting cleanup = False. Then, 
-    the return-list may contain some [] elements.
-
-    This function makes use of a quadtree cache managed in pam.model.
-
-    :param obj_uv: The object with the uv-map
-    :type obj_uv: bpy.types.Object
-    :param uv_list: The list of uv-coordinates to convert
-    :type uv_list: List of mathutils.Vector (Vectors should be 2d)
-    :param check_edges: If set to True, the edges of the mesh are 
-        specifically checked again to ensure accuracy when points 
-        are directly on the edge of a mesh. This slows the function 
-        down, so use with care.
-    :type check_edges: bool
-    :param cleanup: If set to False, unmapped uv-coordinates are 
-        removed from the return list
-    :type cleanup: bool
-
-    :return: List of converted 3d-points
-    :rtype: list of mathutils.Vector (Vectors are 3d) or []
-    """
-
-    uv_list_range_container = range(len(uv_list))
-
-    points_3d = [[] for _ in uv_list_range_container]
-    point_indices = [i for i in uv_list_range_container]
-
-    # Build new quadtree to cache objects if no chache exists
-    if obj_uv.name not in model.QUADTREE_CACHE:
-        qtree = quadtree.buildUVQuadtreeFromObject(obj_uv, constants.CACHE_QUADTREE_DEPTH)
-        model.QUADTREE_CACHE[obj_uv.name] = qtree
-    else:
-        qtree = model.QUADTREE_CACHE[obj_uv.name]
-
-    for i in point_indices:
-        point = uv_list[i]
-        polygons = qtree.getPolygons(point)
-        for polygon in polygons:
-            uvs = polygon[0]
-            p3ds = polygon[1]
-
-            result = mathutils.geometry.intersect_point_tri_2d(
-                point,
-                uvs[0],
-                uvs[1],
-                uvs[2]
-            )
-
-            if (result != 0):
-                points_3d[i] = mathutils.geometry.barycentric_transform(
-                    point.to_3d(),
-                    uvs[0].to_3d(),
-                    uvs[1].to_3d(),
-                    uvs[2].to_3d(),
-                    p3ds[0],
-                    p3ds[1],
-                    p3ds[2]
-                )
-                break
-
-            else:
-                result = mathutils.geometry.intersect_point_tri_2d(
-                    point,
-                    uvs[0],
-                    uvs[2],
-                    uvs[3]
-                )
-                if (result != 0):
-                    points_3d[i] = mathutils.geometry.barycentric_transform(
-                        point.to_3d(),
-                        uvs[0].to_3d(),
-                        uvs[2].to_3d(),
-                        uvs[3].to_3d(),
-                        p3ds[0],
-                        p3ds[2],
-                        p3ds[3]
-                    )
-                    break
-            if check_edges:
-                # Sometimes the point is directly on the edge of a tri and intersect_point_tri_2d doesn't recognize it
-                # So we check for all possible edges
-                edges = [(0, 1),
-                         (1, 2),
-                         (2, 3),
-                         (3, 0),
-                         (0, 2)]
-                for edge in edges:
-                    point_on_line, percentage = mathutils.geometry.intersect_point_line(point, uvs[edge[0]], uvs[edge[1]])
-                    if (point_on_line - point).length <= constants.UV_THRESHOLD and percentage >= 0. and percentage <= 1.:
-                        points_3d[i] = p3ds[edge[0]].lerp(p3ds[edge[1]], percentage)
-                        break
-
-    if cleanup:
-        points_3d = [p for p in points_3d if p]
-
-    return points_3d
-
 
 # TODO(MP): triangle check could be made more efficient
 # TODO(MP): check the correct triangle order !!!
@@ -1089,24 +908,30 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
                         If None, addon preferences are used. If 0, os.cpu_count() is used.
     """
     # Determine if threading is to be used
-    if threads == None:
-        if bpy.context.user_preferences.addons['pam'].preferences.use_threading:
-            return computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connections,
-                        distances, func_pre, args_pre, func_post, args_post,
-                        no_synapses, create, threads)
-    elif threads != -1:
+    if threads is not None and threads != -1:
         return computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connections,
                         distances, func_pre, args_pre, func_post, args_post,
                         no_synapses, create, threads)
 
+    # Collect data from pam_model if only references are given
+    if type(neuronset1) is str:
+        neuronset1 = pam_model.PARTICLES[neuronset1]
+
+    if type(neuronset2) is str:
+        neuronset2 = pam_model.PARTICLES[neuronset2]
+
+    if type(layers[0]) is str:
+        for l in range(len(layers)):
+            layers[l] = pam_model.MESHES[layers[l]]
+
     # connection matrix
-    conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses)).astype(int)
+    conn = numpy.zeros((len(neuronset1), no_synapses), dtype = numpy.int32)
 
     # distance matrix
-    dist = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
+    dist = numpy.zeros((len(neuronset1), no_synapses))
 
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
-    syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
+    syn = [[[] for j in range(no_synapses)] for i in range(len(neuronset1))]
 
     uv_grid = grid.UVGrid(layers[slayer], 0.02)
 
@@ -1336,14 +1161,24 @@ def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connecti
         threads = os.cpu_count()
     logger.info("Using " + str(threads) + " threads")
 
+    if type(neuronset1) is str:
+        neuronset1 = pam_model.PARTICLES[neuronset1]
+
+    if type(neuronset2) is str:
+        neuronset2 = pam_model.PARTICLES[neuronset2]
+
+    if type(layers[0]) is str:
+        for l in range(len(layers)):
+            layers[l] = pam_model.MESHES[layers[l]]
+
     # connection matrix
-    conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses), dtype = numpy.int32)
+    conn = numpy.zeros((len(neuronset1), no_synapses), dtype = numpy.int32)
 
     # distance matrix
-    dist = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
+    dist = numpy.zeros((len(neuronset1), no_synapses))
 
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
-    syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
+    syn = [[[] for j in range(no_synapses)] for i in range(len(neuronset1))]
 
     uv_grid = grid.UVGrid(layers[slayer], 0.02)
 
@@ -1630,3 +1465,6 @@ def initialize3D():
     model.NG_LIST, model.NG_DICT = returnNeuronGroups()
 
     logger.info("done initalizing")
+
+if __name__ == '__main__':
+    pass

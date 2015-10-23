@@ -1,5 +1,4 @@
 import numpy
-#import scipy.spatial.distance
 
 class Mesh():
 
@@ -29,15 +28,17 @@ class Mesh():
         polygons = numpy.unique(polygons)
         closest_distance = numpy.inf
         closest_point = None
+        closest_barycentric_coords = None
         for poly_index in polygons:
-            triangle_point, _ = self._cachedClosestPointOnTriangle(point, poly_index)
+            triangle_point, barycentric_coords = self._cachedClosestPointOnTriangle(point, poly_index)
             d = distance_sqr(triangle_point, point)
             if d < closest_distance:
                 closest_distance = d
                 polygon_index = poly_index
                 closest_point = triangle_point
+                closest_barycentric_coords = barycentric_coords
         print(len(polygons), '/', len(self.polygons), "polygons checked")
-        return closest_point, polygon_index
+        return closest_point, polygon_index, (l1, l2, l3)
 
     def _cachedClosestPointOnTriangle(self, point, polygon_index):
         # http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.104.4264&rep=rep1&type=pdf
@@ -74,19 +75,23 @@ class Mesh():
         closest_poly_index = None
         closest_distance_sqr = numpy.inf
         closest_intersection = None
+        closest_barycentric_coords = None
         for i, poly in enumerate(self.polygons):
-            intersection = intersectRayTri(origin, direction, poly[0][:3], poly[1][:3], poly[2][:3])
+            intersection, barycentric_coords = intersectRayTri(origin, direction, poly[0][:3], poly[1][:3], poly[2][:3])
             if intersection is not None:
                 d = distance_sqr(intersection, origin)
                 if d < closest_distance_sqr:
                     closest_distance_sqr = d
                     closest_poly_index = i
                     closest_intersection = intersection
+                    closest_barycentric_coords = barycentric_coords
+        return closest_intersection, closest_poly_index, numpy.sqrt(closest_distance_sqr), barycentric_coords
 
-        if closest_poly_index is not None:
-            return closest_intersection, closest_poly_index, numpy.sqrt(closest_distance_sqr)
-        else:
-            return None
+    def map3dPointToUV(self, point, normal = None):
+        map3dPointToUV(self, point, normal)
+
+    def mapUVPointTo3d(self, uv):
+        mapUVPointTo3d(self, uv)
 
 class Octree():
     """[INSERT DOCSTRING HERE]
@@ -345,16 +350,13 @@ def intersectPointTri2d(point, p1, p2, p3):
 
 def intersectRayTri(p, v, t1, t2, t3):
     mat = getRotationMatrix(v)
-    print(t1, t2, t3, p, mat, '---\n')
     p1 = numpy.dot(mat, t1)[1:3]
     p2 = numpy.dot(mat, t2)[1:3]
     p3 = numpy.dot(mat, t3)[1:3]
     p = numpy.dot(mat, p)[1:3]
-    print(p1, p2, p3, p, p1.shape)
     if intersectPointTri2d(p, p1, p2, p3):
         l1, l2, l3 = toBarycentricCoordinates(p, p1, p2, p3)
-        print(l1, l2, l3, t1, t2, t3)
-        return fromBarycentricCoordinates(l1, l2, l3, t1, t2, t3)
+        return fromBarycentricCoordinates(l1, l2, l3, t1, t2, t3), (l1, l2, l3)
     return None
 
 def getClosestPointOnLine(point, p1, p2):
@@ -426,7 +428,7 @@ def distance_sqr(p1, p2):
     p = p2 - p1
     return numpy.dot(p, p)
 
-def map3dPointToUV(mesh, point):
+def map3dPointToUV(mesh, point, normal = None):
     """Convert a given 3d-point into uv-coordinates
 
     :param mesh: The source 3d-mesh on which to project the point before mapping
@@ -438,7 +440,15 @@ def map3dPointToUV(mesh, point):
     :rtype: numpy.array (2d)
     """
 
-    p, f = mesh.findClosestPointOnMesh(point)
+    # if normal is None, we don't worry about orthogonal projections
+    if normal is None:
+        # get point, normal and face of closest point to a given point
+        p, f, b = o1.findClosestPointOnMesh(point)
+    else:
+        p, f, d, b = o1.raycast(normal)
+        # if no collision could be detected, return None
+        if f == -1:
+            return None
 
     # get the uv-coordinate of the first triangle of the polygon
     A = mesh.polygons[f][0][:3]
@@ -452,14 +462,13 @@ def map3dPointToUV(mesh, point):
     W = uvs[2]
 
     # convert 3d-coordinates of point p to uv-coordinates
-    _, (l1, l2, l3) = mesh._cachedClosestPointOnTriangle(point, f)
-    p_uv = fromBarycentricCoordinates(l1, l2, l3, U, V, W)
+    p_uv = fromBarycentricCoordinates(b[0], b[1], b[2], U, V, W)
 
     p_uv_2d = p_uv[:2]
 
     return numpy.array(p_uv_2d)
 
-def mapUVPointTo3d(mesh, uv_list, cleanup=True):
+def mapUVPointTo3d(mesh, uv):
     """Convert a list of uv-points into 3d. 
     This function is mostly used by interpolateUVTrackIn3D. Note, that 
     therefore, not all points can and have to be converted to 3d points. 
@@ -483,34 +492,29 @@ def mapUVPointTo3d(mesh, uv_list, cleanup=True):
 
     uv_list_range_container = range(len(uv_list))
 
-    points_3d = [[] for _ in uv_list_range_container]
-    point_indices = [i for i in uv_list_range_container]
+    point_3d = None
 
     # Get uv-quadtree from mesh
     qtree = mesh.uv_quadtree
 
-    for i in point_indices:
-        point = uv_list[i]
-        polygons = qtree.getPolygons(point)
-        for polygon in polygons:
-            uvs = polygon[...,3:]
-            p3ds = polygon[...,:3]
-            result = intersectPointTri2d(
-                point,
-                uvs[0],
-                uvs[2],
-                uvs[1]
-            )
+    point = uv_list[i]
+    polygons = qtree.getPolygons(point)
+    for polygon in polygons:
+        uvs = polygon[...,3:]
+        p3ds = polygon[...,:3]
+        result = intersectPointTri2d(
+            point,
+            uvs[0],
+            uvs[2],
+            uvs[1]
+        )
 
-            if (result):
-                l1, l2, l3 = toBarycentricCoordinates(point, uvs[0], uvs[1], uvs[2])
-                points_3d[i] = fromBarycentricCoordinates(l1, l2, l3, p3ds[0], p3ds[1], p3ds[2])
-                break
+        if (result):
+            l1, l2, l3 = toBarycentricCoordinates(point, uvs[0], uvs[1], uvs[2])
+            points_3d[i] = fromBarycentricCoordinates(l1, l2, l3, p3ds[0], p3ds[1], p3ds[2])
+            break
 
-    if cleanup:
-        points_3d = [p for p in points_3d if len(p) > 0]
-
-    return points_3d
+    return point_3d
 
 def map3dPointTo3d(mesh1, mesh2, point, normal=None):
     """Map a 3d-point on a given object on another object. Both objects must have the
@@ -534,9 +538,9 @@ def map3dPointTo3d(mesh1, mesh2, point, normal=None):
     # if normal is None, we don't worry about orthogonal projections
     if normal is None:
         # get point, normal and face of closest point to a given point
-        p, n, f = o1.closest_point_on_mesh(point)
+        p, f, b = o1.findClosestPointOnMesh(point)
     else:
-        p, n, f = o1.ray_cast(point + normal * constants.RAY_FAC, point - normal * constants.RAY_FAC)
+        p, f, d, b = o1.raycast(normal)
         # if no collision could be detected, return None
         if f == -1:
             return None
@@ -545,40 +549,12 @@ def map3dPointTo3d(mesh1, mesh2, point, normal=None):
     if (o1 == o2):
         return p
 
-    # get the vertices of the first triangle of the polygon from both objects
-    A1 = o1.data.vertices[o1.data.polygons[f].vertices[0]].co
-    B1 = o1.data.vertices[o1.data.polygons[f].vertices[1]].co
-    C1 = o1.data.vertices[o1.data.polygons[f].vertices[2]].co
+    A2 = o2.polygons[f][0][:3]
+    B2 = o2.polygons[f][1][:3]
+    C2 = o2.polygons[f][2][:3]
 
-    # project the point on a 2d-surface and check, whether we are in the right triangle
-    t1 = mathutils.Vector()
-    t2 = mathutils.Vector((1.0, 0.0, 0.0))
-    t3 = mathutils.Vector((0.0, 1.0, 0.0))
-
-    p_test = mathutils.geometry.barycentric_transform(p, A1, B1, C1, t1, t2, t3)
-
-    # if the point is on the 2d-triangle, proceed with the real barycentric_transform
-    if mathutils.geometry.intersect_point_tri_2d(p_test.to_2d(), t1.xy, t2.xy, t3.xy) == 1:
-        A2 = o2.data.vertices[o2.data.polygons[f].vertices[0]].co
-        B2 = o2.data.vertices[o2.data.polygons[f].vertices[1]].co
-        C2 = o2.data.vertices[o2.data.polygons[f].vertices[2]].co
-
-        # convert 3d-coordinates of the point
-        p_new = mathutils.geometry.barycentric_transform(p, A1, B1, C1, A2, B2, C2)
-
-    else:
-        # use the other triangle
-        A1 = o1.data.vertices[o1.data.polygons[f].vertices[0]].co
-        B1 = o1.data.vertices[o1.data.polygons[f].vertices[2]].co
-        C1 = o1.data.vertices[o1.data.polygons[f].vertices[3]].co
-
-        A2 = o2.data.vertices[o2.data.polygons[f].vertices[0]].co
-        B2 = o2.data.vertices[o2.data.polygons[f].vertices[2]].co
-        C2 = o2.data.vertices[o2.data.polygons[f].vertices[3]].co
-
-        # convert 3d-coordinates of the point
-        p_new = mathutils.geometry.barycentric_transform(p, A1, B1, C1, A2, B2, C2)
-
+    # convert 3d-coordinates of the point
+    fromBarycentricCoordinates(b[0], b[1], b[2], A2, B2, C3)
     return p_new
 
 def test():

@@ -130,9 +130,6 @@ def visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj=None, dif
                 mat = bpy.data.materials['color_mat']
                 obj.active_material = mat
                 obj.color = obj_col
-            
-        print(hit_count_list)
-        print(sum(hit_count_list[1]))
 
 def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_paths=False, smoothing=0):
     '''performs anterograde tracing at injection site with defined [radius] around given [location]

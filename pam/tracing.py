@@ -130,6 +130,9 @@ def visualizeNeuronsHitCount(hit_count_list, neural_objects, dupli_obj=None, dif
                 mat = bpy.data.materials['color_mat']
                 obj.active_material = mat
                 obj.color = obj_col
+            
+        print(hit_count_list)
+        print(sum(hit_count_list[1]))
 
 def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_paths=False, smoothing=0):
     '''performs anterograde tracing at injection site with defined [radius] around given [location]
@@ -181,13 +184,15 @@ def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_p
                         output_save_counter += 1
                         
                     post_list = c[pre_number]               #get post_neurons for pre_neuron
+                    if post_list[0] == -1:
+                        continue                     #continue here because there is no connectivity for the current pre neuron
                     for post_number in post_list:                #iterating through post_neurons
                         hit_count_list[post_obj_ind][post_number] += 1
                         
                     #draw paths
                     if draw_paths:
                         ng_index = model.NG_DICT[pre_obj.name][pre_obj.particle_systems[0].name]
-                        for ci in model.CONNECTION_INDICES:
+                        for ci in model.CONNECTION_INDICES:            #iteration might be replaced by using c_i. Not sure if numbers are same.
                             # if ng_index is the pre-synaptic layer in a certain mapping
                             if ci[1] == ng_index:
                                 # visualize the connections

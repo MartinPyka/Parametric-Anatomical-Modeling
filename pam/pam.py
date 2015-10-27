@@ -1137,6 +1137,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     #uv_grid.convert_postNeuronStructure()
     #for m in uv_grid._masks['post']:
     #    print(len(m))
+    uv_grid.printGrid()
     logger.info("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)
     for i in range(0, num_particles):
@@ -1152,10 +1153,14 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
             for j in range(0, len(conn[i])):
                 conn[i, j] = -1
             continue
+            
+        print("i, pre_p2d", i, pre_p2d[0], pre_p2d[1])
 
         numpy.random.seed(i + SEED)
 
         post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
+        
+        print("number of post neurons", len(post_neurons))
 
         if (len(post_neurons) == 0):
             for j in range(0, len(conn[i])):

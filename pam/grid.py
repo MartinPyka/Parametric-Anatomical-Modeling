@@ -97,7 +97,7 @@ class UVGrid(object):
         self._masks = {
             "pre": [[[] for j in range(self._row)] for i in range(self._col)],
             "post": [[[] for j in range(self._row)] for i in range(self._col)]
-        }
+            }
 
         self._converted = False
 
@@ -121,6 +121,47 @@ class UVGrid(object):
 
     def __len__(self):
         return any([len(c) for r in self._weights for c in r if any(c)])
+        
+    def printGrid(self):
+        print("obj", self._obj)
+        print("scaling", self._scaling)
+        print("u_min, u_max, v_min, v_max", self._u_min, self._v_max, self._v_min, self._v_max)
+        #print("uvcoords", self._uvcoords)
+        print("uv coords length", len(self._uvcoords[0]))
+        #print("gridmask", self._gridmask)
+        #print("masks", self._masks)
+        post_masks = self._masks['post']
+        print("post_masks", post_masks)
+                
+        #print("missing", missing)
+        print("grid['post'][0]", self._grid['post'][0])
+        print("grid['pre'][0][0]", self._grid['pre'][0][0])
+        print("len(grid['pre'][0])", len(self._grid['pre'][0]))
+        print("len(grid[post][0])", len(self._grid['post'][0]))
+        print("len(grid['pre'][0][0])", len(self._grid['pre'][0][0]))
+        print("len(grid[post][0][0])", len(self._grid['post'][0][0]))
+        print("len(grid['pre'][0][0][0])", len(self._grid['pre'][0][0][0]))
+        print("len(grid[post])", len(self._grid['post']))
+        print("len(grid[pre])", len(self._grid['pre']))
+        
+        print("first pre entry", self._grid['pre'][0][0][0])
+        
+        self.convert_data_structures()
+        
+        print("=========================CONVERTED==================================")
+        post_masks = self._masks['post']
+        print("post_masks", post_masks)
+        
+        print("grid['post'][0]", self._grid['post'][0])
+        print("grid['pre'][0]", self._grid['pre'][0])
+        print("len(grid['pre'][0])", len(self._grid['pre'][0]))
+        print("len(grid[post][0])", len(self._grid['post'][0]))
+        print("len(grid['pre'][0][0])", len(self._grid['pre'][0][0]))
+        print("len(grid[post][0][0])", len(self._grid['post'][0][0]))
+        print("len(grid[post])", len(self._grid['post']))
+        print("len(grid[pre])", len(self._grid['pre']))
+        
+        print("first pre entry", self._grid['pre'][0][0])
         
     def reset_weights(self):
         self._weights = [[[] for j in range(self._row)] for i in range(self._col)]
@@ -173,6 +214,7 @@ class UVGrid(object):
     def insert_postNeuron(self, index, uv, p_3d, d):
         col, row = self._uv_to_cell_index(uv[0], uv[1])
         if col == -1:
+            print("insert_postNeuron failed for neuron number", index)
             return
 
         if self._gridmask[col][row]:
@@ -202,7 +244,17 @@ class UVGrid(object):
                 weight_sum = numpy.sum(g)
                 if weight_sum == 0:
                     continue
+                g_old = g
                 g /= weight_sum
+                if (row==0) and (col==0):
+                    print("col, row, weight_sum", col, row, weight_sum)
+                    print("g original, sum", g_old, sum(g_old))
+                    print("g divided, sum", g, sum(g))
+                    for el in g_old[0:50]:
+                        print(el)
+                    print("???????????????")
+                    for el in g[0:50]:
+                        print(el)
                 grid[col][row] = numpy.array(g)
         self._grid['pre'] = grid
 
@@ -237,10 +289,12 @@ class UVGrid(object):
 
         """
         if not self._in_bounds(uv[0], uv[1]):
+            print("First out of bounds condition in select_random")
             return []
 
         col, row = self._uv_to_cell_index(uv[0], uv[1])
         if row == -1:
+            print("Second out of bounds condition (row == -1) in select_random")
             return []
         
         # check, whether data structures have already been converted. If not, convert them

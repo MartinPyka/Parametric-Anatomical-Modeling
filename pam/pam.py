@@ -203,14 +203,10 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
     p_uv = mathutils.geometry.barycentric_transform(p, A, B, C, U, V, W)
 
     p_uv_2d = p_uv.to_2d()
-    delta1 = checkPointOnLine(p_uv_2d,uvs[0].uv,uvs[1].uv)
-    delta2 = checkPointOnLine(p_uv_2d,uvs[0].uv,uvs[2].uv)
-    delta3 = checkPointOnLine(p_uv_2d,uvs[1].uv,uvs[2].uv)
-    delta = min(delta1,delta2,delta3)
 
     # if the point is not within the first triangle, we have to repeat the calculation
     # for the second triangle
-    if (mathutils.geometry.intersect_point_tri_2d(p_uv_2d, uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (delta != 0) & (len(uvs) == 4):
+    if (mathutils.geometry.intersect_point_tri_2d(p_uv_2d, uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (len(uvs) == 4):
         A = obj.data.vertices[obj.data.polygons[f].vertices[0]].co
         B = obj.data.vertices[obj.data.polygons[f].vertices[2]].co
         C = obj.data.vertices[obj.data.polygons[f].vertices[3]].co
@@ -225,16 +221,21 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
         return p_uv_2d
 
     p_uv_2d_new = p_uv_new.to_2d()
-    
-    delta1 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[2].uv)
-    delta2 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[3].uv)
-    delta3 = checkPointOnLine(p_uv_2d_new,uvs[2].uv,uvs[3].uv)
-    delta_new = min(delta1,delta2,delta3)
 
-    if (mathutils.geometry.intersect_point_tri_2d(p_uv_2d, uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (delta != 0) & (len(uvs) == 4):
-        if delta_new < delta:
-            return p_uv_2d_new
-        return p_uv_2d
+    if (mathutils.geometry.intersect_point_tri_2d(p_uv_2d_new, uvs[0].uv, uvs[2].uv, uvs[3].uv) == 0) & (len(uvs) == 4):
+        
+        delta1 = checkPointOnLine(p_uv_2d,uvs[0].uv,uvs[1].uv)
+        delta2 = checkPointOnLine(p_uv_2d,uvs[0].uv,uvs[2].uv)
+        delta3 = checkPointOnLine(p_uv_2d,uvs[1].uv,uvs[2].uv)
+        delta = min(delta1,delta2,delta3)
+        
+        delta1 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[2].uv)
+        delta2 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[3].uv)
+        delta3 = checkPointOnLine(p_uv_2d_new,uvs[2].uv,uvs[3].uv)
+        delta_new = min(delta1,delta2,delta3)
+        
+        if delta_new > delta:
+            return p_uv_2d
     return p_uv_2d_new
 
 def mapUVPointTo3d(obj_uv, uv_list, check_edges = False, cleanup=True):
@@ -1140,6 +1141,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     uv_grid.printGrid()
     logger.info("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)
+    maxdif = 0
     for i in range(0, num_particles):
         random.seed(i + SEED)
         pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer + 1)],
@@ -1160,7 +1162,13 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
 
         post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
         
-        print("number of post neurons", len(post_neurons))
+        if len(post_neurons) ==1:
+            if maxdif < post_neurons[0]:
+                maxdif = post_neurons[0]
+            print("difference from UV bounds:", post_neurons[0])
+            post_neurons = []
+        else:
+            print("number of post neurons", len(post_neurons))
 
         if (len(post_neurons) == 0):
             for j in range(0, len(conn[i])):
@@ -1199,6 +1207,8 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
         for rest in range(j + 1, no_synapses):
             conn[i, rest] = -1
 
+    print("maxdif:", maxdif)
+    
     if create:
         model.CONNECTION_INDICES.append(
             [

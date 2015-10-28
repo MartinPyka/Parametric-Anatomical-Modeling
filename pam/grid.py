@@ -289,8 +289,18 @@ class UVGrid(object):
 
         """
         if not self._in_bounds(uv[0], uv[1]):
-            print("First out of bounds condition in select_random")
-            return []
+            print("uv values adjusted")
+            uv = self.adjustUV2(uv)
+            # print("First out of bounds condition in select_random")
+            # if (uv[0]-self._u_max) > 0:
+                # return [uv[0]-self._u_max]
+            # if (self._u_min-uv[0]) > 0:
+                # return [self._u_min-uv[0]]
+            # if (uv[1]-self._v_max) > 0:
+                # return [uv[1]-self._v_max]
+            # if (self._v_min-uv[1]) > 0:
+                # return [self._v_min-uv[1]]
+            # return []
 
         col, row = self._uv_to_cell_index(uv[0], uv[1])
         if row == -1:
@@ -348,6 +358,19 @@ class UVGrid(object):
         if uv[0] >= self._u or vv[1] >= self._v or uv[0] < 0.0 or vv[0] < 0.0:
             uv[0] = min(self._u, max(0., uv[0]))
             uv[1] = min(self._v, max(0., vv[0]))
+        return uv
+        
+    def adjustUV2(self, uv):
+        """Return adjustd uv coordinates, corrected version
+
+        :param uv: uv coordinates
+        :type uv: tuple (float, float)
+        :return: adjusted uv coordinates
+        :rtype: tuple (float, float)
+
+        """
+        uv[0] = min(self._u_max, max(self._u_min, uv[0]))
+        uv[1] = min(self._v_max, max(self._v_min, uv[1]))
         return uv
 
     def _uv_to_cell_index(self, u, v):

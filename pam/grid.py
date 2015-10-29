@@ -212,6 +212,18 @@ class UVGrid(object):
         self._grid[mask] = grid
 
     def insert_postNeuron(self, index, uv, p_3d, d):
+        if not self._in_bounds(uv[0], uv[1]):
+            print("uv values adjusted")
+            uv = self.adjustUV2(uv)
+            #print("Out of bounds in insert_post_neuron", index)
+            #if (uv[0]-self._u_max) > 0:
+                #print(uv[0]-self._u_max)
+            #if (self._u_min-uv[0]) > 0:
+                #print(self._u_min-uv[0])
+            #if (uv[1]-self._v_max) > 0:
+                #print(uv[1]-self._v_max)
+            #if (self._v_min-uv[1]) > 0:
+                #print(self._v_min-uv[1])
         col, row = self._uv_to_cell_index(uv[0], uv[1])
         if col == -1:
             print("insert_postNeuron failed for neuron number", index)
@@ -291,16 +303,16 @@ class UVGrid(object):
         if not self._in_bounds(uv[0], uv[1]):
             print("uv values adjusted")
             uv = self.adjustUV2(uv)
-            # print("First out of bounds condition in select_random")
-            # if (uv[0]-self._u_max) > 0:
-                # return [uv[0]-self._u_max]
-            # if (self._u_min-uv[0]) > 0:
-                # return [self._u_min-uv[0]]
-            # if (uv[1]-self._v_max) > 0:
-                # return [uv[1]-self._v_max]
-            # if (self._v_min-uv[1]) > 0:
-                # return [self._v_min-uv[1]]
-            # return []
+            #print("First out of bounds condition in select_random")
+            #if (uv[0]-self._u_max) > 0:
+                #return [uv[0]-self._u_max]
+            #if (self._u_min-uv[0]) > 0:
+                #return [self._u_min-uv[0]]
+            #if (uv[1]-self._v_max) > 0:
+                #return [uv[1]-self._v_max]
+            #if (self._v_min-uv[1]) > 0:
+                #return [self._v_min-uv[1]]
+            #return []
 
         col, row = self._uv_to_cell_index(uv[0], uv[1])
         if row == -1:
@@ -383,6 +395,11 @@ class UVGrid(object):
 
         col = int(math.floor((u - self._u_min) / self._size_u * self._col))
         row = int(math.floor((v - self._v_min) / self._size_v * self._row))
+        
+        if u == self._u_max:      #if uv was adjusted, uv may be exactly on the upper border, which calculates to an invalid col,row value
+            col = self._col-1     #but is, in fact, a valid coordinate.
+        if v == self._v_max:
+            row = self._row-1
 
         logger.debug("uv (%f, %f) to cell index [%d][%d]", u, v, col, row)
 
@@ -413,7 +430,7 @@ class UVGrid(object):
 
     def _in_bounds(self, u, v):
         """Checks if a uv coordinate is inside uv bounds"""
-        return u < self._u_max and v < self._v_max and u >= self._u_min and v >= self._v_min
+        return u <= self._u_max and v <= self._v_max and u >= self._u_min and v >= self._v_min
 
     def _reset_weights(self):
         """Resets weights across the grid"""

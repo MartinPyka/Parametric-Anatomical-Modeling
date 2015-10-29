@@ -1162,13 +1162,13 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
 
         post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
         
-        # if len(post_neurons) ==1:
-            # if maxdif < post_neurons[0]:
-                # maxdif = post_neurons[0]
-            # print("difference from UV bounds:", post_neurons[0])
-            # post_neurons = []
-        # else:
-            # print("number of post neurons", len(post_neurons))
+        #if len(post_neurons) ==1:
+            #if maxdif < post_neurons[0]:
+                #maxdif = post_neurons[0]
+            #print("difference from UV bounds:", post_neurons[0])
+            #post_neurons = []
+        #else:
+            #print("number of post neurons", len(post_neurons))
 
         if (len(post_neurons) == 0):
             for j in range(0, len(conn[i])):

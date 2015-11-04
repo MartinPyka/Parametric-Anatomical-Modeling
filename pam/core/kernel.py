@@ -4,37 +4,47 @@ import math
 import numpy as np
 
 KERNEL_TYPES = [
-    ("gauss", "Gauss", "", 0),
-    ("gauss_u", "Gauss (u)", "", 1),
-    ("gauss_v", "Gauss (v)", "", 2),
-    ("stripe_with_end", "Stripe with end", "", 3),
-    ("unity", "Unity", "", 4),
-    ("yu_kernel", "Yu Kernel", "", 5),
+    ("GaussKernel", "Gauss", "", 0),
+    ("GaussUKernel", "Gauss (u)", "", 1),
+    ("GaussVKernel", "Gauss (v)", "", 2),
+    ("StripeWithEndKernel", "Stripe with end", "", 3),
+    ("UnityKernel", "Unity", "", 4),
+    ("YuKernel", "Yu Kernel", "", 5),
     ("yu_kernel2", "Yu fixed Params", "", 6)
 ]
+class AbstractKernel():
+    def __init__(self):
+        pass
 
+    def apply(self, uv, guv):
+        """
+        :param uv: uv coordinates
+        :type uv: numpy array of floats with shape (x, y, 2)
+        :param guv: grid coordinates
+        :type guv: numpy array of floats with shape (x, y, 2)"""
 
-# TODO(SK): Fill in docstring parameter/return value
-def gauss(uv, guv, var_u=1.0, var_v=1.0, shift_u=0.0, shift_v=0.0):
+        return None
+
+class GaussKernel(AbstractKernel):
     """Computes distribution value in two dimensional gaussian kernel
 
-    :param uv: uv coordinates
-    :type uv: tuple (float, float)
-    :param guv:
-    :type guv: tuple (float, float)
     :param float var_u:
     :param float var_v:
     :param float shift_u:
     :param float shift_u:
     :return: gauss value at point uv in 2d space
-    :rtype: float
+    :rtype: float"""
+    def __init__(self, var_u = 1.0, var_v = 1.0, shift_u = 0.0, shift_v = 0.0):
+        self.var_u = var_u
+        self.var_v = var_v
+        self.shift_u = shift_u
+        self.shift_v = shift_v
 
-    """
-    ruv = guv - uv  # compute relative position
+    def apply(self, uv, guv):
+        ruv = guv - uv  # compute relative position
 
-    return np.exp(-((ruv[...,0] + shift_u) ** 2 / (2 * var_u ** 2) +
-                    (ruv[...,1] + shift_v) ** 2 / (2 * var_v ** 2)))
-
+        return np.exp(-((ruv[...,0] + self.shift_u) ** 2 / (2 * self.var_u ** 2) +
+                        (ruv[...,1] + self.shift_v) ** 2 / (2 * self.var_v ** 2)))
 
 # copied from:
 # http://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python
@@ -77,84 +87,77 @@ def angle_between(v1, v2):
             return np.pi
     return angle
 
-
-# TODO(SK): Fill in docstring parameter/return value
-def stripe_with_end(uv, guv, vec_u=1.0, vec_v=0.0, shift_u=0.0, shift_v=0.0,
-                    var_v=0.2):
+class StripeWithEndKernel(AbstractKernel):
     """The kernel is essiantially a stripe along the (vec_u, vec_v) axis
     but everything in the negative direction of the vector is ommitted.
 
     This function is helpful to model axons which grow only in one direction
-
-    :param uv: position of the neuron
-    :param guv: relativ position
+    
     :param float vec_u: u-component of the direction vector
     :param float vec_v: v-component of the direction vector
     :param float shift_u: shift along the u-direction relativ in space
     :param float shift_v: shift along the v-direction
     :param float var_v: width of the kernel
-    :type uv: tuple (float, float)
-    :type guv: tuple (float, float)
     :return:
     :rtype: float
-
     """
 
-    # angle of standard-vector to base
-    ruv = guv - uv
+    def __init__(self, vec_u=1.0, vec_v=0.0, shift_u=0.0, shift_v=0.0, var_v=0.2):
+        self.vec_u = vec_u
+        self.vec_v = vec_v
+        self.shift_u = shift_u
+        self.shift_v = shift_v
+        self.var_v = var_v
 
-    vec = np.array([vec_u, vec_v])
-    angle = angle_between(vec, np.array([1., 0.]))
-    rotMatrix = np.array([
-        [np.cos(-angle), -np.sin(-angle)],
-        [np.sin(-angle), np.cos(-angle)]
-    ])
-    rot_vec = np.dot(rotMatrix, ruv[...,np.newaxis])
-    rot_vec = np.swapaxes(rot_vec, 0, -1)[0]
-    rot_vec[...,0] -= shift_u
-    rot_vec[...,1] -= shift_v
-    
-    result = np.exp(-(rot_vec[...,1]**2 / (2 * var_v**2)))
-    if type(result) is not np.ndarray:
-        if rot_vec[0] < 0:
-            return 0.0
+    def apply(self, uv, guv):
+        # angle of standard-vector to base
+        ruv = guv - uv
+
+        vec = np.array([self.vec_u, self.vec_v])
+        angle = angle_between(vec, np.array([1., 0.]))
+        rotMatrix = np.array([
+            [np.cos(-angle), -np.sin(-angle)],
+            [np.sin(-angle), np.cos(-angle)]
+        ])
+        rot_vec = np.dot(rotMatrix, ruv[...,np.newaxis])
+        rot_vec = np.swapaxes(rot_vec, 0, -1)[0]
+        rot_vec[...,0] -= self.shift_u
+        rot_vec[...,1] -= self.shift_v
+        
+        result = np.exp(-(rot_vec[...,1]**2 / (2 * var_v**2)))
+        if type(result) is not np.ndarray:
+            if rot_vec[0] < 0:
+                return 0.0
+            else:
+                return result
         else:
+            np.place(result, rot_vec[...,0] < 0.0, 0.0)
             return result
-    else:
-        np.place(result, rot_vec[...,0] < 0.0, 0.0)
-        return result
 
-# TODO(SK): Rephrase docstring & fill in parameter values
-def gauss_u(uv, guv, origin_u=0.0, var_u=1.0):
+class GaussUKernel(AbstractKernel):
     """Computes distribution value in one dimensional gaussian kernel
     in u direction
 
-    :param uv: uv coordinates
-    :type uv: tuple (float, float)
-    :param guv:
-    :type guv: tuple (float, float)
     :param float origin_u:
     :param float origin_v:
     :type origin_u:
     :type origin_v:
     :return: gauss value at point uv in 2d space
     :rtype: float
-
     """
-    ruv = guv - uv  # compute relative position
+    def __init__(self, origin_u = 0.0, var_u = 1.0):
+        self.origin_u = origin_u
+        self.var_u = var_u
 
-    return math.exp(-(1 / 2) * ((ruv[0] - origin_u) / var_u) ** 2)
+    def apply(self, uv, guv):
+        ruv = guv - uv  # compute relative position
 
+        return np.exp(-(1 / 2) * ((ruv[...,0] - self.origin_u) / self.var_u) ** 2)
 
-# TODO(SK): Rephrase docstring & fill in parameter values
-def gauss_v(uv, guv, origin_v=0.0, var_v=1.0):
+class GaussVKernel(AbstractKernel):
     """Computes distribution value in one dimensional gaussian kernel
     in v direction
 
-    :param uv: uv coordinates
-    :type uv: tuple (float, float)
-    :param guv:
-    :type guv: tuple (float, float)
     :param float origin_u:
     :param float origin_v:
     :type origin_u:
@@ -163,38 +166,27 @@ def gauss_v(uv, guv, origin_v=0.0, var_v=1.0):
     :rtype: float
 
     """
-    ruv = guv - uv  # compute relative position
+    def __init__(self, origin_v = 0.0, var_v = 1.0):
+        self.origin_v = origin_v
+        self.var_v = var_v
 
-    return math.exp(-(1 / 2) * ((ruv[1] - origin_v) / var_v) ** 2)
+    def apply(self, uv, guv):
+        ruv = guv - uv  # compute relative position
 
+        return np.exp(-(1 / 2) * ((ruv[...,1] - self.origin_v) / self.var_v) ** 2)
 
-# TODO(SK): Rephrase docstring & fill in parameter values
-def unity(uv, guv, origin_u, origin_v):
-    """Returns a unity kernel
+class UnityKernel(AbstractKernel):
+    """Returns a unity kernel"""
 
-    :param uv: uv coordinates
-    :type uv: tuple (float, float)
-    :param guv:
-    :type guv: tuple (float, float)
-    :param float origin_u:
-    :param float origin_v:
-    :type origin_u:
-    :type origin_v:
-    :return: 1.0
-    :rtype: float
+    def __init__(self):
+        pass
 
-    """
-    return 1.0
+    def apply(self, uv, guv):
+        return np.ones(guv.shape[:2], dtype = np.float)
 
-
-
-# TODO(SK): Rephrase docstring & fill in parameter values
-def yu_kernel(uv, guv, alpha_u = 0., alpha_v =  0., omega_u = 1.0, omega_v =1.0, ksi_u = 0., ksi_v = 0., tau = 0.):
+class YuKernel():
     """Computes distribution value in two dimensional Yu kernel
 
-    :param uv: uv coordinates
-    :type uv: tuple (float, float)
-    :param guv:    
     :type guv: tuple (float, float)
     :param float alpha_u: compression in u
     :param float alpha_v: compression in v
@@ -204,32 +196,41 @@ def yu_kernel(uv, guv, alpha_u = 0., alpha_v =  0., omega_u = 1.0, omega_v =1.0,
     :param float ksi_v: shift in v
     :param float tau: rotation angle
     :return: yu_kernel value at point uv in 2d space
-    :rtype: float
-     
-    """
-    # omega: Scaling by (omega * bins)
-    #         omega = ]0., ∞] (if = 0 => div 0)
-         
-    # alpha: Compression of function by unknown
-    #         alpha = [-∞, ∞]
-                
-    # ksi:   Shift by (ksi * bins)
-    #         ksi = [-∞, ∞]
+    :rtype: float"""
+    def __init__(self, alpha_u = 0., alpha_v =  0., omega_u = 1.0, omega_v =1.0, ksi_u = 0., ksi_v = 0., tau = 0.):
+        self.alpha_u = alpha_u
+        self.alpha_v = alpha_v
+        self.omega_u = omega_u
+        self.omega_v = omega_v
+        self.ksi_u = ksi_u
+        self.ksi_v = ksi_v
+        self.tau = tau
+
+    @staticmethod
+    def _phi(x):
+        return np.exp(-(x**2/2))/(np.sqrt(2*np.pi))
     
-    def phi(x):
-        return math.exp(-(x**2/2))/(math.sqrt(2*math.pi))
-    
-    def xhi(x):
-        return 0.5*(1+ math.erf(x/math.sqrt(2)))  
-      
-    taur = math.pi/180 * tau    # convert angle in radian
-    u = guv[0] - uv[0] - ksi_u # compute relative u coordinate 
-    v = guv[1] - uv[1] - ksi_v # compute relative u coordinate 
-    ruv = [( u * np.cos(taur) - v * np.sin(taur)), 
-           ( u * np.sin(taur) + v * np.cos(taur))] # compute rotation
-              
-    return (2/omega_v * phi(ruv[1]/ omega_v) * xhi (alpha_v * ruv[1]/ omega_v)*
-            2/omega_u * phi(ruv[0]/ omega_u) * xhi (alpha_u * ruv[0]/ omega_u)) / 20.
+    @staticmethod
+    def _xhi(x):
+        return 0.5*(1+ math.erf(x/np.sqrt(2)))
+
+    def yu_kernel(self, duv):
+        taur = np.pi/180 * self.tau    # convert angle in radian
+        u = duv[0] - self.ksi_u # compute relative u coordinate 
+        v = duv[1] - self.ksi_v # compute relative u coordinate 
+        ruv = [( u * np.cos(taur) - v * np.sin(taur)), 
+               ( u * np.sin(taur) + v * np.cos(taur))] # compute rotation
+                  
+        return (2/self.omega_v * self._phi(ruv[1]/ self.omega_v) * self._xhi (self.alpha_v * ruv[1]/ self.omega_v)*
+                2/self.omega_u * self._phi(ruv[0]/ self.omega_u) * self._xhi (self.alpha_u * ruv[0]/ self.omega_u)) / 20.
+
+    def apply(self, uv, guv):
+        ruv = guv - uv
+        m = np.empty(shape = ruv.shape[:2])
+        for i in range(ruv.shape[0]):
+            for j in range(ruv.shape[1]):
+                m[i, j] = self.yu_kernel(ruv[i, j])
+        return m
 
 
 # TODO(SK): Rephrase docstring & fill in parameter values

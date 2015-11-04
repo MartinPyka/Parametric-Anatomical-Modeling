@@ -93,6 +93,9 @@ class Mesh():
     def mapUVPointTo3d(self, uv):
         mapUVPointTo3d(self, uv)
 
+    def map3dPointTo3d(self, mesh, point, normal = None):
+        return map3dPointTo3d(self, mesh, point, normal)
+
 class Octree():
     """[INSERT DOCSTRING HERE]
     bounds: [-x, +x, -y, +y, -z, +z] 
@@ -443,9 +446,9 @@ def map3dPointToUV(mesh, point, normal = None):
     # if normal is None, we don't worry about orthogonal projections
     if normal is None:
         # get point, normal and face of closest point to a given point
-        p, f, b = o1.findClosestPointOnMesh(point)
+        p, f, b = mesh.findClosestPointOnMesh(point)
     else:
-        p, f, d, b = o1.raycast(normal)
+        p, f, d, b = mesh.raycast(normal)
         # if no collision could be detected, return None
         if f == -1:
             return None
@@ -538,15 +541,15 @@ def map3dPointTo3d(mesh1, mesh2, point, normal=None):
     # if normal is None, we don't worry about orthogonal projections
     if normal is None:
         # get point, normal and face of closest point to a given point
-        p, f, b = o1.findClosestPointOnMesh(point)
+        p, f, b = mesh1.findClosestPointOnMesh(point)
     else:
-        p, f, d, b = o1.raycast(normal)
+        p, f, d, b = mesh1.raycast(normal)
         # if no collision could be detected, return None
         if f == -1:
             return None
 
     # if o1 and o2 are identical, there is nothing more to do
-    if (o1 == o2):
+    if (mesh1 == mesh2):
         return p
 
     A2 = o2.polygons[f][0][:3]

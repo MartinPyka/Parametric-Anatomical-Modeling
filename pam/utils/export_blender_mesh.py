@@ -12,15 +12,22 @@ def export_object(obj):
 
     # Determine active uv-map
     uv_layer = mesh.loops.layers.uv.active
-    if uv_layer is None:
-        raise Exception("No active UV map (uv)")
 
     pymesh = []
-    for face_index, face in enumerate(mesh.faces):
-        poly = []
-        for i, (loop, vert) in enumerate(zip(face.loops, face.verts)):
-            poly.append((vert.co[0], vert.co[1], vert.co[2], loop[uv_layer].uv[0], loop[uv_layer].uv[1]))
-        pymesh.append(poly)
+
+    if uv_layer is None:
+        print("Warning:", obj, "has no active uv map")
+        for face_index, face in enumerate(mesh.faces):
+            poly = []
+            for i, (loop, vert) in enumerate(zip(face.loops, face.verts)):
+                poly.append((vert.co[0], vert.co[1], vert.co[2], 0, 0))
+            pymesh.append(poly)
+    else:
+        for face_index, face in enumerate(mesh.faces):
+            poly = []
+            for i, (loop, vert) in enumerate(zip(face.loops, face.verts)):
+                poly.append((vert.co[0], vert.co[1], vert.co[2], loop[uv_layer].uv[0], loop[uv_layer].uv[1]))
+            pymesh.append(poly)
     
     return pymesh
 

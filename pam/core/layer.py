@@ -23,6 +23,9 @@ class Layer2d(AbstractLayer):
     def mapUVPointTo3d(self, uv):
         self.mesh.mapUVPointTo3d(uv)
 
+    def closest_point_on_mesh(self, point):
+        self.mesh.findClosestPointOnMesh(point)
+
 class NeuronLayer(Layer2d):
     """Implements a 2d-layer with neurons on it"""
 

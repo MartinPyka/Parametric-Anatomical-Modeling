@@ -2,15 +2,16 @@
 
 import math
 import numpy as np
+import inspect
 
 KERNEL_TYPES = [
-    ("GaussKernel", "Gauss", "", 0),
-    ("GaussUKernel", "Gauss (u)", "", 1),
-    ("GaussVKernel", "Gauss (v)", "", 2),
-    ("StripeWithEndKernel", "Stripe with end", "", 3),
-    ("UnityKernel", "Unity", "", 4),
-    ("YuKernel", "Yu Kernel", "", 5),
-    ("yu_kernel2", "Yu fixed Params", "", 6)
+    ("gauss", "Gauss", "GaussKernel", "", 0),
+    ("gauss_u", "Gauss (u)", "GaussUKernel", "", 1),
+    ("gauss_v", "Gauss (v)", "GaussVKernel", "", 2),
+    ("stripe_with_end", "Stripe with end", "StripeWithEndKernel", "", 3),
+    ("unity", "Unity", "UnityKernel", "", 4),
+    ("yu_kernel", "Yu Kernel", "YuKernel", "", 5),
+    ("gauss", "Yu fixed Params", "", "", 6)
 ]
 class AbstractKernel():
     def __init__(self):
@@ -24,6 +25,17 @@ class AbstractKernel():
         :type guv: numpy array of floats with shape (x, y, 2)"""
 
         return None
+
+    def rescale(self, scale):
+        """Rescales all non-private float attributes of the class by scale
+
+        :param scale: The scale to apply
+        :type scale: float"""
+        args = inspect.getmembers(self, lambda a:not(inspect.isroutine(a)))
+        for arg, val in args:
+            if (arg.startswith("__") and arg.endswith("__")) or type(val) is not float:
+                continue
+            setattr(self, arg, val * scale)
 
 class GaussKernel(AbstractKernel):
     """Computes distribution value in two dimensional gaussian kernel

@@ -140,15 +140,15 @@ class UVGrid(object):
         return self._u_min, self._u_max, self._v_min, self._v_max
 
     # TODO(SK): Missing docstring
-    def compute_pre_mask(self, kernel, args):
-        self.compute_grid("pre", kernel, args)
+    def compute_pre_mask(self, kernel):
+        self.compute_grid("pre", kernel)
 
     # TODO(SK): Missing docstring
-    def compute_post_mask(self, kernel, args):
-        self.compute_grid("post", kernel, args)
+    def compute_post_mask(self, kernel):
+        self.compute_grid("post", kernel)
         self._grid['post'] = [item for sublist in self._grid['post'][:,:] for item in sublist]
 
-    def compute_grid(self, mask, kernel, args = []):
+    def compute_grid(self, mask, kernel):
         grid = numpy.zeros((self._col, self._row, self._col, self._row))
         # Padding for uv coordinates is half the size of a cell to center the coordinate
         padding_horizontal = self._size_u / self._col / 2.
@@ -166,7 +166,7 @@ class UVGrid(object):
             for j in range(self._row):
                 uvs = numpy.array([self._cell_index_to_uv(i, j)])
                 # Create array with uv-coords
-                grid[i][j] = kernel(uvs, guvs, *args)
+                grid[i][j] = kernel.apply(uvs, guvs)
         self._grid[mask] = grid
 
     def insert_postNeuron(self, index, uv, p_3d, d):

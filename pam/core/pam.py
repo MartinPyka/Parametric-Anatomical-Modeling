@@ -368,7 +368,7 @@ def computeDistance_PreToSynapse(no_connection, pre_index, synapses=[]):
 # TODO(SK): Rephrase docstring, add parameter/return valuesprint(slayer)
 def compute_path_length(path):
     """Compute for an array of 3d-vectors their length in space"""
-    return sum([(path[i] - path[i - 1]).length for i in range(1, len(path))])
+    return sum([numpy.linalg.norm(path[i] - path[i - 1]) for i in range(1, len(path))])
 
 
 # TODO(SK): Rephrase docstring, add parameter/return values
@@ -884,7 +884,7 @@ def updateMapping(index):
     }
 
 def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
-                        distances, func_pre, args_pre, func_post, args_post,
+                        distances, kernel_pre, kernel_post,
                         no_synapses, create=True, threads = None):
     """Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
     with the given parameters
@@ -920,8 +920,8 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     if type(neuronset2) is str:
         neuronset2 = pam_model.PARTICLES[neuronset2]
 
-    if type(layers[0]) is str:
-        for l in range(len(layers)):
+    for l in range(len(layers)):
+        if type(layers[l]) is str:
             layers[l] = pam_model.MESHES[layers[l]]
 
     # connection matrix
@@ -931,18 +931,20 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     dist = numpy.zeros((len(neuronset1), no_synapses))
 
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
-    syn = [[[] for j in range(no_synapses)] for i in range(len(neuronset1))]
+    syn = numpy.zeros((len(neuronset1), no_synapses, 2))
 
     uv_grid = grid.UVGrid(layers[slayer], 0.02)
 
     # rescale arg-parameters
-    args_pre = [i / layers[slayer]['uv_scaling'] for i in args_pre]
-    args_post = [i / layers[slayer]['uv_scaling'] for i in args_post]
+    if hasattr(kernel_pre, uv_scaling):
+        kernel_pre.rescale(layers[slayer].uv_scaling)
+    if hasattr(kernel_post, uv_scaling):
+        kernel_post.rescale(layers[slayer].uv_scaling)
 
     logger.info("Prepare Grid")
 
-    uv_grid.compute_pre_mask(func_pre, args_pre)
-    uv_grid.compute_post_mask(func_post, args_post)
+    uv_grid.compute_pre_mask(kernel_pre)
+    uv_grid.compute_post_mask(kernel_post)
 
     logger.info("Compute Post-Mapping")
 
@@ -952,11 +954,11 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
         post_p3d, post_p2d, post_d = computeMapping(layers[:(slayer - 1):-1],
                                                     connections[:(slayer - 1):-1],
                                                     distances[:(slayer - 1):-1],
-                                                    layers[-1].particle_systems[neuronset2].particles[i].location)
+                                                    neuronset2[i])
         if post_p3d is None:
             continue
         
-        uv_grid.insert_postNeuron(i, post_p2d, post_p3d[-1].to_tuple(), post_d)
+        uv_grid.insert_postNeuron(i, post_p2d, post_p3d[-1], post_d)
 
 
     #uv_grid.convert_postNeuronStructure()
@@ -969,7 +971,7 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
         pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer + 1)],
                                                  connections[0:slayer],
                                                  distances[0:slayer],
-                                                 layers[0].particle_systems[neuronset1].particles[i].location)
+                                                 neuronset1[i])
 
         logger.info(str(round((i / num_particles) * 10000) / 100) + '%')
 
@@ -990,44 +992,40 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
         for j, post_neuron in enumerate(post_neurons):
             try:
                 distance_pre, _ = computeDistanceToSynapse(
-                    layers[slayer - 1], layers[slayer], pre_p3d[-1], mathutils.Vector(post_neuron[1]), distances[slayer - 1])
+                    layers[slayer - 1], layers[slayer], pre_p3d[-1], post_neuron[1], distances[slayer - 1])
                 try: 
                     distance_post, _ = computeDistanceToSynapse(
-                        layers[slayer + 1], layers[slayer], mathutils.Vector(post_neuron[0][2]), mathutils.Vector(post_neuron[1]), distances[slayer])
+                        layers[slayer + 1], layers[slayer], post_neuron[0][2], post_neuron[1], distances[slayer])
                     conn[i, j] = post_neuron[0][0]      # the index of the post-neuron
                     dist[i, j] = pre_d + distance_pre + distance_post + post_neuron[0][3]      # the distance of the post-neuron
                     syn[i][j] = post_neuron[1]
                 except exceptions.MapUVError as e:
                     logger.info("Message-post-data: " + str(e))
-                    model.CONNECTION_ERRORS.append(e)
+                    pam_model.CONNECTION_ERRORS.append(e)
                     conn[i, j] = -1
-                    syn[i][j] = mathutils.Vector((0, 0))
                 except Exception as e:
                     logger.info("A general error occured: " + str(e))
                     conn[i, j] = -1
-                    syn[i][j] = mathutils.Vector((0, 0))
             except exceptions.MapUVError as e:
                 logger.info("Message-pre-data: " + str(e))
-                model.CONNECTION_ERRORS.append(e)
+                pam_model.CONNECTION_ERRORS.append(e)
                 conn[i, j] = -1
-                syn[i][j] = mathutils.Vector((0, 0))
             except Exception as e:
                 logger.info("A general error occured: " + str(e))
                 conn[i, j] = -1
-                syn[i][j] = mathutils.Vector((0, 0))
 
         for rest in range(j + 1, no_synapses):
             conn[i, rest] = -1
 
     if create:
-        model.CONNECTION_INDICES.append(
+        pam_model.CONNECTION_INDICES.append(
             [
-                model.CONNECTION_COUNTER,
-                model.NG_DICT[layers[0].name][neuronset1],
-                model.NG_DICT[layers[-1].name][neuronset2]
+                pam_model.CONNECTION_COUNTER,
+                pam_model.NG_DICT[layers[0].name][neuronset1],
+                pam_model.NG_DICT[layers[-1].name][neuronset2]
             ]
         )
-        model.CONNECTION_COUNTER += 1
+        pam_model.CONNECTION_COUNTER += 1
 
     return conn, dist, syn, uv_grid
 

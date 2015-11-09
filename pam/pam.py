@@ -134,6 +134,7 @@ def computeUVScalingFactor(obj):
 
     # TODO (MP): compute scaling factor on the basis of all edges
     return numpy.mean(result), result
+    
 def checkPointOnLine(p,a1,a2):
     """Checks if a point p is on the line between the points a1 and a2
     returns the qualitative distance of the point from the line, 0 if the point is on the line with tolerance
@@ -1138,10 +1139,8 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     #uv_grid.convert_postNeuronStructure()
     #for m in uv_grid._masks['post']:
     #    print(len(m))
-    uv_grid.printGrid()
     logger.info("Compute Pre-Mapping")
     num_particles = len(layers[0].particle_systems[neuronset1].particles)
-    maxdif = 0
     for i in range(0, num_particles):
         random.seed(i + SEED)
         pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer + 1)],
@@ -1155,20 +1154,10 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
             for j in range(0, len(conn[i])):
                 conn[i, j] = -1
             continue
-            
-        print("i, pre_p2d", i, pre_p2d[0], pre_p2d[1])
 
         numpy.random.seed(i + SEED)
 
         post_neurons = uv_grid.select_random(pre_p2d, no_synapses)
-        
-        #if len(post_neurons) ==1:
-            #if maxdif < post_neurons[0]:
-                #maxdif = post_neurons[0]
-            #print("difference from UV bounds:", post_neurons[0])
-            #post_neurons = []
-        #else:
-            #print("number of post neurons", len(post_neurons))
 
         if (len(post_neurons) == 0):
             for j in range(0, len(conn[i])):
@@ -1207,8 +1196,6 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
         for rest in range(j + 1, no_synapses):
             conn[i, rest] = -1
 
-    print("maxdif:", maxdif)
-    
     if create:
         model.CONNECTION_INDICES.append(
             [

@@ -8,6 +8,7 @@ import numpy
 
 import constants
 import helper
+import mesh
 
 #import constants
 #import helper
@@ -25,16 +26,17 @@ def uv_bounds(obj):
     :raises TypeError: if obj has no uv data attached
 
     """
-    active_uv = obj.data.uv_layers.active
+    u_max = -numpy.inf
+    u_min = numpy.inf
+    v_max = -numpy.inf
+    v_min = numpy.inf
 
-    if not hasattr(active_uv, "data"):
-        logger.error("%s has no uv data", obj)
-        raise TypeError("object has no uv data")
-
-    u_max = max([mesh.uv[0] for mesh in active_uv.data])
-    v_max = max([mesh.uv[1] for mesh in active_uv.data])
-    u_min = min([mesh.uv[0] for mesh in active_uv.data])
-    v_min = min([mesh.uv[1] for mesh in active_uv.data])
+    for polygon in obj.mesh.polygons:
+        for point in polygon:
+            u_max = max(u_max, point[3])
+            v_max = max(v_max, point[4])
+            u_min = min(u_min, point[3])
+            v_min = min(v_min, point[4])
 
     logger.debug("%s uv bounds (%f, %f, %f, %f)", obj, u_min, u_max, v_min, v_max)
 
@@ -77,7 +79,7 @@ class UVGrid(object):
 
     def __init__(self, obj, resolution=constants.DEFAULT_RESOLUTION):
         self._obj = obj
-        self._scaling = obj['uv_scaling']
+        self._scaling = 1.0 # obj['uv_scaling']
         self._resolution = resolution
 
         self._u_min, self._u_max, self._v_min, self._v_max = uv_bounds(obj)
@@ -348,30 +350,16 @@ class UVGrid(object):
         if normal is not None, the normal is used to detect the point on object, otherwise
         the closest_point_on_mesh operation is used
         """
-
-        result = 0
-        for p in self._obj.data.polygons:
-            uvs = [self._obj.data.uv_layers.active.data[li] for li in p.loop_indices]
-            result = mathutils.geometry.intersect_point_tri_2d(
+        for p in self._obj.mesh.uv_quadtree.getPolygons(uv):
+            uvs = p[...,3:]
+            result = mesh.intersectPointTri2d(
                 uv,
-                uvs[0].uv,
-                uvs[1].uv,
-                uvs[2].uv
+                uvs[0],
+                uvs[1],
+                uvs[2]
             )
 
-            if (result == 1) | (result == -1):
-                result = 1
-                break
-            else:
-                result = mathutils.geometry.intersect_point_tri_2d(
-                    uv,
-                    uvs[0].uv,
-                    uvs[2].uv,
-                    uvs[3].uv
-                )
+            if result:
+                return True
 
-                if (result == 1) | (result == -1):
-                    result = 1
-                    break
-
-        return result
+        return False

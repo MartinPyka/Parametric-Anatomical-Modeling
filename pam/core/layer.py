@@ -5,7 +5,7 @@ from mesh import *
 class AbstractLayer():
     """Abstract layer for implementing layers"""
 
-    def __init__(self, name, mesh):
+    def __init__(self, name):
         self.name = name
     
     def __str__(self):
@@ -18,13 +18,19 @@ class Layer2d(AbstractLayer):
         self.mesh = mesh
 
     def map3dPointToUV(self, point, normal = None):
-        self.mesh.map3dPointToUV(point, normal)
+        return self.mesh.map3dPointToUV(point, normal)
 
     def mapUVPointTo3d(self, uv):
-        self.mesh.mapUVPointTo3d(uv)
+        return self.mesh.mapUVPointTo3d(uv)
 
     def closest_point_on_mesh(self, point):
-        self.mesh.findClosestPointOnMesh(point)
+        return self.mesh.closest_point_on_mesh(point)
+
+    def closest_point_on_mesh_normal(self, point):
+        return self.mesh.closest_point_on_mesh_normal(point)
+
+    def raycast(self, origin, direction):
+        return self.mesh.raycast(origin, direction)
 
 class NeuronLayer(Layer2d):
     """Implements a 2d-layer with neurons on it"""
@@ -69,53 +75,53 @@ class LayerConnectionNormalBase(LayerConnection):
         p3d_n = map3dPointTo3d(layerTo, layerTo, p, n)
         return p3d_n
 
-layerConnectionTypes = {
-    'euklid': {
-        'euklid': (LayerConnectionEuklidBase, LayerConnection),
-        'euklid_uv': (LayerConnectionEuklidBase, LayerConnectionEuklidBase),
-        'jump_uv': (LayerConnectionEuklidBase, LayerConnectionEuklidBase),
-        'uv_jump': None,
-        'normal_uv': None,
-        'uv_normal': None
-    },
-    'normal': {
-        'euklid': None,
-        'euklid_uv': None,
-        'jump_uv': None,
-        'uv_jump': None,
-        'normal_uv': None,
-        'uv_normal': None
-    },
-    'random': {
-        'euklid': None,
-        'euklid_uv': None,
-        'jump_uv': None,
-        'uv_jump': None,
-        'normal_uv': None,
-        'uv_normal': None
-    },
-    'topology': {
-        'euklid': None,
-        'euklid_uv': None,
-        'jump_uv': None,
-        'uv_jump': None,
-        'normal_uv': None,
-        'uv_normal': None
-    },
-    'uv': {
-        'euklid': None,
-        'euklid_uv': None,
-        'jump_uv': None,
-        'uv_jump': None,
-        'normal_uv': None,
-        'uv_normal': None
-    }
-    'mask3d' {
-        'euklid': None,
-        'euklid_uv': None,
-        'jump_uv': None,
-        'uv_jump': None,
-        'normal_uv': None,
-        'uv_normal': None
-    }
-}
+# layerConnectionTypes = {
+#     'euklid': {
+#         'euklid': (LayerConnectionEuklidBase, LayerConnection),
+#         'euklid_uv': (LayerConnectionEuklidBase, LayerConnectionEuklidBase),
+#         'jump_uv': (LayerConnectionEuklidBase, LayerConnectionEuklidBase),
+#         'uv_jump': None,
+#         'normal_uv': None,
+#         'uv_normal': None
+#     },
+#     'normal': {
+#         'euklid': None,
+#         'euklid_uv': None,
+#         'jump_uv': None,
+#         'uv_jump': None,
+#         'normal_uv': None,
+#         'uv_normal': None
+#     },
+#     'random': {
+#         'euklid': None,
+#         'euklid_uv': None,
+#         'jump_uv': None,
+#         'uv_jump': None,
+#         'normal_uv': None,
+#         'uv_normal': None
+#     },
+#     'topology': {
+#         'euklid': None,
+#         'euklid_uv': None,
+#         'jump_uv': None,
+#         'uv_jump': None,
+#         'normal_uv': None,
+#         'uv_normal': None
+#     },
+#     'uv': {
+#         'euklid': None,
+#         'euklid_uv': None,
+#         'jump_uv': None,
+#         'uv_jump': None,
+#         'normal_uv': None,
+#         'uv_normal': None
+#     },
+#     'mask3d': {
+#         'euklid': None,
+#         'euklid_uv': None,
+#         'jump_uv': None,
+#         'uv_jump': None,
+#         'normal_uv': None,
+#         'uv_normal': None
+#     }
+# }

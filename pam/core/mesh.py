@@ -9,7 +9,7 @@ class Mesh():
         self.polygon_transformation_cache = [None] * len(self.polygons)
         self.name = name
 
-    def findClosestPointOnMesh(self, point):
+    def closest_point_on_mesh(self, point):
         # Find closest node
         nodes = self.octree.listNodes()
         p = numpy.array(point)
@@ -22,10 +22,13 @@ class Mesh():
                 node_distance = d
         polygons = closest_node.getPolygonsUpwards()
         node_distance_extended = numpy.square(numpy.sqrt(node_distance) + numpy.sqrt(distance_sqr(numpy.array((closest_node.bounds[0], closest_node.bounds[2], closest_node.bounds[4])), closest_node.center)))
+        poly_lookup = [False] * len(self.polygons)
         for n in nodes:
             if distance_sqr(p, n.center) < node_distance_extended:
-                polygons.extend(n.getPolygonsUpwards())
-        polygons = numpy.unique(polygons)
+                polys = n.getPolygonsUpwards()
+                for poly in polys:
+                    poly_lookup[poly] = True
+        polygons = [i for i in range(len(self.polygons)) if poly_lookup[i]]
         closest_distance = numpy.inf
         closest_point = None
         closest_barycentric_coords = None
@@ -37,8 +40,8 @@ class Mesh():
                 polygon_index = poly_index
                 closest_point = triangle_point
                 closest_barycentric_coords = barycentric_coords
-        print(len(polygons), '/', len(self.polygons), "polygons checked")
-        return closest_point, polygon_index, (l1, l2, l3)
+        # print(len(polygons), '/', len(self.polygons), "polygons checked")
+        return closest_point, polygon_index, closest_barycentric_coords
 
     def _cachedClosestPointOnTriangle(self, point, polygon_index):
         # http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.104.4264&rep=rep1&type=pdf
@@ -77,24 +80,33 @@ class Mesh():
         closest_intersection = None
         closest_barycentric_coords = None
         for i, poly in enumerate(self.polygons):
-            intersection, barycentric_coords = intersectRayTri(origin, direction, poly[0][:3], poly[1][:3], poly[2][:3])
+            intersection = intersectRayTri(origin, direction, poly[0][:3], poly[1][:3], poly[2][:3])
             if intersection is not None:
-                d = distance_sqr(intersection, origin)
+                d = distance_sqr(intersection[0], origin)
                 if d < closest_distance_sqr:
                     closest_distance_sqr = d
                     closest_poly_index = i
-                    closest_intersection = intersection
-                    closest_barycentric_coords = barycentric_coords
-        return closest_intersection, closest_poly_index, numpy.sqrt(closest_distance_sqr), barycentric_coords
+                    closest_intersection = intersection[0]
+                    closest_barycentric_coords = intersection[1]
+        return closest_intersection, closest_poly_index, numpy.sqrt(closest_distance_sqr), closest_barycentric_coords
+
+    def getNormalFromFaceIndex(self, faceIndex):
+        poly = self.polygons[faceIndex]
+        normal = numpy.cross(poly[0][:3], poly[1][:3])
+        return normal / numpy.linalg.norm(normal)
 
     def map3dPointToUV(self, point, normal = None):
-        map3dPointToUV(self, point, normal)
+        return map3dPointToUV(self, point, normal)
 
     def mapUVPointTo3d(self, uv):
-        mapUVPointTo3d(self, uv)
+        return mapUVPointTo3d(self, uv)
 
     def map3dPointTo3d(self, mesh, point, normal = None):
         return map3dPointTo3d(self, mesh, point, normal)
+
+    def closest_point_on_mesh_normal(self, point):
+        p, f, _ = self.closest_point_on_mesh(point)
+        return p, self.getNormalFromFaceIndex(f), f
 
 class Octree():
     """[INSERT DOCSTRING HERE]
@@ -346,7 +358,7 @@ def intersectPointTri2d(point, p1, p2, p3):
     p1p2 = edge_distance(point, p1, p2)
     p2p3 = edge_distance(point, p2, p3)
     p3p1 = edge_distance(point, p3, p1)
-    if p1p2 >= 0 and p2p3 >= 0 and p3p1 >= 0:
+    if ((p1p2 >= 0) == (p2p3 >= 0) == (p3p1 >= 0)):
         return True
     else:
         return False
@@ -406,7 +418,10 @@ def calculatePlaneTransformation(t1, t2, t3):
 
 def getRotationMatrix(vector):
     a = numpy.array(vector, dtype=numpy.float32)
-    a /= numpy.linalg.norm(vector)
+    a_len = numpy.linalg.norm(vector)
+    if a_len == 0:
+        return numpy.identity(3)
+    a /= a_len
     b = numpy.array((1,0,0))
     v = numpy.cross(a, b)
     v_len_2 = numpy.dot(v,v)
@@ -446,9 +461,9 @@ def map3dPointToUV(mesh, point, normal = None):
     # if normal is None, we don't worry about orthogonal projections
     if normal is None:
         # get point, normal and face of closest point to a given point
-        p, f, b = mesh.findClosestPointOnMesh(point)
+        p, f, b = mesh.closest_point_on_mesh(point)
     else:
-        p, f, d, b = mesh.raycast(normal)
+        p, f, d, b = mesh.raycast(point, normal)
         # if no collision could be detected, return None
         if f == -1:
             return None
@@ -493,14 +508,12 @@ def mapUVPointTo3d(mesh, uv):
     :rtype: list of numpy.array or []
     """
 
-    uv_list_range_container = range(len(uv_list))
-
     point_3d = None
 
     # Get uv-quadtree from mesh
     qtree = mesh.uv_quadtree
 
-    point = uv_list[i]
+    point = uv
     polygons = qtree.getPolygons(point)
     for polygon in polygons:
         uvs = polygon[...,3:]
@@ -514,7 +527,7 @@ def mapUVPointTo3d(mesh, uv):
 
         if (result):
             l1, l2, l3 = toBarycentricCoordinates(point, uvs[0], uvs[1], uvs[2])
-            points_3d[i] = fromBarycentricCoordinates(l1, l2, l3, p3ds[0], p3ds[1], p3ds[2])
+            point_3d = fromBarycentricCoordinates(l1, l2, l3, p3ds[0], p3ds[1], p3ds[2])
             break
 
     return point_3d
@@ -539,11 +552,11 @@ def map3dPointTo3d(mesh1, mesh2, point, normal=None):
     """
 
     # if normal is None, we don't worry about orthogonal projections
-    if normal is None:
+    if normal is None or numpy.linalg.norm(normal) == 0:
         # get point, normal and face of closest point to a given point
-        p, f, b = mesh1.findClosestPointOnMesh(point)
+        p, f, b = mesh1.closest_point_on_mesh(point)
     else:
-        p, f, d, b = mesh1.raycast(normal)
+        p, f, d, b = mesh1.raycast(point, normal)
         # if no collision could be detected, return None
         if f == -1:
             return None
@@ -571,9 +584,9 @@ def test():
     # a = numpy.dot(mat, numpy.array((p3[0], p3[1], p3[2], 1)).reshape(4,1))
     # a /= a[3]
     # print(mat, a, sep=('\n'))
-    # m.findClosestPointOnMesh((-1,-1,-1))
+    # m.closest_point_on_mesh((-1,-1,-1))
     # print(closestPointOnTriangle((7,6,10), p1, p2, p3))
-    p,_ = m.findClosestPointOnMesh((0,0,0))
+    p,_ = m.closest_point_on_mesh((0,0,0))
     print(map3dPointToUV(m, p))
     print(mapUVPointTo3d(m, [numpy.array((0.01, 0.7))]))
     # import bpy

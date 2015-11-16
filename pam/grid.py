@@ -298,7 +298,7 @@ class UVGrid(object):
             uv[1] = min(self._v, max(0., vv[0]))
         return uv
         
-    def adjustUVT2(self, uv):
+    def adjustUV2(self, uv):
         """Return adjustd uv coordinates, corrected version with threshold
 
         :param uv: uv coordinates
@@ -313,10 +313,8 @@ class UVGrid(object):
         
         #test if deviation is below threshold
         if (constants.UV_GRID_THRESHOLD*self._size_u > abs(uv_new[0]-uv[0])) and (constants.UV_GRID_THRESHOLD*self._size_v > abs(uv_new[1]-uv[1])):
-            print("UV correction below threshold")
             return uv_new
         else:
-            print("UV correction above threshold")
             return uv
 
     def _uv_to_cell_index(self, u, v):

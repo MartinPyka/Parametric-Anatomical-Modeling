@@ -12,6 +12,7 @@ from . import grid
 from . import model
 from . import exceptions
 from .utils import quadtree
+from .mesh import *
 
 import multiprocessing
 import os
@@ -160,257 +161,6 @@ def checkPointOnLine(p,a1,a2):
         #print('Third false')
         return delta
     return 0
-
-def map3dPointToUV(obj, obj_uv, point, normal=None):
-    """Convert a given 3d-point into uv-coordinates,
-    obj for the 3d point and obj_uv must have the same topology
-    if normal is not None, the normal is used to detect the point on obj, otherwise
-    the closest_point_on_mesh operation is used
-
-    :param obj: The source 3d-object on which to project the point before mapping
-    :type obj: bpy.types.Object
-    :param obj_uv: The object with the uv-map on which to project the point
-    :type obj_uv: bpy.types.Object
-    :param point: The 3d point which to project onto uv
-    :type point: mathutils.Vector (should be 3d)
-
-    :return: The transformed point in uv-space
-    :rtype: mathutils.Vector (2d)
-    """
-
-    if normal:
-        normal_scaled = normal * constants.RAY_FAC
-        p, n, f = obj.ray_cast(point + normal_scaled, point - normal_)
-        # if no collision could be detected, return None
-        if f == -1:
-            return None
-    else:
-        # get point, normal and face of closest point to a given point
-        p, n, f = obj.closest_point_on_mesh(point)
-
-    # get the uv-coordinate of the first triangle of the polygon
-    A = obj.data.vertices[obj.data.polygons[f].vertices[0]].co
-    B = obj.data.vertices[obj.data.polygons[f].vertices[1]].co
-    C = obj.data.vertices[obj.data.polygons[f].vertices[2]].co
-
-    # and the uv-coordinates of the first triangle
-    uvs = [obj_uv.data.uv_layers.active.data[li] for li in obj_uv.data.polygons[f].loop_indices]
-    U = uvs[0].uv.to_3d()
-    V = uvs[1].uv.to_3d()
-    W = uvs[2].uv.to_3d()
-
-    # convert 3d-coordinates of point p to uv-coordinates
-    p_uv = mathutils.geometry.barycentric_transform(p, A, B, C, U, V, W)
-
-    p_uv_2d = p_uv.to_2d()
-    delta1 = checkPointOnLine(p_uv_2d,uvs[0].uv,uvs[1].uv)
-    delta2 = checkPointOnLine(p_uv_2d,uvs[0].uv,uvs[2].uv)
-    delta3 = checkPointOnLine(p_uv_2d,uvs[1].uv,uvs[2].uv)
-    delta = min(delta1,delta2,delta3)
-
-    # if the point is not within the first triangle, we have to repeat the calculation
-    # for the second triangle
-    if (mathutils.geometry.intersect_point_tri_2d(p_uv_2d, uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (delta != 0) & (len(uvs) == 4):
-        A = obj.data.vertices[obj.data.polygons[f].vertices[0]].co
-        B = obj.data.vertices[obj.data.polygons[f].vertices[2]].co
-        C = obj.data.vertices[obj.data.polygons[f].vertices[3]].co
-
-        U = uvs[0].uv.to_3d()
-        V = uvs[2].uv.to_3d()
-        W = uvs[3].uv.to_3d()
-
-        p_uv_new = mathutils.geometry.barycentric_transform(p, A, B, C, U, V, W)
-
-    else:
-        return p_uv_2d
-
-    p_uv_2d_new = p_uv_new.to_2d()
-    
-    delta1 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[2].uv)
-    delta2 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[3].uv)
-    delta3 = checkPointOnLine(p_uv_2d_new,uvs[2].uv,uvs[3].uv)
-    delta_new = min(delta1,delta2,delta3)
-
-    if (mathutils.geometry.intersect_point_tri_2d(p_uv_2d, uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (delta != 0) & (len(uvs) == 4):
-        if delta_new < delta:
-            return p_uv_2d_new
-        return p_uv_2d
-    return p_uv_2d_new
-
-def mapUVPointTo3d(obj_uv, uv_list, check_edges = False, cleanup=True):
-    """Convert a list of uv-points into 3d. 
-    This function is mostly used by interpolateUVTrackIn3D. Note, that 
-    therefore, not all points can and have to be converted to 3d points. 
-    The return list can therefore have less points than the uv-list. 
-    This cleanup can be deactivated by setting cleanup = False. Then, 
-    the return-list may contain some [] elements.
-
-    This function makes use of a quadtree cache managed in pam.model.
-
-    :param obj_uv: The object with the uv-map
-    :type obj_uv: bpy.types.Object
-    :param uv_list: The list of uv-coordinates to convert
-    :type uv_list: List of mathutils.Vector (Vectors should be 2d)
-    :param check_edges: If set to True, the edges of the mesh are 
-        specifically checked again to ensure accuracy when points 
-        are directly on the edge of a mesh. This slows the function 
-        down, so use with care.
-    :type check_edges: bool
-    :param cleanup: If set to False, unmapped uv-coordinates are 
-        removed from the return list
-    :type cleanup: bool
-
-    :return: List of converted 3d-points
-    :rtype: list of mathutils.Vector (Vectors are 3d) or []
-    """
-
-    uv_list_range_container = range(len(uv_list))
-
-    points_3d = [[] for _ in uv_list_range_container]
-    point_indices = [i for i in uv_list_range_container]
-
-    # Build new quadtree to cache objects if no chache exists
-    if obj_uv.name not in model.QUADTREE_CACHE:
-        qtree = quadtree.buildUVQuadtreeFromObject(obj_uv, constants.CACHE_QUADTREE_DEPTH)
-        model.QUADTREE_CACHE[obj_uv.name] = qtree
-    else:
-        qtree = model.QUADTREE_CACHE[obj_uv.name]
-
-    for i in point_indices:
-        point = uv_list[i]
-        polygons = qtree.getPolygons(point)
-        for polygon in polygons:
-            uvs = polygon[0]
-            p3ds = polygon[1]
-
-            result = mathutils.geometry.intersect_point_tri_2d(
-                point,
-                uvs[0],
-                uvs[1],
-                uvs[2]
-            )
-
-            if (result != 0):
-                points_3d[i] = mathutils.geometry.barycentric_transform(
-                    point.to_3d(),
-                    uvs[0].to_3d(),
-                    uvs[1].to_3d(),
-                    uvs[2].to_3d(),
-                    p3ds[0],
-                    p3ds[1],
-                    p3ds[2]
-                )
-                break
-
-            else:
-                result = mathutils.geometry.intersect_point_tri_2d(
-                    point,
-                    uvs[0],
-                    uvs[2],
-                    uvs[3]
-                )
-                if (result != 0):
-                    points_3d[i] = mathutils.geometry.barycentric_transform(
-                        point.to_3d(),
-                        uvs[0].to_3d(),
-                        uvs[2].to_3d(),
-                        uvs[3].to_3d(),
-                        p3ds[0],
-                        p3ds[2],
-                        p3ds[3]
-                    )
-                    break
-            if check_edges:
-                # Sometimes the point is directly on the edge of a tri and intersect_point_tri_2d doesn't recognize it
-                # So we check for all possible edges
-                edges = [(0, 1),
-                         (1, 2),
-                         (2, 3),
-                         (3, 0),
-                         (0, 2)]
-                for edge in edges:
-                    point_on_line, percentage = mathutils.geometry.intersect_point_line(point, uvs[edge[0]], uvs[edge[1]])
-                    if (point_on_line - point).length <= constants.UV_THRESHOLD and percentage >= 0. and percentage <= 1.:
-                        points_3d[i] = p3ds[edge[0]].lerp(p3ds[edge[1]], percentage)
-                        break
-
-    if cleanup:
-        points_3d = [p for p in points_3d if p]
-
-    return points_3d
-
-
-# TODO(MP): triangle check could be made more efficient
-# TODO(MP): check the correct triangle order !!!
-def map3dPointTo3d(o1, o2, point, normal=None):
-    """Map a 3d-point on a given object on another object. Both objects must have the
-    same topology. The closest point on the mesh of the first object is projected onto 
-    the mesh of the second object.
-
-    :param o1: The source object
-    :type o1: bpy.types.Object
-    :param o2: The target object
-    :type o2: bpy.types.Object
-    :param point: The point to transform
-    :type point: mathutils.Vector
-    :param normal: If a normal is given, the point on the target mesh is not determined 
-        by the closest point on the mesh, but by raycast along the normal
-    :type normal: mathutils.Vector
-
-    :return: The transformed point
-    :rtype: mathutils.Vector
-    """
-
-    # if normal is None, we don't worry about orthogonal projections
-    if normal is None:
-        # get point, normal and face of closest point to a given point
-        p, n, f = o1.closest_point_on_mesh(point)
-    else:
-        p, n, f = o1.ray_cast(point + normal * constants.RAY_FAC, point - normal * constants.RAY_FAC)
-        # if no collision could be detected, return None
-        if f == -1:
-            return None
-
-    # if o1 and o2 are identical, there is nothing more to do
-    if (o1 == o2):
-        return p
-
-    # get the vertices of the first triangle of the polygon from both objects
-    A1 = o1.data.vertices[o1.data.polygons[f].vertices[0]].co
-    B1 = o1.data.vertices[o1.data.polygons[f].vertices[1]].co
-    C1 = o1.data.vertices[o1.data.polygons[f].vertices[2]].co
-
-    # project the point on a 2d-surface and check, whether we are in the right triangle
-    t1 = mathutils.Vector()
-    t2 = mathutils.Vector((1.0, 0.0, 0.0))
-    t3 = mathutils.Vector((0.0, 1.0, 0.0))
-
-    p_test = mathutils.geometry.barycentric_transform(p, A1, B1, C1, t1, t2, t3)
-
-    # if the point is on the 2d-triangle, proceed with the real barycentric_transform
-    if mathutils.geometry.intersect_point_tri_2d(p_test.to_2d(), t1.xy, t2.xy, t3.xy) == 1:
-        A2 = o2.data.vertices[o2.data.polygons[f].vertices[0]].co
-        B2 = o2.data.vertices[o2.data.polygons[f].vertices[1]].co
-        C2 = o2.data.vertices[o2.data.polygons[f].vertices[2]].co
-
-        # convert 3d-coordinates of the point
-        p_new = mathutils.geometry.barycentric_transform(p, A1, B1, C1, A2, B2, C2)
-
-    else:
-        # use the other triangle
-        A1 = o1.data.vertices[o1.data.polygons[f].vertices[0]].co
-        B1 = o1.data.vertices[o1.data.polygons[f].vertices[2]].co
-        C1 = o1.data.vertices[o1.data.polygons[f].vertices[3]].co
-
-        A2 = o2.data.vertices[o2.data.polygons[f].vertices[0]].co
-        B2 = o2.data.vertices[o2.data.polygons[f].vertices[2]].co
-        C2 = o2.data.vertices[o2.data.polygons[f].vertices[3]].co
-
-        # convert 3d-coordinates of the point
-        p_new = mathutils.geometry.barycentric_transform(p, A1, B1, C1, A2, B2, C2)
-
-    return p_new
-
 
 def map3dPointToParticle(obj, particle_system, location):
     """Determine based on a 3d-point location (e.g. given by the cursor
@@ -622,9 +372,11 @@ def computeMapping(layers, connections, distances, point, debug=False):
     # go through all connection-elements
     for i in range(0, len(connections)):
         # if euclidean mapping should be computed
+        layer = layers[i]
+        layer_next = layers[i + 1]
         if connections[i] == MAP_euclid:
             # compute the point on the next intermediate layer
-            p3d_n = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
+            p3d_n = layer_next.map3dPointTo3d(p3d[-1])
 
             # we are not on the synapse layer
             if (i < (len(connections) - 1)):
@@ -636,30 +388,30 @@ def computeMapping(layers, connections, distances, point, debug=False):
                 elif distances[i] == DIS_jumpUV:
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_UVjump:
-                    p3d_t = map3dPointTo3d(layers[i], layers[i], p3d_n)
-                    p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
+                    p3d_t = layer.map3dPointTo3d(p3d_n)
+                    p3d = p3d + layer.interpolateUVTrackIn3D(p3d[-1], p3d_t)
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_normalUV:
-                    p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
-                    p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
+                    p, n, f = layer.closest_point_on_mesh(p3d[-1])
+                    p3d_t = layer_next.map3dPointTo3d(p, n)
                     if p3d_t is None:
                         if not debug:
                             return None, None, None
                         else:
                             return p3d, i, None
                     p3d.append(p3d_t)
-                    p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
+                    p3d = p3d + layer_next.interpolateUVTrackIn3D(p3d_t, p3d_n)
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_UVnormal:
-                    p, n, f = layers[i + 1].closest_point_on_mesh(p3d_n)
-                    p3d_t = map3dPointTo3d(layers[i], layers[i], p, n)
+                    p, n, f = layer_next.closest_point_on_mesh(p3d_n)
+                    p3d_t = layer.map3dPointTo3d(p, n)
                     if p3d_t is None:
                         if not debug:
                             return None, None, None
                         else:
                             return p3d, i, None
 
-                    p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
+                    p3d = p3d + layer.interpolateUVTrackIn3D(p3d[-1], p3d_t)
                     p3d.append(p3d_t)
                     p3d.append(p3d_n)
 
@@ -674,9 +426,9 @@ def computeMapping(layers, connections, distances, point, debug=False):
                 # elif distances[i] = DIS_UVjump:
                 #    do nothing
                 elif distances[i] == DIS_normalUV:
-                    p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
+                    p, n, f = layer.closest_point_on_mesh(p3d[-1])
                     # determine new point
-                    p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
+                    p3d_t = layer_next.map3dPointTo3d(p, n)
                     if p3d_t is None:
                         if not debug:
                             return None, None, None
@@ -689,9 +441,9 @@ def computeMapping(layers, connections, distances, point, debug=False):
         # if normal mapping should be computed
         elif connections[i] == MAP_normal:
             # compute normal on layer for the last point
-            p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
+            p, n, f = layer.closest_point_on_mesh(p3d[-1])
             # determine new point
-            p3d_n = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
+            p3d_n = layer_next.map3dPointTo3d(p, n)
             # if there is no intersection, abort
             if p3d_n is None:
                 if not debug:
@@ -706,13 +458,13 @@ def computeMapping(layers, connections, distances, point, debug=False):
                 elif distances[i] == DIS_euclidUV:
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_jumpUV:
-                    p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
+                    p3d_t = layer_next.map3dPointTo3d(p3d[-1])
                     p3d.append(p3d_t)
-                    p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
+                    p3d = p3d + layer_next.interpolateUVTrackIn3D(p3d_t, p3d_n)
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_UVjump:
-                    p3d_t = map3dPointTo3d(layers[i], layers[i], p3d_n)
-                    p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
+                    p3d_t = layer.map3dPointTo3d(p3d_n)
+                    p3d = p3d + layer.interpolateUVTrackIn3D(p3d[-1], p3d_t)
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_normalUV:
                     p3d.append(p3d_n)
@@ -724,7 +476,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
                 if distances[i] == DIS_euclidUV:
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_jumpUV:
-                    p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
+                    p3d_t = layer_next.map3dPointTo3d(p3d[-1])
                     p3d.append(p3d_t)
                 # elif distances[i] == DIS_UVjump:
                 #    do nothing
@@ -735,7 +487,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
 
         # if random mapping should be used
         elif connections[i] == MAP_random:
-            p3d_n, n, f = selectRandomPoint(layers[i + 1])
+            p3d_n, n, f = selectRandomPoint(layer_next)
 
             # if this is not the synapse layer
             if (i < (len(connections) - 1)):
@@ -744,30 +496,30 @@ def computeMapping(layers, connections, distances, point, debug=False):
                 elif distances[i] == DIS_euclidUV:
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_jumpUV:
-                    p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
+                    p3d_t = layer_next.map3dPointTo3d(p3d[-1])
                     p3d.append(p3d_t)
-                    p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
+                    p3d = p3d + layer_next.interpolateUVTrackIn3D(p3d_t, p3d_n)
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_UVjump:
-                    p3d_t = map3dPointTo3d(layers[i], layers[i], p3d_n)
-                    p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
+                    p3d_t = layer.map3dPointTo3d(p3d_n)
+                    p3d = p3d + layer.interpolateUVTrackIn3D(p3d[-1], p3d_t)
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_normalUV:
-                    p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
-                    p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
+                    p, n, f = layer.closest_point_on_mesh(p3d[-1])
+                    p3d_t = layer_next.map3dPointTo3d(p, n)
                     p3d.append(p3d_t)
-                    p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
+                    p3d = p3d + layer_next.interpolateUVTrackIn3D(p3d_t, p3d_n)
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_UVnormal:
-                    p, n, f = layers[i + 1].closest_point_on_mesh(p3d_n)
-                    p3d_t = map3dPointTo3d(layers[i], layers[i], p, n)
+                    p, n, f = layer_next.closest_point_on_mesh(p3d_n)
+                    p3d_t = layer.map3dPointTo3d(p, n)
                     if p3d_t is None:
                         if not debug:
                             return None, None, None
                         else:
                             return p3d, i, None
 
-                    p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
+                    p3d = p3d + layer.interpolateUVTrackIn3D(p3d[-1], p3d_t)
                     p3d.append(p3d_t)
                     p3d.append(p3d_n)
             else:
@@ -776,14 +528,14 @@ def computeMapping(layers, connections, distances, point, debug=False):
                 if distances[i] == DIS_euclidUV:
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_jumpUV:
-                    p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
+                    p3d_t = layer_next.map3dPointTo3d(p3d[-1])
                     p3d.append(p3d_t)
                 # elif distances[i] == DIS_UVjump:
                 #    do nothing
                 elif distances[i] == DIS_normalUV:
-                    p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
+                    p, n, f = layer.closest_point_on_mesh(p3d[-1])
                     # determine new point
-                    p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
+                    p3d_t = layer_next.map3dPointTo3d(p, n)
                     if p3d_t is None:
                         if not debug:
                             return None, None, None
@@ -795,7 +547,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
 
         # if both layers are topologically identical
         elif connections[i] == MAP_top:
-            p3d_n = map3dPointTo3d(layers[i], layers[i + 1], p3d[-1])
+            p3d_n = map3dPointTo3d(layer, layer_next, p3d[-1])
 
             # if this is not the last layer, compute the topological mapping
             if i < (len(connections) - 1):
@@ -804,35 +556,35 @@ def computeMapping(layers, connections, distances, point, debug=False):
                 elif distances[i] == DIS_euclidUV:
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_jumpUV:
-                    p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
+                    p3d_t = layer_next.map3dPointTo3d(p3d[-1])
                     p3d.append(p3d_t)
-                    p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
+                    p3d = p3d + layer_next.interpolateUVTrackIn3D(p3d_t, p3d_n)
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_UVjump:
-                    p3d_t = map3dPointTo3d(layers[i], layers[i], p3d_n)
-                    p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
+                    p3d_t = layer.map3dPointTo3d(p3d_n)
+                    p3d = p3d + layer.interpolateUVTrackIn3D(p3d[-1], p3d_t)
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_normalUV:
-                    p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
-                    p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
+                    p, n, f = layer.closest_point_on_mesh(p3d[-1])
+                    p3d_t = layer_next.map3dPointTo3d(p, n)
                     if p3d_t is None:
                         if not debug:
                             return None, None, None
                         else:
                             return p3d, i, None
                     p3d.append(p3d_t)
-                    p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
+                    p3d = p3d + layer_next.interpolateUVTrackIn3D(p3d_t, p3d_n)
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_UVnormal:
-                    p, n, f = layers[i + 1].closest_point_on_mesh(p3d_n)
-                    p3d_t = map3dPointTo3d(layers[i], layers[i], p, n)
+                    p, n, f = layer_next.closest_point_on_mesh(p3d_n)
+                    p3d_t = layer.map3dPointTo3d(p, n)
                     if p3d_t is None:
                         if not debug:
                             return None, None, None
                         else:
                             return p3d, i, None
 
-                    p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
+                    p3d = p3d + layer.interpolateUVTrackIn3D(p3d[-1], p3d_t)
                     p3d.append(p3d_t)
                     p3d.append(p3d_n)
 
@@ -842,14 +594,14 @@ def computeMapping(layers, connections, distances, point, debug=False):
                 if distances[i] == DIS_euclidUV:
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_jumpUV:
-                    p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
+                    p3d_t = layer_next.map3dPointTo3d(p3d[-1])
                     p3d.append(p3d_t)
                 # elif distances[i] == DIS_UVjump:
                 #    do nothing
                 elif distances[i] == DIS_normalUV:
-                    p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
+                    p, n, f = layer.closest_point_on_mesh(p3d[-1])
                     # determine new point
-                    p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
+                    p3d_t = layer_next.map3dPointTo3d(p, n)
                     if p3d_t is None:
                         if not debug:
                             return None, None, None
@@ -862,8 +614,8 @@ def computeMapping(layers, connections, distances, point, debug=False):
         # map via UV overlap
         elif connections[i] == MAP_uv:
 
-            p2d_t = map3dPointToUV(layers[i], layers[i], p3d[-1])
-            p3d_n = mapUVPointTo3d(layers[i + 1], [p2d_t])
+            p2d_t = layer.map3dPointToUV(p3d[-1])
+            p3d_n = layer_next.mapUVPointTo3d([p2d_t])
 
             if p3d_n == []:
                 if not debug:
@@ -880,35 +632,35 @@ def computeMapping(layers, connections, distances, point, debug=False):
                 elif distances[i] == DIS_euclidUV:
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_jumpUV:
-                    p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
+                    p3d_t = layer_next.map3dPointTo3d(p3d[-1])
                     p3d.append(p3d_t)
-                    p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
+                    p3d = p3d + layer_next.interpolateUVTrackIn3D(p3d_t, p3d_n)
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_UVjump:
-                    p3d_t = map3dPointTo3d(layers[i], layers[i], p3d_n)
-                    p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
+                    p3d_t = layer.map3dPointTo3d(p3d_n)
+                    p3d = p3d + layer.interpolateUVTrackIn3D(p3d[-1], p3d_t)
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_normalUV:
-                    p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
-                    p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
+                    p, n, f = layer.closest_point_on_mesh(p3d[-1])
+                    p3d_t = layer_next.map3dPointTo3d(p, n)
                     if p3d_t is None:
                         if not debug:
                             return None, None, None
                         else:
                             return p3d, i, None
                     p3d.append(p3d_t)
-                    p3d = p3d + interpolateUVTrackIn3D(p3d_t, p3d_n, layers[i + 1])
+                    p3d = p3d + layer_next.interpolateUVTrackIn3D(p3d_t, p3d_n)
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_UVnormal:
-                    p, n, f = layers[i + 1].closest_point_on_mesh(p3d_n)
-                    p3d_t = map3dPointTo3d(layers[i], layers[i], p, n)
+                    p, n, f = layer_next.closest_point_on_mesh(p3d_n)
+                    p3d_t = layer.map3dPointTo3d(p, n)
                     if p3d_t is None:
                         if not debug:
                             return None, None, None
                         else:
                             return p3d, i, None
 
-                    p3d = p3d + interpolateUVTrackIn3D(p3d[-1], p3d_t, layers[i])
+                    p3d = p3d + layer.interpolateUVTrackIn3D(p3d[-1], p3d_t)
                     p3d.append(p3d_t)
                     p3d.append(p3d_n)
 
@@ -918,14 +670,14 @@ def computeMapping(layers, connections, distances, point, debug=False):
                 if distances[i] == DIS_euclidUV:
                     p3d.append(p3d_n)
                 elif distances[i] == DIS_jumpUV:
-                    p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p3d[-1])
+                    p3d_t = layer_next.map3dPointTo3d(p3d[-1])
                     p3d.append(p3d_t)
                 # elif distances[i] == DIS_UVjump:
                 #    do nothing
                 elif distances[i] == DIS_normalUV:
-                    p, n, f = layers[i].closest_point_on_mesh(p3d[-1])
+                    p, n, f = layer.closest_point_on_mesh(p3d[-1])
                     # determine new point
-                    p3d_t = map3dPointTo3d(layers[i + 1], layers[i + 1], p, n)
+                    p3d_t = layer_next.map3dPointTo3d(p, n)
                     if p3d_t is None:
                         if not debug:
                             return None, None, None
@@ -937,7 +689,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
 
         # mask 
         elif connections[i] == MAP_mask3D:
-            if not checkPointInObject(layers[i+1], p3d[-1]):
+            if not checkPointInObject(layer_next, p3d[-1]):
                 if not debug:
                     return None, None, None
                 else:
@@ -949,7 +701,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
 
         # for the synaptic layer, compute the uv-coordinates
         if i == (len(connections) - 1):
-            p2d = map3dPointToUV(layers[i + 1], layers[i + 1], p3d_n)
+            p2d = layer_next.map3dPointToUV(p3d_n)
 
     return p3d, p2d, compute_path_length(p3d)
 
@@ -974,37 +726,37 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
 
     elif dis == DIS_euclidUV:
         path = [p_3d]
-        path = path + interpolateUVTrackIn3D(p_3d, s_3d[0], slayer)
+        path = path + slayer.interpolateUVTrackIn3D(p_3d, s_3d[0])
         path.append(s_3d[0])
         return compute_path_length(path), path
 
     elif dis == DIS_jumpUV:
         path = [p_3d]
-        path = path + interpolateUVTrackIn3D(p_3d, s_3d[0], slayer)
+        path = path + slayer.interpolateUVTrackIn3D(p_3d, s_3d[0])
         path.append(s_3d[0])
         return compute_path_length(path), path
 
     elif dis == DIS_UVjump:
         i_3d = ilayer.closest_point_on_mesh(s_3d[0])[0]
         path = [p_3d]
-        path = path + interpolateUVTrackIn3D(p_3d, i_3d, ilayer)
+        path = path + ilayer.interpolateUVTrackIn3D(p_3d, i_3d)
         path.append(i_3d)
         path.append(s_3d[0])
         return compute_path_length(path), path
 
     elif dis == DIS_normalUV:
         path = [p_3d]
-        path = path + interpolateUVTrackIn3D(p_3d, s_3d[0], slayer)
+        path = path + slayer.interpolateUVTrackIn3D(p_3d, s_3d[0])
         path.append(s_3d[0])
         return compute_path_length(path), path
 
     elif dis == DIS_UVnormal:
         p, n, f = slayers.closest_point_on_mesh(s_3d[0])
-        t_3d = map3dPointTo3d(ilayers, ilayers, p, n)
+        t_3d = ilayer.map3dPointTo3d(p, n)
         if t_3d is None:
             raise exceptions.MapUVError(slayer, dis, [p, n])
         path = [p_3d]
-        path = path + interpolateUVTrackIn3D(p_3d, t_3d, ilayers)
+        path = path + ilayer.interpolateUVTrackIn3D(p_3d, t_3d)
         path.append(t_3d)
         path.append(s_3d[0])
         return compute_path_length(path), path
@@ -1064,7 +816,7 @@ def updateMapping(index):
         's': result[2]
     }
 
-def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
+def computeConnectivity(layers, slayer, connections,
                         distances, func_pre, args_pre, func_post, args_post,
                         no_synapses, create=True, threads = None):
     """Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
@@ -1100,13 +852,13 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
                         no_synapses, create, threads)
 
     # connection matrix
-    conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses)).astype(int)
+    conn = numpy.zeros((layers[0].neuron_count, no_synapses), dtype = numpy.int)
 
     # distance matrix
-    dist = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
+    dist = numpy.zeros((layers[0].neuron_count, no_synapses))
 
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
-    syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
+    syn = [[[] for j in range(no_synapses)] for i in range(layers[0].neuron_count)]
 
     uv_grid = grid.UVGrid(layers[slayer], 0.02)
 
@@ -1121,13 +873,17 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
 
     logger.info("Compute Post-Mapping")
 
+    layers_post = layers[:(slayer - 1):-1]
+    conenctions_post = connections[:(slayer - 1):-1]
+    distances_post = distances[:(slayer - 1):-1]
+
     # fill uv_grid with post-neuron-links
-    for i in range(0, len(layers[-1].particle_systems[neuronset2].particles)):
+    for i in range(0, layers[-1].neuron_count):
         random.seed(i + SEED)
-        post_p3d, post_p2d, post_d = computeMapping(layers[:(slayer - 1):-1],
-                                                    connections[:(slayer - 1):-1],
-                                                    distances[:(slayer - 1):-1],
-                                                    layers[-1].particle_systems[neuronset2].particles[i].location)
+        post_p3d, post_p2d, post_d = computeMapping(layers_post,
+                                                    conenctions_post,
+                                                    distances_post,
+                                                    layers[-1].getNeuronPosition(i))
         if post_p3d is None:
             continue
         
@@ -1138,13 +894,18 @@ def computeConnectivity(layers, neuronset1, neuronset2, slayer, connections,
     #for m in uv_grid._masks['post']:
     #    print(len(m))
     logger.info("Compute Pre-Mapping")
-    num_particles = len(layers[0].particle_systems[neuronset1].particles)
+
+    layers_pre = layers[0:(slayer + 1)]
+    connections_pre = connections[0:slayer]
+    distances_pre = distances[0:slayer]
+
+    num_particles = layers[0].neuron_count
     for i in range(0, num_particles):
         random.seed(i + SEED)
-        pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer + 1)],
-                                                 connections[0:slayer],
-                                                 distances[0:slayer],
-                                                 layers[0].particle_systems[neuronset1].particles[i].location)
+        pre_p3d, pre_p2d, pre_d = computeMapping(layers_pre,
+                                                 connections_pre,
+                                                 distances_pre,
+                                                 layers[0].getNeuronPosition(i))
 
         logger.info(str(round((i / num_particles) * 10000) / 100) + '%')
 

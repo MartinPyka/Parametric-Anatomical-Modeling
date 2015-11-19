@@ -91,7 +91,7 @@ def checkPointInObject(obj, point):
     m.calc_tessface()
     ray_hit_count = 0
 
-    for face in m.tessfaces:
+    for f, face in enumerate(m.tessfaces):
         verts = face.vertices
         if len(verts) == 3:
             v1 = world_matrix * m.vertices[face.vertices[0]].co.xyz

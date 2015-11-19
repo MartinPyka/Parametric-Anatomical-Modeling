@@ -441,6 +441,16 @@ def visualizeUnconnectedNeurons(no_connection):
 
     for index in indices:
         visualizePoint(layer.particle_systems[0].particles[index].location)
+        
+def visualizeUnconnectedPostNeurons(no_connection):
+    """ Visualizes unconnected neurons for a given connection_index """
+    c = numpy.array(model.CONNECTION_RESULTS[no_connection]['c'])
+
+    layer = model.CONNECTIONS[no_connection][0][0]
+
+    for index in range(len(c)):
+        if not index in c:
+            visualizePoint(layer.particle_systems[0].particles[index].location)
 
 
 def visualizePartlyConnectedNeurons(no_connection):

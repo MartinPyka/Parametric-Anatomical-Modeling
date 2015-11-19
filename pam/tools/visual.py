@@ -36,6 +36,11 @@ INJ_METHOD_LIST = [
     ("RETROGRADE", "Retrograde", "", 1)
 ]
 
+EFFERENT_AFFERENT_LIST = [
+    ("EFFERENT", "Efferent", "", 0),
+    ("AFFERENT", "Afferent", "", 1)
+]
+
 
 # TODO(SK): rephrase descriptions
 # TODO(SK): missing docstring
@@ -275,7 +280,7 @@ class PamVisualizeAllConnections(bpy.types.Operator):
 class PamVisualizeUnconnectedNeurons(bpy.types.Operator):
     bl_idname = "pam_vis.visualize_unconnected_neurons"
     bl_label = "Visualize Unconnected Neurons"
-    bl_description = "Visualizes neurons with no connection"
+    bl_description = "Visualizes neurons with no outgoing connection"
     bl_options = {'UNDO'}
 
     def execute(self, context):
@@ -290,7 +295,11 @@ class PamVisualizeUnconnectedNeurons(bpy.types.Operator):
             # if ng_index is the pre-synaptic layer in a certain mapping
             if ci[1] == ng_index:
                 # visualize the connections
-                pam_vis.visualizeUnconnectedNeurons(ci[0])
+                pv = context.scene.pam_visualize
+                if pv.efferent_afferent == "EFFERENT":
+                    pam_vis.visualizeUnconnectedNeurons(ci[0])
+                elif pv.efferent_afferent == "AFFERENT":
+                    pam_vis.visualizeUnconnectedPostNeurons(ci[0])
 
         bpy.context.scene.objects.active = object
         object.select = True
@@ -332,8 +341,8 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
 
 class PamVisualizeForwardConnection(bpy.types.Operator):
     bl_idname = "pam_vis.visualize_forward_connection"
-    bl_label = "Visualize Forward Connection for Neuron at Cursor"
-    bl_description = "Visualizes as many mappings as possible until the synaptic layer"
+    bl_label = "Visualize Connection for Neuron at Cursor"
+    bl_description = "Visualizes as many mappings as possible until the synaptic layer."
     bl_options = {'UNDO'}
 
     def execute(self, context):
@@ -353,7 +362,11 @@ class PamVisualizeForwardConnection(bpy.types.Operator):
             # if ng_index is the pre-synaptic layer in a certain mapping
             if ci[1] == ng_index:
                 # visualize the connections
-                pam_vis.visualizeForwardMapping(ci[0], p_index)
+                pv = context.scene.pam_visualize
+                if pv.efferent_afferent == "EFFERENT":
+                    pam_vis.visualizeForwardMapping(ci[0], p_index)
+                elif pv.efferent_afferent == "AFFERENT":
+                    pam_vis.visualizeBackwardMapping(ci[0], p_index)
 
         bpy.context.scene.objects.active = object
         return {'FINISHED'}
@@ -488,6 +501,10 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
         name="View mode",
         items=VIEW_LIST,
         update=toggle_view
+    )
+    efferent_afferent = bpy.props.EnumProperty(
+        name="efferent_afferent",
+        items=EFFERENT_AFFERENT_LIST
     )
     mode = bpy.props.EnumProperty(
         name="Mode",

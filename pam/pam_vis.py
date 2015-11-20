@@ -247,7 +247,8 @@ def visualizeForwardMapping(no_connection, pre_index):
         logger.debug(pre_p3d)
         logger.debug(pre_p2d)
         logger.debug(pre_d)
-        visualizePath(pre_p3d, material = material)
+        if pre_p3d:
+            visualizePath(pre_p3d, material = material)
 
 
 def visualizeBackwardMapping(no_connection, post_index):
@@ -272,7 +273,8 @@ def visualizeBackwardMapping(no_connection, post_index):
                                                         layers[-1].particle_systems[neuronset2].particles[post_index].location)
         logger.debug(s)
         logger.debug(post_p3d)
-        visualizePath(post_p3d, material = material)
+        if post_p3d:
+            visualizePath(post_p3d, material = material)
 
 
 def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0, print_statistics = False):
@@ -454,9 +456,7 @@ def visualizeUnconnectedPostNeurons(no_connection):
     neuron_count = len(c)
 
     for index in range(neuron_count):
-        print(index)
         if not index in c:
-            print(index)
             visualizePoint(layer.particle_systems[0].particles[index].location)
             indices.append(index)
 

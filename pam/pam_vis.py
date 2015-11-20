@@ -235,7 +235,7 @@ def visualizeForwardMapping(no_connection, pre_index):
 
     material = bpy.data.materials.get(bpy.context.scene.pam_visualize.connection_material, None)
 
-    for s in range(2, (slayer + 1)):
+    for s in range(2, (slayer + 2)):
         pre_p3d, pre_p2d, pre_d = pam.computeMapping(
             layers[0:s],
             connections[0:(s - 1)],
@@ -265,10 +265,10 @@ def visualizeBackwardMapping(no_connection, post_index):
 
     material = bpy.data.materials.get(bpy.context.scene.pam_visualize.connection_material, None)
 
-    for s in range(len(layers), slayer, -1):
-        post_p3d, post_p2d, post_d = pam.computeMapping(layers[:(slayer - 1):-1],
-                                                        connections[:(slayer - 1):-1],
-                                                        distances[:(slayer - 1):-1],
+    for s in range(len(layers)-3, slayer-2, -1):
+        post_p3d, post_p2d, post_d = pam.computeMapping(layers[-1:s:-1],
+                                                        connections[-1:s:-1],
+                                                        distances[-1:s:-1],
                                                         layers[-1].particle_systems[neuronset2].particles[post_index].location)
         logger.debug(s)
         logger.debug(post_p3d)
@@ -436,6 +436,9 @@ def visualizeUnconnectedNeurons(no_connection):
     indices = numpy.where(sums == -model.CONNECTIONS[no_connection][-1])[0]
 
     logger.debug(indices)
+    neuron_count = len(c)
+    unconnected_count = len(indices)
+    logger.debug(str(unconnected_count) + "/" + str(neuron_count) + ", " + str(round((unconnected_count / neuron_count) * 10000) / 100) + "%")
 
     layer = model.CONNECTIONS[no_connection][0][0]
 
@@ -444,13 +447,22 @@ def visualizeUnconnectedNeurons(no_connection):
         
 def visualizeUnconnectedPostNeurons(no_connection):
     """ Visualizes unconnected neurons for a given connection_index """
-    c = numpy.array(model.CONNECTION_RESULTS[no_connection]['c'])
+    c = model.CONNECTION_RESULTS[no_connection]['c']
+    
+    layer = model.CONNECTIONS[no_connection][0][-1]    #last layer of connection
+    indices = []
+    neuron_count = len(c)
 
-    layer = model.CONNECTIONS[no_connection][0][0]
-
-    for index in range(len(c)):
+    for index in range(neuron_count):
+        print(index)
         if not index in c:
+            print(index)
             visualizePoint(layer.particle_systems[0].particles[index].location)
+            indices.append(index)
+
+    logger.debug(indices)
+    unconnected_count = len(indices)
+    logger.debug(str(unconnected_count) + "/" + str(neuron_count) + ", " + str(round((unconnected_count / neuron_count) * 10000) / 100) + "%")
 
 
 def visualizePartlyConnectedNeurons(no_connection):

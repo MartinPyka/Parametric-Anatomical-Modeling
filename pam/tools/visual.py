@@ -285,6 +285,7 @@ class PamVisualizeUnconnectedNeurons(bpy.types.Operator):
 
     def execute(self, context):
         object = context.active_object
+        pv = context.scene.pam_visualize
 
         if object.name in model.NG_DICT:
             ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
@@ -292,13 +293,12 @@ class PamVisualizeUnconnectedNeurons(bpy.types.Operator):
             return {'FINISHED'}
 
         for ci in model.CONNECTION_INDICES:
-            # if ng_index is the pre-synaptic layer in a certain mapping
-            if ci[1] == ng_index:
-                # visualize the connections
-                pv = context.scene.pam_visualize
-                if pv.efferent_afferent == "EFFERENT":
+            # if ng_index is the pre- or post-synaptic layer, respectively, in a certain mapping
+            if pv.efferent_afferent == "EFFERENT":
+                if ci[1] == ng_index:                    
                     pam_vis.visualizeUnconnectedNeurons(ci[0])
-                elif pv.efferent_afferent == "AFFERENT":
+            elif pv.efferent_afferent == "AFFERENT":
+                if ci[2] == ng_index:
                     pam_vis.visualizeUnconnectedPostNeurons(ci[0])
 
         bpy.context.scene.objects.active = object
@@ -309,7 +309,7 @@ class PamVisualizeUnconnectedNeurons(bpy.types.Operator):
 class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
     bl_idname = "pam_vis.visualize_connections_for_neuron"
     bl_label = "Visualize Connections at Cursor"
-    bl_description = "Visualizes all outgoing connections for a neuron at cursor position"
+    bl_description = "Visualizes all outgoing or incoming connections for a neuron at cursor position"
     bl_options = {'UNDO'}
 
     def execute(self, context):
@@ -342,12 +342,13 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
 class PamVisualizeForwardConnection(bpy.types.Operator):
     bl_idname = "pam_vis.visualize_forward_connection"
     bl_label = "Visualize Connection for Neuron at Cursor"
-    bl_description = "Visualizes as many mappings as possible until the synaptic layer."
+    bl_description = "Visualizes as many mappings as possible until the synaptic layer"
     bl_options = {'UNDO'}
 
     def execute(self, context):
         object = context.active_object
         cursor = context.scene.cursor_location
+        pv = context.scene.pam_visualize
 
         if object.name in model.NG_DICT:
             ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
@@ -359,13 +360,12 @@ class PamVisualizeForwardConnection(bpy.types.Operator):
         print('Neuron Number: ' + str(p_index))
 
         for ci in model.CONNECTION_INDICES:
-            # if ng_index is the pre-synaptic layer in a certain mapping
-            if ci[1] == ng_index:
-                # visualize the connections
-                pv = context.scene.pam_visualize
-                if pv.efferent_afferent == "EFFERENT":
+            # if ng_index is the pre- or post-synaptic layer, respectively, in a certain mapping
+            if pv.efferent_afferent == "EFFERENT":
+                if ci[1] == ng_index:
                     pam_vis.visualizeForwardMapping(ci[0], p_index)
-                elif pv.efferent_afferent == "AFFERENT":
+            elif pv.efferent_afferent == "AFFERENT":
+                if ci[2] == ng_index:
                     pam_vis.visualizeBackwardMapping(ci[0], p_index)
 
         bpy.context.scene.objects.active = object

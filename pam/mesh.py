@@ -1,7 +1,11 @@
 import bpy
+import mathutils
+
+import numpy
 
 from . import model
 from . import constants
+from .utils import quadtree
 
 def map3dPointToUV(obj, obj_uv, point, normal=None):
     """Convert a given 3d-point into uv-coordinates,
@@ -252,3 +256,48 @@ def map3dPointTo3d(o1, o2, point, normal=None):
         p_new = mathutils.geometry.barycentric_transform(p, A1, B1, C1, A2, B2, C2)
 
     return p_new
+
+def checkPointOnLine(p,a1,a2):
+    """Checks if a point p is on the line between the points a1 and a2
+    returns the qualitative distance of the point from the line, 0 if the point is on the line with tolerance
+    """
+    EPSILON = 0.0001     #tolerance value for being able to work with floats
+    d1 = p-a1
+    d2 = a2-p
+    dot = numpy.dot(d1,d2)
+    #print('dot',dot)
+    cross = numpy.cross(d1,d2)
+    #print('cross',cross)
+    norma1a2 = numpy.linalg.norm(a2-a1)
+    #print('norma1a2',norma1a2)
+    delta = numpy.linalg.norm(cross) - EPSILON
+    if delta > 0:        #greater than 0, with tolerance
+        #print('First false')
+        return delta
+    delta = -EPSILON-dot
+    if delta > 0:                   #lesser than 0, with tolerance
+        #print('Second false')
+        return delta
+    delta = dot-norma1a2*norma1a2+EPSILON
+    if delta > 0:       #greater that squared norm, with tolerance
+        #print('Third false')
+        return delta
+    return 0
+
+
+# TODO(SK): Rephrase docstring, add parameter/return values
+def interpolateUVTrackIn3D(p1_3d, p2_3d, layer):
+    """Create a 3D-path along given 3d-coordinates p1_3d and p2_3d on layer"""
+    # get 2d-coordinates
+    p1_2d = map3dPointToUV(layer, layer, p1_3d)
+    p2_2d = map3dPointToUV(layer, layer, p2_3d)
+
+    uv_p_2d = []
+
+    for step in range(1, constants.INTERPOLATION_QUALITY + 1):
+        interpolation = step / (constants.INTERPOLATION_QUALITY)
+        uv_p_2d.append(p2_2d * interpolation + p1_2d * (1 - interpolation))
+
+    ip_3d = mapUVPointTo3d(layer, uv_p_2d)
+
+    return ip_3d

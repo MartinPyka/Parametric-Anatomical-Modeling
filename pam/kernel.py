@@ -4,14 +4,18 @@ import math
 import numpy as np
 
 KERNEL_TYPES = [
-    ("GaussKernel", "Gauss", "", 0),
-    ("GaussUKernel", "Gauss (u)", "", 1),
-    ("GaussVKernel", "Gauss (v)", "", 2),
-    ("StripeWithEndKernel", "Stripe with end", "", 3),
-    ("UnityKernel", "Unity", "", 4),
-    ("YuKernel", "Yu Kernel", "", 5),
+    ("gauss", "Gauss", "", 0),
+    ("gauss_u", "Gauss (u)", "", 1),
+    ("gauss_v", "Gauss (v)", "", 2),
+    ("stripe_with_end", "Stripe with end", "", 3),
+    ("unity", "Unity", "", 4),
+    ("yu_kernel", "Yu Kernel", "", 5),
     ("yu_kernel2", "Yu fixed Params", "", 6)
 ]
+
+def get_kernel(kernel_identifier, args):
+    return KERNEL_DICT[kernel_identifier](*args)
+
 class AbstractKernel():
     def __init__(self):
         pass
@@ -34,6 +38,9 @@ class GaussKernel(AbstractKernel):
     :param float shift_u:
     :return: gauss value at point uv in 2d space
     :rtype: float"""
+
+    name = "gauss"
+    
     def __init__(self, var_u = 1.0, var_v = 1.0, shift_u = 0.0, shift_v = 0.0):
         self.var_u = var_u
         self.var_v = var_v
@@ -102,6 +109,8 @@ class StripeWithEndKernel(AbstractKernel):
     :rtype: float
     """
 
+    name = "stripe_with_kernel"
+
     def __init__(self, vec_u=1.0, vec_v=0.0, shift_u=0.0, shift_v=0.0, var_v=0.2):
         self.vec_u = vec_u
         self.vec_v = vec_v
@@ -124,7 +133,7 @@ class StripeWithEndKernel(AbstractKernel):
         rot_vec[...,0] -= self.shift_u
         rot_vec[...,1] -= self.shift_v
         
-        result = np.exp(-(rot_vec[...,1]**2 / (2 * var_v**2)))
+        result = np.exp(-(rot_vec[...,1]**2 / (2 * self.var_v**2)))
         if type(result) is not np.ndarray:
             if rot_vec[0] < 0:
                 return 0.0
@@ -145,6 +154,9 @@ class GaussUKernel(AbstractKernel):
     :return: gauss value at point uv in 2d space
     :rtype: float
     """
+
+    name = "gauss_u"
+
     def __init__(self, origin_u = 0.0, var_u = 1.0):
         self.origin_u = origin_u
         self.var_u = var_u
@@ -166,6 +178,9 @@ class GaussVKernel(AbstractKernel):
     :rtype: float
 
     """
+
+    name = "gauss_v"
+
     def __init__(self, origin_v = 0.0, var_v = 1.0):
         self.origin_v = origin_v
         self.var_v = var_v
@@ -177,6 +192,8 @@ class GaussVKernel(AbstractKernel):
 
 class UnityKernel(AbstractKernel):
     """Returns a unity kernel"""
+
+    name = "unity"
 
     def __init__(self):
         pass
@@ -197,6 +214,9 @@ class YuKernel():
     :param float tau: rotation angle
     :return: yu_kernel value at point uv in 2d space
     :rtype: float"""
+
+    name = "yu_kernel"
+
     def __init__(self, alpha_u = 0., alpha_v =  0., omega_u = 1.0, omega_v =1.0, ksi_u = 0., ksi_v = 0., tau = 0.):
         self.alpha_u = alpha_u
         self.alpha_v = alpha_v
@@ -243,8 +263,9 @@ def yu_kernel2(uv, guv):
     :type guv: tuple (float, float)
     :return: yu_kernel value at point uv in 2d space
     :rtype: float
-     
+    
     """
+
     # omega: Scaling by (omega * bins)
     #         omega = ]0., ∞] (if = 0 => div 0)
          
@@ -320,3 +341,14 @@ def yu_kernel2(uv, guv):
                
     return (2/o_v * phi(ruv[1]/ o_v) * xhi (a_v * ruv[1]/ o_v)*
             2/o_u * phi(ruv[0]/ o_u) * xhi (a_u * ruv[0]/ o_u)) 
+
+
+KERNEL_DICT = {
+    "gauss": GaussKernel,
+    "gauss_u": GaussUKernel,
+    "guass_v": GaussVKernel,
+    "stripe_with_end": StripeWithEndKernel,
+    "unity": UnityKernel,
+    "yu_kernel": YuKernel,
+    "yu_kernel2": yu_kernel2
+}

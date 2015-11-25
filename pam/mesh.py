@@ -3,7 +3,6 @@ import mathutils
 
 import numpy
 
-from . import model
 from . import constants
 from .utils import quadtree
 
@@ -83,6 +82,8 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
         return p_uv_2d
     return p_uv_2d_new
 
+QUADTREE_CACHE = {}
+
 def mapUVPointTo3d(obj_uv, uv_list, check_edges = False, cleanup=True):
     """Convert a list of uv-points into 3d. 
     This function is mostly used by interpolateUVTrackIn3D. Note, that 
@@ -116,11 +117,11 @@ def mapUVPointTo3d(obj_uv, uv_list, check_edges = False, cleanup=True):
     point_indices = [i for i in uv_list_range_container]
 
     # Build new quadtree to cache objects if no chache exists
-    if obj_uv.name not in model.QUADTREE_CACHE:
+    if obj_uv.name not in QUADTREE_CACHE:
         qtree = quadtree.buildUVQuadtreeFromObject(obj_uv, constants.CACHE_QUADTREE_DEPTH)
-        model.QUADTREE_CACHE[obj_uv.name] = qtree
+        QUADTREE_CACHE[obj_uv.name] = qtree
     else:
-        qtree = model.QUADTREE_CACHE[obj_uv.name]
+        qtree = QUADTREE_CACHE[obj_uv.name]
 
     for i in point_indices:
         point = uv_list[i]

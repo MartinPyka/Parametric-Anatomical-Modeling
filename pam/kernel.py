@@ -29,6 +29,9 @@ class AbstractKernel():
 
         return None
 
+    def get_args(self):
+        return []
+
 class GaussKernel(AbstractKernel):
     """Computes distribution value in two dimensional gaussian kernel
 
@@ -52,6 +55,9 @@ class GaussKernel(AbstractKernel):
 
         return np.exp(-((ruv[...,0] + self.shift_u) ** 2 / (2 * self.var_u ** 2) +
                         (ruv[...,1] + self.shift_v) ** 2 / (2 * self.var_v ** 2)))
+
+    def get_args(self):
+        return [self.var_u, self.var_v, self.shift_u, self.shift_v]
 
 # copied from:
 # http://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python
@@ -109,7 +115,7 @@ class StripeWithEndKernel(AbstractKernel):
     :rtype: float
     """
 
-    name = "stripe_with_kernel"
+    name = "stripe_with_end"
 
     def __init__(self, vec_u=1.0, vec_v=0.0, shift_u=0.0, shift_v=0.0, var_v=0.2):
         self.vec_u = vec_u
@@ -143,6 +149,9 @@ class StripeWithEndKernel(AbstractKernel):
             np.place(result, rot_vec[...,0] < 0.0, 0.0)
             return result
 
+    def get_args(self):
+        return [self.var_u, self.var_v, self.shift_u, self.shift_v, self.var_v]
+
 class GaussUKernel(AbstractKernel):
     """Computes distribution value in one dimensional gaussian kernel
     in u direction
@@ -165,6 +174,9 @@ class GaussUKernel(AbstractKernel):
         ruv = guv - uv  # compute relative position
 
         return np.exp(-(1 / 2) * ((ruv[...,0] - self.origin_u) / self.var_u) ** 2)
+
+    def get_args(self):
+        return [self.origin_u, self.var_u]
 
 class GaussVKernel(AbstractKernel):
     """Computes distribution value in one dimensional gaussian kernel
@@ -189,6 +201,9 @@ class GaussVKernel(AbstractKernel):
         ruv = guv - uv  # compute relative position
 
         return np.exp(-(1 / 2) * ((ruv[...,1] - self.origin_v) / self.var_v) ** 2)
+
+    def get_args(self):
+        return [self.origin_v, self.var_v]
 
 class UnityKernel(AbstractKernel):
     """Returns a unity kernel"""
@@ -251,6 +266,9 @@ class YuKernel():
             for j in range(ruv.shape[1]):
                 m[i, j] = self.yu_kernel(ruv[i, j])
         return m
+
+    def get_args(self):
+        return [self.alpha_u, self.alpha_v, self.omega_u, self.omega_v, self.ksi_u, self.ksi_v, self.tau]
 
 
 # TODO(SK): Rephrase docstring & fill in parameter values
@@ -352,3 +370,11 @@ KERNEL_DICT = {
     "yu_kernel": YuKernel,
     "yu_kernel2": yu_kernel2
 }
+
+gauss = GaussKernel
+gauss_u = GaussUKernel
+guass_v = GaussVKernel
+stripe_with_end = StripeWithEndKernel
+unity = UnityKernel
+yu_kernel = YuKernel
+yu_kernel2 = yu_kernel2

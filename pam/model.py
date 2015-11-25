@@ -6,8 +6,11 @@ import bpy
 import bpy_extras
 import mathutils
 import numpy
+import json
 
 from .utils import quadtree
+from . import layer
+from . import kernel
 
 NG_LIST = []
 NG_DICT = {}
@@ -18,6 +21,133 @@ CONNECTION_RESULTS = []
 CONNECTION_ERRORS = []
 
 QUADTREE_CACHE = {}
+MAPPING_NAMES = ['MAP_euclid', 'MAP_normal', 'MAP_random', 'MAP_top', 'MAP_uv', 'MAP_mask3D']
+DISTANCE_NAMES = ['DIS_euclid', 'DIS_euclidUV', 'DIS_jumpUV', 'DIS_UVjump', 'DIS_normalUV', 'DIS_UVnormal']
+
+class Connection():
+    """Represents a Connection with multiple layers"""
+    def __init__(self, layers, slayer, mappings):
+        """"""
+        self.layers = layers
+        self.pre_layer = layers[0]
+        self.post_layer = layers[-1]
+        self.synaptic_layer = layers[slayer]
+        self.pre_intermediate_layers = layers[1:slayer]
+        self.post_intermediate_layers = layers[slayer + 1:-1]
+        self.synaptic_layer_index = slayer
+        self.mappings = mappings
+
+    def __str__(self):
+        return " -> ".join(["|" + self.pre_layer.name + "|"] + [l.name for l in self.pre_intermediate_layers] + ["|" + self.synaptic_layer.name + "|"] + [l.name for l in self.post_intermediate_layers] + ["|"  + self.post_layer.name + "|"])
+
+    def __repr__(self):
+        rep = "Connection from " + self.pre_layer.name + " to " + self.post_layer.name + "\n"
+        rep += "\tLayers:            " + " -> ".join(["|" + self.pre_layer.name + "| (Pre layer)"] + [l.name for l in self.pre_intermediate_layers] + ["|" + self.synaptic_layer.name + "| (Synaptic Layer)"] + [l.name for l in self.post_intermediate_layers] + ["|"  + self.post_layer.name + "| (Post Layer)\n"])
+        rep += "\tMapping functions: " + ", ".join([MAPPING_NAMES[m[0]] for m in self.mappings]) + "\n"
+        rep += "\tMapping distances: " + ", ".join([DISTANCE_NAMES[m[1]] for m in self.mappings]) + "\n"
+        rep += "Kernel functions:\n"
+        rep += "\tPre kernel:  " + self.pre_layer.kernel.name + "(" + ", ".join([str(x) for x in self.pre_layer.kernel.get_args()]) + ")\n"
+        rep += "\tPost kernel: " + self.post_layer.kernel.name + "(" + ", ".join([str(x) for x in self.post_layer.kernel.get_args()]) + ")\n"
+        rep += "Neurons:\n"
+        rep += "\tPre:      " + str(self.pre_layer.neuron_count) + "\n"
+        rep += "\tPost:     " + str(self.post_layer.neuron_count) + "\n"
+        rep += "\tSynapses: " + str(self.synaptic_layer.no_synapses)
+
+        return rep
+
+    def toDict(self):
+        """Returns a dictionary of the values of this class for json encoding"""
+        conDict = {}
+        conDict['layers'] = [l.name for l in self.layers]
+        conDict['ng_pre'] = self.pre_layer.neuronset_name
+        conDict['ng_post'] = self.post_layer.neuronset_name
+        conDict['synaptic_layer_index'] = self.synaptic_layer_index
+        conDict['mappings'] = [(MAPPING_NAMES[m[0]], DISTANCE_NAMES[m[1]]) for m in self.mappings]
+        conDict['pre_kernel'] = {'name': self.pre_layer.kernel.name, 'args': self.pre_layer.kernel.get_args()}
+        conDict['post_kernel'] = {'name': self.post_layer.kernel.name, 'args': self.post_layer.kernel.get_args()}
+        conDict['no_synapses'] = self.synaptic_layer.no_synapses
+        return conDict
+
+    def toList(self):
+        """Returns this class in a list format compatible with the old pam files"""
+        conList = []
+        conList.append([l.name for l in self.layers])
+        conList.append(self.pre_layer.neuronset_name)
+        conList.append(self.post_layer.neuronset_name)
+        conList.append(self.synaptic_layer_index)
+        conList.append([MAPPING_NAMES[m[0]] for m in self.mappings])
+        conList.append([DISTANCE_NAMES[m[1]] for m in self.mappings])
+        conList.append(self.pre_layer.kernel.name)
+        conList.append(self.pre_layer.get_args())
+        conList.append(self.post_layer.kernel.name)
+        conList.append(self.post_layer.get_args())
+        conList.append(self.synaptic_layer.no_synapses)
+        return conList
+
+class Model():
+    """Represents a model with its connections and settings"""
+    def __init__(self, neuron_groups, connections):
+        self.neuron_groups = neuron_groups
+        self.connections = connections
+
+class ModelJsonEncoder(json.JSONEncoder):
+    def default(self, model):
+        modelJson = {}
+        modelJson['NEURON_GROUPS'] = model.neuron_groups
+
+        conJson = []
+        con = model.connections
+        enc = ConnectionJsonEncoder()
+        for c in con:
+            conJson.append(enc.default(c))
+        modelJson['CONNECTIONS'] = conJson
+        return modelJson
+
+class ConnectionJsonEncoder(json.JSONEncoder):
+    def default(self, connection):
+        return connection.toDict()
+
+def decodeJSONModel(m):
+    pass
+
+def connectionFromDict(c):
+    kernel_pre = kernel.getKernel(c['pre_kernel']['name'], c['pre_kernel']['args'])
+    kernel_post = kernel.getKernel(c['post_kernel']['name'], c['post_kernel']['args'])
+
+    layer_names = c['layers']
+    layers = []
+    for i, l in enumerate(layer_names):
+        obj = bpy.data.objects[l]
+        if i == 0:
+            layers.append(layer.NeuronLayer(l, obj, c['ng_pre'], obj.particle_systems[c['ng_pre']].particles, kernel_pre))
+        elif i == len(layer_names)-1:
+            layers.append(layer.NeuronLayer(l, obj, c['ng_post'], obj.particle_systems[c['ng_post']].particles, kernel_post))
+        elif i == c['synaptic_layer_index']:
+            layers.append(layer.SynapticLayer(l, obj, c['no_synapses']))
+        else:
+            layers.append(layer.Layer2d(l, obj))
+    return Connection(layers, c['synaptic_layer_index'], [(MAPPING_NAMES.index(m[0]), DISTANCE_NAMES.index(m[1])) for m in c['mappings']])
+
+def connectionFromList(c):
+    """Create a connection instance from the old list format
+
+    :param c: The connection dictionary
+    :type c: dict
+    
+    :return: The created connection instance
+    :rtype: model.Connection"""
+    layers = []
+    for i, l in enumerate(c[0]):
+        if i == 0:
+            layers.append(layer.NeuronLayer(l.name, l, c[1], l.particle_systems[c[1]].particles, kernel.get_kernel(c[6], c[7])))
+        elif i == len(c[0])-1:
+            layers.append(layer.NeuronLayer(l.name, l, c[2], l.particle_systems[c[2]].particles, kernel.get_kernel(c[8], c[9])))
+        elif i == c[3]:
+            layers.append(layer.SynapticLayer(l.name, l, c[10]))
+        else:
+            layers.append(layer.Layer2d(l.name, l))
+    return Connection(layers, c[3], [(c[4][i], c[5][i]) for i in range(len(c[4]))])
+
 
 def getPreIndicesOfPostIndex(c_index, post_index ):
     """ returns for a given connection-index c_index and a given post-synaptic
@@ -82,7 +212,9 @@ def Pickle2Connection(connections):
     for c in connections:
         new_c = [convertString2Object(c)]
         new_c = new_c + list(c[1:])
-        result.append(tuple(new_c))
+        new_c[6] = new_c[6].name
+        new_c[8] = new_c[8].name
+        result.append(connectionFromList(new_c))
     return result
 
 

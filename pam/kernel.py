@@ -150,7 +150,7 @@ class StripeWithEndKernel(AbstractKernel):
             return result
 
     def get_args(self):
-        return [self.var_u, self.var_v, self.shift_u, self.shift_v, self.var_v]
+        return [self.vec_u, self.vec_v, self.shift_u, self.shift_v, self.var_v]
 
 class GaussUKernel(AbstractKernel):
     """Computes distribution value in one dimensional gaussian kernel

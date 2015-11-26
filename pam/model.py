@@ -8,7 +8,6 @@ import mathutils
 import numpy
 import json
 
-from .utils import quadtree
 from . import layer
 from . import kernel
 
@@ -86,33 +85,45 @@ class Connection():
 
 class Model():
     """Represents a model with its connections and settings"""
-    def __init__(self, neuron_groups, connections):
-        self.neuron_groups = neuron_groups
+    def __init__(self, ng_list = [], ng_dict = {}, connections = []):
+        self.ng_list = ng_list
+        self.ng_dict = ng_dict
         self.connections = connections
 
 class ModelJsonEncoder(json.JSONEncoder):
     def default(self, model):
-        modelJson = {}
-        modelJson['NEURON_GROUPS'] = model.neuron_groups
+        if isinstance(model, Model):
+            modelJson = {}
+            modelJson['NEURON_GROUP_LIST'] = model.ng_list
+            modelJson['NEURON_GROUP_DICT'] = model.ng_dict
 
-        conJson = []
-        con = model.connections
-        enc = ConnectionJsonEncoder()
-        for c in con:
-            conJson.append(enc.default(c))
-        modelJson['CONNECTIONS'] = conJson
-        return modelJson
+            conJson = []
+            con = model.connections
+            enc = ConnectionJsonEncoder()
+            for c in con:
+                conJson.append(enc.default(c))
+            modelJson['CONNECTIONS'] = conJson
+            return modelJson
+        else:
+            return super().default(model)
 
 class ConnectionJsonEncoder(json.JSONEncoder):
     def default(self, connection):
         return connection.toDict()
 
 def decodeJSONModel(m):
-    pass
+    model = Model()
+    model.ng_list = m['NEURON_GROUP_LIST']
+    model.ng_dict = m['NEURON_GROUP_DICT']
+    connections = []
+    for c in m['CONNECTIONS']:
+        connections.append(connectionFromDict(c))
+    model.connections = connections
+    return model
 
 def connectionFromDict(c):
-    kernel_pre = kernel.getKernel(c['pre_kernel']['name'], c['pre_kernel']['args'])
-    kernel_post = kernel.getKernel(c['post_kernel']['name'], c['post_kernel']['args'])
+    kernel_pre = kernel.get_kernel(c['pre_kernel']['name'], c['pre_kernel']['args'])
+    kernel_post = kernel.get_kernel(c['post_kernel']['name'], c['post_kernel']['args'])
 
     layer_names = c['layers']
     layers = []
@@ -148,6 +159,10 @@ def connectionFromList(c):
             layers.append(layer.Layer2d(l.name, l))
     return Connection(layers, c[3], [(c[4][i], c[5][i]) for i in range(len(c[4]))])
 
+def saveModelToJson(model, path):
+    with open(bpy.path.abspath(path), 'w+') as f:
+        json.dump(model, f, cls = ModelJsonEncoder, sort_keys=True,
+            indent = 4, separators=(',', ': '))
 
 def getPreIndicesOfPostIndex(c_index, post_index ):
     """ returns for a given connection-index c_index and a given post-synaptic
@@ -377,3 +392,23 @@ class PAMModelSave(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
         save(self.filepath)
 
         return {'FINISHED'}
+
+class PAMModelJSONSave(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
+    """Save current model"""
+
+    bl_idname = "pam.model_save_json"
+    bl_label = "Save model data to JSON"
+    bl_description = "Save model data"
+
+    filename_ext = ".json"
+
+    @classmethod
+    def poll(cls, context):
+        return any(CONNECTIONS)
+
+    def execute(self, context):
+        # save(self.filepath)
+
+        return {'FINISHED'}
+
+# Use npy/npz file format to save connection results

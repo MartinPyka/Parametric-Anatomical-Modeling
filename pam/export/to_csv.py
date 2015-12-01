@@ -57,8 +57,8 @@ def export_connections(filepath):
         csv_write_matrices(file, "c", cmatrices)
         csv_write_matrices(file, "d", dmatrices)
         csv_write_matrix(file, "names", mapping_names)
-        csv_write_matrix(file, "connections", model.CONNECTION_INDICES)
-        csv_write_matrix(file, "neurongroups", model.NG_LIST)
+        csv_write_matrix(file, "connections", model.MODEL.connection_indices)
+        csv_write_matrix(file, "neurongroups", model.MODEL.ng_list)
 
 
 # TODO(SK): Fill in docstring parameters/return values
@@ -141,7 +141,7 @@ class PAMModelExportCSV(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
     @classmethod
     def poll(cls, context):
-        return any(model.CONNECTIONS)
+        return any(model.MODEL.connections)
 
     def execute(self, context):
         export_connections(self.filepath)

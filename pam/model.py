@@ -10,13 +10,15 @@ import json
 
 from . import layer
 from . import kernel
+from . import mesh
 
-NG_LIST = []
-NG_DICT = {}
-CONNECTION_COUNTER = 0
-CONNECTION_INDICES = []
-CONNECTIONS = []
-CONNECTION_RESULTS = []
+# NG_LIST = []
+# NG_DICT = {}
+# CONNECTION_COUNTER = 0
+# CONNECTION_INDICES = []
+# CONNECTIONS = []
+# CONNECTION_RESULTS = []
+MODEL = None
 CONNECTION_ERRORS = []
 
 QUADTREE_CACHE = {}
@@ -51,6 +53,7 @@ class Connection():
         rep += "\tPre:      " + str(self.pre_layer.neuron_count) + "\n"
         rep += "\tPost:     " + str(self.post_layer.neuron_count) + "\n"
         rep += "\tSynapses: " + str(self.synaptic_layer.no_synapses)
+        rep += "\n"
 
         return rep
 
@@ -85,10 +88,13 @@ class Connection():
 
 class Model():
     """Represents a model with its connections and settings"""
-    def __init__(self, ng_list = [], ng_dict = {}, connections = []):
+    def __init__(self, ng_list = [], ng_dict = {}, connections = [], connection_indices = []):
         self.ng_list = ng_list
         self.ng_dict = ng_dict
         self.connections = connections
+        self.connection_indices = connection_indices
+
+MODEL = Model()
 
 class ModelJsonEncoder(json.JSONEncoder):
     def default(self, model):
@@ -96,6 +102,7 @@ class ModelJsonEncoder(json.JSONEncoder):
             modelJson = {}
             modelJson['NEURON_GROUP_LIST'] = model.ng_list
             modelJson['NEURON_GROUP_DICT'] = model.ng_dict
+            modelJson['CONNECTION_INDICES'] = model.connection_indices
 
             conJson = []
             con = model.connections
@@ -115,6 +122,7 @@ def decodeJSONModel(m):
     model = Model()
     model.ng_list = m['NEURON_GROUP_LIST']
     model.ng_dict = m['NEURON_GROUP_DICT']
+    model.connection_indices = m['CONNECTION_INDICES']
     connections = []
     for c in m['CONNECTIONS']:
         connections.append(connectionFromDict(c))
@@ -163,6 +171,11 @@ def saveModelToJson(model, path):
     with open(bpy.path.abspath(path), 'w+') as f:
         json.dump(model, f, cls = ModelJsonEncoder, sort_keys=True,
             indent = 4, separators=(',', ': '))
+
+def loadModelFromJson(path):
+    with open(bpy.path.abspath(path), 'r') as f:
+        m = decodeJSONModel(json.load(f))
+    return m
 
 def getPreIndicesOfPostIndex(c_index, post_index ):
     """ returns for a given connection-index c_index and a given post-synaptic
@@ -294,7 +307,7 @@ class ModelSnapshot(object):
         return str(self.__dict__) == str(other.__dict__)
 
 
-def save(path):
+def savePickle(path):
     """Save current model via pickle to given path
 
     :param str path: filepath
@@ -304,7 +317,7 @@ def save(path):
     pickle.dump(snapshot, open(path, "wb"))
 
 
-def load(path):
+def loadPickle(path):
     """Load model via pickle from given path
 
     :param str path: filepath
@@ -312,12 +325,14 @@ def load(path):
     """
     snapshot = pickle.load(open(path, "rb"))
 
-    global NG_LIST
-    global NG_DICT
-    global CONNECTION_COUNTER
-    global CONNECTION_INDICES
-    global CONNECTIONS
+    # global NG_LIST
+    # global NG_DICT
+    # global CONNECTION_COUNTER
+    # global CONNECTION_INDICES
+    # global CONNECTIONS
     global CONNECTION_RESULTS
+    global CONNECTION_ERRORS
+    global MODEL
     NG_LIST = snapshot.NG_LIST
     NG_DICT = snapshot.NG_DICT
     CONNECTION_COUNTER = snapshot.CONNECTION_COUNTER
@@ -325,17 +340,18 @@ def load(path):
     CONNECTIONS = Pickle2Connection(snapshot.CONNECTIONS)
     CONNECTION_RESULTS = convertArray2Vector(snapshot.CONNECTION_RESULTS)
     CONNECTION_ERRORS = []
+    MODEL = Model(NG_LIST, NG_DICT, CONNECTIONS, CONNECTION_INDICES)
 
 
-def compare(path1, path2):
+def comparePickle(path1, path2):
     """Compare two models with each other
 
     :param str path1: a path
     :param str path2: another path
 
     """
-    m1 = load(path1)
-    m2 = load(path2)
+    m1 = loadPickle(path1)
+    m2 = loadPickle(path2)
     return m1 == m2
 
 
@@ -359,8 +375,7 @@ def reset():
 def clearQuadtreeCache():
     """Clears the quadtree cache. 
     Has to be called each time a uv-map has changed."""
-    global QUADTREE_CACHE
-    QUADTREE_CACHE = {}
+    mesh.QUADTREE_CACHE = {}
 
 class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """Load a model"""
@@ -370,7 +385,7 @@ class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     bl_description = "Load model data"
 
     def execute(self, context):
-        load(self.filepath)
+        loadPickle(self.filepath)
 
         return {'FINISHED'}
 
@@ -386,10 +401,24 @@ class PAMModelSave(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
     @classmethod
     def poll(cls, context):
-        return any(CONNECTIONS)
+        return any(MODEL.connections)
 
     def execute(self, context):
-        save(self.filepath)
+        savePickle(self.filepath)
+
+        return {'FINISHED'}
+
+class PAMModelJSONLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
+    """Load a model"""
+
+    bl_idname = "pam.model_load_json"
+    bl_label = "Load model data from JSON"
+    bl_description = "Load model data from JSON"
+
+    def execute(self, context):
+        m = loadModelFromJson(self.filepath)
+        global MODEL
+        MODEL = m
 
         return {'FINISHED'}
 
@@ -398,16 +427,16 @@ class PAMModelJSONSave(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
     bl_idname = "pam.model_save_json"
     bl_label = "Save model data to JSON"
-    bl_description = "Save model data"
+    bl_description = "Save model data to JSON"
 
     filename_ext = ".json"
 
     @classmethod
     def poll(cls, context):
-        return any(CONNECTIONS)
+        return any(MODEL.connections)
 
     def execute(self, context):
-        # save(self.filepath)
+        saveModelToJson(MODEL, self.filepath)
 
         return {'FINISHED'}
 

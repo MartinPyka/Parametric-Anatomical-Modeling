@@ -437,10 +437,10 @@ def visualizeUnconnectedNeurons(no_connection):
     sums = numpy.array([sum(row) for row in c])
     indices = numpy.where(sums == -model.CONNECTIONS[no_connection][-1])[0]
 
-    logger.debug(indices)
+    logger.info(indices)
     neuron_count = len(c)
     unconnected_count = len(indices)
-    logger.debug(str(unconnected_count) + "/" + str(neuron_count) + ", " + str(round((unconnected_count / neuron_count) * 10000) / 100) + "%")
+    logger.info(str(unconnected_count) + "/" + str(neuron_count) + ", " + str(round((unconnected_count / neuron_count) * 10000) / 100) + "%")
 
     layer = model.CONNECTIONS[no_connection][0][0]
 
@@ -460,9 +460,9 @@ def visualizeUnconnectedPostNeurons(no_connection):
             visualizePoint(layer.particle_systems[0].particles[index].location)
             indices.append(index)
 
-    logger.debug(indices)
+    logger.info(indices)
     unconnected_count = len(indices)
-    logger.debug(str(unconnected_count) + "/" + str(neuron_count) + ", " + str(round((unconnected_count / neuron_count) * 10000) / 100) + "%")
+    logger.info(str(unconnected_count) + "/" + str(neuron_count) + ", " + str(round((unconnected_count / neuron_count) * 10000) / 100) + "%")
 
 
 def visualizePartlyConnectedNeurons(no_connection):
@@ -471,7 +471,7 @@ def visualizePartlyConnectedNeurons(no_connection):
     sums = numpy.array([sum(row) for row in c])
     indices = numpy.where(sums < model.CONNECTIONS[no_connection][-1])[0]
 
-    logger.debug(indices)
+    logger.info(indices)
 
     layer = model.CONNECTIONS[no_connection][0][0]
 

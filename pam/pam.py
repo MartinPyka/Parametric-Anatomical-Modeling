@@ -1611,12 +1611,16 @@ def returnNeuronGroups():
 
 # TODO(SK): Missing docstring
 def resetOrigins():
+    active_obj = bpy.context.scene.objects.active   #save active object
     for c in model.CONNECTIONS:
         for l in c[0]:
             l.select = True
             bpy.context.scene.objects.active = l
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             l.select = False
+    bpy.context.scene.objects.active = active_obj   #restore
+    if active_obj:
+        active_obj.select = True
 
 
 def initialize3D():

@@ -268,12 +268,16 @@ class PamVisualizeAllConnections(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     def execute(self, context):
+        object = context.active_object
         connections = context.scene.pam_visualize.connections
         smoothing = context.scene.pam_visualize.smoothing
         for j in range(0, model.CONNECTION_COUNTER):
             for i in range(0, connections):
                 pam_vis.visualizeConnectionsForNeuron(j, i, smoothing)
 
+        bpy.context.scene.objects.active = object
+        if object:
+            object.select = True
         return {'FINISHED'}
 
 

@@ -121,6 +121,9 @@ class Model():
         self.connections = connections
         self.connection_indices = connection_indices
 
+    def addConnection(self, connection):
+        self.connections.append(connection)
+
 MODEL = Model()
 
 class ModelJsonEncoder(json.JSONEncoder):
@@ -372,20 +375,10 @@ def comparePickle(path1, path2):
 
 def reset():
     """Reset most important variables"""
-    global NG_LIST
-    global NG_DICT
-    global CONNECTION_COUNTER
-    global CONNECTION_INDICES
-    global CONNECTIONS
+    global MODEL
     global CONNECTION_RESULTS
-    NG_LIST = []
-    NG_DICT = {}
-    CONNECTION_COUNTER = 0
-    CONNECTION_INDICES = []
-    CONNECTIONS = []
+    MODEL = Model()
     CONNECTION_RESULTS = []
-    CONNECTION_ERRORS = []
-    clearQuadtreeCache()
 
 def clearQuadtreeCache():
     """Clears the quadtree cache. 

@@ -119,7 +119,7 @@ class PAMMappingToolsPanel(bpy.types.Panel):
                     row = box.row(align=True)
                     row.prop(layer, "synapse_count", text="Synapses")
 
-            if i < len(active_set.mappings) - 1:
+            if i < len(active_set.mappings):
                 mapping = active_set.mappings[i]
                 split = layout.split(0.8)
                 box = split.box()

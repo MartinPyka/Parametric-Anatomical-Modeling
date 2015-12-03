@@ -446,7 +446,7 @@ def computeMapping(layers, connections, distances, point, debug=False):
 
         # if random mapping should be used
         elif connections[i] == MAP_random:
-            p3d_n, n, f = selectRandomPoint(layer_next)
+            p3d_n, n, f = selectRandomPoint(layer_next.obj)
 
             # if this is not the synapse layer
             if (i < (len(connections) - 1)):
@@ -723,10 +723,14 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
 
 # TODO(SK): Missing docstring
 def addConnection(*args):
-    model.CONNECTIONS.append(args)
+    if type(args[0]) is model.Connection:
+        model.MODEL.addConnection(args[0])
+    else:
+        con = model.Connection(*args)
+        model.MODEL.addConnection(con)
 
     # returns the future index of the connection
-    return (len(model.CONNECTIONS) - 1)
+    return (len(model.MODEL.connections) - 1)
 
 def replaceMapping(index, *args):
     """ Replaces a mapping with a given index by the arguments *args
@@ -752,20 +756,11 @@ def replaceMapping(index, *args):
 
 # TODO(SK): Missing docstring
 def computeAllConnections():
-    for c in model.CONNECTIONS:
-        logger.info(c[0][0].name + ' - ' + c[0][-1].name)
-        layers = []
-        for i, l in enumerate(c[0]):
-            if i == 0:
-                layers.append(layer.NeuronLayer(l.name, l, c[1], l.particle_systems[c[1]].particles, kernel.get_kernel(c[6], c[7])))
-            elif i == len(c[0])-1:
-                layers.append(layer.NeuronLayer(l.name, l, c[2], l.particle_systems[c[2]].particles, kernel.get_kernel(c[8], c[9])))
-            elif i == c[3]:
-                layers.append(layer.SynapticLayer(l.name, l, c[10]))
-            else:
-                layers.append(layer.Layer2d(l.name, l))
+    for c in model.MODEL.connections:
+        logger.info(c.pre_layer.name + ' - ' + c.post_layer.name)
+        
+        result = computeConnectivity(c)
 
-        result = computeConnectivity(layers, c[3], c[4], c[5])
         model.CONNECTION_RESULTS.append(
             {
                 'c': result[0],
@@ -778,16 +773,15 @@ def computeAllConnections():
 # TODO(SK): Rephrase docstring, add parameter/return values
 def updateMapping(index):
     """Update a mapping given by index"""
-    m = model.CONNECTIONS[index]
-    result = computeConnectivity(*m, create=False)
+    c = model.MODEL.connections[index]
+    result = computeConnectivity(c, create=False)
     model.CONNECTION_RESULTS[index] = {
         'c': result[0],
         'd': result[1],
         's': result[2]
     }
 
-def computeConnectivity(layers, slayer, connections,
-                        distances, create=True, threads = -1):
+def computeConnectivity(con, create=True, threads = -1):
     """Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
     with the given parameters
     :param list layers: list of layers connecting a pre- with a post-synaptic layer
@@ -820,17 +814,20 @@ def computeConnectivity(layers, slayer, connections,
                         distances, func_pre, args_pre, func_post, args_post,
                         no_synapses, create, threads)
 
-    no_synapses = layers[slayer].no_synapses
+    no_synapses = con.synaptic_layer.no_synapses
+    slayer = con.synaptic_layer_index
+    connections, distances = zip(*con.mappings)
+    layers = con.layers
     # connection matrix
-    conn = numpy.zeros((layers[0].neuron_count, no_synapses), dtype = numpy.int)
+    conn = numpy.zeros((con.pre_layer.neuron_count, no_synapses), dtype = numpy.int)
 
     # distance matrix
-    dist = numpy.zeros((layers[0].neuron_count, no_synapses))
+    dist = numpy.zeros((con.pre_layer.neuron_count, no_synapses))
 
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
-    syn = [[[] for j in range(no_synapses)] for i in range(layers[0].neuron_count)]
+    syn = [[[] for j in range(no_synapses)] for i in range(con.pre_layer.neuron_count)]
 
-    uv_grid = grid.UVGrid(layers[slayer].obj, 0.02)
+    uv_grid = grid.UVGrid(con.synaptic_layer.obj, 0.02)
 
     # rescale arg-parameters
     # args_pre = [i / layers[slayer].obj['uv_scaling'] for i in args_pre]
@@ -838,22 +835,22 @@ def computeConnectivity(layers, slayer, connections,
 
     logger.info("Prepare Grid")
 
-    uv_grid.compute_pre_mask(layers[0].kernel)
-    uv_grid.compute_post_mask(layers[-1].kernel)
+    uv_grid.compute_pre_mask(con.pre_layer.kernel)
+    uv_grid.compute_post_mask(con.post_layer.kernel)
 
     logger.info("Compute Post-Mapping")
 
     layers_post = layers[:(slayer - 1):-1]
-    conenctions_post = connections[:(slayer - 1):-1]
+    connections_post = connections[:(slayer - 1):-1]
     distances_post = distances[:(slayer - 1):-1]
 
     # fill uv_grid with post-neuron-links
-    for i in range(0, layers[-1].neuron_count):
+    for i in range(0, con.post_layer.neuron_count):
         random.seed(i + SEED)
         post_p3d, post_p2d, post_d = computeMapping(layers_post,
-                                                    conenctions_post,
+                                                    connections_post,
                                                     distances_post,
-                                                    layers[-1].getNeuronPosition(i))
+                                                    con.post_layer.getNeuronPosition(i))
         if post_p3d is None:
             continue
         
@@ -869,13 +866,13 @@ def computeConnectivity(layers, slayer, connections,
     connections_pre = connections[0:slayer]
     distances_pre = distances[0:slayer]
 
-    num_particles = layers[0].neuron_count
+    num_particles = con.pre_layer.neuron_count
     for i in range(0, num_particles):
         random.seed(i + SEED)
         pre_p3d, pre_p2d, pre_d = computeMapping(layers_pre,
                                                  connections_pre,
                                                  distances_pre,
-                                                 layers[0].getNeuronPosition(i))
+                                                 con.pre_layer.getNeuronPosition(i))
 
         logger.info(str(round((i / num_particles) * 10000) / 100) + '%')
 
@@ -926,14 +923,13 @@ def computeConnectivity(layers, slayer, connections,
             conn[i, rest] = -1
 
     if create:
-        model.CONNECTION_INDICES.append(
+        model.MODEL.connection_indices.append(
             [
-                model.CONNECTION_COUNTER,
-                model.NG_DICT[layers[0].name][layers[0].neuronset_name],
-                model.NG_DICT[layers[-1].name][layers[-1].neuronset_name]
+                len(model.MODEL.connections),
+                model.MODEL.ng_dict[con.pre_layer.name][layers[0].neuronset_name],
+                model.MODEL.ng_dict[con.post_layer.name][layers[-1].neuronset_name]
             ]
         )
-        model.CONNECTION_COUNTER += 1
 
     return conn, dist, syn, uv_grid
 
@@ -1340,12 +1336,12 @@ def returnNeuronGroups():
 
 # TODO(SK): Missing docstring
 def resetOrigins():
-    for c in model.CONNECTIONS:
-        for l in c[0]:
-            l.select = True
-            bpy.context.scene.objects.active = l
+    for c in model.MODEL.connections:
+        for l in c.layers:
+            l.obj.select = True
+            bpy.context.scene.objects.active = l.obj
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-            l.select = False
+            l.obj.select = False
 
 
 def initialize3D():
@@ -1361,6 +1357,6 @@ def initialize3D():
     initializeUVs()
 
     logger.info("collecting neuron groups")
-    model.NG_LIST, model.NG_DICT = returnNeuronGroups()
+    model.MODEL.ng_list, model.MODEL.ng_dict = returnNeuronGroups()
 
     logger.info("done initalizing")

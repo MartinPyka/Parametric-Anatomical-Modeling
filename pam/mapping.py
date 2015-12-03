@@ -14,6 +14,7 @@ from . import kernel
 from . import model
 from . import pam
 from . import debug
+from . import layer
 
 from pam import pam_vis as pv
 from pam.tools import colorizeLayer as CL
@@ -33,9 +34,9 @@ LAYER_TYPES = [
 MAPPING_TYPES = [
     ("euclid", "Euclidean", "", "", 0),
     ("normal", "Normal", "", "", 1),
-    ("top", "Topology", "", "", 2),
-    ("uv", "UV", "", "", 3),
-    ("rand", "Random", "", "", 4),
+    ("rand", "Random", "", "", 2),
+    ("top", "Topology", "", "", 3),
+    ("uv", "UV", "", "", 4),
     ("mask3D", "3D Mask", "", "", 5)
 ]
 
@@ -66,36 +67,38 @@ DISTANCE_DICT = {
     "UVnormal": pam.DIS_UVnormal
 }
 
-def updateModel(m, context):
+def updateModel(m = model.MODEL, context = None):
     """Updates the blender model to be up to date with the PAM model"""
+    if context == None:
+        context = bpy.context
     mapping = context.scene.pam_mapping
     for con in m.connections:
         s = mapping.sets.add()
         s.name = con.pre_layer.name + '-' + con.post_layer.name
 
         for l in con.layers:
-            layer = s.layers.add()
-            layer.object = l.obj_name
+            new_layer = s.layers.add()
+            new_layer.object = l.obj_name
 
             if l == con.pre_layer or l == con.post_layer:
                 if l == con.pre_layer:
-                    layer.type = 'presynapse'
+                    new_layer.type = 'presynapse'
                 elif l == con.post_layer:
-                    layer.type = 'postsynapse'
+                    new_layer.type = 'postsynapse'
 
-                layer.kernel.function = l.kernel.name
-                layer.kernel.particles = l.neuronset_name
-                layer.kernel.object = l.obj_name
+                new_layer.kernel.function = l.kernel.name
+                new_layer.kernel.particles = l.neuronset_name
+                new_layer.kernel.object = l.obj_name
                 for arg_name, arg_val in l.kernel.get_args().items():
-                    a = layer.kernel.parameters[arg_name]
+                    a = new_layer.kernel.parameters[arg_name]
                     a.value = arg_val
             elif l == con.synaptic_layer:
-                layer.type = 'synapse'
-                layer.synapse_count = l.no_synapses
+                new_layer.type = 'synapse'
+                new_layer.synapse_count = l.no_synapses
             elif l in con.pre_intermediate_layers:
-                layer.type = 'preintermediates'
+                new_layer.type = 'preintermediates'
             elif l in con.post_intermediate_layers:
-                layer.type = 'postintermediates'
+                new_layer.type = 'postintermediates'
 
         for con_mapping in con.mappings:
             new_mapping = s.mappings.add()
@@ -641,47 +644,45 @@ class PAMMappingCompute(bpy.types.Operator):
 
             pre_neurons = set.layers[0].kernel.particles
             pre_func = set.layers[0].kernel.function
-            pre_params = [param.value for param in set.layers[0].kernel.parameters]
+            pre_params = {param.name: param.value for param in set.layers[0].kernel.parameters}
+            pre_kernel = kernel.get_kernel(pre_func, pre_params)
 
             post_neurons = set.layers[-1].kernel.particles
             post_func = set.layers[-1].kernel.function
-            post_params = [param.value for param in set.layers[-1].kernel.parameters]
+            post_params = {param.name: param.value for param in set.layers[-1].kernel.parameters}
+            post_kernel = kernel.get_kernel(post_func, post_params)
 
             synapse_layer = -1
             synapse_count = 0
             layers = []
 
             # collect all
-            for i, layer in enumerate(set.layers):
-                layers.append(bpy.data.objects[layer.object])
-                # if this is the synapse layer, store this
-                if layer.type == LAYER_TYPES[2][0]:
+            for i, l in enumerate(set.layers):
+                obj = bpy.data.objects[l.object]
+                if l.type == 'presynapse':
+                    layers.append(layer.NeuronLayer(obj.name, obj, pre_neurons, obj.particle_systems[pre_neurons].particles, pre_kernel))
+                elif l.type == 'postsynapse':
+                    layers.append(layer.NeuronLayer(obj.name, obj, post_neurons, obj.particle_systems[post_neurons].particles, post_kernel))
+                elif l.type == 'synapse':
                     synapse_layer = i
-                    synapse_count = layer.synapse_count
+                    layers.append(layer.SynapticLayer(obj.name, obj, l.synapse_count))
+                else:
+                    layers.append(layer.Layer2d(obj.name, obj))
 
             # error checking procedures
             if synapse_layer == -1:
                 raise Exception('no synapse layer given')
 
             mapping_funcs = []
-            distance_funcs = []
 
-            for mapping in set.mappings[:-1]:
-                mapping_funcs.append(MAPPING_DICT[mapping.function])
-                distance_funcs.append(DISTANCE_DICT[mapping.distance])
+            for mapping in set.mappings:
+                mapping_funcs.append((MAPPING_DICT[mapping.function], DISTANCE_DICT[mapping.distance]))
 
-            pam.addConnection(
+            pam.addConnection(model.Connection(
                 layers,
-                pre_neurons, post_neurons,
                 synapse_layer,
-                mapping_funcs,
-                distance_funcs,
-                eval('kernel.' + pre_func),
-                pre_params,
-                eval('kernel.' + post_func),
-                post_params,
-                synapse_count
-            )
+                mapping_funcs
+            ))
 
         pam.resetOrigins()
         pam.computeAllConnections()
@@ -707,47 +708,46 @@ class PAMMappingComputeSelected(bpy.types.Operator):
 
         pre_neurons = set.layers[0].kernel.particles
         pre_func = set.layers[0].kernel.function
-        pre_params = [param.value for param in set.layers[0].kernel.parameters]
+        pre_params = {param.name: param.value for param in set.layers[0].kernel.parameters}
+        pre_kernel = kernel.get_kernel(pre_func, pre_params)
 
         post_neurons = set.layers[-1].kernel.particles
         post_func = set.layers[-1].kernel.function
-        post_params = [param.value for param in set.layers[-1].kernel.parameters]
+        post_params = {param.name: param.value for param in set.layers[-1].kernel.parameters}
+        post_kernel = kernel.get_kernel(post_func, post_params)
 
         synapse_layer = -1
         synapse_count = 0
         layers = []
-        
+
         # collect all
-        for i, layer in enumerate(set.layers):
-            layers.append(bpy.data.objects[layer.object])
-            # if this is the synapse layer, store this
-            if layer.type == LAYER_TYPES[2][0]:
+        for i, l in enumerate(set.layers):
+            obj = bpy.data.objects[l.object]
+            if l.type == 'presynapse':
+                layers.append(layer.NeuronLayer(obj.name, obj, pre_neurons, obj.particle_systems[pre_neurons].particles, pre_kernel))
+            elif l.type == 'postsynapse':
+                layers.append(layer.NeuronLayer(obj.name, obj, post_neurons, obj.particle_systems[post_neurons].particles, post_kernel))
+            elif l.type == 'synapse':
                 synapse_layer = i
-                synapse_count = layer.synapse_count
+                layers.append(layer.SynapticLayer(obj.name, obj, l.synapse_count))
+            else:
+                layers.append(layer.Layer2d(obj.name, obj))
 
         # error checking procedures
         if synapse_layer == -1:
             raise Exception('no synapse layer given')
 
         mapping_funcs = []
-        distance_funcs = []
 
-        for mapping in set.mappings[:-1]:
-            mapping_funcs.append(MAPPING_DICT[mapping.function])
-            distance_funcs.append(DISTANCE_DICT[mapping.distance])
+        for mapping in set.mappings:
+            mapping_funcs.append((MAPPING_DICT[mapping.function], DISTANCE_DICT[mapping.distance]))
 
-        pam.addConnection(
+        pam.addConnection(model.Connection(
             layers,
-            pre_neurons, post_neurons,
             synapse_layer,
-            mapping_funcs,
-            distance_funcs,
-            eval('kernel.' + pre_func),
-            pre_params,
-            eval('kernel.' + post_func),
-            post_params,
-            synapse_count
-        )
+            mapping_funcs
+        ))
+
 
         pam.resetOrigins()
         pam.computeAllConnections()

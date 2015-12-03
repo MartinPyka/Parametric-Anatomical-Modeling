@@ -70,7 +70,7 @@ class PAMMappingToolsPanel(bpy.types.Panel):
 
         layout.label("Layers:")
 
-        for i, (layer, mapping) in enumerate(zip(active_set.layers, active_set.mappings)):
+        for i, layer in enumerate(active_set.layers):
             # layer
             icon_collapsed = "TRIA_RIGHT"
             if not layer.collapsed:
@@ -112,7 +112,7 @@ class PAMMappingToolsPanel(bpy.types.Panel):
                         active_dataptr=layer.kernel,
                         active_propname="active_parameter",
                         type="DEFAULT",
-                        rows=3,
+                        rows=3
                     )
 
                 if layer.type in ['synapse']:
@@ -120,6 +120,7 @@ class PAMMappingToolsPanel(bpy.types.Panel):
                     row.prop(layer, "synapse_count", text="Synapses")
 
             if i < len(active_set.mappings) - 1:
+                mapping = active_set.mappings[i]
                 split = layout.split(0.8)
                 box = split.box()
                 col = box.column()

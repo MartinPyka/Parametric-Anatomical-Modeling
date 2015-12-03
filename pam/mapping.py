@@ -66,6 +66,42 @@ DISTANCE_DICT = {
     "UVnormal": pam.DIS_UVnormal
 }
 
+def updateModel(m, context):
+    """Updates the blender model to be up to date with the PAM model"""
+    mapping = context.scene.pam_mapping
+    for con in m.connections:
+        s = mapping.sets.add()
+        s.name = con.pre_layer.name + '-' + con.post_layer.name
+
+        for l in con.layers:
+            layer = s.layers.add()
+            layer.object = l.obj_name
+
+            if l == con.pre_layer or l == con.post_layer:
+                if l == con.pre_layer:
+                    layer.type = 'presynapse'
+                elif l == con.post_layer:
+                    layer.type = 'postsynapse'
+
+                layer.kernel.function = l.kernel.name
+                layer.kernel.particles = l.neuronset_name
+                layer.kernel.object = l.obj_name
+                for arg_name, arg_val in l.kernel.get_args().items():
+                    a = layer.kernel.parameters[arg_name]
+                    a.value = arg_val
+            elif l == con.synaptic_layer:
+                layer.type = 'synapse'
+                layer.synapse_count = l.no_synapses
+            elif l in con.pre_intermediate_layers:
+                layer.type = 'preintermediates'
+            elif l in con.post_intermediate_layers:
+                layer.type = 'postintermediates'
+
+        for con_mapping in con.mappings:
+            new_mapping = s.mappings.add()
+            new_mapping.function = MAPPING_TYPES[con_mapping[0]][0]
+            new_mapping.distance = DISTANCE_TYPES[con_mapping[1]][0]
+
 
 def particle_systems(self, context):
     """Generator for particle systems on an pam layer

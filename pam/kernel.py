@@ -14,7 +14,7 @@ KERNEL_TYPES = [
 ]
 
 def get_kernel(kernel_identifier, args):
-    return KERNEL_DICT[kernel_identifier](*args)
+    return KERNEL_DICT[kernel_identifier](**args)
 
 class AbstractKernel():
     def __init__(self):
@@ -57,7 +57,7 @@ class GaussKernel(AbstractKernel):
                         (ruv[...,1] + self.shift_v) ** 2 / (2 * self.var_v ** 2)))
 
     def get_args(self):
-        return [self.var_u, self.var_v, self.shift_u, self.shift_v]
+        return {'var_u': self.var_u, 'var_v': self.var_v, 'shift_u': self.shift_u, 'shift_v': self.shift_v}
 
 # copied from:
 # http://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python
@@ -150,7 +150,7 @@ class StripeWithEndKernel(AbstractKernel):
             return result
 
     def get_args(self):
-        return [self.vec_u, self.vec_v, self.shift_u, self.shift_v, self.var_v]
+        return {'vec_u': self.vec_u, 'vec_v': self.vec_v, 'shift_u': self.shift_u, 'shift_v': self.shift_v, 'var_v': self.var_v}
 
 class GaussUKernel(AbstractKernel):
     """Computes distribution value in one dimensional gaussian kernel
@@ -176,7 +176,7 @@ class GaussUKernel(AbstractKernel):
         return np.exp(-(1 / 2) * ((ruv[...,0] - self.origin_u) / self.var_u) ** 2)
 
     def get_args(self):
-        return [self.origin_u, self.var_u]
+        return {'origin_u': self.origin_u, 'var_u': self.var_u}
 
 class GaussVKernel(AbstractKernel):
     """Computes distribution value in one dimensional gaussian kernel
@@ -203,7 +203,7 @@ class GaussVKernel(AbstractKernel):
         return np.exp(-(1 / 2) * ((ruv[...,1] - self.origin_v) / self.var_v) ** 2)
 
     def get_args(self):
-        return [self.origin_v, self.var_v]
+        return {'origin_v': self.origin_v, 'var_v': self.var_v}
 
 class UnityKernel(AbstractKernel):
     """Returns a unity kernel"""
@@ -268,7 +268,13 @@ class YuKernel():
         return m
 
     def get_args(self):
-        return [self.alpha_u, self.alpha_v, self.omega_u, self.omega_v, self.ksi_u, self.ksi_v, self.tau]
+        return {'alpha_u': self.alpha_u,
+            'alpha_v': self.alpha_v,
+            'omega_u': self.omega_u,
+            'omega_v': self.omega_v,
+            'ksi_u': self.ksi_u,
+            'ksi_v': self.ksi_v,
+            'tau': self.tau}
 
 
 # TODO(SK): Rephrase docstring & fill in parameter values

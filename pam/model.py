@@ -29,14 +29,41 @@ class Connection():
     """Represents a Connection with multiple layers"""
     def __init__(self, layers, slayer, mappings):
         """"""
-        self.layers = layers
-        self.pre_layer = layers[0]
-        self.post_layer = layers[-1]
-        self.synaptic_layer = layers[slayer]
-        self.pre_intermediate_layers = layers[1:slayer]
-        self.post_intermediate_layers = layers[slayer + 1:-1]
-        self.synaptic_layer_index = slayer
-        self.mappings = mappings
+        self._layers = layers
+        self._synaptic_layer_index = slayer
+        self._mappings = mappings
+
+    @property
+    def layers(self):
+        return self._layers
+
+    @property
+    def mappings(self):
+        return self._mappings
+    
+    @property
+    def pre_layer(self):
+        return self.layers[0]
+
+    @property
+    def post_layer(self):
+        return self.layers[-1]
+    
+    @property
+    def synaptic_layer(self):
+        return self.layers[self._synaptic_layer_index]
+    
+    @property
+    def synaptic_layer_index(self):
+        return self._synaptic_layer_index
+    
+    @property
+    def pre_intermediate_layers(self):
+        return self.layers[1:self._synaptic_layer_index]
+    
+    @property
+    def post_intermediate_layers(self):
+        return self.layers[self._synaptic_layer_index + 1:-1]
 
     def __str__(self):
         return " -> ".join(["|" + self.pre_layer.name + "|"] + [l.name for l in self.pre_intermediate_layers] + ["|" + self.synaptic_layer.name + "|"] + [l.name for l in self.post_intermediate_layers] + ["|"  + self.post_layer.name + "|"])
@@ -47,8 +74,8 @@ class Connection():
         rep += "\tMapping functions: " + ", ".join([MAPPING_NAMES[m[0]] for m in self.mappings]) + "\n"
         rep += "\tMapping distances: " + ", ".join([DISTANCE_NAMES[m[1]] for m in self.mappings]) + "\n"
         rep += "Kernel functions:\n"
-        rep += "\tPre kernel:  " + self.pre_layer.kernel.name + "(" + ", ".join([str(x) for x in self.pre_layer.kernel.get_args()]) + ")\n"
-        rep += "\tPost kernel: " + self.post_layer.kernel.name + "(" + ", ".join([str(x) for x in self.post_layer.kernel.get_args()]) + ")\n"
+        rep += "\tPre kernel:  " + self.pre_layer.kernel.name + "(" + ", ".join([str(x) + '=' + str(y) for x, y in self.pre_layer.kernel.get_args().items()]) + ")\n"
+        rep += "\tPost kernel: " + self.post_layer.kernel.name + "(" + ", ".join([str(x) + '=' + str(y) for x, y in self.post_layer.kernel.get_args().items()]) + ")\n"
         rep += "Neurons:\n"
         rep += "\tPre:      " + str(self.pre_layer.neuron_count) + "\n"
         rep += "\tPost:     " + str(self.post_layer.neuron_count) + "\n"
@@ -290,17 +317,10 @@ def convertArray2Vector(connection_results):
 class ModelSnapshot(object):
     """Represents a snapshot of the current model"""
     def __init__(self):
-        global NG_LIST
-        global NG_DICT
-        global CONNECTION_COUNTER
-        global CONNECTION_INDICES
-        global CONNECTIONS
-        global CONNECTION_RESULTS
-        self.NG_LIST = NG_LIST
-        self.NG_DICT = NG_DICT
-        self.CONNECTION_COUNTER = CONNECTION_COUNTER
-        self.CONNECTION_INDICES = CONNECTION_INDICES
-        self.CONNECTIONS = Connection2Pickle(CONNECTIONS)
+        self.NG_LIST = MODEL.ng_list
+        self.NG_DICT = MODEL.ng_dict
+        self.CONNECTION_INDICES = MODEL.connection_indices
+        self.CONNECTIONS = [c.to_list() for c in MODEL.connections]
         self.CONNECTION_RESULTS = convertVector2Array(CONNECTION_RESULTS)
 
     def __eq__(self, other):
@@ -325,11 +345,6 @@ def loadPickle(path):
     """
     snapshot = pickle.load(open(path, "rb"))
 
-    # global NG_LIST
-    # global NG_DICT
-    # global CONNECTION_COUNTER
-    # global CONNECTION_INDICES
-    # global CONNECTIONS
     global CONNECTION_RESULTS
     global CONNECTION_ERRORS
     global MODEL

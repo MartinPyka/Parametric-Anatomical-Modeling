@@ -281,12 +281,12 @@ class PamVisualizeUnconnectedNeurons(bpy.types.Operator):
     def execute(self, context):
         object = context.active_object
 
-        if object.name in model.NG_DICT:
-            ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
+        if object.name in model.MODEL.ng_dict:
+            ng_index = model.MODEL.ng_dict[object.name][object.particle_systems[0].name]
         else:
             return {'FINISHED'}
 
-        for ci in model.CONNECTION_INDICES:
+        for ci in model.MODEL.connection_indices:
             # if ng_index is the pre-synaptic layer in a certain mapping
             if ci[1] == ng_index:
                 # visualize the connections
@@ -307,19 +307,19 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
         object = context.active_object
         cursor = context.scene.cursor_location
 
-        if object.name in model.NG_DICT:
-            ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
+        if object.name in model.MODEL.ng_dict:
+            ng_index = model.MODEL.ng_dict[object.name][object.particle_systems[0].name]
         else:
             return {'FINISHED'}
 
-        ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
+        ng_index = model.MODEL.ng_dict[object.name][object.particle_systems[0].name]
         p_index = pam.map3dPointToParticle(object, 0, cursor)
         print('Neuron Number: ' + str(p_index))
         
         pam_vis.visualizePoint(object.particle_systems[0].particles[p_index].location)
 
         smoothing = context.scene.pam_visualize.smoothing
-        for ci in model.CONNECTION_INDICES:
+        for ci in model.MODEL.connection_indices:
             # if ng_index is the pre-synaptic layer in a certain mapping
             if ci[1] == ng_index:
                 # visualize the connections
@@ -340,16 +340,16 @@ class PamVisualizeForwardConnection(bpy.types.Operator):
         object = context.active_object
         cursor = context.scene.cursor_location
 
-        if object.name in model.NG_DICT:
-            ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
+        if object.name in model.MODEL.ng_dict:
+            ng_index = model.MODEL.ng_dict[object.name][object.particle_systems[0].name]
         else:
             return {'FINISHED'}
 
-        ng_index = model.NG_DICT[object.name][object.particle_systems[0].name]
+        ng_index = model.MODEL.ng_dict[object.name][object.particle_systems[0].name]
         p_index = pam.map3dPointToParticle(object, 0, cursor)
         print('Neuron Number: ' + str(p_index))
 
-        for ci in model.CONNECTION_INDICES:
+        for ci in model.MODEL.connection_indices:
             # if ng_index is the pre-synaptic layer in a certain mapping
             if ci[1] == ng_index:
                 # visualize the connections

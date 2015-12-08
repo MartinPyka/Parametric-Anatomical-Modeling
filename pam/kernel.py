@@ -14,7 +14,10 @@ KERNEL_TYPES = [
 ]
 
 def get_kernel(kernel_identifier, args):
-    return KERNEL_DICT[kernel_identifier](**args)
+    if type(args) is list:
+        return KERNEL_DICT[kernel_identifier](*args)
+    elif type(args) is dict:
+        return KERNEL_DICT[kernel_identifier](**args)
 
 class AbstractKernel():
     def __init__(self):

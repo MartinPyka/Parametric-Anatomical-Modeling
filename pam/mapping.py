@@ -966,8 +966,8 @@ class PAMMappingSaveDistances(bpy.types.Operator, bpy_extras.io_utils.ExportHelp
     
     def execute(self, context):
         mapping_id = bpy.context.scene.pam_mapping.active_set       
-        pre = model.CONNECTIONS[mapping_id][0][0]
-        post = model.CONNECTIONS[mapping_id][0][-1]
+        pre = model.MODEL.connections[mapping_id].pre_layer.obj
+        post = model.MODEL.connections[mapping_id].post_layer.obj
        
         CL.saveUVDistance(self.filepath + '_Pre.csv', pre.name, pre.particle_systems[0].active_particle_target_index, mapping_id)
         CL.saveUVDistanceForPost(self.filepath + '_Post.csv', post.name, post.particle_systems[0].active_particle_target_index, mapping_id)       
@@ -984,8 +984,8 @@ class PAMMappingColorizeLayer(bpy.types.Operator):
     
     def execute(self, context):
         mapping_id = bpy.context.scene.pam_mapping.active_set
-        pre = model.CONNECTIONS[mapping_id][0][0]
-        post = model.CONNECTIONS[mapping_id][0][-1]
+        pre = model.MODEL.connections[mapping_id].pre_layer.obj
+        post = model.MODEL.connections[mapping_id].post_layer.obj
         #neuron = bpy.data.objects['Neuron_Sphere']
 
         distances_pre = CL.getDistancesPerParticle(model.CONNECTION_RESULTS[mapping_id]['d'])

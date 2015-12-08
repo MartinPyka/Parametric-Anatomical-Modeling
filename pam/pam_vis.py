@@ -121,8 +121,8 @@ def visualizeNeuronProjLength(no_connection, obj):
 
     """
     global vis_objects
-    layers = model.CONNECTIONS[no_connection][0][0]  # get first layer
-    neuronset1 = model.CONNECTIONS[no_connection][1]
+    layers = model.MODEL.connections[no_connection].pre_layer.obj  # get first layer
+    neuronset1 = model.MODEL.connections[no_connection].pre_layer.neuronset_name
 
     ds = numpy.mean(model.CONNECTION_RESULTS[no_connection]['d'], 1)
     colors = getColors(colormaps.standard, ds)
@@ -226,12 +226,11 @@ def visualizeForwardMapping(no_connection, pre_index):
     no_connection       : connection/mapping-index
     pre_index           : index of pre-synaptic neuron
     """
-    layers = model.CONNECTIONS[no_connection][0]
-    neuronset1 = model.CONNECTIONS[no_connection][1]
-    neuronset2 = model.CONNECTIONS[no_connection][2]
-    slayer = model.CONNECTIONS[no_connection][3]
-    connections = model.CONNECTIONS[no_connection][4]
-    distances = model.CONNECTIONS[no_connection][5]
+    con = model.MODEL.connections[no_connection] 
+    layers = con.layers
+    slayer = con.synaptic_layer_index
+    connections = con.mapping_connections
+    distances = con.mapping_distances
 
     material = bpy.data.materials.get(bpy.context.scene.pam_visualize.connection_material, None)
 
@@ -240,7 +239,7 @@ def visualizeForwardMapping(no_connection, pre_index):
             layers[0:s],
             connections[0:(s - 1)],
             distances[0:(s - 2)] + [pam.DIS_euclidUV],
-            layers[0].particle_systems[neuronset1].particles[pre_index].location,
+            con.pre_layer.getNeuronPosition(pre_index),
             debug=True
         )
         logger.debug(s)
@@ -256,12 +255,11 @@ def visualizeBackwardMapping(no_connection, post_index):
     no_connection       : connection/mapping-index
     post_index          : index of post-synaptic neuron
     """
-    layers = model.CONNECTIONS[no_connection][0]
-    neuronset1 = model.CONNECTIONS[no_connection][1]
-    neuronset2 = model.CONNECTIONS[no_connection][2]
-    slayer = model.CONNECTIONS[no_connection][3]
-    connections = model.CONNECTIONS[no_connection][4]
-    distances = model.CONNECTIONS[no_connection][5]
+    con = model.MODEL.connections[no_connection]
+    layers = con.layers
+    slayer = con.synaptic_layer_index
+    connections = con.mapping_connections
+    distances = con.mapping_distances
 
     material = bpy.data.materials.get(bpy.context.scene.pam_visualize.connection_material, None)
 
@@ -269,7 +267,7 @@ def visualizeBackwardMapping(no_connection, post_index):
         post_p3d, post_p2d, post_d = pam.computeMapping(layers[:(slayer - 1):-1],
                                                         connections[:(slayer - 1):-1],
                                                         distances[:(slayer - 1):-1],
-                                                        layers[-1].particle_systems[neuronset2].particles[post_index].location)
+                                                        con.post_layer.getNeuronPosition(post_index))
         logger.debug(s)
         logger.debug(post_p3d)
         visualizePath(post_p3d, material = material)
@@ -289,12 +287,11 @@ def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0, print_s
     synapses            : optional list of coordinates for synapses
     """
 
-    layers = model.CONNECTIONS[no_connection][0]
-    neuronset1 = model.CONNECTIONS[no_connection][1]
-    neuronset2 = model.CONNECTIONS[no_connection][2]
-    slayer = model.CONNECTIONS[no_connection][3]
-    connections = model.CONNECTIONS[no_connection][4]
-    distances = model.CONNECTIONS[no_connection][5]
+    con = model.MODEL.connections[no_connection]
+    layers = con.layers
+    slayer = con.synaptic_layer_index
+    connections = con.mapping_connections
+    distances = con.mapping_distances
 
     post_indices = model.CONNECTION_RESULTS[no_connection]['c'][pre_index]
     synapses = model.CONNECTION_RESULTS[no_connection]['s'][pre_index]
@@ -306,7 +303,7 @@ def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0, print_s
     pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer + 1)],
                                                  connections[0:slayer],
                                                  distances[0:slayer],
-                                                 layers[0].particle_systems[neuronset1].particles[pre_index].location)
+                                                 con.pre_layer.getNeuronPosition(pre_index))
 
     first_item = True
     first_item_distance = 0.0
@@ -320,7 +317,7 @@ def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0, print_s
         post_p3d, post_p2d, post_d = pam.computeMapping(layers[:(slayer - 1):-1],
                                                         connections[:(slayer - 1):-1],
                                                         distances[:(slayer - 1):-1],
-                                                        layers[-1].particle_systems[neuronset2].particles[int(post_indices[i])].location)
+                                                        con.post_layer.getNeuronPosition(int(post_indices[i])))
         if synapses is None:
             curve = visualizePath(pre_p3d + post_p3d[::-1], material = material)
             distance = calculatePathLength(curve)
@@ -346,7 +343,7 @@ def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0, print_s
     
     if print_statistics:
         path_lengthes = numpy.array(path_lengthes)
-        delay = layers[0].particle_systems[neuronset1].settings.get('delay', 1.0)
+        delay = layers[0].obj.particle_systems[layers[0].neuronset_name].settings.get('delay', 1.0)
         print("Using a delay modifier of ", delay)
         path_lengthes *= delay
 
@@ -377,12 +374,11 @@ def visualizeOneConnection(no_connection, pre_index, post_index, smoothing=0):
         return None
     post_list_index = where_list[0]
     
-    layers = model.CONNECTIONS[no_connection][0]
-    neuronset1 = model.CONNECTIONS[no_connection][1]
-    neuronset2 = model.CONNECTIONS[no_connection][2]
-    slayer = model.CONNECTIONS[no_connection][3]
-    connections = model.CONNECTIONS[no_connection][4]
-    distances = model.CONNECTIONS[no_connection][5]
+    con = model.MODEL.connections[no_connection]
+    layers = con.layers
+    slayer = con.synaptic_layer_index
+    connections = con.mapping_connections
+    distances = con.mapping_distances
 
     synapses = model.CONNECTION_RESULTS[no_connection]['s'][pre_index]
 
@@ -392,12 +388,12 @@ def visualizeOneConnection(no_connection, pre_index, post_index, smoothing=0):
     pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer + 1)],
                                                  connections[0:slayer],
                                                  distances[0:slayer],
-                                                 layers[0].particle_systems[neuronset1].particles[pre_index].location)
+                                                 con.pre_layer.getNeuronPosition(pre_index))
 
     post_p3d, post_p2d, post_d = pam.computeMapping(layers[:(slayer - 1):-1],
                                                     connections[:(slayer - 1):-1],
                                                     distances[:(slayer - 1):-1],
-                                                    layers[-1].particle_systems[neuronset2].particles[post_index].location)
+                                                    con.post_layer.getNeuronPosition(post_index))
     if synapses is None:
         return visualizePath(pre_p3d + post_p3d[::-1], smoothing, material = material)
     else:
@@ -433,29 +429,28 @@ def visualizeUnconnectedNeurons(no_connection):
     """ Visualizes unconnected neurons for a given connection_index """
     c = numpy.array(model.CONNECTION_RESULTS[no_connection]['c'])
     sums = numpy.array([sum(row) for row in c])
-    indices = numpy.where(sums == -model.CONNECTIONS[no_connection][-1])[0]
+    indices = numpy.where(sums == -model.MODEL.connections[no_connection].synaptic_layer.no_synapses)[0]
 
     logger.debug(indices)
 
-    layer = model.CONNECTIONS[no_connection][0][0]
+    layer = model.MODEL.connections[no_connection].pre_layer
 
     for index in indices:
-        visualizePoint(layer.particle_systems[0].particles[index].location)
+        visualizePoint(layer.getNeuronPosition(index))
 
 
 def visualizePartlyConnectedNeurons(no_connection):
     """ Visualizes neurons which are only partly connected """
     c = numpy.array(model.CONNECTION_RESULTS[no_connection]['c'])
     sums = numpy.array([sum(row) for row in c])
-    indices = numpy.where(sums < model.CONNECTIONS[no_connection][-1])[0]
+    indices = numpy.where(sums < model.MODEL.connections[no_connection].synaptic_layer.no_synapses)[0]
 
     logger.debug(indices)
 
-    layer = model.CONNECTIONS[no_connection][0][0]
+    layer = model.MODEL.connections[no_connection].pre_layer
 
     for index in indices:
-        visualizePoint(layer.particle_systems[0].particles[index].location)
-
+        visualizePoint(layer.getNeuronPosition(index))
 
 def visualizeClean():
     """delete all visualization objects"""
@@ -532,15 +527,14 @@ def visualizeMappingDistance(no_mapping):
     """ visualizes the mapping distance for a pre-synaptic layer and a given
     mapping. The mapping distance is visualized by colorizing the vertices
     of the layer """
-    layers = model.CONNECTIONS[no_mapping][0]
-    neuronset1 = model.CONNECTIONS[no_mapping][1]
+    layers = model.MODEL.connections[no_mapping].layers
 
     distances = []
 
     for ds in model.CONNECTION_RESULTS[no_mapping]['d']:
         distances.append(numpy.mean(ds))
 
-    colorize_vertices(layers[0], distances)
+    colorize_vertices(layers[0].obj, distances)
 
 
 def computeAxonLengths(no_connection, pre_index, visualize=False):
@@ -550,12 +544,11 @@ def computeAxonLengths(no_connection, pre_index, visualize=False):
     pre_index           : index of pre-synaptic neuron
     """
 
-    layers = model.CONNECTIONS[no_connection][0]
-    neuronset1 = model.CONNECTIONS[no_connection][1]
-    neuronset2 = model.CONNECTIONS[no_connection][2]
-    slayer = model.CONNECTIONS[no_connection][3]
-    connections = model.CONNECTIONS[no_connection][4]
-    distances = model.CONNECTIONS[no_connection][5]
+    con = model.MODEL.connections[no_connection]
+    layers = con.layers
+    slayer = con.synaptic_layer_index
+    connections = con.mapping_connections
+    distances = con.mapping_distances
 
     post_indices = model.CONNECTION_RESULTS[no_connection]['c'][pre_index]
     synapses = model.CONNECTION_RESULTS[no_connection]['s'][pre_index]
@@ -564,7 +557,7 @@ def computeAxonLengths(no_connection, pre_index, visualize=False):
     pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer + 1)],
                                                  connections[0:slayer],
                                                  distances[0:slayer],
-                                                 layers[0].particle_systems[neuronset1].particles[pre_index].location)
+                                                 con.pre_layer.getNeuronPosition(pre_index))
 
     first_item = True
     
@@ -589,19 +582,19 @@ def computeAxonLengths(no_connection, pre_index, visualize=False):
 def hideAllLayers():
     """ Hide all layers involved in all mappings. If a layer occurs multiple times
     it is also called here multiple times """
-    for m in model.CONNECTIONS:
-        for layer in m[0]:
-            layer.hide = True
+    for m in model.MODEL.connections:
+        for layer in m.layers:
+            layer.obj.hide = True
             
 def showMappingLayers(index):
     """ shows for a given mapping all layers involved in but hides everything else """
     hideAllLayers()
-    for layer in model.CONNECTIONS[index][0]:
-        layer.hide = False
+    for layer in model.MODEL.connections[index].layers:
+        layer.obj.hide = False
         
 def showPrePostLayers():
     """ shows for all mappings all the pre- and post-layers and hides everything else """
     hideAllLayers()
-    for m in model.CONNECTIONS:
-        m[0][0].hide = False
-        m[0][-1].hide = False
+    for m in model.MODEL.connections:
+        m.pre_layer.obj.hide = False
+        m.post_layer.obj.hide = False

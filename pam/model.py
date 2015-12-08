@@ -40,7 +40,15 @@ class Connection():
     @property
     def mappings(self):
         return self._mappings
+
+    @property
+    def mapping_connections(self):
+        return [m[0] for m in self._mappings]
     
+    @property
+    def mapping_distances(self):
+        return [m[1] for m in self._mappings]
+        
     @property
     def pre_layer(self):
         return self.layers[0]

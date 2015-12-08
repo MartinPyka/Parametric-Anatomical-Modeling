@@ -215,13 +215,13 @@ def computeDistance_PreToSynapse(no_connection, pre_index, synapses=[]):
     synapses can be optionally be used to compute the distance for only a 
     subset of synapses
     """
-    layers = model.CONNECTIONS[no_connection][0]
-    neuronset1 = model.CONNECTIONS[no_connection][1]
-    slayer = model.CONNECTIONS[no_connection][3]
-    connections = model.CONNECTIONS[no_connection][4]
-    distances = model.CONNECTIONS[no_connection][5]
+    con = model.MODEL.connections[no_connection]
+    layers = con.layers
+    slayer = con.synaptic_layer_index
+    connections = con.mapping_connections
+    distances = con.mapping_distances
 
-    point = layers[0].particle_systems[neuronset1].particles[pre_index].location
+    point = con.pre_layer.getNeuronPosition(pre_index)
 
     pre_p3d, pre_p2d, pre_d = computeMapping(layers[0:(slayer + 1)] + [layers[slayer]],
                                              connections[0:slayer] + [connections[slayer]],
@@ -732,10 +732,10 @@ def addConnection(*args):
     # returns the future index of the connection
     return (len(model.MODEL.connections) - 1)
 
-def replaceMapping(index, *args):
+def replaceMapping(index, connection):
     """ Replaces a mapping with a given index by the arguments *args
     """
-    model.CONNECTIONS[index] = args
+    model.MODEL.conenctions[index] = connection
 
 # TODO(SK): ??? closing brackets are switched
 
@@ -1215,9 +1215,9 @@ def computeConnectivityAll(layers, neuronset1, neuronset2, slayer, connections, 
 
 def printConnections():
     """Print connection pairs"""
-    for i, c in enumerate(model.CONNECTION_INDICES):
-        message = "%d: %s - %s" % (i, model.NG_LIST[c[1]][0],
-                                   model.NG_LIST[c[2]][0])
+    for i, c in enumerate(model.MODEL.connection_indices):
+        message = "%d: %s - %s" % (i, model.MODEL.ng_list[c[1]][0],
+                                   model.MODEL.ng_list[c[2]][0])
 
         logger.info(message)
 

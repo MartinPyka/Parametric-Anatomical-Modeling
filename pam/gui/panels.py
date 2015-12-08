@@ -48,15 +48,19 @@ class PAMMappingToolsPanel(bpy.types.Panel):
             active_dataptr=m,
             active_propname="active_set",
             type="DEFAULT",
-            rows=5,
+            rows=6,
         )
 
-        col = row.column(align=True)
-        col.operator("pam.mapping_add_set", icon="ZOOMIN", text="")
-        col.operator("pam.mapping_delete_set", icon="ZOOMOUT", text="")
-        col.operator("pam.mapping_up", icon="TRIA_UP", text="")
-        col.operator("pam.mapping_down", icon="TRIA_DOWN", text="")
-        col.operator("pam.mapping_visibility", icon="RESTRICT_VIEW_OFF", text="")
+        col = row.column()
+        sub = col.column(align = True)
+        sub.operator("pam.model_load_sync_json", icon = "COPYDOWN", text = "")
+        sub.operator("pam.model_sync_save_json", icon = "PASTEDOWN", text = "")
+        sub = col.column(align = True)
+        sub.operator("pam.mapping_add_set", icon="ZOOMIN", text="")
+        sub.operator("pam.mapping_delete_set", icon="ZOOMOUT", text="")
+        sub.operator("pam.mapping_up", icon="TRIA_UP", text="")
+        sub.operator("pam.mapping_down", icon="TRIA_DOWN", text="")
+        sub.operator("pam.mapping_visibility", icon="RESTRICT_VIEW_OFF", text="")
 
         active_set = None
 

@@ -67,8 +67,8 @@ DISTANCE_DICT = {
     "UVnormal": pam.DIS_UVnormal
 }
 
-def updateModel(m = model.MODEL, context = None):
-    """Updates the blender model to be up to date with the PAM model"""
+def updatePanels(m = model.MODEL, context = None):
+    """Updates the mapping panels to be up to date with the PAM model"""
     if context == None:
         context = bpy.context
     mapping = context.scene.pam_mapping
@@ -105,6 +105,53 @@ def updateModel(m = model.MODEL, context = None):
             new_mapping.function = MAPPING_TYPES[con_mapping[0]][0]
             new_mapping.distance = DISTANCE_TYPES[con_mapping[1]][0]
 
+def convertToModel():
+    """Adds the blender model connections to the pam model"""
+
+    model.reset()
+
+    for set in bpy.context.scene.pam_mapping.sets:
+        pre_neurons = set.layers[0].kernel.particles
+        pre_func = set.layers[0].kernel.function
+        pre_params = {param.name: param.value for param in set.layers[0].kernel.parameters}
+        pre_kernel = kernel.get_kernel(pre_func, pre_params)
+
+        post_neurons = set.layers[-1].kernel.particles
+        post_func = set.layers[-1].kernel.function
+        post_params = {param.name: param.value for param in set.layers[-1].kernel.parameters}
+        post_kernel = kernel.get_kernel(post_func, post_params)
+
+        synapse_layer = -1
+        synapse_count = 0
+        layers = []
+
+        # collect all
+        for i, l in enumerate(set.layers):
+            obj = bpy.data.objects[l.object]
+            if l.type == 'presynapse':
+                layers.append(layer.NeuronLayer(obj.name, obj, pre_neurons, obj.particle_systems[pre_neurons].particles, pre_kernel))
+            elif l.type == 'postsynapse':
+                layers.append(layer.NeuronLayer(obj.name, obj, post_neurons, obj.particle_systems[post_neurons].particles, post_kernel))
+            elif l.type == 'synapse':
+                synapse_layer = i
+                layers.append(layer.SynapticLayer(obj.name, obj, l.synapse_count))
+            else:
+                layers.append(layer.Layer2d(obj.name, obj))
+
+        # error checking procedures
+        if synapse_layer == -1:
+            raise Exception('no synapse layer given')
+
+        mapping_funcs = []
+
+        for mapping in set.mappings:
+            mapping_funcs.append((MAPPING_DICT[mapping.function], DISTANCE_DICT[mapping.distance]))
+
+        pam.addConnection(model.Connection(
+            layers,
+            synapse_layer,
+            mapping_funcs
+        ))
 
 def particle_systems(self, context):
     """Generator for particle systems on an pam layer
@@ -339,6 +386,64 @@ class PAMMap(bpy.types.PropertyGroup):
         min=1,
     )
     seed = bpy.props.IntProperty(name = "Seed")
+
+class PAMSyncPanelsToModel(bpy.types.Operator):
+    bl_idname = "pam.sync_panel_model"
+    bl_label = "Sync Panels to Model"
+    bl_description = "Synchronize the mapping panel to the pam model"
+
+    def execute(self, context):
+        convertToModel()
+
+        return {'FINISHED'}
+
+class PAMSyncModelToPanels(bpy.types.Operator):
+    bl_idname = "pam.sync_model_panel"
+    bl_label = "Sync Model to Mapping Panels"
+    bl_description = "Synchronize the pam model to the mapping panels"
+
+    @classmethod
+    def poll(cls, context):
+        return any(model.MODEL.connections)
+
+    def execute(self, context):
+        updateModel()
+
+        return {'FINISHED'}
+
+class PAMSyncAndSaveMapping(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
+    """Save current model"""
+
+    bl_idname = "pam.model_sync_save_json"
+    bl_label = "Sync and save"
+    bl_description = "Synchronize the model with the mapping panel and save it to JSON"
+
+    filename_ext = ".json"
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        convertToModel()
+        model.saveModelToJson(model.MODEL, self.filepath)
+
+        return {'FINISHED'}
+
+class PAMLoadAndSyncMapping(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
+    """Load the model and sync it to the mapping panel"""
+
+    bl_idname = "pam.model_load_sync_json"
+    bl_label = "Load and sync"
+    bl_description = "Load the model from JSON and synchronize it with the mapping panel"
+
+    def execute(self, context):
+        m = model.loadModelFromJson(self.filepath)
+        model.MODEL = m
+        updatePanels(m)
+
+        return {'FINISHED'}
+
 
 class PAMMappingVisibility(bpy.types.Operator):
     """Make only objects involved in this mapping visible. Hides every other object that is set to be selectable."""
@@ -640,49 +745,7 @@ class PAMMappingCompute(bpy.types.Operator):
     def execute(self, context):
         pam.initialize3D()
 
-        for set in bpy.context.scene.pam_mapping.sets:
-
-            pre_neurons = set.layers[0].kernel.particles
-            pre_func = set.layers[0].kernel.function
-            pre_params = {param.name: param.value for param in set.layers[0].kernel.parameters}
-            pre_kernel = kernel.get_kernel(pre_func, pre_params)
-
-            post_neurons = set.layers[-1].kernel.particles
-            post_func = set.layers[-1].kernel.function
-            post_params = {param.name: param.value for param in set.layers[-1].kernel.parameters}
-            post_kernel = kernel.get_kernel(post_func, post_params)
-
-            synapse_layer = -1
-            synapse_count = 0
-            layers = []
-
-            # collect all
-            for i, l in enumerate(set.layers):
-                obj = bpy.data.objects[l.object]
-                if l.type == 'presynapse':
-                    layers.append(layer.NeuronLayer(obj.name, obj, pre_neurons, obj.particle_systems[pre_neurons].particles, pre_kernel))
-                elif l.type == 'postsynapse':
-                    layers.append(layer.NeuronLayer(obj.name, obj, post_neurons, obj.particle_systems[post_neurons].particles, post_kernel))
-                elif l.type == 'synapse':
-                    synapse_layer = i
-                    layers.append(layer.SynapticLayer(obj.name, obj, l.synapse_count))
-                else:
-                    layers.append(layer.Layer2d(obj.name, obj))
-
-            # error checking procedures
-            if synapse_layer == -1:
-                raise Exception('no synapse layer given')
-
-            mapping_funcs = []
-
-            for mapping in set.mappings:
-                mapping_funcs.append((MAPPING_DICT[mapping.function], DISTANCE_DICT[mapping.distance]))
-
-            pam.addConnection(model.Connection(
-                layers,
-                synapse_layer,
-                mapping_funcs
-            ))
+        convertToModel()
 
         pam.resetOrigins()
         pam.computeAllConnections()

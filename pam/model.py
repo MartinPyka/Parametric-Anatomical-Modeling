@@ -132,7 +132,6 @@ class Model():
     def addConnection(self, connection):
         self.connections.append(connection)
 
-MODEL = Model()
 
 class ModelJsonEncoder(json.JSONEncoder):
     def default(self, model):
@@ -449,11 +448,12 @@ class PAMModelJSONSave(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 
     @classmethod
     def poll(cls, context):
-        return any(MODEL.connections)
+        return True # any(MODEL.connections)
 
     def execute(self, context):
         saveModelToJson(MODEL, self.filepath)
 
         return {'FINISHED'}
 
-# Use npy/npz file format to save connection results
+if MODEL == None:
+    MODEL = Model()

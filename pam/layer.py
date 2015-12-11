@@ -21,6 +21,9 @@ class Layer2d(AbstractLayer):
         self._obj_name = obj.name
         self.uv_scaling = uv_scaling
 
+    def __repr__(self):
+        return self.obj_name
+
     @property
     def obj(self):
         return self._obj

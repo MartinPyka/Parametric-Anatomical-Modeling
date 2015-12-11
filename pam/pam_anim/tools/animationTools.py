@@ -28,7 +28,7 @@ class UpdateAvailableLayers(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return len(model.NG_LIST) > 0
+        return len(model.MODEL.ng_list) > 0
 
     def execute(self, context):
         item = context.scene.pam_anim_animation.layerCollection.clear()

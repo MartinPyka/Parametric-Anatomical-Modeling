@@ -70,7 +70,7 @@ def generateLayerNeurons(layer, particle_system, obj, object_color=[],
 
 # TODO(SK): Missing docstring
 def generateNetworkNeurons(obj):
-    for neurongroup in model.NG_LIST:
+    for neurongroup in model.MODEL.ng_list:
         layer = bpy.data.objects[neurongroup[0]]
         particle_system = neurongroup[1]
         generateLayerNeurons(layer, particle_system, obj)
@@ -79,7 +79,7 @@ def generateNetworkNeurons(obj):
 # TODO(SK): Missing docstring
 def animNeuronSpiking(func):
     timings = data.TIMINGS
-    neuronGroups = model.NG_LIST
+    neuronGroups = model.MODEL.ng_list
 
     no_timings = len(timings)
 
@@ -92,7 +92,7 @@ def animNeuronSpiking(func):
 
 def generateSpikingTexture(layer_id, fadeoutFrames, colors = None):
     timings = data.TIMINGS
-    neuronGroups = model.NG_LIST
+    neuronGroups = model.MODEL.ng_list
     layer = neuronGroups[layer_id]
     neuron_count = layer[2]
     frames = bpy.context.scene.pam_anim_animation.endFrame
@@ -151,15 +151,15 @@ def animNeuronScaling(layer_name, n_id, frame):
     neuron.keyframe_insert(data_path = 'scale', frame=frame + animSpikeFadeout)
 
 def setNeuronColor(neuronID, neuronGroupID, color):
-    layer_name = model.NG_LIST[neuronGroupID][0]
+    layer_name = model.MODEL.ng_list[neuronGroupID][0]
     neuron_name = 'n_' + layer_name + '_%05d' % (neuronID)
     if neuron_name in bpy.data.objects:
         neuron = bpy.data.objects[neuron_name]
         neuron.color = color
 
 def setNeuronColorKeyframe(neuronID, neuronGroupID, fireTime, color):
-    layer_name = model.NG_LIST[neuronGroupID][0]
-    neuron_name = 'n_' + layer_name + "_" + model.NG_LIST[neuronGroupID][1]+ '_%05d' % (neuronID)
+    layer_name = model.MODEL.ng_list[neuronGroupID][0]
+    neuron_name = 'n_' + layer_name + "_" + model.MODEL.ng_list[neuronGroupID][1]+ '_%05d' % (neuronID)
     if neuron_name in bpy.data.objects:
         frame = int(helper.projectTimeToFrames(fireTime))
         neuron = bpy.data.objects[neuron_name]

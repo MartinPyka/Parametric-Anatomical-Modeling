@@ -176,7 +176,7 @@ def simulateTiming(timingID):
     neuronID = timing[1]
     fireTime = timing[2]
 
-    connectionIDs = [x for x in model.CONNECTION_INDICES if x[1] == neuronGroupID]
+    connectionIDs = [x for x in model.MODEL.connection_indices if x[1] == neuronGroupID]
 
     c = model.CONNECTION_RESULTS
 
@@ -223,8 +223,8 @@ def simulateColorsByLayer(source = "MATERIAL"):
     TIMING_COLORS = [[1.0, 1.0, 1.0]] * len(data.TIMINGS)
     for spike in SPIKE_OBJECTS.values():
         connectionID = spike.connectionID
-        neuronGroupID = model.CONNECTION_INDICES[connectionID][1]
-        neuronGroupName = model.NG_LIST[neuronGroupID][0]
+        neuronGroupID = model.MODEL.connection_indices[connectionID][1]
+        neuronGroupName = model.MODEL.ng_list[neuronGroupID][0]
         if source == "MATERIAL_CYCLES":
             mat = bpy.context.scene.objects[neuronGroupName].active_material
             if mat:
@@ -269,7 +269,7 @@ def simulateColors(decayFunc=anim_functions.decay,
 
     t = data.TIMINGS
     d = data.DELAYS
-    c = model.CONNECTION_RESULTS
+    c = model.MODEL.connection_results
 
     neuronValues = {}
     neuronUpdateQueue = []
@@ -282,7 +282,7 @@ def simulateColors(decayFunc=anim_functions.decay,
         neuronGroupID = timing[0]
         fireTime = timing[2]
 
-        connectionIDs = [x for x in model.CONNECTION_INDICES if x[1] == neuronGroupID]
+        connectionIDs = [x for x in model.MODEL.connection_indices if x[1] == neuronGroupID]
 
         # Update the color values of all neurons with queued updates
         poppedValues = getQueueValues(neuronUpdateQueue, fireTime)
@@ -343,7 +343,7 @@ def simulateColorsByMask():
     TIMING_COLORS = [[1.0, 1.0, 1.0]] * len(data.TIMINGS)
 
     for spike in SPIKE_OBJECTS.values():
-        neuron_group = model.NG_LIST[model.CONNECTION_INDICES[spike.connectionID][1]]
+        neuron_group = model.NG_LIST[model.MODEL.connection_indices[spike.connectionID][1]]
         layer_name = neuron_group[0]
         particle_system_name = neuron_group[1]
         particle = bpy.data.objects[layer_name].particle_systems[particle_system_name].particles[spike.sourceNeuronID]
@@ -367,7 +367,7 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
     """
     connectionIndicesFilter = None
     if layerFilter is not None:
-        connectionIndicesFilter = [False]*len(model.CONNECTION_INDICES)
+        connectionIndicesFilter = [False]*len(model.MODEL.connection_indices)
         for connection in model.CONNECTION_INDICES:
             connectionIndicesFilter[connection[0]] = connection[1] in layerFilter
 
@@ -542,7 +542,7 @@ def getUsedNeuronGroups():
     the indices of those neurongroups. This routine is used by visualize() in order
     to reduce the number of neurongroups for which neurons should be created """
     inds = []
-    for c in model.CONNECTION_INDICES:
+    for c in model.MODEL.connection_indices:
         inds.append(c[1])
         inds.append(c[2])
     return numpy.unique(inds)
@@ -606,7 +606,7 @@ def animateNeuronSpiking():
     ng_inds = getUsedNeuronGroups()
     for ind in ng_inds:
         logger.info("Generate neurons for ng " + str(ind))
-        anim_spikes.generateLayerNeurons(bpy.data.objects[model.NG_LIST[ind][0]], model.NG_LIST[ind][1], neuron_object)
+        anim_spikes.generateLayerNeurons(bpy.data.objects[model.MODEL.ng_list[ind][0]], model.MODEL.ng_list[ind][1], neuron_object)
     logger.info("Create spike animation for neurons")
     anim_spikes.animNeuronSpiking(anim_spikes.animNeuronScaling)
 
@@ -706,7 +706,7 @@ class GenerateOperator(bpy.types.Operator):
             return False
 
         # Check if a model is loaded into pam
-        if not model.NG_LIST:
+        if not model.MODEL.ng_list:
             return False
 
         # Check if either spikes or paths are to be animated (would generate nothing if not active)
@@ -756,7 +756,7 @@ class GenerateNeuronSpikingTexture(bpy.types.Operator):
 
     def execute(self, context):
         active_obj = bpy.context.active_object
-        if active_obj.name not in model.NG_DICT:
+        if active_obj.name not in model.MODEL.ng_dict:
             logger.info("Please select a pre- or post-synaptic layer, for which the spiking texture should be generated")
             return {'CANCELLED'}
         data.readSimulationData(bpy.context.scene.pam_anim_data.simulationData)

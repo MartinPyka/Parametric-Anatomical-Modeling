@@ -7,6 +7,8 @@ import bpy_extras
 import mathutils
 import numpy
 import json
+import zipfile
+import tempfile
 
 from . import layer
 from . import kernel
@@ -115,9 +117,9 @@ class Connection():
         conList.append([MAPPING_NAMES[m[0]] for m in self.mappings])
         conList.append([DISTANCE_NAMES[m[1]] for m in self.mappings])
         conList.append(self.pre_layer.kernel.name)
-        conList.append(self.pre_layer.get_args())
+        conList.append(self.pre_layer.kernel.get_args())
         conList.append(self.post_layer.kernel.name)
-        conList.append(self.post_layer.get_args())
+        conList.append(self.post_layer.kernel.get_args())
         conList.append(self.synaptic_layer.no_synapses)
         return conList
 
@@ -195,13 +197,13 @@ def connectionFromList(c):
     layers = []
     for i, l in enumerate(c[0]):
         if i == 0:
-            layers.append(layer.NeuronLayer(l.name, l, c[1], l.particle_systems[c[1]].particles, kernel.get_kernel(c[6], c[7])))
+            layers.append(layer.NeuronLayer(l, bpy.data.objects[l], c[1], bpy.data.objects[l].particle_systems[c[1]].particles, kernel.get_kernel(c[6], c[7])))
         elif i == len(c[0])-1:
-            layers.append(layer.NeuronLayer(l.name, l, c[2], l.particle_systems[c[2]].particles, kernel.get_kernel(c[8], c[9])))
+            layers.append(layer.NeuronLayer(l, bpy.data.objects[l], c[2], bpy.data.objects[l].particle_systems[c[2]].particles, kernel.get_kernel(c[8], c[9])))
         elif i == c[3]:
-            layers.append(layer.SynapticLayer(l.name, l, c[10]))
+            layers.append(layer.SynapticLayer(l, bpy.data.objects[l], c[10]))
         else:
-            layers.append(layer.Layer2d(l.name, l))
+            layers.append(layer.Layer2d(l, bpy.data.objects[l]))
     return Connection(layers, c[3], [(c[4][i], c[5][i]) for i in range(len(c[4]))])
 
 def saveModelToJson(model, path):
@@ -275,11 +277,12 @@ def Pickle2Connection(connections):
     """
     result = []
     for c in connections:
-        new_c = [convertString2Object(c)]
-        new_c = new_c + list(c[1:])
-        new_c[6] = new_c[6].name
-        new_c[8] = new_c[8].name
-        result.append(connectionFromList(new_c))
+        if hasattr(c[6], 'name'):
+            c[6] = c[6].name
+        if hasattr(c[8], 'name'):
+            c[8] = c[8].name
+        new_c = connectionFromList(c)
+        result.append(new_c)
     return result
 
 
@@ -330,7 +333,7 @@ class ModelSnapshot(object):
         self.NG_LIST = MODEL.ng_list
         self.NG_DICT = MODEL.ng_dict
         self.CONNECTION_INDICES = MODEL.connection_indices
-        self.CONNECTIONS = [c.to_list() for c in MODEL.connections]
+        self.CONNECTIONS = [c.toList() for c in MODEL.connections]
         self.CONNECTION_RESULTS = convertVector2Array(CONNECTION_RESULTS)
 
     def __eq__(self, other):
@@ -360,7 +363,6 @@ def loadPickle(path):
     global MODEL
     NG_LIST = snapshot.NG_LIST
     NG_DICT = snapshot.NG_DICT
-    CONNECTION_COUNTER = snapshot.CONNECTION_COUNTER
     CONNECTION_INDICES = snapshot.CONNECTION_INDICES
     CONNECTIONS = Pickle2Connection(snapshot.CONNECTIONS)
     CONNECTION_RESULTS = convertArray2Vector(snapshot.CONNECTION_RESULTS)
@@ -392,34 +394,104 @@ def clearQuadtreeCache():
     Has to be called each time a uv-map has changed."""
     mesh.QUADTREE_CACHE = {}
 
+def saveZip(path):
+    connection_results = {}
+    for i, con in enumerate(CONNECTION_RESULTS):
+        connection_results['connection_result_' + str(i) + '_c'] = con['c']
+        connection_results['connection_result_' + str(i) + '_d'] = con['d']
+
+        # Synapses have to be copied manually because numpy can't handle vector objects
+        s = numpy.zeros((len(con['s']), len(con['c'][0]), 2))
+        for s_i in range(s.shape[0]):
+            for s_j in range(s.shape[1]):
+                if len(con['s'][s_i][s_j]) == 2:
+                    for s_k in range(s.shape[2]):
+                        s[s_i][s_j][s_k] = con['s'][s_i][s_j][s_k]
+        connection_results['connection_result_' + str(i) + '_s'] = s
+
+    # Write connection results using numpy npy files and compress them
+    with open(path, 'wb') as f:
+        numpy.savez_compressed(f, **connection_results)
+    
+    # Open zipfile again and add the json model data to it
+    with zipfile.ZipFile(path, mode = 'a') as zf:
+        json_data = json.dumps(MODEL, cls = ModelJsonEncoder, sort_keys=True,
+                indent = 4, separators=(',', ': '))
+        zf.writestr('model.json', json_data)
+
+def loadZip(path):
+    with zipfile.ZipFile(path, mode = 'r') as zf:
+        model_file = zf.open('model.json', 'r')
+        m = decodeJSONModel(json.loads(model_file.read().decode('UTF-8')))
+        global MODEL
+        MODEL = m
+        model_file.close()
+
+    f = numpy.load(path)
+    global CONNECTION_RESULTS
+    CONNECTION_RESULTS = []
+    for i in range(len(m.connections)):
+        dist_name = 'connection_result_' + str(i) + '_d.npy'
+        con_name = 'connection_result_' + str(i) + '_c.npy'
+        syn_name = 'connection_result_' + str(i) + '_s.npy'
+        con = {'c': f[con_name], 'd': f[dist_name], 's': f[syn_name]}
+        CONNECTION_RESULTS.append(con)
+    CONNECTION_RESULTS = convertArray2Vector(CONNECTION_RESULTS)
+
 class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
-    """Load a model"""
+    """Load a model and the connection results"""
 
     bl_idname = "pam.model_load"
     bl_label = "Load model data"
     bl_description = "Load model data"
 
+    load_type = bpy.props.EnumProperty(items = [
+        ('zip', 'ZIP', 'Load from compressed zip file', '', 1),
+        ('pam', 'Pickle', 'Load using Pickle serialization', '', 2)],
+        name = 'File format', description = 'The type of serilization for the data', default = 'zip')
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.prop(self, 'load_type')
+
     def execute(self, context):
-        loadPickle(self.filepath)
+        if self.load_type == 'pam':
+            loadPickle(self.filepath)
+        elif self.load_type == 'zip':
+            loadZip(self.filepath)
 
         return {'FINISHED'}
 
 
 class PAMModelSave(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
-    """Save current model"""
+    """Save current model with the connection results"""
 
     bl_idname = "pam.model_save"
     bl_label = "Save model data"
     bl_description = "Save model data"
 
-    filename_ext = ".pam"
+    filename_ext = ".zip"
+
+    save_type = bpy.props.EnumProperty(items = [
+        ('zip', 'ZIP', 'Save as compressed zip file', '', 1),
+        ('pam', 'Pickle', 'Save using Pickle serialization', '', 2)],
+        name = 'File format', description = 'The type of serilization for the data', default = 'zip')
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.prop(self, 'save_type')
 
     @classmethod
     def poll(cls, context):
         return any(MODEL.connections)
 
     def execute(self, context):
-        savePickle(self.filepath)
+        if self.save_type == 'zip':
+            saveZip(self.filepath)
+        elif self.save_type == 'pam':
+            savePickle(self.filepath)
 
         return {'FINISHED'}
 

@@ -733,9 +733,9 @@ def addConnection(*args):
     return (len(model.MODEL.connections) - 1)
 
 def replaceMapping(index, connection):
-    """ Replaces a mapping with a given index by the arguments *args
+    """ Replaces a mapping with a given index by the given connection
     """
-    model.MODEL.conenctions[index] = connection
+    model.MODEL.connections[index] = connection
 
 # TODO(SK): ??? closing brackets are switched
 
@@ -832,6 +832,8 @@ def computeConnectivity(con, create=True, threads = -1):
     # rescale arg-parameters
     # args_pre = [i / layers[slayer].obj['uv_scaling'] for i in args_pre]
     # args_post = [i / layers[slayer].obj['uv_scaling'] for i in args_post]
+    con.pre_layer.kernel.rescale(con.synaptic_layer.obj['uv_scaling'])
+    con.post_layer.kernel.rescale(con.synaptic_layer.obj['uv_scaling'])
 
     logger.info("Prepare Grid")
 

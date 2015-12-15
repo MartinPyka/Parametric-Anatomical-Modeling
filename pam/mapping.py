@@ -108,8 +108,6 @@ def updatePanels(m = model.MODEL, context = None):
 def convertToModel():
     """Adds the blender model connections to the pam model"""
 
-    model.reset()
-
     for set in bpy.context.scene.pam_mapping.sets:
         pre_neurons = set.layers[0].kernel.particles
         pre_func = set.layers[0].kernel.function
@@ -393,6 +391,7 @@ class PAMSyncPanelsToModel(bpy.types.Operator):
     bl_description = "Synchronize the mapping panel to the pam model"
 
     def execute(self, context):
+        model.reset()
         convertToModel()
 
         return {'FINISHED'}
@@ -744,7 +743,6 @@ class PAMMappingCompute(bpy.types.Operator):
 
     def execute(self, context):
         pam.initialize3D()
-
         convertToModel()
 
         pam.resetOrigins()
@@ -765,6 +763,7 @@ class PAMMappingComputeSelected(bpy.types.Operator):
         return True
 
     def execute(self, context):
+        pam.model.reset()
         pam.initialize3D()
 
         set = bpy.context.scene.pam_mapping.sets[bpy.context.scene.pam_mapping.active_set]

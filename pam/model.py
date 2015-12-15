@@ -94,6 +94,24 @@ class Connection():
 
         return rep
 
+    def __eq__(self, con):
+        if len(self.layers) != len(con.layers):
+            return False
+        for i in range(len(self.layers)):
+            if self.layers[i] != con.layers[i]:
+                return False
+        if self.synaptic_layer_index != con.synaptic_layer_index:
+            return False
+        if len(self.layers) - 1 > len(con.mappings):
+            return False 
+        for i in range(len(self.layers) - 1):
+            if self.mappings[i][0] != con.mappings[i][0] or self.mappings[i][1] != con.mappings[i][1]:
+                return False
+        return True
+
+    def __ne__(self, con):
+        return not self.__eq__(con)
+
     def toDict(self):
         """Returns a dictionary of the values of this class for json encoding"""
         conDict = {}
@@ -125,14 +143,23 @@ class Connection():
 
 class Model():
     """Represents a model with its connections and settings"""
-    def __init__(self, ng_list = [], ng_dict = {}, connections = [], connection_indices = []):
-        self.ng_list = ng_list
-        self.ng_dict = ng_dict
-        self.connections = connections
-        self.connection_indices = connection_indices
+    def __init__(self, ng_list = None, ng_dict = None, connections = None, connection_indices = None):
+        self.ng_list = ng_list or []
+        self.ng_dict = ng_dict or {}
+        self.connections = connections or []
+        self.connection_indices = connection_indices or []
 
     def addConnection(self, connection):
         self.connections.append(connection)
+
+    def __eq__(self, other):
+        return self.ng_list == other.ng_list \
+            and self.ng_dict == other.ng_dict \
+            and self.connections == other.connections \
+            and self.connection_indices == other.connection_indices
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 
 class ModelJsonEncoder(json.JSONEncoder):

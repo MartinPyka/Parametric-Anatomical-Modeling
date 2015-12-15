@@ -21,7 +21,7 @@ def get_kernel(kernel_identifier, args):
 
 class AbstractKernel():
     def __init__(self):
-        pass
+        self.scale = 1.0
 
     def apply(self, uv, guv):
         """
@@ -33,7 +33,16 @@ class AbstractKernel():
         return None
 
     def get_args(self):
-        return []
+        return {}
+
+    def __eq__(self, other):
+        return self.get_args() == other.get_args()
+
+    def __ne__(self, other):
+        return self.get_args() != other.get_args()
+
+    def rescale(self, scale):
+        self.scale = scale
 
 class GaussKernel(AbstractKernel):
     """Computes distribution value in two dimensional gaussian kernel
@@ -56,8 +65,8 @@ class GaussKernel(AbstractKernel):
     def apply(self, uv, guv):
         ruv = guv - uv  # compute relative position
 
-        return np.exp(-((ruv[...,0] + self.shift_u) ** 2 / (2 * self.var_u ** 2) +
-                        (ruv[...,1] + self.shift_v) ** 2 / (2 * self.var_v ** 2)))
+        return np.exp(-((ruv[...,0] + self.shift_u / self.scale) ** 2 / (2 * (self.var_u / self.scale) ** 2) +
+                        (ruv[...,1] + self.shift_v / self.scale) ** 2 / (2 * (self.var_v / self.scale) ** 2)))
 
     def get_args(self):
         return {'var_u': self.var_u, 'var_v': self.var_v, 'shift_u': self.shift_u, 'shift_v': self.shift_v}
@@ -131,7 +140,7 @@ class StripeWithEndKernel(AbstractKernel):
         # angle of standard-vector to base
         ruv = guv - uv
 
-        vec = np.array([self.vec_u, self.vec_v])
+        vec = np.array([self.vec_u / scale, self.vec_v / scale])
         angle = angle_between(vec, np.array([1., 0.]))
         rotMatrix = np.array([
             [np.cos(-angle), -np.sin(-angle)],
@@ -139,8 +148,8 @@ class StripeWithEndKernel(AbstractKernel):
         ])
         rot_vec = np.dot(rotMatrix, ruv[...,np.newaxis])
         rot_vec = np.swapaxes(rot_vec, 0, -1)[0]
-        rot_vec[...,0] -= self.shift_u
-        rot_vec[...,1] -= self.shift_v
+        rot_vec[...,0] -= self.shift_u / self.scale
+        rot_vec[...,1] -= self.shift_v / self.scale
         
         result = np.exp(-(rot_vec[...,1]**2 / (2 * self.var_v**2)))
         if type(result) is not np.ndarray:
@@ -176,7 +185,7 @@ class GaussUKernel(AbstractKernel):
     def apply(self, uv, guv):
         ruv = guv - uv  # compute relative position
 
-        return np.exp(-(1 / 2) * ((ruv[...,0] - self.origin_u) / self.var_u) ** 2)
+        return np.exp(-(1 / 2) * ((ruv[...,0] - self.origin_u / self.scale) / self.var_u / self.scale) ** 2)
 
     def get_args(self):
         return {'origin_u': self.origin_u, 'var_u': self.var_u}
@@ -203,7 +212,7 @@ class GaussVKernel(AbstractKernel):
     def apply(self, uv, guv):
         ruv = guv - uv  # compute relative position
 
-        return np.exp(-(1 / 2) * ((ruv[...,1] - self.origin_v) / self.var_v) ** 2)
+        return np.exp(-(1 / 2) * ((ruv[...,1] - self.origin_v / self.scale) / (self.var_v / self.scale)) ** 2)
 
     def get_args(self):
         return {'origin_v': self.origin_v, 'var_v': self.var_v}

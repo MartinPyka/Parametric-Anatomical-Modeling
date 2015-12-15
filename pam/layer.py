@@ -13,6 +13,12 @@ class AbstractLayer():
     def __str__(self):
         return self._name
 
+    def __eq__(self, other):
+        return self._name == other._name
+
+    def __ne__(self, other):
+        return self._name != other._name
+
 class Layer2d(AbstractLayer):
     """Implements a layer as a 2D-manifold"""
     def __init__(self, name, obj, uv_scaling = (1.0, 1.0)):
@@ -23,6 +29,12 @@ class Layer2d(AbstractLayer):
 
     def __repr__(self):
         return self.obj_name
+
+    def __eq__(self, other):
+        return self._obj_name == other._obj_name and self.uv_scaling == other.uv_scaling
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @property
     def obj(self):
@@ -70,6 +82,15 @@ class NeuronLayer(Layer2d):
         self.kernel = kernel
         self.neuron_count = len(neuronset)
 
+    def __eq__(self, other):
+        return self._obj_name == other._obj_name \
+            and self.uv_scaling == other.uv_scaling \
+            and self.neuronset_name == other.neuronset_name \
+            and self.kernel == other.kernel
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def getNeuronPosition(self, index):
         """Returns the 3d point of the neuron with the given index
         :param index: The index of the neuron
@@ -84,3 +105,9 @@ class SynapticLayer(Layer2d):
     def __init__(self, name, obj, no_synapses):
         super().__init__(name, obj)
         self.no_synapses = no_synapses
+
+    def __eq__(self, other):
+        return self._obj_name == other._obj_name and self.uv_scaling == other.uv_scaling and self.no_synapses == other.no_synapses
+
+    def __ne__(self, other):
+        return not self.__eq__(other)

@@ -38,7 +38,7 @@ class TestPamModelCreate(unittest.TestCase):
                 self.assertEqual(self.model.connections[i], pam.model.MODEL.connections[i], "Connections between neuron groups differ")
                 numpy.testing.assert_array_equal(self.CONNECTION_RESULTS[i]['c'], pam.model.CONNECTION_RESULTS[i]['c'], "Connections are not equal in connection ID " + str(i))
                 numpy.testing.assert_array_equal(self.CONNECTION_RESULTS[i]['d'], pam.model.CONNECTION_RESULTS[i]['d'], "Distances between connections are incorrect in connection ID " + str(i))
-                self.assertEqual(self.CONNECTION_RESULTS[i]['s'], pam.model.CONNECTION_RESULTS[i]['s'], "Synapse vectors are incorrect for connection " + str(i))
+                numpy.testing.assert_array_equal(self.CONNECTION_RESULTS[i]['s'], pam.model.CONNECTION_RESULTS[i]['s'], "Synapse vectors are incorrect for connection " + str(i))
                 self.assertEqual(self.model.connection_indices[i], pam.model.MODEL.connection_indices[i], "Connection indices are incorrect")
                 self.assertEqual(self.model.ng_list[i], pam.model.MODEL.ng_list[i], "Neuron group list is incorrect")
             self.assertEqual(self.model.ng_dict, pam.model.MODEL.ng_dict, "Neuron group dictionary is incorrect")

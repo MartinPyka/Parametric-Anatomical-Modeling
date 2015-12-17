@@ -463,7 +463,7 @@ def loadZip(path):
         syn_name = 'connection_result_' + str(i) + '_s.npy'
         con = {'c': f[con_name], 'd': f[dist_name], 's': f[syn_name]}
         CONNECTION_RESULTS.append(con)
-    CONNECTION_RESULTS = convertArray2Vector(CONNECTION_RESULTS)
+    # CONNECTION_RESULTS = convertArray2Vector(CONNECTION_RESULTS)
 
 class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """Load a model and the connection results"""

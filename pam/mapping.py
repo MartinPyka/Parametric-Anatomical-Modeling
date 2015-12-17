@@ -67,11 +67,15 @@ DISTANCE_DICT = {
     "UVnormal": pam.DIS_UVnormal
 }
 
-def updatePanels(m = model.MODEL, context = None):
+def updatePanels(m = model.MODEL, context = None, clear = True):
     """Updates the mapping panels to be up to date with the PAM model"""
     if context == None:
         context = bpy.context
     mapping = context.scene.pam_mapping
+    
+    if clear:
+        mapping.sets.clear()
+
     for con in m.connections:
         s = mapping.sets.add()
         s.name = con.pre_layer.name + '-' + con.post_layer.name

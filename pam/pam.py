@@ -781,7 +781,7 @@ def updateMapping(index):
         's': result[2]
     }
 
-def computeConnectivity(con, create=True, threads = -1):
+def computeConnectivity(con, create=True, threads = None):
     """Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
     with the given parameters
     :param list layers: list of layers connecting a pre- with a post-synaptic layer
@@ -806,13 +806,9 @@ def computeConnectivity(con, create=True, threads = -1):
     # Determine if threading is to be used
     if threads == None:
         if bpy.context.user_preferences.addons['pam'].preferences.use_threading:
-            return computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connections,
-                        distances, func_pre, args_pre, func_post, args_post,
-                        no_synapses, create, threads)
+            return computeConnectivityThreaded(con, create, threads)
     elif threads != -1:
-        return computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connections,
-                        distances, func_pre, args_pre, func_post, args_post,
-                        no_synapses, create, threads)
+        return computeConnectivityThreaded(con, create, threads)
 
     no_synapses = con.synaptic_layer.no_synapses
     slayer = con.synaptic_layer_index
@@ -927,9 +923,9 @@ def computeConnectivity(con, create=True, threads = -1):
     if create:
         model.MODEL.connection_indices.append(
             [
-                len(model.MODEL.connections),
-                model.MODEL.ng_dict[con.pre_layer.name][layers[0].neuronset_name],
-                model.MODEL.ng_dict[con.post_layer.name][layers[-1].neuronset_name]
+                len(model.MODEL.connection_indices),
+                model.MODEL.ng_dict[con.pre_layer.name][con.pre_layer.neuronset_name],
+                model.MODEL.ng_dict[con.post_layer.name][con.post_layer.neuronset_name]
             ]
         )
 
@@ -956,7 +952,7 @@ def post_neuron_initializer(players, pconnections, pdistances):
     global layers
     global connections
     global distances
-    layers = [bpy.data.objects[i] for i in players]
+    layers = [layer.Layer2d("", bpy.data.objects[i]) for i in players]
     connections = pconnections
     distances = pdistances
     
@@ -1025,15 +1021,13 @@ def pre_neuron_initializer(players, pconnections, pdistances, puv_grid, pno_syna
     global distances
     global no_synapses
     uv_grid = puv_grid
-    layers = [bpy.data.objects[i] for i in players]
+    layers = [layer.Layer2d("", bpy.data.objects[i]) for i in players]
     connections = pconnections
     distances = pdistances
     no_synapses = pno_synapses
 
 # TODO(SK): Rephrase docstring, fill in parameter/return values
-def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connections,
-                        distances, func_pre, args_pre, func_post, args_post,
-                        no_synapses, create=True, threads = None):
+def computeConnectivityThreaded(con, create=True, threads = None):
     """Multithreaded version of computeConnectivity()
     Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
     with the given parameters
@@ -1065,33 +1059,38 @@ def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connecti
         threads = os.cpu_count()
     logger.info("Using " + str(threads) + " threads")
 
+    no_synapses = con.synaptic_layer.no_synapses
+    slayer = con.synaptic_layer_index
+    connections, distances = zip(*con.mappings)
+    layers = con.layers
+
     # connection matrix
-    conn = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses), dtype = numpy.int32)
+    conn = numpy.zeros((con.pre_layer.neuron_count, no_synapses), dtype = numpy.int)
 
     # distance matrix
-    dist = numpy.zeros((len(layers[0].particle_systems[neuronset1].particles), no_synapses))
+    dist = numpy.zeros((con.pre_layer.neuron_count, no_synapses))
 
     # synapse mattrx (matrix, with the uv-coordinates of the synapses)
-    syn = [[[] for j in range(no_synapses)] for i in range(len(layers[0].particle_systems[neuronset1].particles))]
+    syn = [[[] for j in range(no_synapses)] for i in range(con.pre_layer.neuron_count)]
 
-    uv_grid = grid.UVGrid(layers[slayer], 0.02)
+    uv_grid = grid.UVGrid(con.synaptic_layer.obj, 0.02)
 
     # rescale arg-parameters
-    args_pre = [i / layers[slayer]['uv_scaling'] for i in args_pre]
-    args_post = [i / layers[slayer]['uv_scaling'] for i in args_post]
+    con.pre_layer.kernel.rescale(con.synaptic_layer.obj['uv_scaling'])
+    con.post_layer.kernel.rescale(con.synaptic_layer.obj['uv_scaling'])
 
     logger.info("Compute Post-Mapping")
     
-    layers_threading = [x.name for x in layers[:(slayer - 1)]]
-    connections_threading = connections[:(slayer - 1)]
-    distances_threading = distances[:(slayer - 1)]
+    layers_threading = [x.obj_name for x in layers[:(slayer - 1):-1]]
+    connections_threading = connections[:(slayer - 1):-1]
+    distances_threading = distances[:(slayer - 1):-1]
 
     pool = multiprocessing.Pool(processes = threads, 
                                 initializer = post_neuron_initializer, 
-                                initargs = ([x.name for x in layers[:(slayer - 1):-1]], connections[:(slayer - 1):-1], distances[:(slayer - 1):-1]))
+                                initargs = (layers_threading, connections_threading, distances_threading))
 
     # Collect particles for post-mapping
-    particles = layers[-1].particle_systems[neuronset2].particles
+    particles = layers[-1].neuronset
     thread_mapping = [(i,  particles[i].location.to_tuple()) for i in range(0, len(particles))]
     
     # Execute the wrapper for multiprocessing
@@ -1103,8 +1102,8 @@ def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connecti
     # While post neuron mapping is running, we can prepare the grid
     logger.info("Prepare Grid")
 
-    uv_grid.compute_pre_mask(func_pre, args_pre)
-    uv_grid.compute_post_mask(func_post, args_post)
+    uv_grid.compute_pre_mask(con.pre_layer.kernel)
+    uv_grid.compute_post_mask(con.post_layer.kernel)
 
     logger.info("Finished Grid")
     # Block until the results for the post mapping are in
@@ -1122,13 +1121,18 @@ def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connecti
 
     #uv_grid.convert_postNeuronStructure()
     logger.info("Compute Pre-Mapping")
-    num_particles = len(layers[0].particle_systems[neuronset1].particles)
+    num_particles = layers[0].neuron_count
+
+    layers_pre = [l.obj_name for l in layers[0:(slayer + 2)]]
+    connections_pre = connections[0:slayer + 1]
+    distances_pre = distances[0:slayer + 1]
+
     pool = multiprocessing.Pool(processes = threads, 
                                 initializer = pre_neuron_initializer, 
-                                initargs = ([x.name for x in layers[0:(slayer + 2)]], connections[0:slayer + 1], distances[0:slayer + 1], uv_grid, no_synapses))
+                                initargs = (layers_pre, connections_pre, distances_pre, uv_grid, no_synapses))
 
     # Collect particles for pre-mapping
-    particles = layers[0].particle_systems[neuronset1].particles
+    particles = layers[0].neuronset
     thread_mapping = [(i,  particles[i].location.to_tuple()) for i in range(0, len(particles))]
 
     result = pool.map(pre_neuron_wrapper, thread_mapping)
@@ -1144,14 +1148,13 @@ def computeConnectivityThreaded(layers, neuronset1, neuronset2, slayer, connecti
     logger.info("Finished Pre-Mapping")
 
     if create:
-        model.CONNECTION_INDICES.append(
+        model.MODEL.connection_indices.append(
             [
-                model.CONNECTION_COUNTER,
-                model.NG_DICT[layers[0].name][neuronset1],
-                model.NG_DICT[layers[-1].name][neuronset2]
+                len(model.MODEL.connection_indices),
+                model.MODEL.ng_dict[con.pre_layer.name][con.pre_layer.neuronset_name],
+                model.MODEL.ng_dict[con.post_layer.name][con.post_layer.neuronset_name]
             ]
         )
-        model.CONNECTION_COUNTER += 1
 
     return conn, dist, syn, uv_grid
 

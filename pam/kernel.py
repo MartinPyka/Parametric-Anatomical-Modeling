@@ -140,7 +140,7 @@ class StripeWithEndKernel(AbstractKernel):
         # angle of standard-vector to base
         ruv = guv - uv
 
-        vec = np.array([self.vec_u / scale, self.vec_v / scale])
+        vec = np.array([self.vec_u / self.scale, self.vec_v / self.scale])
         angle = angle_between(vec, np.array([1., 0.]))
         rotMatrix = np.array([
             [np.cos(-angle), -np.sin(-angle)],

@@ -269,7 +269,7 @@ def simulateColors(decayFunc=anim_functions.decay,
 
     t = data.TIMINGS
     d = data.DELAYS
-    c = model.MODEL.connection_results
+    c = model.CONNECTION_RESULTS
 
     neuronValues = {}
     neuronUpdateQueue = []
@@ -314,9 +314,9 @@ def simulateColors(decayFunc=anim_functions.decay,
             del(neuronValues[(neuronGroupID, neuronID)])
 
         else:
-            layerValuesDecay = initialColorValuesFunc(neuronGroupID, neuronID, model.NG_LIST)
+            layerValuesDecay = initialColorValuesFunc(neuronGroupID, neuronID, model.MODEL.ng_list)
 
-        color = applyColorFunc(layerValuesDecay, neuronID, neuronGroupID, model.NG_LIST)
+        color = applyColorFunc(layerValuesDecay, neuronID, neuronGroupID, model.MODEL.ng_list)
         TIMING_COLORS[timingID] = color
         anim_spikes.setNeuronColorKeyframe(neuronID, neuronGroupID, fireTime, color)
         for connectionID in connectionIDs:
@@ -326,6 +326,7 @@ def simulateColors(decayFunc=anim_functions.decay,
                 obj = SPIKE_OBJECTS[((connectionID[0], neuronID, i), timingID)]
                 if obj.object:
                     obj.object.color = color
+                    obj.object['spiking_labels'] = str(layerValuesDecay)
 
                 # Queue an update to the connected neuron
                 updateTime = fireTime + d[connectionID[0]][neuronID][index]
@@ -343,7 +344,7 @@ def simulateColorsByMask():
     TIMING_COLORS = [[1.0, 1.0, 1.0]] * len(data.TIMINGS)
 
     for spike in SPIKE_OBJECTS.values():
-        neuron_group = model.NG_LIST[model.MODEL.connection_indices[spike.connectionID][1]]
+        neuron_group = model.MODEL.ng_list[model.MODEL.connection_indices[spike.connectionID][1]]
         layer_name = neuron_group[0]
         particle_system_name = neuron_group[1]
         particle = bpy.data.objects[layer_name].particle_systems[particle_system_name].particles[spike.sourceNeuronID]

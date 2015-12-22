@@ -5,6 +5,7 @@ import numpy
 from . import pam
 from . import pam_vis
 from . import model
+from . import layer
 
 MAX_FACTOR = 5
 MAX_STEP_SIZE = 1
@@ -15,11 +16,11 @@ def getNeuralObjects():
     '''returns all objects that are used in PAM connections and have a particle system
     '''
     neuralObjects = []
-    for (i, c) in enumerate(model.CONNECTIONS):  #go through all connections defined in pam
-        for (ii, cc) in enumerate(c[0]):         #look at all objects used in the connection
-            if len(cc.particle_systems):          #check if there are neurons in the object (if not, it is an intermediate or synapse layer)
-                if cc not in neuralObjects:      #check if object is not already in the list
-                    neuralObjects.append(cc)     #append found object to list and continue
+    for (i, c) in enumerate(model.MODEL.connections):  #go through all connections defined in pam
+        for (ii, cc) in enumerate(c.layers):         #look at all objects used in the connection
+            if type(cc) is layer.NeuronLayer:          #check if layer is a layer with neurons on it
+                if cc.obj not in neuralObjects:      #check if object is not already in the list
+                    neuralObjects.append(cc.obj)     #append found object to list and continue
     return neuralObjects
 
 def getObjectColor(obj, force_color=None):
@@ -136,6 +137,7 @@ def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_p
 '''
     neural_objects = getNeuralObjects()
     #o_total = len(neural_objects)
+    print(neural_objects)
     inj_neurons = getInjectionSiteNeurons(neural_objects, location, radius)
     
     logger.info("Visualizing injection")
@@ -155,10 +157,10 @@ def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_p
         if len(pre_list) == 0:
             continue
         #print(pre_list)
-        for (i_c, conn_def) in enumerate(model.CONNECTIONS):     #iterate through all connection definitions in the model
+        for (i_c, conn_def) in enumerate(model.MODEL.connections):     #iterate through all connection definitions in the model
             #print(conn_def[0])
-            if pre_obj == conn_def[0][0]:                        #and continue for those starting with the current pre_object
-                post_obj = conn_def[0][-1]                     #get post_object
+            if pre_obj == conn_def.pre_layer.obj:                        #and continue for those starting with the current pre_object
+                post_obj = conn_def.post_layer.obj                     #get post_object
                 
                 logger.info("Connection found: " + pre_obj.name + " - " + post_obj.name + ".")
                 
@@ -188,8 +190,8 @@ def anterograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_p
                         
                     #draw paths
                     if draw_paths:
-                        ng_index = model.NG_DICT[pre_obj.name][pre_obj.particle_systems[0].name]
-                        for ci in model.CONNECTION_INDICES:            #iteration might be replaced by using c_i. Not sure if numbers are same.
+                        ng_index = model.MODEL.ng_dict[pre_obj.name][pre_obj.particle_systems[0].name]
+                        for ci in model.MODEL.connection_indices:            #iteration might be replaced by using c_i. Not sure if numbers are same.
                             # if ng_index is the pre-synaptic layer in a certain mapping
                             if ci[1] == ng_index:
                                 # visualize the connections
@@ -226,10 +228,10 @@ def retrograde_tracing(location, radius, inj_color=None, dupli_obj=None, draw_pa
         if len(inj_list) == 0:
             continue
         #print(pre_list)
-        for (i_c, conn_def) in enumerate(model.CONNECTIONS):     #iterate through all connection definitions in the model
+        for (i_c, conn_def) in enumerate(model.MODEL.connections):     #iterate through all connection definitions in the model
             #print(conn_def[0])
-            if post_obj == conn_def[0][-1]:                        #and continue for those ending with the current post_object
-                pre_obj = conn_def[0][0]                     #get pre_object
+            if post_obj == conn_def.post_layer.obj:                        #and continue for those ending with the current post_object
+                pre_obj = conn_def.pre_layer.obj                     #get pre_object
                 
                 logger.info("Connection found: " + pre_obj.name + " - " + post_obj.name + ".")
                 

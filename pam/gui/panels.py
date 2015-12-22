@@ -137,9 +137,9 @@ class PAMMappingToolsPanel(bpy.types.Panel):
 
         col = layout.column(align=True)
         col.operator("pam.mapping_layer_add", icon="ZOOMIN", text="Add layer")
-        col.operator("pam.mapping_update", icon="SCRIPTWIN", text="Update mapping")
         col.operator("pam.mapping_compute", icon="SCRIPTWIN", text="Compute mapping")
         col.operator("pam.mapping_compute_sel", icon="SCRIPTWIN", text="Compute selected mapping")
+        col.operator("pam.mapping_update", icon="SCRIPTWIN", text="Update mapping")
         col.operator("pam.mapping_debug", icon="SCRIPTWIN", text="Debug selected mapping")
         col.prop(m, "seed")
 

@@ -109,51 +109,54 @@ def updatePanels(m = model.MODEL, context = None, clear = True):
             new_mapping.function = MAPPING_TYPES[con_mapping[0]][0]
             new_mapping.distance = DISTANCE_TYPES[con_mapping[1]][0]
 
-def convertToModel():
+def convertAllSetsToModel():
     """Adds the blender model connections to the pam model"""
 
     for set in bpy.context.scene.pam_mapping.sets:
-        pre_neurons = set.layers[0].kernel.particles
-        pre_func = set.layers[0].kernel.function
-        pre_params = {param.name: param.value for param in set.layers[0].kernel.parameters}
-        pre_kernel = kernel.get_kernel(pre_func, pre_params)
+        pam.addConnection(setToModel(set))
 
-        post_neurons = set.layers[-1].kernel.particles
-        post_func = set.layers[-1].kernel.function
-        post_params = {param.name: param.value for param in set.layers[-1].kernel.parameters}
-        post_kernel = kernel.get_kernel(post_func, post_params)
+def setToModel(set):
+    pre_neurons = set.layers[0].kernel.particles
+    pre_func = set.layers[0].kernel.function
+    pre_params = {param.name: param.value for param in set.layers[0].kernel.parameters}
+    pre_kernel = kernel.get_kernel(pre_func, pre_params)
 
-        synapse_layer = -1
-        synapse_count = 0
-        layers = []
+    post_neurons = set.layers[-1].kernel.particles
+    post_func = set.layers[-1].kernel.function
+    post_params = {param.name: param.value for param in set.layers[-1].kernel.parameters}
+    post_kernel = kernel.get_kernel(post_func, post_params)
 
-        # collect all
-        for i, l in enumerate(set.layers):
-            obj = bpy.data.objects[l.object]
-            if l.type == 'presynapse':
-                layers.append(layer.NeuronLayer(obj.name, obj, pre_neurons, obj.particle_systems[pre_neurons].particles, pre_kernel))
-            elif l.type == 'postsynapse':
-                layers.append(layer.NeuronLayer(obj.name, obj, post_neurons, obj.particle_systems[post_neurons].particles, post_kernel))
-            elif l.type == 'synapse':
-                synapse_layer = i
-                layers.append(layer.SynapticLayer(obj.name, obj, l.synapse_count))
-            else:
-                layers.append(layer.Layer2d(obj.name, obj))
+    synapse_layer = -1
+    synapse_count = 0
+    layers = []
 
-        # error checking procedures
-        if synapse_layer == -1:
-            raise Exception('no synapse layer given')
+    # collect all
+    for i, l in enumerate(set.layers):
+        obj = bpy.data.objects[l.object]
+        if l.type == 'presynapse':
+            layers.append(layer.NeuronLayer(obj.name, obj, pre_neurons, obj.particle_systems[pre_neurons].particles, pre_kernel))
+        elif l.type == 'postsynapse':
+            layers.append(layer.NeuronLayer(obj.name, obj, post_neurons, obj.particle_systems[post_neurons].particles, post_kernel))
+        elif l.type == 'synapse':
+            synapse_layer = i
+            layers.append(layer.SynapticLayer(obj.name, obj, l.synapse_count))
+        else:
+            layers.append(layer.Layer2d(obj.name, obj))
 
-        mapping_funcs = []
+    # error checking procedures
+    if synapse_layer == -1:
+        raise Exception('no synapse layer given')
 
-        for mapping in set.mappings:
-            mapping_funcs.append((MAPPING_DICT[mapping.function], DISTANCE_DICT[mapping.distance]))
+    mapping_funcs = []
 
-        pam.addConnection(model.Connection(
-            layers,
-            synapse_layer,
-            mapping_funcs
-        ))
+    for mapping in set.mappings:
+        mapping_funcs.append((MAPPING_DICT[mapping.function], DISTANCE_DICT[mapping.distance]))
+    
+    return model.Connection(
+        layers,
+        synapse_layer,
+        mapping_funcs
+    )
 
 def particle_systems(self, context):
     """Generator for particle systems on an pam layer
@@ -396,7 +399,7 @@ class PAMSyncPanelsToModel(bpy.types.Operator):
 
     def execute(self, context):
         model.reset()
-        convertToModel()
+        convertAllSetsToModel()
 
         return {'FINISHED'}
 
@@ -428,7 +431,7 @@ class PAMSyncAndSaveMapping(bpy.types.Operator, bpy_extras.io_utils.ExportHelper
         return True
 
     def execute(self, context):
-        convertToModel()
+        convertAllSetsToModel()
         model.saveModelToJson(model.MODEL, self.filepath)
 
         return {'FINISHED'}
@@ -623,7 +626,7 @@ class PAMMappingLayerRemove(bpy.types.Operator):
         active_set = m.sets[m.active_set]
 
         active_set.layers.remove(self.index)
-        active_set.mappings.remove(self.index)
+        active_set.mappings.remove(self.index - 1)
 
         return {'FINISHED'}
 
@@ -671,15 +674,16 @@ class PAMMappingAddSet(bpy.types.Operator):
         self.count += 1
 
         pre = set.layers.add()
-        pre_mapping = set.mappings.add()
         pre.type = LAYER_TYPES[4][0]
 
-        syn = set.layers.add()
-        syn_mapping = set.mappings.add()
-        syn.type = LAYER_TYPES[2][0]
+        pre_syn_mapping = set.mappings.add()
 
+        syn = set.layers.add()
+        syn.type = LAYER_TYPES[2][0]
+        
+        syn_post_mapping = set.mappings.add()
+        
         post = set.layers.add()
-        post_mapping = set.mappings.add()
         post.type = LAYER_TYPES[0][0]
 
         return {'FINISHED'}
@@ -747,7 +751,7 @@ class PAMMappingCompute(bpy.types.Operator):
 
     def execute(self, context):
         pam.initialize3D()
-        convertToModel()
+        convertAllSetsToModel()
 
         pam.resetOrigins()
         pam.computeAllConnections()
@@ -772,48 +776,7 @@ class PAMMappingComputeSelected(bpy.types.Operator):
 
         set = bpy.context.scene.pam_mapping.sets[bpy.context.scene.pam_mapping.active_set]
 
-        pre_neurons = set.layers[0].kernel.particles
-        pre_func = set.layers[0].kernel.function
-        pre_params = {param.name: param.value for param in set.layers[0].kernel.parameters}
-        pre_kernel = kernel.get_kernel(pre_func, pre_params)
-
-        post_neurons = set.layers[-1].kernel.particles
-        post_func = set.layers[-1].kernel.function
-        post_params = {param.name: param.value for param in set.layers[-1].kernel.parameters}
-        post_kernel = kernel.get_kernel(post_func, post_params)
-
-        synapse_layer = -1
-        synapse_count = 0
-        layers = []
-
-        # collect all
-        for i, l in enumerate(set.layers):
-            obj = bpy.data.objects[l.object]
-            if l.type == 'presynapse':
-                layers.append(layer.NeuronLayer(obj.name, obj, pre_neurons, obj.particle_systems[pre_neurons].particles, pre_kernel))
-            elif l.type == 'postsynapse':
-                layers.append(layer.NeuronLayer(obj.name, obj, post_neurons, obj.particle_systems[post_neurons].particles, post_kernel))
-            elif l.type == 'synapse':
-                synapse_layer = i
-                layers.append(layer.SynapticLayer(obj.name, obj, l.synapse_count))
-            else:
-                layers.append(layer.Layer2d(obj.name, obj))
-
-        # error checking procedures
-        if synapse_layer == -1:
-            raise Exception('no synapse layer given')
-
-        mapping_funcs = []
-
-        for mapping in set.mappings:
-            mapping_funcs.append((MAPPING_DICT[mapping.function], DISTANCE_DICT[mapping.distance]))
-
-        pam.addConnection(model.Connection(
-            layers,
-            synapse_layer,
-            mapping_funcs
-        ))
-
+        pam.addConnection(setToModel(set))
 
         pam.resetOrigins()
         pam.computeAllConnections()
@@ -836,7 +799,10 @@ class PAMAddNeuronSet(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.object.type == "MESH"
+        if context.object:
+            return context.object.type == "MESH"
+        else:
+            return False
 
     def execute(self, context):
         active_obj = context.active_object
@@ -954,56 +920,16 @@ class PAMMappingUpdate(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return True
+        m = context.scene.pam_mapping
+        return len(model.CONNECTION_RESULTS) > m.active_set
 
     def execute(self, context):
         m = context.scene.pam_mapping
         active_set = m.sets[m.active_set]
 
-        pre_neurons = active_set.layers[0].kernel.particles
-        pre_func = active_set.layers[0].kernel.function
-        pre_params = [param.value for param in active_set.layers[0].kernel.parameters]
+        con = setToModel(active_set)
 
-        post_neurons = active_set.layers[-1].kernel.particles
-        post_func = active_set.layers[-1].kernel.function
-        post_params = [param.value for param in active_set.layers[-1].kernel.parameters]
-
-        synapse_layer = -1
-        synapse_count = 0
-        layers = []
-
-        # collect all
-        for i, layer in enumerate(active_set.layers):
-            layers.append(bpy.data.objects[layer.object])
-            # if this is the synapse layer, store this
-            if layer.type == LAYER_TYPES[2][0]:
-                synapse_layer = i
-                synapse_count = layer.synapse_count
-
-        # error checking procedures
-        if synapse_layer == -1:
-            raise Exception('no synapse layer given')
-
-        mapping_funcs = []
-        distance_funcs = []
-
-        for mapping in active_set.mappings[:-1]:
-            mapping_funcs.append(MAPPING_DICT[mapping.function])
-            distance_funcs.append(DISTANCE_DICT[mapping.distance])
-
-        pam.replaceMapping(
-            m.active_set,
-            layers,
-            pre_neurons, post_neurons,
-            synapse_layer,
-            mapping_funcs,
-            distance_funcs,
-            eval('kernel.' + pre_func),
-            pre_params,
-            eval('kernel.' + post_func),
-            post_params,
-            synapse_count
-        )
+        pam.replaceMapping(con)
 
         pam.updateMapping(m.active_set)
 
@@ -1015,6 +941,11 @@ class PAMMappingDebug(bpy.types.Operator):
     bl_label = "Debug Mapping"
     bl_description = "Checks where unconnected neurons failed"
 
+    @classmethod
+    def poll(cls, context):
+        m = context.scene.pam_mapping
+        return len(model.CONNECTION_RESULTS) > m.active_set
+        
     def execute(self, context):
         debug.debugPreMapping(context.scene.pam_mapping.active_set)
         debug.debugPostMapping(context.scene.pam_mapping.active_set)

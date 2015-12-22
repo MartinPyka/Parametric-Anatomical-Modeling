@@ -1328,6 +1328,7 @@ def returnNeuronGroups():
     r_list = []
     r_dict = {}
     counter = 0
+
     for obj in bpy.data.objects:
         for p in obj.particle_systems:
             r_list.append([obj.name, p.name, p.settings.count])

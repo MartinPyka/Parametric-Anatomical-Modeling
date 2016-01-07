@@ -23,6 +23,7 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
     :rtype: mathutils.Vector (2d)
     """
 
+    
     if normal:
         normal_scaled = normal * constants.RAY_FAC
         p, n, f = obj.ray_cast(point + normal_scaled, point - normal_)
@@ -48,14 +49,10 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
     p_uv = mathutils.geometry.barycentric_transform(p, A, B, C, U, V, W)
 
     p_uv_2d = p_uv.to_2d()
-    delta1 = checkPointOnLine(p_uv_2d,uvs[0].uv,uvs[1].uv)
-    delta2 = checkPointOnLine(p_uv_2d,uvs[0].uv,uvs[2].uv)
-    delta3 = checkPointOnLine(p_uv_2d,uvs[1].uv,uvs[2].uv)
-    delta = min(delta1,delta2,delta3)
 
     # if the point is not within the first triangle, we have to repeat the calculation
     # for the second triangle
-    if (mathutils.geometry.intersect_point_tri_2d(p_uv_2d, uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (delta != 0) & (len(uvs) == 4):
+    if (mathutils.geometry.intersect_point_tri_2d(p_uv_2d, uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (len(uvs) == 4):
         A = obj.data.vertices[obj.data.polygons[f].vertices[0]].co
         B = obj.data.vertices[obj.data.polygons[f].vertices[2]].co
         C = obj.data.vertices[obj.data.polygons[f].vertices[3]].co
@@ -70,16 +67,21 @@ def map3dPointToUV(obj, obj_uv, point, normal=None):
         return p_uv_2d
 
     p_uv_2d_new = p_uv_new.to_2d()
-    
-    delta1 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[2].uv)
-    delta2 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[3].uv)
-    delta3 = checkPointOnLine(p_uv_2d_new,uvs[2].uv,uvs[3].uv)
-    delta_new = min(delta1,delta2,delta3)
 
-    if (mathutils.geometry.intersect_point_tri_2d(p_uv_2d, uvs[0].uv, uvs[1].uv, uvs[2].uv) == 0) & (delta != 0) & (len(uvs) == 4):
-        if delta_new < delta:
-            return p_uv_2d_new
-        return p_uv_2d
+    if (mathutils.geometry.intersect_point_tri_2d(p_uv_2d_new, uvs[0].uv, uvs[2].uv, uvs[3].uv) == 0) & (len(uvs) == 4):
+        
+        delta1 = checkPointOnLine(p_uv_2d,uvs[0].uv,uvs[1].uv)
+        delta2 = checkPointOnLine(p_uv_2d,uvs[0].uv,uvs[2].uv)
+        delta3 = checkPointOnLine(p_uv_2d,uvs[1].uv,uvs[2].uv)
+        delta = min(delta1,delta2,delta3)
+        
+        delta1 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[2].uv)
+        delta2 = checkPointOnLine(p_uv_2d_new,uvs[0].uv,uvs[3].uv)
+        delta3 = checkPointOnLine(p_uv_2d_new,uvs[2].uv,uvs[3].uv)
+        delta_new = min(delta1,delta2,delta3)
+        
+        if delta_new > delta:
+            return p_uv_2d
     return p_uv_2d_new
 
 QUADTREE_CACHE = {}

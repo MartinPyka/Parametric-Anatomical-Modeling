@@ -94,7 +94,7 @@ def checkPointInObject(obj, point):
     m.calc_tessface()
     ray_hit_count = 0
 
-    for face in m.tessfaces:
+    for f, face in enumerate(m.tessfaces):
         verts = face.vertices
         if len(verts) == 3:
             v1 = world_matrix * m.vertices[face.vertices[0]].co.xyz
@@ -1369,16 +1369,18 @@ def returnNeuronGroups():
 
     return r_list, r_dict
 
-
 # TODO(SK): Missing docstring
 def resetOrigins():
+    active_obj = bpy.context.scene.objects.active   #save active object
     for c in model.MODEL.connections:
         for l in c.layers:
             l.obj.select = True
             bpy.context.scene.objects.active = l.obj
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             l.obj.select = False
-
+    bpy.context.scene.objects.active = active_obj   #restore
+    if active_obj:
+        active_obj.select = True
 
 def initialize3D():
     """Prepare necessary steps for the computation of connections"""

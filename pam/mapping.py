@@ -470,12 +470,17 @@ class PAMMappingVisibility(bpy.types.Operator):
         for i, layer in enumerate(set.layers):
             layers.append(bpy.data.objects[layer.object])
             
+        bpy.ops.object.select_all(action='DESELECT')
+            
         for obj in bpy.data.objects:
             if not obj.hide_select:
                 obj.hide  = True
         
         for obj in layers:
             obj.hide = False
+
+        bpy.context.scene.objects.active = layers[0]    #set presynaptic object active
+        layers[0].select = True
             
         return {'FINISHED'}
 

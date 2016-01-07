@@ -32,6 +32,12 @@ CACHE_QUADTREE_DEPTH = 2
 # For when points seem to be outside of the uv mesh due to floating point errors
 UV_THRESHOLD = 1e-8
 
+# Threshold for correcting points outside UV borders in grid
+# as a fraction of UV grid size
+# This means, the value is multiplied with uv grid size to determine if
+# the deviation is small enough to be corrected
+UV_GRID_THRESHOLD = 1e-3
+
 #DEFAULT_LOCATION = mathutils.Vector((0.0, 0.0, 0.0))
 #DEFAULT_SCALE = mathutils.Vector((1.0, 1.0, 1.0))
 #DEFAULT_ROTATION = mathutils.Euler((0.0, 0.0, 0.0), "XYZ")

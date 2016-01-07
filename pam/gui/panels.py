@@ -205,18 +205,7 @@ class PAMToolsPanel(bpy.types.Panel):
             "pam_vis.visualize_connections_for_neuron",
             "Connections at Cursor"
         )
-
-        row.label("Debugging")
-
-        row.operator(
-            "pam_vis.visualize_forward_connection",
-            "Forward mapping at Cursor"
-        )
-
-        row.operator(
-            "pam_vis.visualize_unconnected_neurons",
-            "Unconnected neurons"
-        )
+        
         row.separator()
         row.prop(
             context.scene.pam_visualize,
@@ -227,6 +216,24 @@ class PAMToolsPanel(bpy.types.Panel):
             "pam_vis.visualize_connections_all",
             "Connections for all mappings"
         )
+
+        row.label("Debugging")
+
+        row = layout.row()
+        row.prop(context.scene.pam_visualize, "efferent_afferent", text="Direction of connection", expand=True)
+        row = layout.column()
+        
+        row.operator(
+            "pam_vis.visualize_forward_connection",
+            "Mapping at Cursor"
+        )
+
+        row.operator(
+            "pam_vis.visualize_unconnected_neurons",
+            "Unconnected neurons"
+        )
+        
+        row.separator()
         row.operator("pam_vis.visualize_clean", "Clear Visualizations")
 
 class PAMTracingPanel(bpy.types.Panel):

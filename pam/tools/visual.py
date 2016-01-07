@@ -36,6 +36,11 @@ INJ_METHOD_LIST = [
     ("RETROGRADE", "Retrograde", "", 1)
 ]
 
+EFFERENT_AFFERENT_LIST = [
+    ("EFFERENT", "Efferent", "", 0),
+    ("AFFERENT", "Afferent", "", 1)
+]
+
 
 # TODO(SK): rephrase descriptions
 # TODO(SK): missing docstring
@@ -263,34 +268,42 @@ class PamVisualizeAllConnections(bpy.types.Operator):
     bl_options = {'UNDO'}
 
     def execute(self, context):
+        object = context.active_object
         connections = context.scene.pam_visualize.connections
         smoothing = context.scene.pam_visualize.smoothing
         for j in range(0, len(model.MODEL.connections)):
             for i in range(0, min(connections, len(pam.model.CONNECTION_RESULTS[j]['c']))):
                 pam_vis.visualizeConnectionsForNeuron(j, i, smoothing)
 
+        bpy.context.scene.objects.active = object
+        if object:
+            object.select = True
         return {'FINISHED'}
 
 
 class PamVisualizeUnconnectedNeurons(bpy.types.Operator):
     bl_idname = "pam_vis.visualize_unconnected_neurons"
     bl_label = "Visualize Unconnected Neurons"
-    bl_description = "Visualizes neurons with no connection"
+    bl_description = "Visualizes neurons with no outgoing connection"
     bl_options = {'UNDO'}
 
     def execute(self, context):
         object = context.active_object
+        pv = context.scene.pam_visualize
 
         if object.name in model.MODEL.ng_dict:
             ng_index = model.MODEL.ng_dict[object.name][object.particle_systems[0].name]
         else:
             return {'FINISHED'}
 
-        for ci in model.MODEL.connection_indices:
-            # if ng_index is the pre-synaptic layer in a certain mapping
-            if ci[1] == ng_index:
-                # visualize the connections
-                pam_vis.visualizeUnconnectedNeurons(ci[0])
+        for ci in model.MODEL.CONNECTION_INDICES:
+            # if ng_index is the pre- or post-synaptic layer, respectively, in a certain mapping
+            if pv.efferent_afferent == "EFFERENT":
+                if ci[1] == ng_index:                    
+                    pam_vis.visualizeUnconnectedNeurons(ci[0])
+            elif pv.efferent_afferent == "AFFERENT":
+                if ci[2] == ng_index:
+                    pam_vis.visualizeUnconnectedPostNeurons(ci[0])
 
         bpy.context.scene.objects.active = object
         object.select = True
@@ -300,7 +313,7 @@ class PamVisualizeUnconnectedNeurons(bpy.types.Operator):
 class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
     bl_idname = "pam_vis.visualize_connections_for_neuron"
     bl_label = "Visualize Connections at Cursor"
-    bl_description = "Visualizes all outgoing connections for a neuron at cursor position"
+    bl_description = "Visualizes all outgoing or incoming connections for a neuron at cursor position"
     bl_options = {'UNDO'}
 
     def execute(self, context):
@@ -332,13 +345,14 @@ class PamVisualizeConnectionsForNeuron(bpy.types.Operator):
 
 class PamVisualizeForwardConnection(bpy.types.Operator):
     bl_idname = "pam_vis.visualize_forward_connection"
-    bl_label = "Visualize Forward Connection for Neuron at Cursor"
+    bl_label = "Visualize Connection for Neuron at Cursor"
     bl_description = "Visualizes as many mappings as possible until the synaptic layer"
     bl_options = {'UNDO'}
 
     def execute(self, context):
         object = context.active_object
         cursor = context.scene.cursor_location
+        pv = context.scene.pam_visualize
 
         if object.name in model.MODEL.ng_dict:
             ng_index = model.MODEL.ng_dict[object.name][object.particle_systems[0].name]
@@ -350,10 +364,13 @@ class PamVisualizeForwardConnection(bpy.types.Operator):
         print('Neuron Number: ' + str(p_index))
 
         for ci in model.MODEL.connection_indices:
-            # if ng_index is the pre-synaptic layer in a certain mapping
-            if ci[1] == ng_index:
-                # visualize the connections
-                pam_vis.visualizeForwardMapping(ci[0], p_index)
+            # if ng_index is the pre- or post-synaptic layer, respectively, in a certain mapping
+            if pv.efferent_afferent == "EFFERENT":
+                if ci[1] == ng_index:
+                    pam_vis.visualizeForwardMapping(ci[0], p_index)
+            elif pv.efferent_afferent == "AFFERENT":
+                if ci[2] == ng_index:
+                    pam_vis.visualizeBackwardMapping(ci[0], p_index)
 
         bpy.context.scene.objects.active = object
         return {'FINISHED'}
@@ -488,6 +505,10 @@ class PamVisualizeKernelProperties(bpy.types.PropertyGroup):
         name="View mode",
         items=VIEW_LIST,
         update=toggle_view
+    )
+    efferent_afferent = bpy.props.EnumProperty(
+        name="efferent_afferent",
+        items=EFFERENT_AFFERENT_LIST
     )
     mode = bpy.props.EnumProperty(
         name="Mode",

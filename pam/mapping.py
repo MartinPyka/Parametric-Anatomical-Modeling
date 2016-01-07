@@ -929,9 +929,9 @@ class PAMMappingUpdate(bpy.types.Operator):
 
         con = setToModel(active_set)
 
-        pam.replaceMapping(con)
+        index = pam.replaceMapping(m.active_set, con)
 
-        pam.updateMapping(m.active_set)
+        pam.updateMapping(index)
 
         return {'FINISHED'}
 

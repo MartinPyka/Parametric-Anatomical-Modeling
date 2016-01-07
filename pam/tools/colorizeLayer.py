@@ -88,7 +88,6 @@ def saveUVDistanceForPost(filename, name, p_index, c_index):
     number_particles = len(object.particle_systems[p_index].particles)
     for i, p in enumerate(object.particle_systems[p_index].particles):
         logger.info('%i / %i' % (i, number_particles))
-        print('%i / %i' % (i, number_particles))
         pre_neurons, synapses = model.getPreIndicesOfPostIndex(c_index, i)
         distance = []
         axon_length = []

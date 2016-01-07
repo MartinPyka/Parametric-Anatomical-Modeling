@@ -239,7 +239,7 @@ def computeDistance_PreToSynapse(no_connection, pre_index, synapses=[]):
                 
             for s2d in s2ds:
                 #try:
-                uv_distance, _ = computeDistanceToSynapse(layers[slayer], layers[slayer], pre_p3d[-1], s2d, distances[slayer])
+                uv_distance, _ = computeDistanceToSynapse(layers[slayer], layers[slayer], pre_p3d[-1], mathutils.Vector(s2d), distances[slayer])
                 uv_distances.append(uv_distance)
                 #except exceptions.MapUVError as e:
                 #    logger.info("Message-pre-data: ", e)
@@ -255,9 +255,13 @@ def computeDistance_PreToSynapse(no_connection, pre_index, synapses=[]):
     return path_length, pre_p3d
 
 
-# TODO(SK): Rephrase docstring, add parameter/return valuesprint(slayer)
 def compute_path_length(path):
-    """Compute for an array of 3d-vectors their length in space"""
+    """Compute for an array of 3d-vectors their combined length in space
+    :param path: A sequence of mathutils.Vector, defining the points of the path
+    :type path: Sequence of mathutils.Vector
+
+    :return: The length of the path
+    :rtype: float"""
     return sum([(path[i] - path[i - 1]).length for i in range(1, len(path))])
 
 
@@ -721,8 +725,13 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
         return compute_path_length(path), path
 
 
-# TODO(SK): Missing docstring
 def addConnection(*args):
+    """Adds a new connection to model.MODEL.
+
+    If args is a connection object, the object is added to the model. Otherwise, a new 
+    connection object is created using args and then added. The index of the added 
+    connection in the model is returned."""
+
     if type(args[0]) is model.Connection:
         model.MODEL.addConnection(args[0])
     else:
@@ -734,8 +743,23 @@ def addConnection(*args):
 
 def replaceMapping(index, connection):
     """ Replaces a mapping with a given index by the given connection
+
+    :param index: The index of the connection to be replaced. If the index is out of bounds, 
+    the connection is appended to the connections.
+    :type index: int
+    :param connection: The new connection
+    :type connection: model.Connection
+
+    :return: The index of the replaced connection. Equal to index if index is in bounds.
+    :rtype: int
     """
-    model.MODEL.connections[index] = connection
+
+    if index >= len(model.MODEL.connections):
+        model.MODEL.connections.append(connection)
+        return len(model.MODEL.connections) - 1
+    else:
+        model.MODEL.connections[index] = connection
+        return index
 
 # TODO(SK): ??? closing brackets are switched
 
@@ -754,8 +778,8 @@ def replaceMapping(index, connection):
 #     }
 
 
-# TODO(SK): Missing docstring
 def computeAllConnections():
+    """Computes all connections in model.MODEL and saves the result in model.CONNECTION_RESULTS"""
     for c in model.MODEL.connections:
         logger.info(c.pre_layer.name + ' - ' + c.post_layer.name)
         
@@ -770,9 +794,15 @@ def computeAllConnections():
         )
 
 
-# TODO(SK): Rephrase docstring, add parameter/return values
 def updateMapping(index):
-    """Update a mapping given by index"""
+    """Update a mapping given by index
+
+    Computes a single connection without deleting any other connections results. 
+    The results are saved in model.CONNECTION_RESULTS
+
+    :param index: The index of the connection to update
+    :type index: int
+    """
     c = model.MODEL.connections[index]
     result = computeConnectivity(c, create=False)
     model.CONNECTION_RESULTS[index] = {

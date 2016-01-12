@@ -55,6 +55,8 @@ class ConnectionCurve:
         try:
             self.curveObject = pam_vis.visualizeOneConnection(self.connectionID, self.sourceNeuronID, self.targetNeuronID, 
                 bpy.context.scene.pam_visualize.smoothing)
+            bpy.data.groups[PATHS_GROUP_NAME].objects.link(self.curveObject)
+            
             self.curveObject.data.resolution_u = bpy.context.scene.pam_anim_mesh.path_bevel_resolution
             frameLength = timeToFrames(self.timeLength)
 
@@ -111,6 +113,8 @@ class SpikeObject:
 
         obj = bpy.data.objects.new("Spike_" + "_" + str(self.timingID) + "_" + str(self.connectionID) + "_" + str(self.sourceNeuronID) + "_" + str(self.targetNeuronID), meshObject.data)
         obj.color = self.color
+
+        bpy.data.groups[SPIKE_GROUP_NAME].objects.link(obj)
 
         bpy.context.scene.objects.link(obj)
 
@@ -254,17 +258,17 @@ def simulateColorsByLayer(source = "MATERIAL"):
         TIMING_COLORS[spike.timingID] = groupColor
 
 def simulateColors(decayFunc=anim_functions.decay,
-                   initialColorValuesFunc=anim_functions.getInitialColorValues,
-                   mixValuesFunc=anim_functions.mixLayerValues,
-                   applyColorFunc=anim_functions.applyColorValues):
+                   initialLabelsFunc=anim_functions.getInitialLabel,
+                   mixLabelsFunc=anim_functions.mixLabels,
+                   labelToColorFunc=anim_functions.labelToColor):
     """Simulates colors for simulated spikes
 
     :param function decay_func: Function used for calculating decay at a neuron
-    :param function initialColorValuesFunc: Function for getting the initial color values for
+    :param function initialLabelsFunc: Function for getting the initial labels for
         neurons that have no spiking information
-    :param function mixValuesFunc: Function for calculating the mixing of colors when a spike 
+    :param function mixLabelsFunc: Function for calculating the mixing of labels when a spike 
         hits a neuron with color information
-    :param function applyColorFunc: Function for generating color values from the value dictionaries
+    :param function labelToColorFunc: Function for generating color values from the labels
     """
 
     t = data.TIMINGS
@@ -297,7 +301,7 @@ def simulateColors(decayFunc=anim_functions.decay,
                 lastUpdateTime = neuronValues[key][1]
 
                 oldLayerValuesDecay = calculateDecay(oldLayerValues, updateTime - lastUpdateTime, decayFunc)
-                updatedLayerValues = mixValuesFunc(oldLayerValuesDecay, newLayerValues)
+                updatedLayerValues = mixLabelsFunc(oldLayerValuesDecay, newLayerValues)
 
                 neuronValues[key] = (updatedLayerValues, updateTime)
             # If not, we don't need to mix the colors together, as this would just darken the color
@@ -314,9 +318,9 @@ def simulateColors(decayFunc=anim_functions.decay,
             del(neuronValues[(neuronGroupID, neuronID)])
 
         else:
-            layerValuesDecay = initialColorValuesFunc(neuronGroupID, neuronID, model.MODEL.ng_list)
+            layerValuesDecay = initialLabelsFunc(neuronGroupID, neuronID, model.MODEL.ng_list)
 
-        color = applyColorFunc(layerValuesDecay, neuronID, neuronGroupID, model.MODEL.ng_list)
+        color = labelToColorFunc(layerValuesDecay, neuronID, neuronGroupID, model.MODEL.ng_list)
         TIMING_COLORS[timingID] = color
         anim_spikes.setNeuronColorKeyframe(neuronID, neuronGroupID, fireTime, color)
         for connectionID in connectionIDs:
@@ -570,19 +574,15 @@ def animateSpikePropagation():
             if layerItem.layerGenerate:
                 layerFilter.append(layerItem.layerIndex)
 
-    logger.info('Visualize spike propagation')
-    generateAllTimings(frameStart = frameStart, frameEnd = frameEnd, maxConns = maxConns, showPercent = showPercent, layerFilter = layerFilter)
-
     # Create groups if they do not already exist
     if PATHS_GROUP_NAME not in bpy.data.groups:
         bpy.data.groups.new(PATHS_GROUP_NAME)
     if SPIKE_GROUP_NAME not in bpy.data.groups:
         bpy.data.groups.new(SPIKE_GROUP_NAME)
 
-    # Insert objects into groups
-    addObjectsToGroup(bpy.data.groups[PATHS_GROUP_NAME], [obj.curveObject for obj in CURVES.values() if obj.curveObject is not None])
-    addObjectsToGroup(bpy.data.groups[SPIKE_GROUP_NAME], [obj.object for obj in SPIKE_OBJECTS.values() if obj.object is not None])
-
+    logger.info('Visualize spike propagation')
+    generateAllTimings(frameStart = frameStart, frameEnd = frameEnd, maxConns = maxConns, showPercent = showPercent, layerFilter = layerFilter)
+    
     # Apply material to paths
     if bpy.context.scene.pam_anim_material.pathMaterial in bpy.data.materials:
         for curveObj in CURVES.values():
@@ -628,9 +628,9 @@ def colorizeAnimation():
     elif method == 'SIMULATE':
         # Prepare functions
         decayFunc = anim_functions.decay
-        getInitialColorValuesFunc = anim_functions.getInitialColorValues
-        mixLayerValuesFunc = anim_functions.mixLayerValues
-        applyColorValuesFunc = anim_functions.applyColorValues
+        getInitialLabelFunc = anim_functions.getInitialLabel
+        mixLabelsFunc = anim_functions.mixLabels
+        labelToColorFunc = anim_functions.labelToColor
 
         # Load any scripts
         script = bpy.context.scene.pam_anim_material.script
@@ -639,18 +639,18 @@ def colorizeAnimation():
             exec(bpy.data.texts[script].as_string(), localFuncs)
             if "decay" in localFuncs:
                 decayFunc = localFuncs['decay']
-            if "getInitialColorValues" in localFuncs:
-                getInitialColorValuesFunc = localFuncs['getInitialColorValues']
-            if "mixLayerValues" in localFuncs:
-                mixLayerValuesFunc = localFuncs['mixLayerValues']
-            if "applyColorValues" in localFuncs:
-                applyColorValuesFunc = localFuncs['applyColorValues']
+            if "getInitialLabel" in localFuncs:
+                getInitialLabelFunc = localFuncs['getInitialLabel']
+            if "mixLabels" in localFuncs:
+                mixLabelsFunc = localFuncs['mixLabels']
+            if "labelToColor" in localFuncs:
+                labelToColorFunc = localFuncs['labelToColor']
 
-        simulateColors(decayFunc, getInitialColorValuesFunc, mixLayerValuesFunc, applyColorValuesFunc)
+        simulateColors(decayFunc, getInitialLabelFunc, mixLabelsFunc, labelToColorFunc)
 
     elif method == 'MASK':
         if bpy.context.scene.pam_anim_material.mixColors:
-            simulateColors(initialColorValuesFunc = anim_functions.getInitialColorValuesMask)
+            simulateColors(initialLabelsFunc = anim_functions.getInitialLabelMask)
         else:
             simulateColorsByMask()
 

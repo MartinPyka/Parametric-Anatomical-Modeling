@@ -12,7 +12,7 @@ class AnimationProperty(bpy.types.PropertyGroup):
     endFrame = bpy.props.IntProperty(name="End frame", default=100)
 
     startTime = bpy.props.FloatProperty(name="Start time", default=0.0)
-    endTime = bpy.props.FloatProperty(name="End time", default=1.0)
+    endTime = bpy.props.FloatProperty(name="End time", default=100.0)
 
     connNumber = bpy.props.IntProperty(name="Max Connection", default=0)
 
@@ -32,7 +32,7 @@ class UpdateAvailableLayers(bpy.types.Operator):
 
     def execute(self, context):
         item = context.scene.pam_anim_animation.layerCollection.clear()
-        for index, ng in enumerate(model.NG_LIST):
+        for index, ng in enumerate(model.MODEL.ng_list):
             name = ng[0]
             item = context.scene.pam_anim_animation.layerCollection.add()
             item.layerName = name

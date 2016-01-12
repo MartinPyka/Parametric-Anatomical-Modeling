@@ -182,8 +182,8 @@ def visualizePath(pointlist, smoothing=0, material=None, bevel_resolution = 0):
         p.handle_right_type = 'VECTOR'
         p.handle_left_type = 'VECTOR'
 
-    bpy.context.scene.objects.active = curve
-    bpy.ops.object.mode_set()
+    # bpy.context.scene.objects.active = curve
+    # bpy.ops.object.mode_set()
     curve.name = "visualization.%03d" % vis_objects
 
     vis_objects = vis_objects + 1
@@ -194,6 +194,8 @@ def visualizePath(pointlist, smoothing=0, material=None, bevel_resolution = 0):
 
     # apply smoothing if requested
     if smoothing > 0:
+        bpy.context.scene.objects.active = curve
+        bpy.ops.object.mode_set()
         bpy.ops.object.editmode_toggle()
         bpy.ops.curve.select_all(action='SELECT')
         for i in range(0, smoothing):

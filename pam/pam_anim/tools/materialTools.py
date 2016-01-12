@@ -21,7 +21,7 @@ class MaterialProperty(bpy.types.PropertyGroup):
             ('SIMULATE', 'By simulation', 'Tries to generate colors by simulating the spiking activity'),
             ('MASK', 'Mask', 'Gives every spike originating from a neuron iside of a specified mask a given color')
         ),
-        default = 'NONE'
+        default = 'SIMULATE'
     )
 
     pathMaterial = bpy.props.StringProperty(name="Path material", description = "Material applied to paths. Leave blank for no material.")

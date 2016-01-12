@@ -34,11 +34,14 @@ LAYER_TYPES = [
 MAPPING_TYPES = [
     ("euclid", "Euclidean", "", "", 0),
     ("normal", "Normal", "", "", 1),
-    ("rand", "Random", "", "", 2),
-    ("top", "Topology", "", "", 3),
-    ("uv", "UV", "", "", 4),
+    ("top", "Topology", "", "", 2),
+    ("uv", "UV", "", "", 3),
+    ("rand", "Random", "", "", 4),
     ("mask3D", "3D Mask", "", "", 5)
 ]
+
+# Temp workaround because MAPPING_TYPES is in the wrong order, but can't be changed for legacy reasons
+MAPPING_TYPES_PAM_ORDER = ["euclid", "normal", "rand", "top", "uv", "mask3D"]
 
 MAPPING_DICT = {
     "euclid": pam.MAP_euclid,
@@ -106,7 +109,7 @@ def updatePanels(m = model.MODEL, context = None, clear = True):
 
         for con_mapping in con.mappings:
             new_mapping = s.mappings.add()
-            new_mapping.function = MAPPING_TYPES[con_mapping[0]][0]
+            new_mapping.function = MAPPING_TYPES_PAM_ORDER[con_mapping[0]]
             new_mapping.distance = DISTANCE_TYPES[con_mapping[1]][0]
 
 def convertAllSetsToModel():
@@ -149,7 +152,7 @@ def setToModel(set):
 
     mapping_funcs = []
 
-    for mapping in set.mappings:
+    for mapping in set.mappings[:len(layers) - 1]:
         mapping_funcs.append((MAPPING_DICT[mapping.function], DISTANCE_DICT[mapping.distance]))
     
     return model.Connection(

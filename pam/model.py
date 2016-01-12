@@ -473,9 +473,10 @@ class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     bl_description = "Load model data"
 
     load_type = bpy.props.EnumProperty(items = [
-        ('zip', 'ZIP', 'Load from compressed zip file', '', 1),
-        ('pam', 'Pickle', 'Load using Pickle serialization', '', 2)],
-        name = 'File format', description = 'The type of serilization for the data', default = 'zip')
+        ('auto', 'Auto', 'Detect load type by file extension', '', 1),
+        ('zip', 'ZIP', 'Load from compressed zip file', '', 2),
+        ('pam', 'Pickle', 'Load using Pickle serialization', '', 3)],
+        name = 'File format', description = 'The type of serilization for the data', default = 'auto')
 
     def draw(self, context):
         layout = self.layout
@@ -483,7 +484,12 @@ class PAMModelLoad(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         row.prop(self, 'load_type')
 
     def execute(self, context):
-        if self.load_type == 'pam':
+        if self.load_type == 'auto':
+            if self.filepath.endswith('.zip'):
+                loadZip(self.filepath)
+            else:
+                loadPickle(self.filepath)
+        elif self.load_type == 'pam':
             loadPickle(self.filepath)
         elif self.load_type == 'zip':
             loadZip(self.filepath)

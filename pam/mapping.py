@@ -87,10 +87,10 @@ def updatePanels(m = model.MODEL, context = None, clear = True):
             new_layer = s.layers.add()
             new_layer.object = l.obj_name
 
-            if l == con.pre_layer or l == con.post_layer:
-                if l == con.pre_layer:
+            if l is con.pre_layer or l is con.post_layer:
+                if l is con.pre_layer:
                     new_layer.type = 'presynapse'
-                elif l == con.post_layer:
+                elif l is con.post_layer:
                     new_layer.type = 'postsynapse'
 
                 new_layer.kernel.function = l.kernel.name
@@ -99,7 +99,7 @@ def updatePanels(m = model.MODEL, context = None, clear = True):
                 for arg_name, arg_val in l.kernel.get_args().items():
                     a = new_layer.kernel.parameters[arg_name]
                     a.value = arg_val
-            elif l == con.synaptic_layer:
+            elif l is con.synaptic_layer:
                 new_layer.type = 'synapse'
                 new_layer.synapse_count = l.no_synapses
             elif l in con.pre_intermediate_layers:
@@ -416,7 +416,7 @@ class PAMSyncModelToPanels(bpy.types.Operator):
         return any(model.MODEL.connections)
 
     def execute(self, context):
-        updateModel()
+        updatePanels()
 
         return {'FINISHED'}
 

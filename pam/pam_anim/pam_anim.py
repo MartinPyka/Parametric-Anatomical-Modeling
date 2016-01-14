@@ -373,7 +373,7 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
     connectionIndicesFilter = None
     if layerFilter is not None:
         connectionIndicesFilter = [False]*len(model.MODEL.connection_indices)
-        for connection in model.CONNECTION_INDICES:
+        for connection in model.MODEL.connection_indices:
             connectionIndicesFilter[connection[0]] = connection[1] in layerFilter
 
     # This takes some time, so here's a loading bar!

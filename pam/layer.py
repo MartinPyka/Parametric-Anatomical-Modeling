@@ -109,7 +109,7 @@ class SynapticLayer(Layer2d):
         self.no_synapses = no_synapses
 
     def __eq__(self, other):
-        if not hasattr(other, no_synapses):
+        if not hasattr(other, 'no_synapses'):
             return False
         return self._obj_name == other._obj_name and self.uv_scaling == other.uv_scaling and self.no_synapses == other.no_synapses
 

@@ -83,6 +83,8 @@ class NeuronLayer(Layer2d):
         self.neuron_count = len(neuronset)
 
     def __eq__(self, other):
+        if not (hasattr(other, 'neuronset_name') and hasattr(other, 'kernel')):
+            return false
         return self._obj_name == other._obj_name \
             and self.uv_scaling == other.uv_scaling \
             and self.neuronset_name == other.neuronset_name \
@@ -107,6 +109,8 @@ class SynapticLayer(Layer2d):
         self.no_synapses = no_synapses
 
     def __eq__(self, other):
+        if not hasattr(other, no_synapses):
+            return False
         return self._obj_name == other._obj_name and self.uv_scaling == other.uv_scaling and self.no_synapses == other.no_synapses
 
     def __ne__(self, other):

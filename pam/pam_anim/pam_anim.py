@@ -325,7 +325,7 @@ def simulateColors(decayFunc=anim_functions.decay,
         anim_spikes.setNeuronColorKeyframe(neuronID, neuronGroupID, fireTime, color)
         for connectionID in connectionIDs:
             for index, i in enumerate(c[connectionID[0]]["c"][neuronID][:data.noAvailableConnections]):
-                if i == -1:
+                if i == -1 or ((connectionID[0], neuronID, i), timingID) not in SPIKE_OBJECTS:
                     continue
                 obj = SPIKE_OBJECTS[((connectionID[0], neuronID, i), timingID)]
                 if obj.object:

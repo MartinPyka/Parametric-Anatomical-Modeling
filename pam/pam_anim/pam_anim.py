@@ -225,33 +225,40 @@ def simulateColorsByLayer(source = "MATERIAL"):
 
     global TIMING_COLORS
     TIMING_COLORS = [[1.0, 1.0, 1.0]] * len(data.TIMINGS)
-    for spike in SPIKE_OBJECTS.values():
-        connectionID = spike.connectionID
-        neuronGroupID = model.MODEL.connection_indices[connectionID][1]
-        neuronGroupName = model.MODEL.ng_list[neuronGroupID][0]
+
+    groupColors = []
+
+    for neuronGroup in model.MODEL.ng_list:
         if source == "MATERIAL_CYCLES":
-            mat = bpy.context.scene.objects[neuronGroupName].active_material
+            mat = bpy.context.scene.objects[neuronGroup[0]].active_material
             if mat:
                 diffuseNode = mat.node_tree.nodes.get("Diffuse BSDF")
                 if diffuseNode:
                     values = diffuseNode.inputs[0].default_value
-                    groupColor = (values[0], values[1], values[2], values[3])
+                    groupColors.append((values[0], values[1], values[2], values[3]))
                 else:
                     source = "MATERIAL"
             else:
                 source = "OBJECT"
         
         if source == "MATERIAL":
-            mat = bpy.context.scene.objects[neuronGroupName]
+            mat = bpy.context.scene.objects[neuronGroup[0]]
             if mat:
                 color = mat.active_material.diffuse_color
-                groupColor = (color.r, color.g, color.b, 1.0)
+                groupColors.append((color.r, color.g, color.b, 1.0))
             else:
                 source = "OBJECT"
                 
         if source == "OBJECT":
-            groupColor = bpy.context.scene.objects[neuronGroupName].color
+            groupColors.append(bpy.context.scene.objects[neuronGroup[0]].color)
 
+    for spike in SPIKE_OBJECTS.values():
+        connectionID = spike.connectionID
+        neuronGroupID = model.MODEL.connection_indices[connectionID][1]
+        neuronGroupName = model.MODEL.ng_list[neuronGroupID][0]
+        
+        groupColor = groupColors[neuronGroupID]
+        
         spike.color = groupColor
         if spike.object is not None:
             spike.object.color = groupColor

@@ -449,13 +449,13 @@ def visualizeUnconnectedPostNeurons(no_connection):
     """ Visualizes unconnected neurons for a given connection_index """
     c = model.CONNECTION_RESULTS[no_connection]['c']
     
-    layer = model.CONNECTIONS[no_connection][0][-1]    #last layer of connection
+    layer = model.MODEL.connections[no_connection].post_layer    #last layer of connection
     indices = []
     neuron_count = len(c)
 
     for index in range(neuron_count):
         if not index in c:
-            visualizePoint(layer.particle_systems[0].particles[index].location)
+            visualizePoint(layer.getNeuronPosition(index))
             indices.append(index)
 
     logger.info(indices)

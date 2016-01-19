@@ -297,7 +297,7 @@ class PamVisualizeUnconnectedNeurons(bpy.types.Operator):
         else:
             return {'FINISHED'}
 
-        for ci in model.MODEL.CONNECTION_INDICES:
+        for ci in model.MODEL.connection_indices:
             # if ng_index is the pre- or post-synaptic layer, respectively, in a certain mapping
             if pv.efferent_afferent == "EFFERENT":
                 if ci[1] == ng_index:                    

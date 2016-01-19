@@ -122,15 +122,16 @@ class PAMVisualizeKernel(bpy.types.Operator):
         temp_material = bpy.data.materials.new("temp_material")
         # temp_material.use_shadeless = True
 
-        kwargs = {p.name: p.value / uv_scaling_factor for p in pam_visualize.customs}
+        kwargs = {p.name: p.value for p in pam_visualize.customs}
 
-        kernel_func = next(getattr(kernel, k) for (k, n, d, n) in kernel.KERNEL_TYPES if k == pam_visualize.kernel)
+        # kernel_func = next(getattr(kernel, k) for (k, n, d, n) in kernel.KERNEL_TYPES if k == pam_visualize.kernel)
+        kernel_obj = kernel.get_kernel(pam_visualize.kernel, kwargs)
+        kernel_obj.rescale(uv_scaling_factor)
 
         kernel_image(
             np.array([u, v]),
             temp_image,
-            kernel_func,
-            kwargs
+            kernel_obj
         )
 
         if context.scene.render.engine == 'CYCLES':
@@ -401,7 +402,7 @@ class PamVisualizeTracing(bpy.types.Operator):
 
 # TODO(SK): missing docstring
 @p.profiling
-def kernel_image(guv, image, func, kwargs):
+def kernel_image(guv, image, kernel):
     width, height = image.size
     if width != height:
         pass
@@ -410,7 +411,7 @@ def kernel_image(guv, image, func, kwargs):
 
     ranges = list(map(lambda x: x * res, range(width)))
 
-    values = [func(np.array([u, v]), guv, **kwargs) for v in ranges for u in ranges]
+    values = [kernel.apply(np.array([u, v]), guv) for v in ranges for u in ranges]
     color_index = list(map(lambda x: math.floor(x * 255.0), values))
 
     color_values = [COLOR[i] for i in color_index]

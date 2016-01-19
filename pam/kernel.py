@@ -185,7 +185,7 @@ class GaussUKernel(AbstractKernel):
     def apply(self, uv, guv):
         ruv = guv - uv  # compute relative position
 
-        return np.exp(-(1 / 2) * ((ruv[...,0] - self.origin_u / self.scale) / self.var_u / self.scale) ** 2)
+        return np.exp(-(1 / 2) * ((ruv[...,0] - self.origin_u / self.scale) / (self.var_u / self.scale)) ** 2)
 
     def get_args(self):
         return {'origin_u': self.origin_u, 'var_u': self.var_u}
@@ -382,7 +382,7 @@ def yu_kernel2(uv, guv):
 KERNEL_DICT = {
     "gauss": GaussKernel,
     "gauss_u": GaussUKernel,
-    "guass_v": GaussVKernel,
+    "gauss_v": GaussVKernel,
     "stripe_with_end": StripeWithEndKernel,
     "unity": UnityKernel,
     "yu_kernel": YuKernel,
@@ -391,7 +391,7 @@ KERNEL_DICT = {
 
 gauss = GaussKernel
 gauss_u = GaussUKernel
-guass_v = GaussVKernel
+gauss_v = GaussVKernel
 stripe_with_end = StripeWithEndKernel
 unity = UnityKernel
 yu_kernel = YuKernel

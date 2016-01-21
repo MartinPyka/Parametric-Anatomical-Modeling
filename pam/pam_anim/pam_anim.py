@@ -13,6 +13,7 @@ from . import anim_spikes
 from . import anim_functions
 from .helper import *
 
+import traceback
 import logging
 
 logger = logging.getLogger(__package__)
@@ -55,6 +56,7 @@ class ConnectionCurve:
         try:
             self.curveObject = pam_vis.visualizeOneConnection(self.connectionID, self.sourceNeuronID, self.targetNeuronID, 
                 bpy.context.scene.pam_visualize.smoothing)
+            self.curveObject.name = "curve.%d_%d_%d" % (self.connectionID, self.sourceNeuronID, self.targetNeuronID)
             bpy.data.groups[PATHS_GROUP_NAME].objects.link(self.curveObject)
             
             self.curveObject.data.resolution_u = bpy.context.scene.pam_anim_mesh.path_bevel_resolution
@@ -63,7 +65,7 @@ class ConnectionCurve:
             setAnimationSpeed(self.curveObject.data, frameLength)
             self.curveObject.data["timeLength"] = frameLength
         except Exception as e:
-            logger.error(e)
+            logger.info(traceback.format_exc())
             logger.error("Failed to visualize connection " + str((self.connectionID, self.sourceNeuronID, self.targetNeuronID)))
 
 

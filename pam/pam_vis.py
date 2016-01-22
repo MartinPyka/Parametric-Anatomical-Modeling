@@ -90,8 +90,7 @@ def getColors(colormap, v, interval=[], alpha=True, zeroBlack=False, offset=0.0)
     :param list offset: shifts the entire colormap. range between -1 and 1. 
     """
     if not interval:
-        interval.append(min(v))
-        interval.append(max(v))
+        interval = [min(v), max(v)]
 
     l = len(colormap) - 1
     span = float(interval[1] - interval[0])

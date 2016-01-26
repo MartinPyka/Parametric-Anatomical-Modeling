@@ -1,6 +1,18 @@
 import mathutils
 import random
+import numpy
 
+def computePoint(v1, v2, v3, v4, x1, x2):
+    """Interpolates point on a quad
+    :param v1, v2, v3, v4: Vertices of the quad
+    :type v1, v2, v3, v4: mathutils.Vector
+    :param x1, x2: The interpolation values
+    :type x1, x2: float [0..1]"""
+    mv12_co = v1.co * x1 + v2.co * (1 - x1)
+    mv34_co = v3.co * (1 - x1) + v4.co * x1
+    mv_co = mv12_co * x2 + mv34_co * (1 - x2)
+
+    return mv_co
 
 def compute_path_length(path):
     """Compute for an array of 3d-vectors their combined length in space

@@ -1,4 +1,5 @@
 import mathutils
+import random
 
 
 def compute_path_length(path):

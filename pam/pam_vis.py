@@ -10,6 +10,7 @@ from . import pam
 from . import model
 from . import colormaps
 from . import constants
+from . import mesh
 
 logger = logging.getLogger(__package__)
 
@@ -592,12 +593,12 @@ def computeAxonLengths(no_connection, pre_index, visualize=False):
             continue
 
         if synapses is None:
-            result.append(pam.compute_path_length(pre_p3d))
+            result.append(mesh.compute_path_length(pre_p3d))
         else:
             if (len(synapses[i]) > 0):
                 distances_pre, pre_path = pam.computeDistanceToSynapse(
                     layers[slayer - 1], layers[slayer], pre_p3d[-1], synapses[i], distances[slayer - 1])
-                result.append(pam.compute_path_length(pre_p3d + pre_path))
+                result.append(mesh.compute_path_length(pre_p3d + pre_path))
                 if visualize:
                     visualizePath(pre_p3d + pre_path)
     return result

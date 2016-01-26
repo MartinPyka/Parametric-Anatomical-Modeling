@@ -1,6 +1,7 @@
 import mathutils
 import random
 import numpy
+from .mesh import *
 
 def computePoint(v1, v2, v3, v4, x1, x2):
     """Interpolates point on a quad
@@ -13,16 +14,6 @@ def computePoint(v1, v2, v3, v4, x1, x2):
     mv_co = mv12_co * x2 + mv34_co * (1 - x2)
 
     return mv_co
-
-def compute_path_length(path):
-    """Compute for an array of 3d-vectors their combined length in space
-    :param path: A sequence of mathutils.Vector, defining the points of the path
-    :type path: Sequence of mathutils.Vector
-
-    :return: The length of the path
-    :rtype: float"""
-    return sum([(path[i] - path[i - 1]).length for i in range(1, len(path))])
-
 
 def selectRandomPoint(obj):
     """Selects a random point on the mesh of an object
@@ -46,50 +37,6 @@ def selectRandomPoint(obj):
 
     return p, n, f
 
-
-def checkPointInObject(obj, point):
-    """Checks if a given point is inside or outside of the given geometry
-
-    Uses a ray casting algorithm to count intersections
-
-    :param obj: The object whose geometry will be used to check
-    :type obj: bpy.types.Object 
-    :param point: The point to be checked
-    :type point: mathutils.Vector (should be 3d)
-
-    :return: True if the point is inside of the geometry, False if outside
-    :rtype: bool"""
-
-    m = obj.data
-    ray = mathutils.Vector((0.0,0.0,1.0))
-
-    world_matrix = obj.matrix_world
-    
-    m.calc_tessface()
-    ray_hit_count = 0
-
-    for f, face in enumerate(m.tessfaces):
-        verts = face.vertices
-        if len(verts) == 3:
-            v1 = world_matrix * m.vertices[face.vertices[0]].co.xyz
-            v2 = world_matrix * m.vertices[face.vertices[1]].co.xyz
-            v3 = world_matrix * m.vertices[face.vertices[2]].co.xyz
-            vr = mathutils.geometry.intersect_ray_tri(v1, v2, v3, ray, point)
-            if vr is not None:
-                ray_hit_count += 1
-        elif len(verts) == 4:
-            v1 = world_matrix * m.vertices[face.vertices[0]].co.xyz
-            v2 = world_matrix * m.vertices[face.vertices[1]].co.xyz
-            v3 = world_matrix * m.vertices[face.vertices[2]].co.xyz
-            v4 = world_matrix * m.vertices[face.vertices[3]].co.xyz
-            vr1 = mathutils.geometry.intersect_ray_tri(v1, v2, v3, ray, point)
-            vr2 = mathutils.geometry.intersect_ray_tri(v1, v3, v4, ray, point)
-            if vr1 is not None:
-                ray_hit_count += 1
-            if vr2 is not None:
-                ray_hit_count += 1
-
-    return ray_hit_count % 2 == 1
 
 
 class MappingException(Exception):

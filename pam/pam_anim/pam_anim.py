@@ -8,6 +8,7 @@ import numpy
 from .. import pam_vis
 from .. import model
 from .. import pam
+from .. import mesh
 from . import data
 from . import anim_spikes
 from . import anim_functions
@@ -362,7 +363,7 @@ def simulateColorsByMask():
         particle_system_name = neuron_group[1]
         particle = bpy.data.objects[layer_name].particle_systems[particle_system_name].particles[spike.sourceNeuronID]
         if spike.object is not None:
-            if pam.checkPointInObject(maskObject, particle.location):
+            if mesh.checkPointInObject(maskObject, particle.location):
                 spike.color = insideMaskColor
                 spike.object.color = insideMaskColor
             else:

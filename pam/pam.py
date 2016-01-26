@@ -13,6 +13,7 @@ from . import model
 from . import exceptions
 from . import layer
 from . import kernel
+from . import connection_mapping
 from .utils import quadtree
 from .mesh import *
 
@@ -872,13 +873,12 @@ def computeConnectivity(con, create=True, threads = None):
     connections_post = connections[:(slayer - 1):-1]
     distances_post = distances[:(slayer - 1):-1]
 
+    mapping_post = connection_mapping.Mapping(layers_post, connections_post, distances_post)
+
     # fill uv_grid with post-neuron-links
     for i in range(0, con.post_layer.neuron_count):
         random.seed(i + SEED)
-        post_p3d, post_p2d, post_d = computeMapping(layers_post,
-                                                    connections_post,
-                                                    distances_post,
-                                                    con.post_layer.getNeuronPosition(i))
+        post_p3d, post_p2d, post_d = mapping_post.computeMapping(con.post_layer.getNeuronPosition(i))
         if post_p3d is None:
             continue
         
@@ -893,14 +893,12 @@ def computeConnectivity(con, create=True, threads = None):
     layers_pre = layers[0:(slayer + 1)]
     connections_pre = connections[0:slayer]
     distances_pre = distances[0:slayer]
+    mapping_pre = connection_mapping.Mapping(layers_pre, connections_pre, distances_pre)
 
     num_particles = con.pre_layer.neuron_count
     for i in range(0, num_particles):
         random.seed(i + SEED)
-        pre_p3d, pre_p2d, pre_d = computeMapping(layers_pre,
-                                                 connections_pre,
-                                                 distances_pre,
-                                                 con.pre_layer.getNeuronPosition(i))
+        pre_p3d, pre_p2d, pre_d = mapping_pre.computeMapping(con.pre_layer.getNeuronPosition(i))
 
         logger.info(str(round((i / num_particles) * 10000) / 100) + '%')
 
@@ -963,11 +961,9 @@ def computeConnectivity(con, create=True, threads = None):
 
 def post_neuron_wrapper(x):
     """Wrapper for computing post neuron mapping. To be used with multithreading."""
-    global layers
-    global connections
-    global distances
+    global mapping_post
     random.seed(x[0] + SEED)
-    p3d, p2d, dis = computeMapping(layers, connections, distances, mathutils.Vector(x[1]))
+    p3d, p2d, dis = mapping_post.computeMapping(mathutils.Vector(x[1]))
     if p3d is not None:
         p3d = [v[:] for v in p3d]
     if p2d is not None:
@@ -979,12 +975,11 @@ def post_neuron_initializer(players, pconnections, pdistances):
 
     NOTE: globals are only available in the executing thread, so don't expect them 
     to be available in the main thread."""
-    global layers
-    global connections
-    global distances
+    global mapping_post
     layers = [layer.Layer2d("", bpy.data.objects[i]) for i in players]
     connections = pconnections
     distances = pdistances
+    mapping_post = connection_mapping.Mapping(layers, connections, distances)
     
 def pre_neuron_wrapper(x):
     """Wrapper for computing pre neuron mapping. To be used with multithreading."""
@@ -992,15 +987,12 @@ def pre_neuron_wrapper(x):
 
     global uv_grid
     global layers
-    global connections
+    global mapping_pre
     global distances
     global no_synapses
 
     random.seed(i + SEED)
-    pre_p3d, pre_p2d, pre_d = computeMapping(layers[:-1],
-                                                connections[:-1],
-                                                distances[:-1],
-                                                mathutils.Vector(particle))
+    pre_p3d, pre_p2d, pre_d = mapping_pre.computeMapping(mathutils.Vector(particle))
 
     conn = numpy.zeros(no_synapses)
     dist = numpy.zeros(no_synapses)
@@ -1047,7 +1039,7 @@ def pre_neuron_initializer(players, pconnections, pdistances, puv_grid, pno_syna
     to be available in the main thread."""
     global uv_grid
     global layers
-    global connections
+    global mapping_pre
     global distances
     global no_synapses
     uv_grid = puv_grid
@@ -1055,6 +1047,7 @@ def pre_neuron_initializer(players, pconnections, pdistances, puv_grid, pno_syna
     connections = pconnections
     distances = pdistances
     no_synapses = pno_synapses
+    mapping_pre = connection_mapping.Mapping(layers[:-1], connections[:-1], distances[:-1])
 
 # TODO(SK): Rephrase docstring, fill in parameter/return values
 def computeConnectivityThreaded(con, create=True, threads = None):

@@ -217,7 +217,7 @@ def calculatePathLength(curveObject):
     length = 0.0
     for spline in data.splines:
         for i in range(len(spline.bezier_points) - 1):
-            dist = spline.bezier_points[i].co - spline.bezier_points[i - 1].co
+            dist = spline.bezier_points[i+1].co - spline.bezier_points[i].co
             length += dist.length
     return length
 

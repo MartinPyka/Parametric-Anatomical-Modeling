@@ -52,11 +52,10 @@ def checkPointInObject(obj, point):
     :return: True if the point is inside of the geometry, False if outside
     :rtype: bool"""
 
-    m = obj.data
+    m = obj.obj.data
     ray = mathutils.Vector((0.0,0.0,1.0))
 
-    world_matrix = obj.matrix_world
-    
+    world_matrix = obj.obj.matrix_world
     m.calc_tessface()
     ray_hit_count = 0
 

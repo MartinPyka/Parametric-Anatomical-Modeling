@@ -39,48 +39,6 @@ DIS_UVnormal = 5
 
 SEED = 0
 
-def checkPointInObject(obj, point):
-    """Checks if a given point is inside or outside of the given geometry
-
-    Uses a ray casting algorithm to count intersections
-
-    :param obj: The object whose geometry will be used to check
-    :type obj: bpy.types.Object 
-    :param point: The point to be checked
-    :type point: mathutils.Vector (should be 3d)
-
-    :return: True if the point is inside of the geometry, False if outside
-    :rtype: bool"""
-
-    m = obj.obj.data
-    ray = mathutils.Vector((0.0,0.0,1.0))
-
-    world_matrix = obj.obj.matrix_world
-    m.calc_tessface()
-    ray_hit_count = 0
-
-    for f, face in enumerate(m.tessfaces):
-        verts = face.vertices
-        if len(verts) == 3:
-            v1 = world_matrix * m.vertices[face.vertices[0]].co.xyz
-            v2 = world_matrix * m.vertices[face.vertices[1]].co.xyz
-            v3 = world_matrix * m.vertices[face.vertices[2]].co.xyz
-            vr = mathutils.geometry.intersect_ray_tri(v1, v2, v3, ray, point)
-            if vr is not None:
-                ray_hit_count += 1
-        elif len(verts) == 4:
-            v1 = world_matrix * m.vertices[face.vertices[0]].co.xyz
-            v2 = world_matrix * m.vertices[face.vertices[1]].co.xyz
-            v3 = world_matrix * m.vertices[face.vertices[2]].co.xyz
-            v4 = world_matrix * m.vertices[face.vertices[3]].co.xyz
-            vr1 = mathutils.geometry.intersect_ray_tri(v1, v2, v3, ray, point)
-            vr2 = mathutils.geometry.intersect_ray_tri(v1, v3, v4, ray, point)
-            if vr1 is not None:
-                ray_hit_count += 1
-            if vr2 is not None:
-                ray_hit_count += 1
-
-    return ray_hit_count % 2 == 1
 
 # TODO(SK): Rephrase docstring, add parameter/return values
 def computeUVScalingFactor(obj):
@@ -218,17 +176,6 @@ def computeDistance_PreToSynapse(no_connection, pre_index, synapses=[]):
         path_length = 0.
 
     return path_length, pre_p3d
-
-
-def compute_path_length(path):
-    """Compute for an array of 3d-vectors their combined length in space
-    :param path: A sequence of mathutils.Vector, defining the points of the path
-    :type path: Sequence of mathutils.Vector
-
-    :return: The length of the path
-    :rtype: float"""
-    return sum([(path[i] - path[i - 1]).length for i in range(1, len(path))])
-
 
 # TODO(SK): Rephrase docstring, add parameter/return values
 def sortNeuronsToUV(layer, neuronset, u_or_v):

@@ -28,11 +28,10 @@ def checkPointInObject(obj, point):
     :return: True if the point is inside of the geometry, False if outside
     :rtype: bool"""
 
-    m = obj.data
+    m = obj.obj.data
     ray = mathutils.Vector((0.0,0.0,1.0))
 
-    world_matrix = obj.matrix_world
-    
+    world_matrix = obj.obj.matrix_world
     m.calc_tessface()
     ray_hit_count = 0
 
@@ -58,6 +57,7 @@ def checkPointInObject(obj, point):
                 ray_hit_count += 1
 
     return ray_hit_count % 2 == 1
+
 
 def map3dPointToUV(obj, obj_uv, point, normal=None):
     """Convert a given 3d-point into uv-coordinates,

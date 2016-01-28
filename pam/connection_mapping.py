@@ -1,7 +1,11 @@
+import logging
+
 import mathutils
 import random
 import numpy
 from .mesh import *
+
+logger = logging.getLogger(__package__)
 
 def computePoint(v1, v2, v3, v4, x1, x2):
     """Interpolates point on a quad

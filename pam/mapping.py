@@ -143,7 +143,7 @@ def setToModel(set):
             layers.append(layer.NeuronLayer(obj.name, obj, post_neurons, obj.particle_systems[post_neurons].particles, post_kernel))
         elif l.type == 'synapse':
             synapse_layer = i
-            layers.append(layer.SynapticLayer(obj.name, obj, l.synapse_count))
+            layers.append(layer.SynapticLayer(obj.name, obj, int(l.synapse_count * bpy.context.scene.pam_mapping.synapse_multiplier)))
         else:
             layers.append(layer.Layer2d(obj.name, obj))
 
@@ -309,6 +309,19 @@ def update_kernels(self, context):
                 p.name = k
                 p.value = v
 
+def update_neuron_number(self, context):
+    if self.object in bpy.data.objects and self.particles in bpy.data.objects[self.object].particle_systems:
+        self.particle_count = bpy.data.objects[self.object].particle_systems[self.particles].settings.count
+
+def update_particle_number(self, context):
+    if self.particle_count > 0 and self.object in bpy.data.objects and self.particles in bpy.data.objects[self.object].particle_systems:
+        bpy.data.objects[self.object].particle_systems[self.particles].settings.count = self.particle_count * context.scene.pam_mapping.neuron_multiplier
+
+def update_all_particle_numbers(self, context):
+    for s in self.sets:
+        for layer in s.layers:
+            if layer.type in ['presynapse', 'postsynapse']:
+                update_particle_number(layer.kernel, context)
 
 class PAMKernelValues(bpy.types.PropertyGroup):
     """Represent a kernel name/value pair"""
@@ -336,6 +349,13 @@ class PAMKernelParameter(bpy.types.PropertyGroup):
     particles = bpy.props.EnumProperty(
         name="Particle system",
         items=particle_systems,
+        update = update_neuron_number
+    )
+    particle_count = bpy.props.IntProperty(
+        name='Neuron count',
+        min = 0,
+        default = 0,
+        update = update_particle_number
     )
     active_parameter = bpy.props.IntProperty()
 
@@ -393,6 +413,19 @@ class PAMMap(bpy.types.PropertyGroup):
     num_neurons = bpy.props.IntProperty(
         default=1,
         min=1,
+    )
+    neuron_multiplier = bpy.props.FloatProperty(
+        name = "Neuron count multiplier", 
+        min = 0.0,
+        subtype = 'UNSIGNED',
+        default = 1.0,
+        update = update_all_particle_numbers
+    )
+    synapse_multiplier = bpy.props.FloatProperty(
+        name = "Synapse count multiplier", 
+        min = 0.0,
+        subtype = 'UNSIGNED',
+        default = 1.0
     )
     seed = bpy.props.IntProperty(name = "Seed")
 
@@ -792,6 +825,66 @@ class PAMMappingComputeSelected(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class PAMAddNeuronSetLayer(bpy.types.Operator):
+    """Adds a new neuron set to the active object
+
+    .. note::
+        Only mesh-objects are allowed to own neuron sets as custom
+        properties.
+    """
+
+    bl_idname = "pam.add_neuron_set_layer"
+    bl_label = "Add neuron-set"
+    bl_description = "Add a new neuron set"
+    bl_options = {'UNDO'}
+
+    # layer = bpy.props.PointerProperty(type=PAMLayer)
+    layer_index = bpy.props.IntProperty()
+
+    @classmethod
+    def poll(cls, context):
+        return  True#cls.layer.object in bpy.data.objects
+
+    def execute(self, context):
+        layer = context.scene.pam_mapping.sets[context.scene.pam_mapping.active_set].layers[self.layer_index]
+        active_obj = bpy.data.objects[layer.object]
+
+        context.scene.objects.active = active_obj
+        bpy.ops.object.particle_system_add()
+
+        psys = active_obj.particle_systems[-1]
+        psys.name = "pam.neuron_group"
+        psys.seed = random.randrange(0, 1000000)
+
+        pset = psys.settings
+        pset.type = "EMITTER"
+        pset.count = layer.kernel.particle_count
+        pset.frame_start = pset.frame_end = 1.0
+        pset.emit_from = "FACE"
+        pset.use_emit_random = True
+        pset.use_even_distribution = True
+        pset.distribution = "RAND"
+        pset.use_rotations = True
+        pset.use_rotation_dupli = True
+        pset.rotation_mode = "NOR"
+        pset.normal_factor = 0.0
+        pset.render_type = "OBJECT"
+        pset.use_whole_group = True
+        pset.physics_type = "NO"
+        pset.particle_size = 1.0
+
+        pset['delay'] = 1.0
+
+        bpy.ops.object.select_all(action="DESELECT")
+
+        context.scene.update()
+
+        active_obj.select = True
+
+        layer.kernel.particles = psys.name
+
+        return {'FINISHED'}
+
 
 class PAMAddNeuronSet(bpy.types.Operator):
     """Adds a new neuron set to the active object
@@ -806,17 +899,32 @@ class PAMAddNeuronSet(bpy.types.Operator):
     bl_description = "Add a new neuron set"
     bl_options = {'UNDO'}
 
+    glob = bpy.props.BoolProperty(
+        default = True
+    )
+    obj = bpy.props.StringProperty(
+        default = ""
+    )
+
     @classmethod
     def poll(cls, context):
-        if context.object:
-            return context.object.type == "MESH"
+        if cls.glob:
+            obj = context.object
+            if obj:
+                return obj.type == "MESH"
+            else:
+                return False
         else:
-            return False
+            return cls.obj in bpy.data.objects
 
     def execute(self, context):
-        active_obj = context.active_object
+        if not self.glob:
+            active_obj = bpy.data.objects[self.obj]
+        else:
+            active_obj = context.active_object
         m = context.scene.pam_mapping
 
+        context.scene.objects.active = active_obj
         bpy.ops.object.particle_system_add()
 
         psys = active_obj.particle_systems[-1]
@@ -846,7 +954,6 @@ class PAMAddNeuronSet(bpy.types.Operator):
 
         context.scene.update()
 
-        context.scene.objects.active = active_obj
         active_obj.select = True
 
         return {'FINISHED'}

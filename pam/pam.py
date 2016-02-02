@@ -22,21 +22,6 @@ import os
 
 logger = logging.getLogger(__package__)
 
-# key-values for the mapping-procedure
-MAP_euclid = 0
-MAP_normal = 1
-MAP_random = 2
-MAP_top = 3
-MAP_uv = 4
-MAP_mask3D = 5
-
-DIS_euclid = 0
-DIS_euclidUV = 1
-DIS_jumpUV = 2
-DIS_UVjump = 3
-DIS_normalUV = 4
-DIS_UVnormal = 5
-
 SEED = 0
 
 
@@ -152,7 +137,7 @@ def computeDistance_PreToSynapse(no_connection, pre_index, synapses=[]):
                                              point)
     
     if  pre_p3d:
-        if (distances[slayer] == DIS_normalUV) | (distances[slayer] == DIS_euclidUV):
+        if (distances[slayer] == constants.DIS_normalUV) | (distances[slayer] == constants.DIS_euclidUV):
             uv_distances = []
             # if synapses is empty, simply calculate it for all synapses
             if not synapses:
@@ -260,22 +245,22 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
     if not any(s_3d):
         raise exceptions.MapUVError(slayer, dis, s_2d)
 
-    if dis == DIS_euclid:
+    if dis == constants.DIS_euclid:
         return (p_3d - s_3d[0]).length, s_3d
 
-    elif dis == DIS_euclidUV:
+    elif dis == constants.DIS_euclidUV:
         path = [p_3d]
         path = path + slayer.interpolateUVTrackIn3D(p_3d, s_3d[0])
         path.append(s_3d[0])
         return compute_path_length(path), path
 
-    elif dis == DIS_jumpUV:
+    elif dis == constants.DIS_jumpUV:
         path = [p_3d]
         path = path + slayer.interpolateUVTrackIn3D(p_3d, s_3d[0])
         path.append(s_3d[0])
         return compute_path_length(path), path
 
-    elif dis == DIS_UVjump:
+    elif dis == constants.DIS_UVjump:
         i_3d = ilayer.closest_point_on_mesh(s_3d[0])[0]
         path = [p_3d]
         path = path + ilayer.interpolateUVTrackIn3D(p_3d, i_3d)
@@ -283,13 +268,13 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
         path.append(s_3d[0])
         return compute_path_length(path), path
 
-    elif dis == DIS_normalUV:
+    elif dis == constants.DIS_normalUV:
         path = [p_3d]
         path = path + slayer.interpolateUVTrackIn3D(p_3d, s_3d[0])
         path.append(s_3d[0])
         return compute_path_length(path), path
 
-    elif dis == DIS_UVnormal:
+    elif dis == constants.DIS_UVnormal:
         p, n, f = slayers.closest_point_on_mesh(s_3d[0])
         t_3d = ilayer.map3dPointTo3d(layer, p, n)
         if t_3d is None:

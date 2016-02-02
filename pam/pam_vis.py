@@ -240,7 +240,7 @@ def visualizeForwardMapping(no_connection, pre_index):
         pre_p3d, pre_p2d, pre_d = pam.computeMapping(
             layers[0:s],
             connections[0:(s - 1)],
-            distances[0:(s - 2)] + [pam.DIS_euclidUV],
+            distances[0:(s - 2)] + [constants.DIS_euclidUV],
             con.pre_layer.getNeuronPosition(pre_index),
             debug=True
         )

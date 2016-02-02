@@ -1,5 +1,6 @@
 from pam import model
 from pam import pam
+from pam import constants
 
 import bpy
 import numpy
@@ -77,7 +78,7 @@ def debugPreNeuron(no_connection, pre_index):
         pre_p3d, pre_p2d, pre_d = pam.computeMapping(
             layers[0:s],
             connections[0:(s - 1)],
-            distances[0:(s - 2)] + [pam.DIS_euclidUV],
+            distances[0:(s - 2)] + [constants.DIS_euclidUV],
             layers[0].particle_systems[neuronset1].particles[pre_index].location,
             debug=True
         )

@@ -17,6 +17,7 @@ from . import debug
 from . import layer
 
 from pam import pam_vis as pv
+from pam import constants
 from pam.tools import colorizeLayer as CL
 from bpy_extras import io_utils
 
@@ -44,12 +45,12 @@ MAPPING_TYPES = [
 MAPPING_TYPES_PAM_ORDER = ["euclid", "normal", "rand", "top", "uv", "mask3D"]
 
 MAPPING_DICT = {
-    "euclid": pam.MAP_euclid,
-    "normal": pam.MAP_normal,
-    "rand": pam.MAP_random,
-    "top": pam.MAP_top,
-    "uv": pam.MAP_uv,
-    "mask3D": pam.MAP_mask3D
+    "euclid": constants.MAP_euclid,
+    "normal": constants.MAP_normal,
+    "rand": constants.MAP_random,
+    "top": constants.MAP_top,
+    "uv": constants.MAP_uv,
+    "mask3D": constants.MAP_mask3D
 }
 
 DISTANCE_TYPES = [
@@ -62,12 +63,12 @@ DISTANCE_TYPES = [
 ]
 
 DISTANCE_DICT = {
-    "euclid": pam.DIS_euclid,
-    "euclidUV": pam.DIS_euclidUV,
-    "jumpUV": pam.DIS_jumpUV,
-    "UVjump": pam.DIS_UVjump,
-    "normalUV": pam.DIS_normalUV,
-    "UVnormal": pam.DIS_UVnormal
+    "euclid": constants.DIS_euclid,
+    "euclidUV": constants.DIS_euclidUV,
+    "jumpUV": constants.DIS_jumpUV,
+    "UVjump": constants.DIS_UVjump,
+    "normalUV": constants.DIS_normalUV,
+    "UVnormal": constants.DIS_UVnormal
 }
 
 def updatePanels(m = model.MODEL, context = None, clear = True):

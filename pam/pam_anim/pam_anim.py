@@ -491,11 +491,14 @@ def createDefaultMaterial():
     property set to True.
     The name for this material is defined in the global variable DEFAULT_MAT_NAME"""
     options = bpy.context.scene.pam_anim_material
-    if options.material != DEFAULT_MAT_NAME:
+    if DEFAULT_MAT_NAME not in bpy.data.materials:
         mat = bpy.data.materials.new(DEFAULT_MAT_NAME)
         mat.diffuse_color = (1.0, 1.0, 1.0)
         mat.use_object_color = True
         options.material = mat.name
+    else:
+        mat = bpy.data.materials
+    return mat
 
 def copyModifiers(source_object, target_objects):
     """Copies all modifiers from source_object to all objects in target_objects"""
@@ -568,7 +571,10 @@ def animateSpikePropagation():
     # Create a default material if needed
     if bpy.context.scene.pam_anim_material.materialOption == "DEFAULT":
         createDefaultMaterial()
-
+        material = bpy.data.materials[DEFAULT_MAT_NAME]
+    else:
+        material = bpy.data.materials[bpy.context.scene.pam_anim_material.material]
+    
     frameStart = bpy.context.scene.pam_anim_animation.startFrame
     frameEnd = bpy.context.scene.pam_anim_animation.endFrame
     showPercent = bpy.context.scene.pam_anim_animation.showPercent
@@ -603,7 +609,7 @@ def animateSpikePropagation():
     # Apply material to mesh
     mesh = bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh].data
     mesh.materials.clear()
-    mesh.materials.append(bpy.data.materials[bpy.context.scene.pam_anim_material.material])
+    mesh.materials.append(material)
 
 def animateNeuronSpiking():
     """Generates neuron spiking using anim_spikes.py

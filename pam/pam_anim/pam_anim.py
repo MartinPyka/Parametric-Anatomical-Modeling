@@ -593,7 +593,8 @@ def animateSpikePropagation():
     # Apply material to paths
     if bpy.context.scene.pam_anim_material.pathMaterial in bpy.data.materials:
         for curveObj in CURVES.values():
-            curveObj.curveObject.active_material = bpy.data.materials[bpy.context.scene.pam_anim_material.pathMaterial]
+            if curveObj.curveObject:
+                curveObj.curveObject.active_material = bpy.data.materials[bpy.context.scene.pam_anim_material.pathMaterial]
 
     # Copy modifiers and drivers
     copyModifiers(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh], [spike.object for spike in SPIKE_OBJECTS.values() if spike.object is not None])

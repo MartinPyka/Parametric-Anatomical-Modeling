@@ -41,14 +41,14 @@ Otherwise, normal-, Euclidean- and random-based mapping are available.
 ### Conversion into an artificial neural network simulation
 
 * CVS-export of connection/distance matrix for external use
-* Python data-import module for [NEST Framework](nest) available at **missing link**.
+* Python data-import module for [NEST Framework](nest) available at https://github.com/MartinPyka/Pam-Utils.
 
 [nest]: http://www.nest-initiative.org
 
 Installation
 ------------
 
-1. Download the latest official release ([a complete list can be found here](https://bitbucket.org/rub-hippo/parametric-anatomical-modeling/downloads)) or get a snapshot of [this GIT repository](https://bitbucket.org/rub-hippo/parametric-anatomical-modeling/src)
+1. Download the latest official release ([a complete list can be found here](https://github.com/MartinPyka/Parametric-Anatomical-Modeling/releases)) or get a snapshot of [this GIT repository](https://github.com/MartinPyka/Parametric-Anatomical-Modeling)
 
 2. Install the pam-folder as Add-On in Blender ([how to install an Add-On](http://wiki.blender.org/index.php/Doc:2.6/Manual/Extensions/Python/Add-Ons)). You can, for example, copy the pam-folder into the 2.X/scripts/addon-folder of your Blender version. If you downloaded the ZIP-file, you must only install the pam-folder as addon for Blender
 
@@ -62,11 +62,11 @@ Usage
 
 The repository contains two examples, a very simple one and the hippocampal model, which could help to understand how to use PAM.
 
-The [Wiki](https://bitbucket.org/rub-hippo/parametric-anatomical-modeling/wiki/Home) contains a list of all mapping techniques and a description of the approach used to generate synapses.
+The [Wiki](https://github.com/MartinPyka/Parametric-Anatomical-Modeling/wiki) contains a list of all mapping techniques and a description of the approach used to generate synapses.
 
 Here is a list of videos that introduce PAM and show some features of it.
 
-An importer of with PAM generated data to [NEST](http://www.nest-initiative.org/) can be found [here](https://bitbucket.org/rub-hippo/pam-utils)
+An importer of with PAM generated data to [NEST](http://www.nest-initiative.org/) can be found [here](https://github.com/MartinPyka/Pam-Utils)
 
 Contribute
 ----------

@@ -52,7 +52,17 @@ class MappingException(Exception):
         return "MappingException"
 
 class Mapping():
+    """Based on a list of layers, connections-properties and distance-properties,
+    this class can compute the 3d-point, the 2d-uv-point and the distance from a given
+    point on the first layer to the corresponding point on the last layer
+"""
     def __init__(self, layers, connections, distances, debug = False):
+        """:param list layers: layers connecting the pre-synaptic layer with the synaptic layer
+        :param list connections: values determining the type of layer-mapping
+        :param list distances: values determining the calculation of the distances between layers
+        :param bool debug: if true, compute mapping returns a list of layers that it was able
+                          to pass. Helps to debug the mapping-definitions in order to figure
+                          our where exactly the mapping stops"""
         self.layers = layers
         self.connections = connections
         self.distances = distances
@@ -60,11 +70,32 @@ class Mapping():
         self.initFunctions()
 
     def initFunctions(self):
+        """Initializes the function lists from the connections and distances lists. 
+        Needs to be called after connections or distances have changed"""
         self.mapping_functions = [connection_dict[i] for i in self.connections]
         self.distance_functions = [distance_dict[self.connections[i]][self.distances[i]] for i in range(len(self.distances))]
         self.distance_functions[-1] = distance_dict_syn[self.connections[-1]][self.distances[-1]]
 
     def computeMapping(self, point):
+        """Compute the mapping of a single point
+
+        :param mathutils.Vector point: vector for which the mapping should be calculated
+        
+        Return values
+        -------------
+        p3d                   list of 3d-vector of the neuron position on all layers until the last
+                              last position before the synapse. Note, that this might be before the
+                              synapse layer!!! This depends on the distance-property.
+        p2d                   2d-vector of the neuron position on the UV map of the last layer
+        d                     distance between neuron position on the first layer and last position before
+                              the synapse! This is not the distance to the p3d point! This is either the
+                              distance to the 3d-position of the last but one layer or, in case
+                              euclidean-uv-distance was used, the distance to the position of the last
+                              layer determind by euclidean-distance. Functions, like computeConnectivity()
+                              add the distance to the synapse to value d in order to retrieve
+                              the complete distance from the pre- or post-synaptic neuron
+                              to the synapse
+        """
         self.p3d = [point]
 
         for i in range(0, len(self.connections)):

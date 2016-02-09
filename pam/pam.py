@@ -12,9 +12,7 @@ from . import grid
 from . import model
 from . import exceptions
 from . import layer
-from . import kernel
 from . import connection_mapping
-from .utils import quadtree
 from .mesh import *
 
 import multiprocessing
@@ -375,21 +373,7 @@ def updateMapping(index):
 def computeConnectivity(con, create=True, threads = None):
     """Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
     with the given parameters
-    :param list layers: list of layers connecting a pre- with a post-synaptic layer
-    :param str neuronset1: name of the neuronset (particle system) of the pre- and post-synaptic layer
-    :param str neuronset2: name of the neuronset (particle system) of the pre- and post-synaptic layer
-    :param index slayer: index in layers for the synaptic layer
-    :param list connections: values determining the type of layer-mapping
-    :param list distances: values determining the calculation of the distances between layers
-    :param function func_pre: pre-synaptic connectivity kernel, if func_pre is None
-                              only the mapping position of the pre-synaptic neuron on the synaptic layer
-                              is used
-    :param function args_pre:
-    :param function func_post:
-    :param function args_post: same, as for func_pre and and args_pre, but now for the post-synaptic neurons
-                               again, func_post can be None. Then a neuron is just assigned to the cell
-                               of its corresponding position on the synapse layer
-    :param int no_synapses: number of synapses for each pre-synaptic neuron
+    :param Connection con: The conection to be computed (See model.Connection for details)
     :param bool create: if create == True, then create new connection, otherwise it is just updated
     :param int threads: If not -1, computeConnectivityThreaded is called instead with number of given threads.
                         If None, addon preferences are used. If 0, os.cpu_count() is used.
@@ -615,21 +599,7 @@ def computeConnectivityThreaded(con, create=True, threads = None):
     Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
     with the given parameters
 
-    :param list layers: list of layers connecting a pre- with a post-synaptic layer
-    :param str neuronset1: name of the neuronset (particle system) of the pre- and post-synaptic layer
-    :param str neuronset2: name of the neuronset (particle system) of the pre- and post-synaptic layer
-    :param index slayer: index in layers for the synaptic layer
-    :param list connections: values determining the type of layer-mapping
-    :param list distances: values determining the calculation of the distances between layers
-    :param function func_pre: pre-synaptic connectivity kernel, if func_pre is None
-                              only the mapping position of the pre-synaptic neuron on the synaptic layer
-                              is used
-    :param function args_pre:
-    :param function func_post:
-    :param function args_post: same, as for func_pre and and args_pre, but now for the post-synaptic neurons
-                               again, func_post can be None. Then a neuron is just assigned to the cell
-                               of its corresponding position on the synapse layer
-    :param int no_synapses: number of synapses for each pre-synaptic neuron
+    :param Connection con: The conection to be computed (See model.Connection for details)
     :param bool create: if create == True, then create new connection, otherwise it is just updated
     :param int threads: Number of threads to be used for multiprocessing. If None, Value in addon preferences is used.
                         If 0, os.cpu_count() is used.
@@ -741,11 +711,10 @@ def computeConnectivityThreaded(con, create=True, threads = None):
 
     return conn, dist, syn, uv_grid
 
-
-# TODO(SK): Rephrase docstring, add parameter/return values
-# TODO(SK): Fill in param types
 def computeConnectivityAll(layers, neuronset1, neuronset2, slayer, connections, distances, func, args):
-    """Compute the connectivity probability between all neurons of both neuronsets
+    """DEPRECATED
+       ----------
+    Compute the connectivity probability between all neurons of both neuronsets
     on a synaptic layer
 
     :param list layers: layers connecting a pre- with a post-synaptic layer
@@ -922,8 +891,8 @@ def returnNeuronGroups():
 
     return r_list, r_dict
 
-# TODO(SK): Missing docstring
 def resetOrigins():
+    """Resets the transformations of all objects in the model to avoid false behaviour of mapping functions"""
     active_obj = bpy.context.scene.objects.active   #save active object
     for c in model.MODEL.connections:
         for l in c.layers:

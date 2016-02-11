@@ -71,10 +71,20 @@ DISTANCE_DICT = {
     "UVnormal": constants.DIS_UVnormal
 }
 
-def updatePanels(m = model.MODEL, context = None, clear = True):
-    """Updates the mapping panels to be up to date with the PAM model"""
+def updatePanels(m = None, context = None, clear = True):
+    """Updates the mapping panels to be up to date with the PAM model
+
+    :param m: The model to convert. If None, the currently active model in model.MODEL is used
+    :type m: model.Model
+    :param context: The blender context to create the mapping panels in. If None, the currently active context is used
+    :type context: bpy.types.Context
+    :param clear: If true, clears the mapping sets before adding new sets
+    :type clear: Boolean
+    """
     if context == None:
         context = bpy.context
+    if m is None:
+        m = model.MODEL
     mapping = context.scene.pam_mapping
     
     if clear:
@@ -120,6 +130,13 @@ def convertAllSetsToModel():
         pam.addConnection(setToModel(set))
 
 def setToModel(set):
+    """Converts a PAM Mapping set to a model connection
+    :param set: The set to be converted 
+    :type set: mapping.PAMMapSet
+
+    :return: A new connection object containing the information of the set
+    :rtype: model.Connection
+    """
     pre_neurons = set.layers[0].kernel.particles
     pre_func = set.layers[0].kernel.function
     pre_params = {param.name: param.value for param in set.layers[0].kernel.parameters}
@@ -310,14 +327,17 @@ def update_kernels(self, context):
                 p.value = v
 
 def update_neuron_number(self, context):
+    """Update function, called when neuron set has been changed"""
     if self.object in bpy.data.objects and self.particles in bpy.data.objects[self.object].particle_systems:
         self.particle_count = bpy.data.objects[self.object].particle_systems[self.particles].settings.count
 
 def update_particle_number(self, context):
+    """Update function, called when neuron count has been changed"""
     if self.particle_count > 0 and self.object in bpy.data.objects and self.particles in bpy.data.objects[self.object].particle_systems:
         bpy.data.objects[self.object].particle_systems[self.particles].settings.count = self.particle_count * context.scene.pam_mapping.neuron_multiplier
 
 def update_all_particle_numbers(self, context):
+    """Update function, called when the neuron multiplier has been changed"""
     for s in self.sets:
         for layer in s.layers:
             if layer.type in ['presynapse', 'postsynapse']:
@@ -444,6 +464,7 @@ class PAMSyncModelToPanels(bpy.types.Operator):
     bl_idname = "pam.sync_model_panel"
     bl_label = "Sync Model to Mapping Panels"
     bl_description = "Synchronize the pam model to the mapping panels"
+    bl_options = {"UNDO"}
 
     @classmethod
     def poll(cls, context):

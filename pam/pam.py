@@ -1,4 +1,4 @@
-# TODO(SK): missing module docstring
+"""THis module contains the core functions needed to compute pam models"""
 
 import logging
 import random
@@ -320,23 +320,6 @@ def replaceMapping(index, connection):
         model.MODEL.connections[index] = connection
         return index
 
-# TODO(SK): ??? closing brackets are switched
-
-#    model.CONNECTIONS.append(
-#    {'layers': args[0],
-#     'neuronset1': args[1],
-#     'neuronset2': args[2],
-#     'slayer': args[3],
-#     'connections': args[4],
-#     'distances': args[5],
-#     'func_pre': args[6],
-#     'args_pre': args[7],
-#     'func_post': args[8],
-#     'args_post': args[9],
-#     'no_synapses': args[10] )
-#     }
-
-
 def computeAllConnections():
     """Computes all connections in model.MODEL and saves the result in model.CONNECTION_RESULTS"""
     for c in model.MODEL.connections:
@@ -373,7 +356,7 @@ def updateMapping(index):
 def computeConnectivity(con, create=True, threads = None):
     """Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
     with the given parameters
-    :param Connection con: The conection to be computed (See model.Connection for details)
+    :param Connection con: The connection to be computed (See model.Connection for details)
     :param bool create: if create == True, then create new connection, otherwise it is just updated
     :param int threads: If not -1, computeConnectivityThreaded is called instead with number of given threads.
                         If None, addon preferences are used. If 0, os.cpu_count() is used.
@@ -593,13 +576,12 @@ def pre_neuron_initializer(players, pconnections, pdistances, puv_grid, pno_syna
     no_synapses = pno_synapses
     mapping_pre = connection_mapping.Mapping(layers[:-1], connections[:-1], distances[:-1])
 
-# TODO(SK): Rephrase docstring, fill in parameter/return values
 def computeConnectivityThreaded(con, create=True, threads = None):
     """Multithreaded version of computeConnectivity()
     Computes for each pre-synaptic neuron no_synapses connections to post-synaptic neurons
     with the given parameters
 
-    :param Connection con: The conection to be computed (See model.Connection for details)
+    :param Connection con: The connection to be computed (See model.Connection for details)
     :param bool create: if create == True, then create new connection, otherwise it is just updated
     :param int threads: Number of threads to be used for multiprocessing. If None, Value in addon preferences is used.
                         If 0, os.cpu_count() is used.
@@ -779,7 +761,6 @@ def printConnections():
         logger.info(message)
 
 
-# TODO(SK): Fill in docstring parameters/return values
 def computeDistance(layer1, layer2, neuronset1, neuronset2, common_layer,
                     connection_matrix):
     """Measure the distance between neurons on the same layer according to the
@@ -817,7 +798,6 @@ def computeDistance(layer1, layer2, neuronset1, neuronset2, common_layer,
     return result, positions1, positions2
 
 
-# TODO(SK): Fill in docstring parameters/return values
 def measureUVs(objects):
     """Return the ratio between real and UV-distance for all edges for all objects in
     objects
@@ -869,7 +849,6 @@ def initializeUVs():
             obj['area_sum'] = p_sum
 
 
-# TODO(SK): Fill in docstring parameters/return values
 def returnNeuronGroups():
     """Return a list of neural groups (particle-systems) for the whole model.
     This is used for the NEST import to determine, which neural groups should

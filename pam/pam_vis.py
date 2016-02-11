@@ -315,13 +315,16 @@ def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0, print_s
 
     material = bpy.data.materials.get(bpy.context.scene.pam_visualize.connection_material, None)
 
+    layers_post = layers[:(slayer - 1):-1]
+    connections_post = connections[:(slayer - 1):-1]
+    distances_post = distances[:(slayer - 1):-1]
+
+    mapping_post = connection_mapping.Mapping(layers_post, connections_post, distances_post)
+
     for i in range(0, len(post_indices)):
         if post_indices[i] == -1:
             continue
-        post_p3d, post_p2d, post_d = pam.computeMapping(layers[:(slayer - 1):-1],
-                                                        connections[:(slayer - 1):-1],
-                                                        distances[:(slayer - 1):-1],
-                                                        con.post_layer.getNeuronPosition(int(post_indices[i])))
+        post_p3d, post_p2d, post_d = mapping_post.computeMapping(con.post_layer.getNeuronPosition(int(post_indices[i])))
         if synapses is None:
             curve = visualizePath(pre_p3d + post_p3d[::-1], material = material)
             distance = calculatePathLength(curve)

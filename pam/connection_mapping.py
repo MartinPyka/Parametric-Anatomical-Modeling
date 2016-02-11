@@ -1,3 +1,5 @@
+"""This module contains the functions and classes needed for mapping points between layers"""
+
 import logging
 
 import mathutils
@@ -55,7 +57,7 @@ class Mapping():
     """Based on a list of layers, connections-properties and distance-properties,
     this class can compute the 3d-point, the 2d-uv-point and the distance from a given
     point on the first layer to the corresponding point on the last layer
-"""
+    """
     def __init__(self, layers, connections, distances, debug = False):
         """:param list layers: layers connecting the pre-synaptic layer with the synaptic layer
         :param list connections: values determining the type of layer-mapping
@@ -116,7 +118,15 @@ class Mapping():
 
         return self.p3d, p2d, compute_path_length(self.p3d)
 
+"""
+The following functions are the combinations of all distance and mapping types.
 
+If you wish to add a new mapping or distance type, you will have to create a 
+function for each possible combination. If you add a mapping function, you also 
+have to add a function that computes the point on the next layer (p3d_n), 
+prefix "con_", and pass it down to the distance function. You also have to add
+your functions to the lists below.
+"""
 
 """Euclidean mapping"""
 def con_euclid(self, layer, layer_next, dis_func):

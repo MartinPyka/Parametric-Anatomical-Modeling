@@ -10,12 +10,15 @@ MAP_euclid = 0
 MAP_normal = 1
 MAP_random = 2
 MAP_top = 3
+MAP_uv = 4
+MAP_mask3D = 5
 
 DIS_euclid = 0
 DIS_euclidUV = 1
 DIS_jumpUV = 2
-DIS_normalUV = 3
-DIS_UVnormal = 4
+DIS_UVjump = 3
+DIS_normalUV = 4
+DIS_UVnormal = 5
 
 # length of a ray along a normal-vector.
 # This is used for 1pam.map3dPointToUV() and

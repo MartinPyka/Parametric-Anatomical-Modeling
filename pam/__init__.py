@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 bl_info = {
     "name": "PAM",
-    "author": "Sebastian Klatt, Martin Pyka",
-    "version": (0, 2, 0),
+    "author": "Sebastian Klatt, Martin Pyka, Patrick Herbers",
+    "version": (0, 3, 0),
     "blender": (2, 7, 0),
     "license": "GPL v2",
     "description": "Parametric Anatomical Modeling is a method to translate "

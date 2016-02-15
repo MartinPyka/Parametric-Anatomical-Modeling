@@ -10,6 +10,7 @@ from . import pam
 from . import model
 from . import colormaps
 from . import constants
+from . import mesh
 
 logger = logging.getLogger(__package__)
 
@@ -239,7 +240,7 @@ def visualizeForwardMapping(no_connection, pre_index):
         pre_p3d, pre_p2d, pre_d = pam.computeMapping(
             layers[0:s],
             connections[0:(s - 1)],
-            distances[0:(s - 2)] + [pam.DIS_euclidUV],
+            distances[0:(s - 2)] + [constants.DIS_euclidUV],
             con.pre_layer.getNeuronPosition(pre_index),
             debug=True
         )
@@ -314,13 +315,16 @@ def visualizeConnectionsForNeuron(no_connection, pre_index, smoothing=0, print_s
 
     material = bpy.data.materials.get(bpy.context.scene.pam_visualize.connection_material, None)
 
+    layers_post = layers[:(slayer - 1):-1]
+    connections_post = connections[:(slayer - 1):-1]
+    distances_post = distances[:(slayer - 1):-1]
+
+    mapping_post = connection_mapping.Mapping(layers_post, connections_post, distances_post)
+
     for i in range(0, len(post_indices)):
         if post_indices[i] == -1:
             continue
-        post_p3d, post_p2d, post_d = pam.computeMapping(layers[:(slayer - 1):-1],
-                                                        connections[:(slayer - 1):-1],
-                                                        distances[:(slayer - 1):-1],
-                                                        con.post_layer.getNeuronPosition(int(post_indices[i])))
+        post_p3d, post_p2d, post_d = mapping_post.computeMapping(con.post_layer.getNeuronPosition(int(post_indices[i])))
         if synapses is None:
             curve = visualizePath(pre_p3d + post_p3d[::-1], material = material)
             distance = calculatePathLength(curve)
@@ -591,12 +595,12 @@ def computeAxonLengths(no_connection, pre_index, visualize=False):
             continue
 
         if synapses is None:
-            result.append(pam.compute_path_length(pre_p3d))
+            result.append(mesh.compute_path_length(pre_p3d))
         else:
             if (len(synapses[i]) > 0):
                 distances_pre, pre_path = pam.computeDistanceToSynapse(
                     layers[slayer - 1], layers[slayer], pre_p3d[-1], synapses[i], distances[slayer - 1])
-                result.append(pam.compute_path_length(pre_p3d + pre_path))
+                result.append(mesh.compute_path_length(pre_p3d + pre_path))
                 if visualize:
                     visualizePath(pre_p3d + pre_path)
     return result

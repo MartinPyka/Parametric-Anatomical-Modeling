@@ -100,12 +100,17 @@ class PAMMappingToolsPanel(bpy.types.Panel):
 
             if not layer.collapsed:
                 row = box.row(align=True)
-                row.prop(layer, "object", text="Object")
+                row.prop_search(layer, "object", bpy.data, 'objects', text="Object")
                 row.operator("pam.mapping_layer_set_object", icon="SNAP_ON", text="").index = i
 
                 if layer.type in ['presynapse', 'postsynapse']:
                     row = box.row(align=True)
                     row.prop(layer.kernel, "particles", text="", icon="PARTICLES")
+                    row.prop(layer.kernel, 'particle_count')
+                    op_prop = row.operator('pam.add_neuron_set_layer', icon='ZOOMIN', text = "")
+                    op_prop.layer_index = i
+
+                    row = box.row()
                     row.prop(layer.kernel, "function", text="", icon="SMOOTHCURVE")
 
                     row = box.row()
@@ -135,6 +140,10 @@ class PAMMappingToolsPanel(bpy.types.Panel):
                 col = box.column()
                 col.prop(mapping, "distance", text="", icon="ALIGN")
 
+        col = layout.column(align=True)
+        col.prop(m, "neuron_multiplier")
+        col.prop(m, "synapse_multiplier")
+        
         col = layout.column(align=True)
         col.operator("pam.mapping_layer_add", icon="ZOOMIN", text="Add layer")
         col.operator("pam.mapping_compute", icon="SCRIPTWIN", text="Compute mapping")

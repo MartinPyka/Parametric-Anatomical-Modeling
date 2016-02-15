@@ -2,6 +2,7 @@ import bpy
 
 import numpy
 from .. import pam
+from .. import mesh
 
 # CONSTANTS
 TAU = 20
@@ -130,7 +131,7 @@ def getInitialLabelMask(neuronGroupID, neuronID, neuronGroups):
     layer_name = neuron_group[0]
     particle_system_name = neuron_group[1]
     particle = bpy.data.objects[layer_name].particle_systems[particle_system_name].particles[neuronID]
-    if pam.checkPointInObject(maskObject, particle.location):
+    if mesh.checkPointInObject(maskObject, particle.location):
         return {"red": insideMaskColor[0], "green": insideMaskColor[1], "blue": insideMaskColor[2]}
     else:
         return {"red": outsideMaskColor[0], "green": outsideMaskColor[1], "blue": outsideMaskColor[2]}

@@ -17,6 +17,7 @@ from . import debug
 from . import layer
 
 from pam import pam_vis as pv
+from pam import constants
 from pam.tools import colorizeLayer as CL
 from bpy_extras import io_utils
 
@@ -44,12 +45,12 @@ MAPPING_TYPES = [
 MAPPING_TYPES_PAM_ORDER = ["euclid", "normal", "rand", "top", "uv", "mask3D"]
 
 MAPPING_DICT = {
-    "euclid": pam.MAP_euclid,
-    "normal": pam.MAP_normal,
-    "rand": pam.MAP_random,
-    "top": pam.MAP_top,
-    "uv": pam.MAP_uv,
-    "mask3D": pam.MAP_mask3D
+    "euclid": constants.MAP_euclid,
+    "normal": constants.MAP_normal,
+    "rand": constants.MAP_random,
+    "top": constants.MAP_top,
+    "uv": constants.MAP_uv,
+    "mask3D": constants.MAP_mask3D
 }
 
 DISTANCE_TYPES = [
@@ -62,18 +63,28 @@ DISTANCE_TYPES = [
 ]
 
 DISTANCE_DICT = {
-    "euclid": pam.DIS_euclid,
-    "euclidUV": pam.DIS_euclidUV,
-    "jumpUV": pam.DIS_jumpUV,
-    "UVjump": pam.DIS_UVjump,
-    "normalUV": pam.DIS_normalUV,
-    "UVnormal": pam.DIS_UVnormal
+    "euclid": constants.DIS_euclid,
+    "euclidUV": constants.DIS_euclidUV,
+    "jumpUV": constants.DIS_jumpUV,
+    "UVjump": constants.DIS_UVjump,
+    "normalUV": constants.DIS_normalUV,
+    "UVnormal": constants.DIS_UVnormal
 }
 
-def updatePanels(m = model.MODEL, context = None, clear = True):
-    """Updates the mapping panels to be up to date with the PAM model"""
+def updatePanels(m = None, context = None, clear = True):
+    """Updates the mapping panels to be up to date with the PAM model
+
+    :param m: The model to convert. If None, the currently active model in model.MODEL is used
+    :type m: model.Model
+    :param context: The blender context to create the mapping panels in. If None, the currently active context is used
+    :type context: bpy.types.Context
+    :param clear: If true, clears the mapping sets before adding new sets
+    :type clear: Boolean
+    """
     if context == None:
         context = bpy.context
+    if m is None:
+        m = model.MODEL
     mapping = context.scene.pam_mapping
     
     if clear:
@@ -119,6 +130,13 @@ def convertAllSetsToModel():
         pam.addConnection(setToModel(set))
 
 def setToModel(set):
+    """Converts a PAM Mapping set to a model connection
+    :param set: The set to be converted 
+    :type set: mapping.PAMMapSet
+
+    :return: A new connection object containing the information of the set
+    :rtype: model.Connection
+    """
     pre_neurons = set.layers[0].kernel.particles
     pre_func = set.layers[0].kernel.function
     pre_params = {param.name: param.value for param in set.layers[0].kernel.parameters}
@@ -142,7 +160,7 @@ def setToModel(set):
             layers.append(layer.NeuronLayer(obj.name, obj, post_neurons, obj.particle_systems[post_neurons].particles, post_kernel))
         elif l.type == 'synapse':
             synapse_layer = i
-            layers.append(layer.SynapticLayer(obj.name, obj, l.synapse_count))
+            layers.append(layer.SynapticLayer(obj.name, obj, int(l.synapse_count * bpy.context.scene.pam_mapping.synapse_multiplier)))
         else:
             layers.append(layer.Layer2d(obj.name, obj))
 
@@ -308,6 +326,22 @@ def update_kernels(self, context):
                 p.name = k
                 p.value = v
 
+def update_neuron_number(self, context):
+    """Update function, called when neuron set has been changed"""
+    if self.object in bpy.data.objects and self.particles in bpy.data.objects[self.object].particle_systems:
+        self.particle_count = bpy.data.objects[self.object].particle_systems[self.particles].settings.count
+
+def update_particle_number(self, context):
+    """Update function, called when neuron count has been changed"""
+    if self.particle_count > 0 and self.object in bpy.data.objects and self.particles in bpy.data.objects[self.object].particle_systems:
+        bpy.data.objects[self.object].particle_systems[self.particles].settings.count = self.particle_count * context.scene.pam_mapping.neuron_multiplier
+
+def update_all_particle_numbers(self, context):
+    """Update function, called when the neuron multiplier has been changed"""
+    for s in self.sets:
+        for layer in s.layers:
+            if layer.type in ['presynapse', 'postsynapse']:
+                update_particle_number(layer.kernel, context)
 
 class PAMKernelValues(bpy.types.PropertyGroup):
     """Represent a kernel name/value pair"""
@@ -335,6 +369,13 @@ class PAMKernelParameter(bpy.types.PropertyGroup):
     particles = bpy.props.EnumProperty(
         name="Particle system",
         items=particle_systems,
+        update = update_neuron_number
+    )
+    particle_count = bpy.props.IntProperty(
+        name='Neuron count',
+        min = 0,
+        default = 0,
+        update = update_particle_number
     )
     active_parameter = bpy.props.IntProperty()
 
@@ -393,6 +434,19 @@ class PAMMap(bpy.types.PropertyGroup):
         default=1,
         min=1,
     )
+    neuron_multiplier = bpy.props.FloatProperty(
+        name = "Neuron count multiplier", 
+        min = 0.0,
+        subtype = 'UNSIGNED',
+        default = 1.0,
+        update = update_all_particle_numbers
+    )
+    synapse_multiplier = bpy.props.FloatProperty(
+        name = "Synapse count multiplier", 
+        min = 0.0,
+        subtype = 'UNSIGNED',
+        default = 1.0
+    )
     seed = bpy.props.IntProperty(name = "Seed")
 
 class PAMSyncPanelsToModel(bpy.types.Operator):
@@ -410,6 +464,7 @@ class PAMSyncModelToPanels(bpy.types.Operator):
     bl_idname = "pam.sync_model_panel"
     bl_label = "Sync Model to Mapping Panels"
     bl_description = "Synchronize the pam model to the mapping panels"
+    bl_options = {"UNDO"}
 
     @classmethod
     def poll(cls, context):
@@ -791,6 +846,66 @@ class PAMMappingComputeSelected(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class PAMAddNeuronSetLayer(bpy.types.Operator):
+    """Adds a new neuron set to the active object
+
+    .. note::
+        Only mesh-objects are allowed to own neuron sets as custom
+        properties.
+    """
+
+    bl_idname = "pam.add_neuron_set_layer"
+    bl_label = "Add neuron-set"
+    bl_description = "Add a new neuron set"
+    bl_options = {'UNDO'}
+
+    # layer = bpy.props.PointerProperty(type=PAMLayer)
+    layer_index = bpy.props.IntProperty()
+
+    @classmethod
+    def poll(cls, context):
+        return  True#cls.layer.object in bpy.data.objects
+
+    def execute(self, context):
+        layer = context.scene.pam_mapping.sets[context.scene.pam_mapping.active_set].layers[self.layer_index]
+        active_obj = bpy.data.objects[layer.object]
+
+        context.scene.objects.active = active_obj
+        bpy.ops.object.particle_system_add()
+
+        psys = active_obj.particle_systems[-1]
+        psys.name = "pam.neuron_group"
+        psys.seed = random.randrange(0, 1000000)
+
+        pset = psys.settings
+        pset.type = "EMITTER"
+        pset.count = layer.kernel.particle_count
+        pset.frame_start = pset.frame_end = 1.0
+        pset.emit_from = "FACE"
+        pset.use_emit_random = True
+        pset.use_even_distribution = True
+        pset.distribution = "RAND"
+        pset.use_rotations = True
+        pset.use_rotation_dupli = True
+        pset.rotation_mode = "NOR"
+        pset.normal_factor = 0.0
+        pset.render_type = "OBJECT"
+        pset.use_whole_group = True
+        pset.physics_type = "NO"
+        pset.particle_size = 1.0
+
+        pset['delay'] = 1.0
+
+        bpy.ops.object.select_all(action="DESELECT")
+
+        context.scene.update()
+
+        active_obj.select = True
+
+        layer.kernel.particles = psys.name
+
+        return {'FINISHED'}
+
 
 class PAMAddNeuronSet(bpy.types.Operator):
     """Adds a new neuron set to the active object
@@ -805,17 +920,32 @@ class PAMAddNeuronSet(bpy.types.Operator):
     bl_description = "Add a new neuron set"
     bl_options = {'UNDO'}
 
+    glob = bpy.props.BoolProperty(
+        default = True
+    )
+    obj = bpy.props.StringProperty(
+        default = ""
+    )
+
     @classmethod
     def poll(cls, context):
-        if context.object:
-            return context.object.type == "MESH"
+        if cls.glob:
+            obj = context.object
+            if obj:
+                return obj.type == "MESH"
+            else:
+                return False
         else:
-            return False
+            return cls.obj in bpy.data.objects
 
     def execute(self, context):
-        active_obj = context.active_object
+        if not self.glob:
+            active_obj = bpy.data.objects[self.obj]
+        else:
+            active_obj = context.active_object
         m = context.scene.pam_mapping
 
+        context.scene.objects.active = active_obj
         bpy.ops.object.particle_system_add()
 
         psys = active_obj.particle_systems[-1]
@@ -845,7 +975,6 @@ class PAMAddNeuronSet(bpy.types.Operator):
 
         context.scene.update()
 
-        context.scene.objects.active = active_obj
         active_obj.select = True
 
         return {'FINISHED'}

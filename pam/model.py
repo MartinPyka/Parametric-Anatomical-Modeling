@@ -14,23 +14,39 @@ from . import layer
 from . import kernel
 from . import mesh
 
-# NG_LIST = []
-# NG_DICT = {}
-# CONNECTION_COUNTER = 0
-# CONNECTION_INDICES = []
-# CONNECTIONS = []
+"""Contains all the connection results. The structure for this list is:
+list of mapping sets -> 
+    dict: 'c' for connections:
+        2D array with connection indices (int)
+    'd' for distances:
+        2D array with distances (float)
+    's' for synapse:
+        2D array of mathutils.Vector (2D) for synapse position on the synapse uv layer
+"""
 CONNECTION_RESULTS = []
+
+"""The currently active model. Should be an object of the Model-class"""
 MODEL = None
+
+"""A list containing all mapping exceptions that occured during calculation"""
 CONNECTION_ERRORS = []
 
-QUADTREE_CACHE = {}
 MAPPING_NAMES = ['MAP_euclid', 'MAP_normal', 'MAP_random', 'MAP_top', 'MAP_uv', 'MAP_mask3D']
 DISTANCE_NAMES = ['DIS_euclid', 'DIS_euclidUV', 'DIS_jumpUV', 'DIS_UVjump', 'DIS_normalUV', 'DIS_UVnormal']
 
 class Connection():
     """Represents a Connection with multiple layers"""
     def __init__(self, layers, slayer, mappings):
-        """"""
+        """Initialize the connection
+        :param layers: a list of the layers in the connection
+        :type layers: list of layer.Layer2D
+        :param slayer: The index of the synaptic layer in your connection. 
+        This should correspond to the index layer.SynpaseLayer object in layers
+        :type slayer: int
+        :param mappings: The mapping and distance functions for this connection
+        :type mappings: list of tuples, each tuple containing 2 integers correspondig 
+        to a mapping function and a distance function
+        """
         self._layers = layers
         self._synaptic_layer_index = slayer
         self._mappings = mappings
@@ -144,6 +160,18 @@ class Connection():
 class Model():
     """Represents a model with its connections and settings"""
     def __init__(self, ng_list = None, ng_dict = None, connections = None, connection_indices = None):
+        """Create a new model
+        
+        :param ng_list: A list of used neuron groups
+        :type ng_list: A list of tuple with 3 elements: (ng_name, psystem_name, neuron_count)
+        :param ng_dict: A dictionary of used neuron groups (similar to ng_list, but the object names are the keys)
+        See pam.returnNeuronGroups() for more info
+        :type ng_dict: dictionary of dictionaries
+        :param connections: A list of connections for this model
+        :type connections: List of model.Connection
+        :param connection_indices: A list of lists, containing 3 integers, that correspond to (connection_id, source_ng_id, target_ng_id)
+        :type connection_indices: list
+        """
         self.ng_list = ng_list or []
         self.ng_dict = ng_dict or {}
         self.connections = connections or []
@@ -163,6 +191,7 @@ class Model():
 
 
 class ModelJsonEncoder(json.JSONEncoder):
+    """Encodes a model to the json format"""
     def default(self, model):
         if isinstance(model, Model):
             modelJson = {}
@@ -181,10 +210,16 @@ class ModelJsonEncoder(json.JSONEncoder):
             return super().default(model)
 
 class ConnectionJsonEncoder(json.JSONEncoder):
+    """Encodes a Connection object to json"""
     def default(self, connection):
         return connection.toDict()
 
 def decodeJSONModel(m):
+    """Decode a JSON dict to a model object
+    :param m: The model dict
+    :type m: dict
+    :retruns: A model object generated from the dict
+    :rtype: model.Model"""
     model = Model()
     model.ng_list = m['NEURON_GROUP_LIST']
     model.ng_dict = m['NEURON_GROUP_DICT']
@@ -196,6 +231,11 @@ def decodeJSONModel(m):
     return model
 
 def connectionFromDict(c):
+    """Decode a JSON dict to a connection
+    :param c: The connection dict
+    :type c: dict
+    :return: A Connection object generated from the dict
+    :rtype: model.Connection"""
     kernel_pre = kernel.get_kernel(c['pre_kernel']['name'], c['pre_kernel']['args'])
     kernel_post = kernel.get_kernel(c['post_kernel']['name'], c['post_kernel']['args'])
 
@@ -234,11 +274,23 @@ def connectionFromList(c):
     return Connection(layers, c[3], [(c[4][i], c[5][i]) for i in range(len(c[4]))])
 
 def saveModelToJson(model, path):
+    """Save a model to a json file
+    :param model: The model to save
+    :type model: model.Model
+    :param path: The filepath to save the model to
+    :type path: string
+    """
     with open(bpy.path.abspath(path), 'w+') as f:
         json.dump(model, f, cls = ModelJsonEncoder, sort_keys=True,
             indent = 4, separators=(',', ': '))
 
 def loadModelFromJson(path):
+    """Load a model from a JSON file
+    :param path: The path to the JSON file
+    :type path: string
+    :return: The model
+    :rtype: model.Model
+    """
     with open(bpy.path.abspath(path), 'r') as f:
         m = decodeJSONModel(json.load(f))
     return m
@@ -250,39 +302,42 @@ def getPreIndicesOfPostIndex(c_index, post_index ):
     pre_indices, synapses = numpy.where(numpy.array(CONNECTION_RESULTS[c_index]['c']) == post_index)
     return pre_indices, synapses
 
-# TODO(SK): Fill in docstring parameter/return values
 def convertObject2String(connection):
     """Takes a CONNECTION-struct and converts `bpy.objects` to
     string names and returns a list of strings
+    Note: This function is only to be used with the legacy 
+    connection structures, not with a Connection object
 
-    :param list connection:
-    :return:
-    :rtype:
-
+    :param connection: The connection struct
+    :type connection: list
+    :return: A list of the names of the objects in the connection struct
+    :rtype: list of strings
     """
     return [o.name for o in connection[0]]
 
 
-# TODO(SK): Fill in docstring parameter/return values
 def convertString2Object(connection):
     """Takes a CONNECTION-struct and converts string names to
     `bpy.objects` and returns a list of `bpy.objects`
+    Note: This function is only to be used with the legacy 
+    connection structures, not with a Connection object
 
-    :param list connection:
-    :return:
-    :rtype:
+    :param connection: A connection struct (with object names only)
+    :type connection: list
+    :return: A list of objects
+    :rtype: list of bpy.types.Object
 
     """
     return [bpy.data.objects[name] for name in connection[0]]
 
 
-# TODO(SK): Fill in docstring parameter/return values
 def Connection2Pickle(connections):
-    """
+    """Converts a Connection struct into a format that can be used by pickle
 
-    :param list connection:
-    :return:
-    :rtype:
+    :param connection: A connection struct
+    :type connection: list
+    :return: A new connection struct with all bpy-objects replaced with strings
+    :rtype: list
 
     """
     result = []
@@ -293,13 +348,13 @@ def Connection2Pickle(connections):
     return result
 
 
-# TODO(SK): Fill in docstring parameter/return values
 def Pickle2Connection(connections):
-    """
+    """Convert a conection struct from a Pickle-ready format to its normal form
 
-    :param list connection:
-    :return:
-    :rtype:
+    :param connection: The connection struct
+    :type connection: list
+    :return: A new connection struct with all object names replaced by the corresponding blender object
+    :rtype: list
 
     """
     result = []
@@ -313,14 +368,14 @@ def Pickle2Connection(connections):
     return result
 
 
-# TODO(SK): Fill in docstring parameter/return values
 def convertVector2Array(connection_results):
     """Takes a CONNECTION_RESULTS-struct and converts `mathutils.Vector`
     to `numpy.Array`
 
-    :param list connection_results:
-    :return:
-    :rtype:
+    :param connection_results: The connection results list
+    :type connection_results: list
+    :return: A new array with the Vectors replaced with arrays
+    :rtype: list
 
     """
     result = []
@@ -337,9 +392,10 @@ def convertArray2Vector(connection_results):
     """Takes a CONNECTION_RESULTS-struct and converts `numpy.array`
     to `mathutils.Vector`
 
-    :param list connection_results:
-    :return:
-    :rtype:
+    :param connection_results: The connection results list
+    :type connection_results: list
+    :return: A new array with the arrays replaced with blender vectors
+    :rtype: list
 
     """
     result = []
@@ -421,11 +477,24 @@ def clearQuadtreeCache():
     Has to be called each time a uv-map has changed."""
     mesh.QUADTREE_CACHE = {}
 
-def saveZip(path):
-    connection_results = {}
-    for i, con in enumerate(CONNECTION_RESULTS):
-        connection_results['connection_result_' + str(i) + '_c'] = con['c']
-        connection_results['connection_result_' + str(i) + '_d'] = con['d']
+def saveZip(path, model = None, connection_results = None):
+    """Saves a model and the connection results to a zip file using JSON encoding
+    :param path: The path where the zip file should be saved
+    :type path: string
+    :param model: The model to save. If None, the currently active model is used
+    :type model: model.Model
+    :param connection_results: The connection results. If None, the currently active CONNECTION_RESULTS is used)
+    :type connection_results: list (See CONNECTION_RESULTS for details)
+    """
+    if model is None:
+        model = MODEL
+    if connection_results is None:
+        connection_results = CONNECTION_RESULTS
+
+    connection_results_dict = {}
+    for i, con in enumerate(connection_results):
+        connection_results_dict['connection_result_' + str(i) + '_c'] = con['c']
+        connection_results_dict['connection_result_' + str(i) + '_d'] = con['d']
 
         # Synapses have to be copied manually because numpy can't handle vector objects
         s = numpy.zeros((len(con['s']), len(con['c'][0]), 2))
@@ -434,19 +503,23 @@ def saveZip(path):
                 if len(con['s'][s_i][s_j]) == 2:
                     for s_k in range(s.shape[2]):
                         s[s_i][s_j][s_k] = con['s'][s_i][s_j][s_k]
-        connection_results['connection_result_' + str(i) + '_s'] = s
+        connection_results_dict['connection_result_' + str(i) + '_s'] = s
 
     # Write connection results using numpy npy files and compress them
     with open(path, 'wb') as f:
-        numpy.savez_compressed(f, **connection_results)
+        numpy.savez_compressed(f, **connection_results_dict)
     
     # Open zipfile again and add the json model data to it
     with zipfile.ZipFile(path, mode = 'a') as zf:
-        json_data = json.dumps(MODEL, cls = ModelJsonEncoder, sort_keys=True,
+        json_data = json.dumps(model, cls = ModelJsonEncoder, sort_keys=True,
                 indent = 4, separators=(',', ': '))
         zf.writestr('model.json', json_data)
 
 def loadZip(path):
+    """Load model and connection results from a zip file and save it as the active model
+
+    :param path: The path to the zip file
+    :type path: string"""
     with zipfile.ZipFile(path, mode = 'r') as zf:
         model_file = zf.open('model.json', 'r')
         m = decodeJSONModel(json.loads(model_file.read().decode('UTF-8')))

@@ -4,134 +4,227 @@ import numpy
 from .. import pam
 from .. import mesh
 
-# CONSTANTS
-TAU = 20
+class LabelController():
+
+    def __init__(self, tau = 20):
+        self.tau = tau
+
+    def mixLabels(self, layerValue1, layerValue2):
+        """Function that is called when a spike hits a neuron and the two 
+        labels need to be mixed together
+        :param dict layerValues1: label of the given neuron
+        :param dict layerValues2: label for the incoming spike
+        :return: mixed colors
+        :rtype: dict
+        """
+        newValue = {"blue": 0.0, "red": 0.0, "green": 0.0}
+
+        newValue["blue"] = (layerValue1["blue"] + layerValue2["blue"]) / 2
+        newValue["red"] = (layerValue1["red"] + layerValue2["red"]) / 2
+        newValue["green"] = (layerValue1["green"] + layerValue2["green"]) / 2
+
+        return newValue
 
 
-def mixLabels(layerValue1, layerValue2):
-    """Function that is called when a spike hits a neuron and the two 
-    labels need to be mixed together
+    def decay(self, labels, delta):
+        """Calculate decay of a given label dict in a neuron
+        :param float value: label value
+        :param float delta: time since the last update for this neuron in ms
+        :return: The new value after a decay has been applied
+        :rtype: float
+        """
 
-    :param dict layerValues1: label of the given neuron
-    :param dict layerValues2: label for the incoming spike
-
-    :return: mixed colors
-    :rtype: dict
-
-    """
-    newValue = {"blue": 0.0, "red": 0.0, "green": 0.0}
-
-    newValue["blue"] = (layerValue1["blue"] + layerValue2["blue"]) / 2
-    newValue["red"] = (layerValue1["red"] + layerValue2["red"]) / 2
-    newValue["green"] = (layerValue1["green"] + layerValue2["green"]) / 2
-
-    return newValue
+        for key in labels:
+            labels[key] = labels[key] * numpy.exp(-delta / self.tau)
+        return labels
 
 
-def decay(value, delta):
-    """Calculate decay of a given label value in a neuron
+    def getInitialLabel(self, neuronGroupID, neuronID, neuronGroups):
+        """Return an initial label for a neuron when an update is called
+        for the first time
+        :param int neuronGroupID: id of neuron group
+        :param int neuronID: id of neuron
+        :param list neuronGroups: all neuron groups
+        .. note::
+            Every entry in `neuronGroups` is an object with the following properties:
+                * name
+                * particle_system
+                * count
+                * areaStart
+                * areaEnd
+                * connections
+            See data.py for a detailed description
+        :return: color values
+        :rtype: dict
+        """
+        ng = neuronGroups[neuronGroupID]
 
-    :param float value: label value
-    :param float delta: time since the last update for this neuron in ms
+        layerValue = {"blue": 0.0, "red": 0.0, "green": 0.0}
+        if (neuronID + neuronGroupID) % 2 == 0:
+            layerValue["blue"] = 1.0
+        else:
+            layerValue["red"] = 1.0
+        return layerValue
 
-    :return: The new value after a decay has been applied
-    :rtype: float
-
-    """
-
-    return value * numpy.exp(-delta / TAU)
-
-
-def getInitialLabel(neuronGroupID, neuronID, neuronGroups):
-    """Return an initial label for a neuron when an update is called
-    for the first time
-
-    :param int neuronGroupID: id of neuron group
-    :param int neuronID: id of neuron
-    :param list neuronGroups: all neuron groups
-
-    .. note::
-        Every entry in `neuronGroups` is an object with the following properties:
+    def labelToColor(self, layerValues, neuronID, neuronGroupID, neuronGroups):
+        """Apply a color to a spike object from a given label
+        :param layerValues: The label for this spike.
+        :type layerValues: dict
+        :param neuronID: The ID of the neuron this spike is originating from
+        :type neuronID: int
+        :param neuronGroupID: The ID of the neuron group
+        :type neuronGroupID: int
+        :param neuronGroups: A list of all neuron groups available. Every entry
+          in this list is an object with the following properties:
             * name
-            * particle_system
+            * particle_system,
             * count
             * areaStart
             * areaEnd
             * connections
+            See data.py for a detailed description.
+        :return: the color for this spike
+        :rtype:  float[4]
+        """
+        red = layerValues["red"]
+        blue = layerValues["blue"]
+        green = layerValues["green"]
 
-        See data.py for a detailed description
+        return (red, green, blue, 1.0)
 
-    :return: color values
-    :rtype: dict
+class MaskLabelController(LabelController):
+    def getInitialLabel(self, neuronGroupID, neuronID, neuronGroups):
+        """Checks if a neuron is inside or outside of the mask, and returns
+        a color label.
+        :param neuronID: The ID of the neuron this spike is originating from
+        :type neuronID: int
+        :param neuronGroupID: The ID of the neuron group
+        :type neuronGroupID: int
+        :param neuronGroups: A list of all neuron groups available. Every entry
+          in this list is an object with the following properties:
+            * name
+            * particle_system,
+            * count
+            * areaStart
+            * areaEnd
+            * connections
+            See data.py for a detailed description.
+        :return: The label for this spike
+        :rtype:  dict
+        """
+        maskObject = bpy.data.objects[bpy.context.scene.pam_anim_material.maskObject]
+        insideMaskColor = bpy.context.scene.pam_anim_material.insideMaskColor
+        outsideMaskColor = bpy.context.scene.pam_anim_material.outsideMaskColor
+        neuron_group = neuronGroups[neuronGroupID]
+        layer_name = neuron_group[0]
+        particle_system_name = neuron_group[1]
+        particle = bpy.data.objects[layer_name].particle_systems[particle_system_name].particles[neuronID]
+        if mesh.checkPointInObject(maskObject, particle.location):
+            return {"red": insideMaskColor[0], "green": insideMaskColor[1], "blue": insideMaskColor[2]}
+        else:
+            return {"red": outsideMaskColor[0], "green": outsideMaskColor[1], "blue": outsideMaskColor[2]}
 
-    """
-    ng = neuronGroups[neuronGroupID]
+class HSVLabelController(LabelController):
+    def mixLabels(self, layerValue1, layerValue2):
+        newValue = {"hue": 0.0, "saturation": 0.0, "value": 0.0}
 
-    layerValue = {"blue": 0.0, "red": 0.0, "green": 0.0}
-    if (neuronID + neuronGroupID) % 2 == 0:
-        layerValue["blue"] = 1.0
-    else:
-        layerValue["red"] = 1.0
-    return layerValue
+        h1 = layerValue1["hue"]
+        h2 = layerValue2["hue"]
+        if abs(h1 - h2) < 180:
+            newValue["hue"] = (h1 + h2) / 2
+        else:
+            # Find the average modulo 360
+            newValue["hue"] = (((h1 - 180) % 360.0 + (h2 - 180) % 360) / 2 + 180) % 360
+        newValue["saturation"] = (layerValue1["saturation"] + layerValue2["saturation"]) / 2
+        newValue["value"] = (layerValue1["value"] + layerValue2["value"]) / 2
 
-def labelToColor(layerValues, neuronID, neuronGroupID, neuronGroups):
-    """Apply a color to a spike object from a given label
+        return newValue
 
-    :param layerValues: The label for this spike.
-    :type layerValues: dict
-    :param neuronID: The ID of the neuron this spike is originating from
-    :type neuronID: int
-    :param neuronGroupID: The ID of the neuron group
-    :type neuronGroupID: int
-    :param neuronGroups: A list of all neuron groups available. Every entry
-      in this list is an object with the following properties:
-        * name
-        * particle_system,
-        * count
-        * areaStart
-        * areaEnd
-        * connections
+    def decay(self, labels, delta):
+        # for key in labels:
+        #     labels[key] = labels[key] * numpy.exp(-delta / self.tau)
+        labels['value'] = labels['value'] * numpy.exp(-delta / self.tau)
+        return labels
 
-        See data.py for a detailed description.
-    :return: the color for this spike
-    :rtype:  float[4]
 
-    """
-    red = layerValues["red"]
-    blue = layerValues["blue"]
-    green = layerValues["green"]
+    def getInitialLabel(self, neuronGroupID, neuronID, neuronGroups):
+        ng = neuronGroups[neuronGroupID]
 
-    return (red, green, blue, 1.0)
+        layerValue = {"hue": 0.0, "saturation": 1.0, "value": 1.0}
+        if (neuronID + neuronGroupID) % 2 == 0:
+            layerValue["hue"] = 240.0
+        else:
+            layerValue["hue"] = 0.0
+        return layerValue
 
-def getInitialLabelMask(neuronGroupID, neuronID, neuronGroups):
-    """Checks if a neuron is inside or outside of the mask, and returns
-    a color label.
+    def labelToColor(self, layerValues, neuronID, neuronGroupID, neuronGroups):
 
-    :param neuronID: The ID of the neuron this spike is originating from
-    :type neuronID: int
-    :param neuronGroupID: The ID of the neuron group
-    :type neuronGroupID: int
-    :param neuronGroups: A list of all neuron groups available. Every entry
-      in this list is an object with the following properties:
-        * name
-        * particle_system,
-        * count
-        * areaStart
-        * areaEnd
-        * connections
+        hue = layerValues['hue']
+        sat = layerValues['saturation']
+        val = layerValues['value']
 
-        See data.py for a detailed description.
-    :return: The label for this spike
-    :rtype:  dict
-    """
-    maskObject = bpy.data.objects[bpy.context.scene.pam_anim_material.maskObject]
-    insideMaskColor = bpy.context.scene.pam_anim_material.insideMaskColor
-    outsideMaskColor = bpy.context.scene.pam_anim_material.outsideMaskColor
-    neuron_group = neuronGroups[neuronGroupID]
-    layer_name = neuron_group[0]
-    particle_system_name = neuron_group[1]
-    particle = bpy.data.objects[layer_name].particle_systems[particle_system_name].particles[neuronID]
-    if mesh.checkPointInObject(maskObject, particle.location):
-        return {"red": insideMaskColor[0], "green": insideMaskColor[1], "blue": insideMaskColor[2]}
-    else:
-        return {"red": outsideMaskColor[0], "green": outsideMaskColor[1], "blue": outsideMaskColor[2]}
+        rgb = hsv_to_rgb(hue, sat, val)
+
+        return (rgb[0], rgb[1], rgb[2], 1.0)
+
+    @classmethod
+    def rgb_to_hsv(r, g, b):
+        max_col = max(r, g, b)
+        min_col = min(r, g, b)
+        c = max_col - min_col
+        if c == 0.0:
+            return (0, 0, 0)
+        if max_col == r:
+            hue = ((g - b) / c) % 6.0
+        elif max_col == g:
+            hue = ((b - r) / c) + 2
+        elif max_col == b:
+            hue = ((r - g) / c) + 4
+        value = max_col
+        if c == 0:
+            saturation = 0
+        else:
+            saturation = c / value
+        return (hue * 60, saturation, value)
+
+    @classmethod
+    def hsv_to_rgb(hue, sat, val):
+        c = val * sat
+        h = hue / 60.0
+        x = c*(1 - abs((h % 2) - 1))
+        if h < 1:
+            rgb = (c, x, 0)
+        elif h < 2:
+            rgb = (x, c, 0)
+        elif h < 3:
+            rgb = (0, c, x)
+        elif h < 4:
+            rgb = (0, x, c)
+        elif h < 5:
+            rgb = (x, 0, c)
+        elif h < 6:
+            rgb = (c, 0, x)
+
+        m = val - c
+
+        return (rgb[0] + m, rgb[1] + m, rgb[2] + m, 1.0)
+
+class HSVMaskLabelController(HSVLabelController):
+
+    def getInitialLabel(self, neuronGroupID, neuronID, neuronGroups):
+
+        maskObject = bpy.data.objects[bpy.context.scene.pam_anim_material.maskObject]
+        insideMaskColor = bpy.context.scene.pam_anim_material.insideMaskColor
+        outsideMaskColor = bpy.context.scene.pam_anim_material.outsideMaskColor
+        neuron_group = neuronGroups[neuronGroupID]
+        layer_name = neuron_group[0]
+        particle_system_name = neuron_group[1]
+        particle = bpy.data.objects[layer_name].particle_systems[particle_system_name].particles[neuronID]
+        
+        col_inside = rgb_to_hsv(*insideMaskColor[:3])
+        col_outside = rgb_to_hsv(*outsideMaskColor[:3])
+
+        if mesh.checkPointInObject(maskObject, particle.location):
+            return {"hue": col_inside[0], "saturation": col_inside[1], "value": col_inside[2]}
+        else:
+            return {"hue": col_outside[0], "saturation": col_outside[1], "value": col_outside[2]}

@@ -267,10 +267,7 @@ def simulateColorsByLayer(source = "MATERIAL"):
             spike.object.color = groupColor
         TIMING_COLORS[spike.timingID] = groupColor
 
-def simulateColors(decayFunc=anim_functions.decay,
-                   initialLabelsFunc=anim_functions.getInitialLabel,
-                   mixLabelsFunc=anim_functions.mixLabels,
-                   labelToColorFunc=anim_functions.labelToColor):
+def simulateColors(labelController = None):
     """Simulates colors for simulated spikes
 
     :param function decay_func: Function used for calculating decay at a neuron
@@ -280,6 +277,9 @@ def simulateColors(decayFunc=anim_functions.decay,
         hits a neuron with color information
     :param function labelToColorFunc: Function for generating color values from the labels
     """
+
+    if labelController == None:
+        labelController = anim_functions.HSVLabelController()
 
     t = data.TIMINGS
     d = data.DELAYS
@@ -310,8 +310,8 @@ def simulateColors(decayFunc=anim_functions.decay,
                 oldLayerValues = neuronValues[key][0]
                 lastUpdateTime = neuronValues[key][1]
 
-                oldLayerValuesDecay = calculateDecay(oldLayerValues, updateTime - lastUpdateTime, decayFunc)
-                updatedLayerValues = mixLabelsFunc(oldLayerValuesDecay, newLayerValues)
+                oldLayerValuesDecay = labelController.decay(oldLayerValues, updateTime - lastUpdateTime)
+                updatedLayerValues = labelController.mixLabels(oldLayerValuesDecay, newLayerValues)
 
                 neuronValues[key] = (updatedLayerValues, updateTime)
             # If not, we don't need to mix the colors together, as this would just darken the color
@@ -322,15 +322,15 @@ def simulateColors(decayFunc=anim_functions.decay,
             # Update this neuron
             layerValues = neuronValues[(neuronGroupID, neuronID)][0]
             lastUpdateTime = neuronValues[(neuronGroupID, neuronID)][1]
-            layerValuesDecay = calculateDecay(layerValues, fireTime - lastUpdateTime, decayFunc)
+            layerValuesDecay = labelController.decay(layerValues, fireTime - lastUpdateTime)
 
             # Now that the neuron has fired, its values go back down to zero
             del(neuronValues[(neuronGroupID, neuronID)])
 
         else:
-            layerValuesDecay = initialLabelsFunc(neuronGroupID, neuronID, model.MODEL.ng_list)
+            layerValuesDecay = labelController.getInitialLabel(neuronGroupID, neuronID, model.MODEL.ng_list)
 
-        color = labelToColorFunc(layerValuesDecay, neuronID, neuronGroupID, model.MODEL.ng_list)
+        color = labelController.labelToColor(layerValuesDecay, neuronID, neuronGroupID, model.MODEL.ng_list)
         TIMING_COLORS[timingID] = color
         anim_spikes.setNeuronColorKeyframe(neuronID, neuronGroupID, fireTime, color)
         for connectionID in connectionIDs:
@@ -469,7 +469,7 @@ def setAnimationSpeed(curve, animationSpeed):
     # Set the extrapolation of the curve to linear (This is important, without it, neurons with an offset start would not be animated)
     curve.animation_data.action.fcurves[0].extrapolation = 'LINEAR'
 
-def calculateDecay(layerValues, delta, decayFunc):
+def decayFunc(layerValues, delta, decayFunc):
     """Calculates the decay of all values in a dictionary
 
     The given decay function is used on every value in the given dictionary. 
@@ -643,11 +643,11 @@ def colorizeAnimation():
             simulateColorsByLayer('MATERIAL')
 
     elif method == 'SIMULATE':
-        # Prepare functions
-        decayFunc = anim_functions.decay
-        getInitialLabelFunc = anim_functions.getInitialLabel
-        mixLabelsFunc = anim_functions.mixLabels
-        labelToColorFunc = anim_functions.labelToColor
+        # # Prepare functions
+        # decayFunc = anim_functions.decay
+        # getInitialLabelFunc = anim_functions.getInitialLabel
+        # mixLabelsFunc = anim_functions.mixLabels
+        # labelToColorFunc = anim_functions.labelToColor
 
         # Load any scripts
         script = bpy.context.scene.pam_anim_material.script
@@ -663,7 +663,7 @@ def colorizeAnimation():
             if "labelToColor" in localFuncs:
                 labelToColorFunc = localFuncs['labelToColor']
 
-        simulateColors(decayFunc, getInitialLabelFunc, mixLabelsFunc, labelToColorFunc)
+        simulateColors(anim_functions.LabelController())
 
     elif method == 'MASK':
         if bpy.context.scene.pam_anim_material.mixColors:

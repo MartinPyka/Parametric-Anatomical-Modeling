@@ -386,7 +386,7 @@ def uv_dis_uv_normal_syn(self, p3d_n, layer, layer_next):
     pass
 
 def con_mask3d(self, layer, layer_next, dis_func):
-    if not checkPointInObject(layer_next, self.p3d[-1]):
+    if not checkPointInObject(layer_next.obj, self.p3d[-1]):
         raise MappingException()
     else:
         p3d_n = self.p3d[-1]

@@ -24,9 +24,9 @@ class TestPamAllMappings(unittest.TestCase):
         pam.model.reset()
         
     def testModels(self):
-        """Test if the pam model generated using euclidean mapping method is the same as a predefined model.
+        """Test if the pam model generated using all mapping combinations is the same as a predefined model.
 
-        Checks CONNECTIONS, CONNECTION_RESULTS, CONNECTION_INDICES, NG_LIST and NG_DICT"""
+        Checks the connections and the CONNECTION_RESULTS struct"""
         # Import should-be pam model
         self.loadModel("//mapping.test.zip")
 

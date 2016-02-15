@@ -503,6 +503,7 @@ def post_neuron_initializer(players, pconnections, pdistances):
     NOTE: globals are only available in the executing thread, so don't expect them 
     to be available in the main thread."""
     global mapping_post
+    # TODO (PH): Threading sometimes get deadlocked here, probably because of simultaneous access to bpy.data.objects. Use locks?
     layers = [layer.Layer2d("", bpy.data.objects[i]) for i in players]
     connections = pconnections
     distances = pdistances

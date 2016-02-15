@@ -5,6 +5,13 @@ from .. import pam
 from .. import mesh
 
 class LabelController():
+    """Controls how the labels are changing during the animation.
+    The animation can be modified by overriding the four main functions of 
+    this class or one of its subclasses.
+
+    This base class creates a blue label for even neuron indices and a red
+    label for uneven neuron indices. The rgb-values are then mixed together
+    """
 
     def __init__(self, tau = 20):
         self.tau = tau
@@ -93,6 +100,9 @@ class LabelController():
         return (red, green, blue, 1.0)
 
 class MaskLabelController(LabelController):
+    """Similar to LabelController, but initializes the labels whether the neuron 
+    is masked by an object"""
+
     def getInitialLabel(self, neuronGroupID, neuronID, neuronGroups):
         """Checks if a neuron is inside or outside of the mask, and returns
         a color label.
@@ -125,6 +135,9 @@ class MaskLabelController(LabelController):
             return {"red": outsideMaskColor[0], "green": outsideMaskColor[1], "blue": outsideMaskColor[2]}
 
 class HSVLabelController(LabelController):
+    """Similar to LabelController, but stores color values in the HSV format, 
+    decays value, and mixes value and hue (For better color mixing)"""
+    
     def mixLabels(self, layerValue1, layerValue2):
         newValue = {"hue": 0.0, "saturation": 0.0, "value": 0.0}
 
@@ -210,6 +223,7 @@ class HSVLabelController(LabelController):
         return (rgb[0] + m, rgb[1] + m, rgb[2] + m, 1.0)
 
 class HSVMaskLabelController(HSVLabelController):
+    """Masked version of HSVLabelController"""
 
     def getInitialLabel(self, neuronGroupID, neuronID, neuronGroups):
 

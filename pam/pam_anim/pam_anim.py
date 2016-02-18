@@ -663,7 +663,7 @@ def colorizeAnimation():
             if "labelToColor" in localFuncs:
                 labelToColorFunc = localFuncs['labelToColor']
 
-        simulateColors(anim_functions.LabelController())
+        simulateColors(anim_functions.labelControllerDict[bpy.context.scene.pam_anim_simulation])
 
     elif method == 'MASK':
         if bpy.context.scene.pam_anim_material.mixColors:
@@ -799,6 +799,7 @@ def register():
     bpy.utils.register_class(RecolorSpikesOperator)
     bpy.utils.register_class(ReadSimulationData)
     bpy.utils.register_class(GenerateNeuronSpikingTexture)
+    anim_functions.register()
 
 def unregister():
     """Unregisters the operators"""

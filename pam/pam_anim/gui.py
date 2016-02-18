@@ -3,6 +3,7 @@
 import bpy
 
 from .. import model
+from . import anim_functions
 
 
 class PamAnimDataPane(bpy.types.Panel):
@@ -174,7 +175,9 @@ class PamAnimLayerPane(bpy.types.Panel):
         col.operator("pam_anim.update_available_layers", icon = "FILE_REFRESH")
 
         row = layout.row()
-        row.prop(options, "colorizingMethod")
+        row.prop(context.scene, "pam_anim_simulation")
+
+        anim_functions.labelControllerDict[context.scene.pam_anim_simulation].draw(layout, context)
 
         if options.colorizingMethod == 'SIMULATE':
             row = layout.row()

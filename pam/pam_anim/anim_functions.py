@@ -4,6 +4,18 @@ import numpy
 from .. import pam
 from .. import mesh
 
+labelControllerDict = {}
+labelControllerList = []
+
+def addLabelController(labelController):
+    labelControllerDict[labelController.identifier] = labelController
+    labelControllerList.append(labelController)
+    bpy.types.Scene.pam_anim_simulation = bpy.props.EnumProperty(name = 'Simulation type', items = [(c.identifier, c.name, c.description) for c in labelControllerList])
+    
+    if labelController.properties:
+        bpy.utils.register_class(labelController.properties)
+        setattr(bpy.types.Scene, labelController.identifier + '_props', bpy.props.PointerProperty(type=labelController.properties))
+
 class LabelController():
     """Controls how the labels are changing during the animation.
     The animation can be modified by overriding the four main functions of 
@@ -13,8 +25,20 @@ class LabelController():
     label for uneven neuron indices. The rgb-values are then mixed together
     """
 
+    identifier = 'LabelController'
+    name = 'RGB'
+    description = 'RGBs'
+
+    properties = None
+
     def __init__(self, tau = 20):
         self.tau = tau
+
+    def draw(self, layout, context):
+        pass
+
+    def getProps(self, context):
+        return getattr(context.scene, self.identifier + '_props')
 
     def mixLabels(self, layerValue1, layerValue2):
         """Function that is called when a spike hits a neuron and the two 
@@ -103,6 +127,10 @@ class MaskLabelController(LabelController):
     """Similar to LabelController, but initializes the labels whether the neuron 
     is masked by an object"""
 
+    identifier = 'MaskLabelController'
+    name = 'RGB Masked'
+    description = 'RGBs'
+
     def getInitialLabel(self, neuronGroupID, neuronID, neuronGroups):
         """Checks if a neuron is inside or outside of the mask, and returns
         a color label.
@@ -138,6 +166,10 @@ class HSVLabelController(LabelController):
     """Similar to LabelController, but stores color values in the HSV format, 
     decays value, and mixes value and hue (For better color mixing)"""
     
+    identifier = 'HSVLabelController'
+    name = 'HSV'
+    description = 'RGBs'
+
     def mixLabels(self, layerValue1, layerValue2):
         newValue = {"hue": 0.0, "saturation": 0.0, "value": 0.0}
 
@@ -176,11 +208,11 @@ class HSVLabelController(LabelController):
         sat = layerValues['saturation']
         val = layerValues['value']
 
-        rgb = hsv_to_rgb(hue, sat, val)
+        rgb = self.hsv_to_rgb(hue, sat, val)
 
         return (rgb[0], rgb[1], rgb[2], 1.0)
 
-    @classmethod
+    @staticmethod
     def rgb_to_hsv(r, g, b):
         max_col = max(r, g, b)
         min_col = min(r, g, b)
@@ -200,7 +232,7 @@ class HSVLabelController(LabelController):
             saturation = c / value
         return (hue * 60, saturation, value)
 
-    @classmethod
+    @staticmethod
     def hsv_to_rgb(hue, sat, val):
         c = val * sat
         h = hue / 60.0
@@ -225,20 +257,49 @@ class HSVLabelController(LabelController):
 class HSVMaskLabelController(HSVLabelController):
     """Masked version of HSVLabelController"""
 
-    def getInitialLabel(self, neuronGroupID, neuronID, neuronGroups):
+    identifier = 'HSVMaskLabelController'
+    name = 'Masked HSV'
+    description = 'RGBs'
 
-        maskObject = bpy.data.objects[bpy.context.scene.pam_anim_material.maskObject]
-        insideMaskColor = bpy.context.scene.pam_anim_material.insideMaskColor
-        outsideMaskColor = bpy.context.scene.pam_anim_material.outsideMaskColor
+    class MaskProperties(bpy.types.PropertyGroup):
+        maskObject = bpy.props.StringProperty(name = "Mask")
+        insideMaskColor = bpy.props.FloatVectorProperty(name = "Spike color inside", default = (1.0, 0.0, 0.0, 1.0), subtype = 'COLOR', size = 4, min = 0.0, max = 1.0)
+        outsideMaskColor = bpy.props.FloatVectorProperty(name = "Spike color outside", default = (0.0, 1.0, 0.0, 1.0), subtype = 'COLOR', size = 4, min = 0.0, max = 1.0)
+
+    properties = MaskProperties
+
+    def draw(self, layout, context):
+        props = self.getProps(context)
+
+        row = layout.row()
+        row.prop_search(props, "maskObject", bpy.data, "objects")
+
+        row = layout.row()
+        row.prop(props, "insideMaskColor")
+
+        row = layout.row()
+        row.prop(props, "outsideMaskColor")
+
+    def getInitialLabel(self, neuronGroupID, neuronID, neuronGroups):
+        props = self.getProps(bpy.context)
+        maskObject = bpy.data.objects[props.maskObject]
+        insideMaskColor = props.insideMaskColor
+        outsideMaskColor = props.outsideMaskColor
         neuron_group = neuronGroups[neuronGroupID]
         layer_name = neuron_group[0]
         particle_system_name = neuron_group[1]
         particle = bpy.data.objects[layer_name].particle_systems[particle_system_name].particles[neuronID]
         
-        col_inside = rgb_to_hsv(*insideMaskColor[:3])
-        col_outside = rgb_to_hsv(*outsideMaskColor[:3])
+        col_inside = self.rgb_to_hsv(*insideMaskColor[:3])
+        col_outside = self.rgb_to_hsv(*outsideMaskColor[:3])
 
         if mesh.checkPointInObject(maskObject, particle.location):
             return {"hue": col_inside[0], "saturation": col_inside[1], "value": col_inside[2]}
         else:
             return {"hue": col_outside[0], "saturation": col_outside[1], "value": col_outside[2]}
+
+def register():
+    addLabelController(LabelController())
+    addLabelController(MaskLabelController())
+    addLabelController(HSVLabelController())
+    addLabelController(HSVMaskLabelController())

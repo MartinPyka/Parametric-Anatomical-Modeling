@@ -279,7 +279,7 @@ def simulateColors(labelController = None):
     """
 
     if labelController == None:
-        labelController = anim_functions.HSVLabelController()
+        labelController = anim_functions.labelControllerDict['HSVLabelController']
 
     t = data.TIMINGS
     d = data.DELAYS
@@ -583,13 +583,6 @@ def animateSpikePropagation():
     showPercent = bpy.context.scene.pam_anim_animation.showPercent
     maxConns = bpy.context.scene.pam_anim_animation.connNumber
 
-    layerFilter = None
-    if len(bpy.context.scene.pam_anim_animation.layerCollection) > 0:
-        layerFilter = []
-        for layerItem in bpy.context.scene.pam_anim_animation.layerCollection:
-            if layerItem.layerGenerate:
-                layerFilter.append(layerItem.layerIndex)
-
     # Create groups if they do not already exist
     if PATHS_GROUP_NAME not in bpy.data.groups:
         bpy.data.groups.new(PATHS_GROUP_NAME)
@@ -597,7 +590,7 @@ def animateSpikePropagation():
         bpy.data.groups.new(SPIKE_GROUP_NAME)
 
     logger.info('Visualize spike propagation')
-    generateAllTimings(frameStart = frameStart, frameEnd = frameEnd, maxConns = maxConns, showPercent = showPercent, layerFilter = layerFilter)
+    generateAllTimings(frameStart = frameStart, frameEnd = frameEnd, maxConns = maxConns, showPercent = showPercent)
     
     # Apply material to paths
     if bpy.context.scene.pam_anim_material.pathMaterial in bpy.data.materials:
@@ -634,43 +627,7 @@ def colorizeAnimation():
     Collects information for colorization from the GUI and chooses 
     the appropiate function for colorizing spikes"""
 
-    method = bpy.context.scene.pam_anim_material.colorizingMethod
-
-    if method == 'LAYER':
-        if bpy.context.scene.render.engine == 'CYCLES':
-            simulateColorsByLayer('MATERIAL_CYCLES')
-        else:
-            simulateColorsByLayer('MATERIAL')
-
-    elif method == 'SIMULATE':
-        # # Prepare functions
-        # decayFunc = anim_functions.decay
-        # getInitialLabelFunc = anim_functions.getInitialLabel
-        # mixLabelsFunc = anim_functions.mixLabels
-        # labelToColorFunc = anim_functions.labelToColor
-
-        # Load any scripts
-        script = bpy.context.scene.pam_anim_material.script
-        if script in bpy.data.texts:
-            localFuncs = {}
-            exec(bpy.data.texts[script].as_string(), localFuncs)
-            if "decay" in localFuncs:
-                decayFunc = localFuncs['decay']
-            if "getInitialLabel" in localFuncs:
-                getInitialLabelFunc = localFuncs['getInitialLabel']
-            if "mixLabels" in localFuncs:
-                mixLabelsFunc = localFuncs['mixLabels']
-            if "labelToColor" in localFuncs:
-                labelToColorFunc = localFuncs['labelToColor']
-
-        simulateColors(anim_functions.labelControllerDict[bpy.context.scene.pam_anim_simulation])
-
-    elif method == 'MASK':
-        if bpy.context.scene.pam_anim_material.mixColors:
-            simulateColors(initialLabelsFunc = anim_functions.getInitialLabelMask)
-        else:
-            simulateColorsByMask()
-
+    simulateColors(anim_functions.labelControllerDict[bpy.context.scene.pam_anim_simulation])
 
 class ClearPamAnimOperator(bpy.types.Operator):
     """Clear Animation"""
@@ -757,7 +714,7 @@ class GenerateOperator(bpy.types.Operator):
             animateNeuronSpiking()
 
         # Colorize spikes:
-        if bpy.context.scene.pam_anim_material.colorizingMethod != 'NONE':
+        if bpy.context.scene.pam_anim_material.simulate_colors is True:
             logger.info("Colorizing animation")
             colorizeAnimation()
         

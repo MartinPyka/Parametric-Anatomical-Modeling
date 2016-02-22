@@ -158,9 +158,11 @@ class PamAnimLayerPane(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_context = "objectmode"
-    bl_label = "Layer colors"
+    bl_label = "Color Simulation"
     bl_category = "PAM Animate"
 
+    def draw_header(self, context):
+        self.layout.prop(context.scene.pam_anim_material, "simulate_colors", text = "")
     def draw(self, context):
         layout = self.layout
 
@@ -168,33 +170,9 @@ class PamAnimLayerPane(bpy.types.Panel):
 
         row = layout.row()
 
-        animOp = context.scene.pam_anim_animation
-        row.template_list("LayerSelectionList", "", animOp, "layerCollection", animOp, "activeLayerIndex")
-
-        col = row.column()
-        col.operator("pam_anim.update_available_layers", icon = "FILE_REFRESH")
-
-        row = layout.row()
         row.prop(context.scene, "pam_anim_simulation")
 
         anim_functions.labelControllerDict[context.scene.pam_anim_simulation].draw(layout, context)
-
-        if options.colorizingMethod == 'SIMULATE':
-            row = layout.row()
-            row.prop_search(options, "script", bpy.data, "texts")
-
-        elif options.colorizingMethod == 'MASK':
-            row = layout.row()
-            row.prop(options, "mixColors")
-            
-            row = layout.row()
-            row.prop_search(options, "maskObject", bpy.data, "objects")
-
-            row = layout.row()
-            row.prop(options, "insideMaskColor")
-
-            row = layout.row()
-            row.prop(options, "outsideMaskColor")
 
         row = layout.row()
         row.operator("pam_anim.recolor_spikes")

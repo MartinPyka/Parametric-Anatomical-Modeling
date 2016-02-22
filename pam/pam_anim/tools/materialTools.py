@@ -13,26 +13,9 @@ class MaterialProperty(bpy.types.PropertyGroup):
         default='DEFAULT'
     )
 
-    colorizingMethod = bpy.props.EnumProperty(
-        name = "Colorization method",
-        items = (
-            ('NONE', 'No colorization', 'The object colors of the spikes will remain unchanged'),
-            ('LAYER', 'By layer', 'Gives each spike the color of its source layer'),
-            ('SIMULATE', 'By simulation', 'Tries to generate colors by simulating the spiking activity'),
-            ('MASK', 'Mask', 'Gives every spike originating from a neuron iside of a specified mask a given color')
-        ),
-        default = 'SIMULATE'
-    )
-
     pathMaterial = bpy.props.StringProperty(name="Path material", description = "Material applied to paths. Leave blank for no material.")
 
-    mixColors = bpy.props.BoolProperty(name = "Mix colors", default = True)
-
-    maskObject = bpy.props.StringProperty(name = "Mask")
-    insideMaskColor = bpy.props.FloatVectorProperty(name = "Spike color inside", default = (1.0, 0.0, 0.0, 1.0), subtype = 'COLOR', size = 4, min = 0.0, max = 1.0)
-    outsideMaskColor = bpy.props.FloatVectorProperty(name = "Spike color outside", default = (0.0, 1.0, 0.0, 1.0), subtype = 'COLOR', size = 4, min = 0.0, max = 1.0)
-
-    script = bpy.props.StringProperty(name = "Script")
+    simulate_colors = bpy.props.BoolProperty(name = "Simulate Colors", description = "When checked, simulates color labels for the animation", default = True)
 
 
 # TODO(SK): Missing docstring

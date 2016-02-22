@@ -31,7 +31,7 @@ class LabelController():
 
     identifier = 'LabelController'
     name = 'RGB'
-    description = 'RGBs'
+    description = 'Creates random red and blue spikes and mixes them using RGB'
 
     properties = None
 
@@ -134,7 +134,7 @@ class MaskLabelController(LabelController):
 
     identifier = 'MaskLabelController'
     name = 'RGB Masked'
-    description = 'RGBs'
+    description = 'Creates one color inside a mask and mixes using RGB'
 
     class MaskProperties(bpy.types.PropertyGroup):
         maskObject = bpy.props.StringProperty(name = "Mask")
@@ -194,7 +194,7 @@ class HSVLabelController(LabelController):
     
     identifier = 'HSVLabelController'
     name = 'HSV'
-    description = 'RGBs'
+    description = 'Creates random red and green spikes and mixes them using HSV'
 
     def mixLabels(self, layerValue1, layerValue2):
         newValue = {"hue": 0.0, "saturation": 0.0, "value": 0.0}
@@ -285,7 +285,7 @@ class HSVMaskLabelController(HSVLabelController, MaskLabelController):
 
     identifier = 'HSVMaskLabelController'
     name = 'Masked HSV'
-    description = 'RGBs'
+    description = 'Creates colored spikes inside a mask and mixes them using HSV'
 
     def getInitialLabel(self, neuronGroupID, neuronID, neuronGroups):
         props = self.getProps(bpy.context)

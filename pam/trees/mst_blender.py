@@ -398,6 +398,8 @@ def register():
 def unregister():
     bpy.utils.unregister_class(MSTProperties)
     del bpy.types.Scene.mst_options
+    bpy.utils.unregister_class(MSTDendriteProperties)
+    del bpy.types.Scene.mst_dendrite_options
     bpy.utils.unregister_class(CreateMST)
     bpy.utils.unregister_class(MSTPanel)
     bpy.utils.unregister_class(CreateDendrites)

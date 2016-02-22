@@ -120,6 +120,13 @@ def unregister():
     mapping.unregister()
     gui.menus.unregister()
 
+    pam_anim.tools.animationTools.unregister()
+    pam_anim.tools.dataTools.unregister()
+    pam_anim.tools.materialTools.unregister()
+    pam_anim.tools.meshTools.unregister()
+
+    pam_anim.pam_anim.unregister()
+
     trees.unregister()
 
     bpy.utils.unregister_module(__name__)

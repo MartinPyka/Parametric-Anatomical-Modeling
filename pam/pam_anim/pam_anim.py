@@ -808,3 +808,4 @@ def unregister():
     bpy.utils.unregister_class(RecolorSpikesOperator)
     bpy.utils.unregister_class(ReadSimulationData)
     bpy.utils.unregister_class(GenerateNeuronSpikingTexture)
+    anim_functions.unregister()

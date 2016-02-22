@@ -4,17 +4,21 @@ import numpy
 from .. import pam
 from .. import mesh
 
-labelControllerDict = {}
-labelControllerList = []
+from collections import OrderedDict
+
+labelControllerDict = OrderedDict()
 
 def addLabelController(labelController):
     labelControllerDict[labelController.identifier] = labelController
-    labelControllerList.append(labelController)
-    bpy.types.Scene.pam_anim_simulation = bpy.props.EnumProperty(name = 'Simulation type', items = [(c.identifier, c.name, c.description) for c in labelControllerList])
+    bpy.types.Scene.pam_anim_simulation = bpy.props.EnumProperty(name = 'Simulation type', 
+        items = [(c.identifier, c.name, c.description) for c in reversed(list(labelControllerDict.values()))])
     
     if labelController.properties:
-        bpy.utils.register_class(labelController.properties)
-        setattr(bpy.types.Scene, labelController.identifier + '_props', bpy.props.PointerProperty(type=labelController.properties))
+        try:
+            bpy.utils.register_class(labelController.properties)
+        except ValueError:
+            pass
+        setattr(bpy.types.Scene, 'pam_anim_simulation_' + labelController.identifier + '_props', bpy.props.PointerProperty(type=labelController.properties))
 
 class LabelController():
     """Controls how the labels are changing during the animation.
@@ -35,10 +39,11 @@ class LabelController():
         self.tau = tau
 
     def draw(self, layout, context):
+        # props = self.getProps(context)
         pass
 
     def getProps(self, context):
-        return getattr(context.scene, self.identifier + '_props')
+        return getattr(context.scene, 'pam_anim_simulation_' + self.identifier + '_props')
 
     def mixLabels(self, layerValue1, layerValue2):
         """Function that is called when a spike hits a neuron and the two 
@@ -131,6 +136,25 @@ class MaskLabelController(LabelController):
     name = 'RGB Masked'
     description = 'RGBs'
 
+    class MaskProperties(bpy.types.PropertyGroup):
+        maskObject = bpy.props.StringProperty(name = "Mask")
+        insideMaskColor = bpy.props.FloatVectorProperty(name = "Spike color inside", default = (1.0, 0.0, 0.0, 1.0), subtype = 'COLOR', size = 4, min = 0.0, max = 1.0)
+        outsideMaskColor = bpy.props.FloatVectorProperty(name = "Spike color outside", default = (0.0, 1.0, 0.0, 1.0), subtype = 'COLOR', size = 4, min = 0.0, max = 1.0)
+
+    properties = MaskProperties
+
+    def draw(self, layout, context):
+        props = self.getProps(context)
+
+        row = layout.row()
+        row.prop_search(props, "maskObject", bpy.data, "objects")
+
+        row = layout.row()
+        row.prop(props, "insideMaskColor")
+
+        row = layout.row()
+        row.prop(props, "outsideMaskColor")
+
     def getInitialLabel(self, neuronGroupID, neuronID, neuronGroups):
         """Checks if a neuron is inside or outside of the mask, and returns
         a color label.
@@ -150,13 +174,15 @@ class MaskLabelController(LabelController):
         :return: The label for this spike
         :rtype:  dict
         """
-        maskObject = bpy.data.objects[bpy.context.scene.pam_anim_material.maskObject]
-        insideMaskColor = bpy.context.scene.pam_anim_material.insideMaskColor
-        outsideMaskColor = bpy.context.scene.pam_anim_material.outsideMaskColor
+        props = self.getProps(bpy.context)
+        maskObject = bpy.data.objects[props.maskObject]
+        insideMaskColor = props.insideMaskColor
+        outsideMaskColor = props.outsideMaskColor
         neuron_group = neuronGroups[neuronGroupID]
         layer_name = neuron_group[0]
         particle_system_name = neuron_group[1]
         particle = bpy.data.objects[layer_name].particle_systems[particle_system_name].particles[neuronID]
+        
         if mesh.checkPointInObject(maskObject, particle.location):
             return {"red": insideMaskColor[0], "green": insideMaskColor[1], "blue": insideMaskColor[2]}
         else:
@@ -254,31 +280,12 @@ class HSVLabelController(LabelController):
 
         return (rgb[0] + m, rgb[1] + m, rgb[2] + m, 1.0)
 
-class HSVMaskLabelController(HSVLabelController):
+class HSVMaskLabelController(HSVLabelController, MaskLabelController):
     """Masked version of HSVLabelController"""
 
     identifier = 'HSVMaskLabelController'
     name = 'Masked HSV'
     description = 'RGBs'
-
-    class MaskProperties(bpy.types.PropertyGroup):
-        maskObject = bpy.props.StringProperty(name = "Mask")
-        insideMaskColor = bpy.props.FloatVectorProperty(name = "Spike color inside", default = (1.0, 0.0, 0.0, 1.0), subtype = 'COLOR', size = 4, min = 0.0, max = 1.0)
-        outsideMaskColor = bpy.props.FloatVectorProperty(name = "Spike color outside", default = (0.0, 1.0, 0.0, 1.0), subtype = 'COLOR', size = 4, min = 0.0, max = 1.0)
-
-    properties = MaskProperties
-
-    def draw(self, layout, context):
-        props = self.getProps(context)
-
-        row = layout.row()
-        row.prop_search(props, "maskObject", bpy.data, "objects")
-
-        row = layout.row()
-        row.prop(props, "insideMaskColor")
-
-        row = layout.row()
-        row.prop(props, "outsideMaskColor")
 
     def getInitialLabel(self, neuronGroupID, neuronID, neuronGroups):
         props = self.getProps(bpy.context)
@@ -303,3 +310,13 @@ def register():
     addLabelController(MaskLabelController())
     addLabelController(HSVLabelController())
     addLabelController(HSVMaskLabelController())
+
+def unregister():
+    del bpy.types.Scene.pam_anim_simulation
+    for controller in labelControllerDict.values():
+        if controller.properties:
+            delattr(bpy.types.Scene, 'pam_anim_simulation_' + controller.identifier + '_props')
+            try:
+                bpy.utils.unregister_class(controller.properties)
+            except RuntimeError:
+                pass

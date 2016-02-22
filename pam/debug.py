@@ -108,7 +108,7 @@ def debugPostMapping(no_connection):
 
     logger.info("Checking post mapping " + str(model.MODEL.connections[no_connection]))
 
-    for i in range(0, len(layers[-1].particle_systems[neuronset2].particles)):
+    for i in range(0, con.post_layer.neuron_count):
         post_p3d, post_p2d, post_d = pam.computeMapping(layers[:(slayer - 1):-1],
                                                     connections[:(slayer - 1):-1],
                                                     distances[:(slayer - 1):-1],

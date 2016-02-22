@@ -15,7 +15,7 @@ class ClarityDetectorSettings(bpy.types.Panel):
         layout = self.layout   
         layout.prop(context.scene,"clarity_thread_count")
         layout.prop(context.scene,"clarity_max_block_size")
-        layout.operator("detector.launch")
+        layout.operator("neuron_detector.launch")
 		
 		
 		

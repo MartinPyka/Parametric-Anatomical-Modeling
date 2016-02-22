@@ -11,6 +11,7 @@ from . import model
 from . import colormaps
 from . import constants
 from . import mesh
+from . import connection_mapping
 
 logger = logging.getLogger(__package__)
 

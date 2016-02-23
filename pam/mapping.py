@@ -512,7 +512,7 @@ class PAMLoadAndSyncMapping(bpy.types.Operator, bpy_extras.io_utils.ImportHelper
 class PAMMappingVisibility(bpy.types.Operator):
     """Make only objects involved in this mapping visible. Hides every other object that is set to be selectable."""
     bl_idname = "pam.mapping_visibility"
-    bl_label = "Make objects visible"
+    bl_label = "Make mapping objects visible"
     bl_description = "Make only objects involved in this mapping visible"
     bl_options = {"UNDO"}
 
@@ -536,6 +536,71 @@ class PAMMappingVisibility(bpy.types.Operator):
         
         for obj in layers:
             obj.hide = False
+
+        bpy.context.scene.objects.active = layers[0]    #set presynaptic object active
+        layers[0].select = True
+            
+        return {'FINISHED'}
+
+class PAMMappingVisibilityPart(bpy.types.Operator):
+    """Make only objects involved in this mapping that have particle systems visible. Hides every other object that is set to be selectable."""
+    bl_idname = "pam.mapping_visibility_part"
+    bl_label = "Make mapping objects with paricles visible"
+    bl_description = "Make only objects involved in this mapping that have particle systems visible"
+    bl_options = {"UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        set = bpy.context.scene.pam_mapping.sets[bpy.context.scene.pam_mapping.active_set]
+        
+        layers = []
+        
+        for i, layer in enumerate(set.layers):
+            layers.append(bpy.data.objects[layer.object])
+            
+        bpy.ops.object.select_all(action='DESELECT')
+            
+        for obj in bpy.data.objects:
+            if not obj.hide_select:
+                obj.hide  = True
+        
+        for obj in layers:
+            if len(obj.particle_systems) > 0:
+                obj.hide = False
+
+        bpy.context.scene.objects.active = layers[0]    #set presynaptic object active
+        layers[0].select = True
+            
+        return {'FINISHED'}
+
+class PAMMappingVisibilityAll(bpy.types.Operator):
+    """Make all objects that have particle systems visible. Hides every other object that is set to be selectable."""
+    bl_idname = "pam.mapping_visibility_all"
+    bl_label = "Make objects with particles visible"
+    bl_description = "Make all objects that have particle systems visible"
+    bl_options = {"UNDO"}
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        set = bpy.context.scene.pam_mapping.sets[bpy.context.scene.pam_mapping.active_set]
+        
+        layers = []
+        
+        for i, layer in enumerate(set.layers):
+            layers.append(bpy.data.objects[layer.object])
+            
+        bpy.ops.object.select_all(action='DESELECT')
+        for obj in bpy.data.objects:
+            if not obj.hide_select:
+                if len(obj.particle_systems) > 0:
+                    obj.hide = False
+                else:
+                    obj.hide  = True
 
         bpy.context.scene.objects.active = layers[0]    #set presynaptic object active
         layers[0].select = True

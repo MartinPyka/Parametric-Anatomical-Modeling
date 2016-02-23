@@ -61,6 +61,9 @@ class PAMMappingToolsPanel(bpy.types.Panel):
         sub.operator("pam.mapping_up", icon="TRIA_UP", text="")
         sub.operator("pam.mapping_down", icon="TRIA_DOWN", text="")
         sub.operator("pam.mapping_visibility", icon="RESTRICT_VIEW_OFF", text="")
+        sub.operator("pam.mapping_visibility_part", icon="PARTICLES", text="")
+        sub = col.column(align = True)
+        sub.operator("pam.mapping_visibility_all", icon="RESTRICT_VIEW_OFF", text="")
 
         active_set = None
 

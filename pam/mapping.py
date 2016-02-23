@@ -512,7 +512,7 @@ class PAMLoadAndSyncMapping(bpy.types.Operator, bpy_extras.io_utils.ImportHelper
 class PAMMappingVisibility(bpy.types.Operator):
     """Make only objects involved in this mapping visible. Hides every other object that is set to be selectable."""
     bl_idname = "pam.mapping_visibility"
-    bl_label = "Make mapping objects visible"
+    bl_label = "Make mapping objects visible. Hide others."
     bl_description = "Make only objects involved in this mapping visible"
     bl_options = {"UNDO"}
 
@@ -543,10 +543,10 @@ class PAMMappingVisibility(bpy.types.Operator):
         return {'FINISHED'}
 
 class PAMMappingVisibilityPart(bpy.types.Operator):
-    """Make only objects involved in this mapping that have particle systems visible. Hides every other object that is set to be selectable."""
+    """Make only objects involved in this mapping visible that have particles. Hides every other object that is set to be selectable."""
     bl_idname = "pam.mapping_visibility_part"
-    bl_label = "Make mapping objects with paricles visible"
-    bl_description = "Make only objects involved in this mapping that have particle systems visible"
+    bl_label = "Make mapping objects with paricles visible. Hide others"
+    bl_description = "Make only objects involved in this mapping visible that have particles"
     bl_options = {"UNDO"}
 
     @classmethod
@@ -577,10 +577,10 @@ class PAMMappingVisibilityPart(bpy.types.Operator):
         return {'FINISHED'}
 
 class PAMMappingVisibilityAll(bpy.types.Operator):
-    """Make all objects that have particle systems visible. Hides every other object that is set to be selectable."""
+    """Make all neuron objects visible. Hides every other object that is set to be selectable."""
     bl_idname = "pam.mapping_visibility_all"
-    bl_label = "Make objects with particles visible"
-    bl_description = "Make all objects that have particle systems visible"
+    bl_label = "Make neuron objects visible. Hide others"
+    bl_description = "Make all neuron objects visible. Hide others"
     bl_options = {"UNDO"}
     @classmethod
     def poll(cls, context):

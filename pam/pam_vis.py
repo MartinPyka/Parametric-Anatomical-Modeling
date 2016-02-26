@@ -413,6 +413,82 @@ def visualizeOneConnection(no_connection, pre_index, post_index, smoothing=0):
             if distances_post >= 0:
                 return visualizePath(pre_p3d + pre_path + post_path[::-1] + post_p3d[::-1], smoothing, material = material)
 
+def visualizeOneConnectionPre(no_connection, pre_index, smoothing=0):
+    """ Visualizes the connection up to the forking just before the synapse
+    :param no_connection: connection/mapping-id
+    :type no_connection: int
+    :param pre_index: index of pre-synaptic neuron
+    :type pre_index: int
+    :return: The created curve object
+    :rtype: bpy.types.Object
+    """
+    
+    con = model.MODEL.connections[no_connection]
+    layers = con.layers
+    slayer = con.synaptic_layer_index
+    connections = con.mapping_connections
+    distances = con.mapping_distances
+
+    synapses = model.CONNECTION_RESULTS[no_connection]['s'][pre_index]
+
+    material = bpy.data.materials.get(bpy.context.scene.pam_visualize.connection_material, None)
+
+    # path of the presynaptic neuron to the synaptic layer
+    pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer + 1)],
+                                                 connections[0:slayer],
+                                                 distances[0:slayer],
+                                                 con.pre_layer.getNeuronPosition(pre_index))
+
+    return visualizePath(pre_p3d, smoothing, material = material)
+    
+def visualizeOneConnectionPost(no_connection, pre_index, post_index, smoothing=0):
+    """ Visualizes only the part of a connection, where the connection starts to fork to the given post-neuron
+    :param no_connection: connection/mapping-id
+    :type no_connection: int
+    :param pre_index: index of pre-synaptic neuron
+    :type pre_index: int
+    :param post_index: index of post-synaptic neuron
+    :type post_index: int
+    :return: The created curve object
+    :rtype: bpy.types.Object
+    """
+
+    where_list = numpy.where(model.CONNECTION_RESULTS[no_connection]['c'][pre_index] == post_index)[0]
+    if len(where_list)==0:
+        return None
+    post_list_index = where_list[0]
+    
+    con = model.MODEL.connections[no_connection]
+    layers = con.layers
+    slayer = con.synaptic_layer_index
+    connections = con.mapping_connections
+    distances = con.mapping_distances
+
+    synapses = model.CONNECTION_RESULTS[no_connection]['s'][pre_index]
+
+    material = bpy.data.materials.get(bpy.context.scene.pam_visualize.connection_material, None)
+
+    # path of the presynaptic neuron to the synaptic layer
+    pre_p3d, pre_p2d, pre_d = pam.computeMapping(layers[0:(slayer + 1)],
+                                                 connections[0:slayer],
+                                                 distances[0:slayer],
+                                                 con.pre_layer.getNeuronPosition(pre_index))
+
+    post_p3d, post_p2d, post_d = pam.computeMapping(layers[:(slayer - 1):-1],
+                                                    connections[:(slayer - 1):-1],
+                                                    distances[:(slayer - 1):-1],
+                                                    con.post_layer.getNeuronPosition(post_index))
+    if synapses is None:
+        return visualizePath(post_p3d[::-1], smoothing, material = material)
+    else:
+        distances_pre, pre_path = pam.computeDistanceToSynapse(
+            layers[slayer - 1], layers[slayer], pre_p3d[-1], mathutils.Vector(synapses[post_list_index]), distances[slayer - 1])
+        if distances_pre >= 0:
+            distances_post, post_path = pam.computeDistanceToSynapse(
+                layers[slayer + 1], layers[slayer], post_p3d[-1], mathutils.Vector(synapses[post_list_index]), distances[slayer])
+            if distances_post >= 0:
+                return visualizePath(pre_path + post_path[::-1] + post_p3d[::-1], smoothing, material = material)
+
 
 def visualizeNeuronSpread(connections, neuron):
     """Visualize for a collection of connections, the post-synaptic targets

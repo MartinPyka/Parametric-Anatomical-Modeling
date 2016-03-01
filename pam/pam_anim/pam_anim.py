@@ -20,7 +20,6 @@ import logging
 logger = logging.getLogger(__package__)
 
 # CONSTANTS
-TAU = 60
 DEFAULT_MAT_NAME = "SpikeMaterial"
 
 PATHS_GROUP_NAME = "PATHS"
@@ -28,6 +27,7 @@ SPIKE_GROUP_NAME = "SPIKES"
 
 SPIKE_OBJECTS = {}
 CURVES = {}
+CURVES_PRE = {}
 TIMING_COLORS = []
 
 class ConnectionCurve:
@@ -44,6 +44,7 @@ class ConnectionCurve:
 
     def __init__(self, connectionID, sourceNeuronID, targetNeuronID, timeLength):
         self.curveObject = None
+        self.curvePre = None
         self.timeLength = timeLength
         self.connectionID = connectionID
         self.sourceNeuronID = sourceNeuronID
@@ -55,7 +56,7 @@ class ConnectionCurve:
         This function calls visualizeOneConnection with it's IDs and saves the generated object in curveObject
         """
         try:
-            self.curveObject = pam_vis.visualizeOneConnection(self.connectionID, self.sourceNeuronID, self.targetNeuronID, 
+            self.curveObject = pam_vis.visualizeOneConnectionPost(self.connectionID, self.sourceNeuronID, self.targetNeuronID, 
                 bpy.context.scene.pam_visualize.smoothing)
             self.curveObject.name = "curve.%d_%d_%d" % (self.connectionID, self.sourceNeuronID, self.targetNeuronID)
             bpy.data.groups[PATHS_GROUP_NAME].objects.link(self.curveObject)
@@ -63,11 +64,55 @@ class ConnectionCurve:
             self.curveObject.data.resolution_u = bpy.context.scene.pam_anim_mesh.path_bevel_resolution
             frameLength = timeToFrames(self.timeLength)
 
-            setAnimationSpeed(self.curveObject.data, frameLength)
-            self.curveObject.data["timeLength"] = frameLength
+            # setAnimationSpeed(self.curveObject.data, frameLength)
+            # self.curveObject.data["timeLength"] = frameLength
         except Exception as e:
             logger.info(traceback.format_exc())
-            logger.error("Failed to visualize connection " + str((self.connectionID, self.sourceNeuronID, self.targetNeuronID)))
+            logger.error("Failed to visualize post connection " + str((self.connectionID, self.sourceNeuronID, self.targetNeuronID)))
+
+class ConnectionCurvePre:
+    def __init__(self, connectionID, sourceNeuronID, timeLength):
+        self.curveObject = None
+        self.connectionID = connectionID
+        self.sourceNeuronID = sourceNeuronID
+        self.curves_post = []
+        self.timeLength = timeLength
+
+    def visualize(self):
+        try:
+            self.curveObject = pam_vis.visualizeOneConnectionPre(self.connectionID, self.sourceNeuronID)
+            self.curveObject.name = "curve.%d_%d_pre" % (self.connectionID, self.sourceNeuronID)
+            bpy.data.groups[PATHS_GROUP_NAME].objects.link(self.curveObject)
+            
+            self.curveObject.data.resolution_u = bpy.context.scene.pam_anim_mesh.path_bevel_resolution
+
+            dist_mean = 0.0
+            for curve_post in self.curves_post:
+                curve_post.visualize()
+                dist_mean += pam_vis.calculatePathLength(curve_post.curveObject)
+            dist_mean /= len(self.curves_post)
+
+            self.curveObject = pam_vis.visualizeOneConnectionPre(self.connectionID, self.sourceNeuronID, 
+                bpy.context.scene.pam_visualize.smoothing)
+            dist_pre = pam_vis.calculatePathLength(self.curveObject)
+
+            fork_percent = dist_pre / (dist_pre + dist_mean)
+            fork_time = fork_percent * self.timeLength
+
+            frameLengthPre = timeToFrames(fork_time)
+            frameLengthPost = timeToFrames(self.timeLength - fork_time)
+
+            self.post_delay = fork_time
+
+            for curve_post in self.curves_post:
+                setAnimationSpeed(curve_post.curveObject.data, frameLengthPost)
+                curve_post.curveObject.data["timeLength"] = frameLengthPost
+
+            self.curveObject.data["timeLength"] = frameLengthPre
+            setAnimationSpeed(self.curveObject.data, frameLengthPre)
+        except Exception as e:
+            logger.info(traceback.format_exc())
+            logger.error("Failed to visualize pre connection " + str((self.connectionID, self.sourceNeuronID)))
 
 
 class SpikeObject:
@@ -84,8 +129,9 @@ class SpikeObject:
     :attribute int targetNeuronIndex: The index of the target neuron. Useful for maxConns.
     :attribute int timingID: The ID (line in the timing file) of the timing that has fired this neuron
     """
-    def __init__(self, connectionID, sourceNeuronID, targetNeuronID, targetNeuronIndex, timingID, curve, startTime):
+    def __init__(self, connectionID, sourceNeuronID, targetNeuronID, targetNeuronIndex, timingID, curve, curve_pre, startTime):
         self.curve = curve
+        self.curve_pre = curve_pre
         self.object = None
         self.color = (1.0, 1.0, 1.0, 1.0)
         self.startTime = startTime
@@ -95,6 +141,13 @@ class SpikeObject:
         self.targetNeuronID = targetNeuronID
         self.targetNeuronIndex = targetNeuronIndex
         self.timingID = timingID
+
+    def visualizeCurve(self):
+        if self.curve_pre.curveObject is None:
+            self.curve_pre.visualize()
+
+    def getDelay(self):
+        return self.curve_pre.post_delay
 
     def visualize(self, meshObject, orientationOptions = {'orientationType': 'NONE'}):
         """Generates an object for this spike
@@ -107,21 +160,21 @@ class SpikeObject:
             orientationType: {'NONE', 'OBJECT', 'FOLLOW'}
             orientationObject: bpy.types.Object, Only used for orientationType OBJECT
         """
-        if self.curve.curveObject is None:
-            self.curve.visualize()
+
+        self.visualizeCurve()
 
         if self.curve.curveObject is None:
-            logger.error("No curve object to attatch to for spike " + str((self.connectionID, self.sourceNeuronID, self.targetNeuronID, self.timingID)) + "!")
+            logger.error("No curve object to attatch to for spike " + self.__repr__() + "!")
             return
 
-        obj = bpy.data.objects.new("Spike_" + "_" + str(self.timingID) + "_" + str(self.connectionID) + "_" + str(self.sourceNeuronID) + "_" + str(self.targetNeuronID), meshObject.data)
+        obj = bpy.data.objects.new(self.__repr__(), meshObject.data)
         obj.color = self.color
 
         bpy.data.groups[SPIKE_GROUP_NAME].objects.link(obj)
 
         bpy.context.scene.objects.link(obj)
 
-        startTime = projectTimeToFrames(self.startTime)
+        startTime = projectTimeToFrames(self.startTime + self.getDelay())
 
         constraint = obj.constraints.new(type="FOLLOW_PATH")
         time = self.curve.curveObject.data["timeLength"]
@@ -131,16 +184,16 @@ class SpikeObject:
         startFrame = int(startTime)
 
         obj.hide = True
-        obj.keyframe_insert(data_path="hide", frame=startFrame - 2)
-        obj.hide = False
         obj.keyframe_insert(data_path="hide", frame=startFrame - 1)
+        obj.hide = False
+        obj.keyframe_insert(data_path="hide", frame=startFrame)
         obj.hide = True
         obj.keyframe_insert(data_path="hide", frame=math.ceil(startFrame + time))
 
         obj.hide_render = True
-        obj.keyframe_insert(data_path="hide_render", frame=startFrame - 2)
-        obj.hide_render = False
         obj.keyframe_insert(data_path="hide_render", frame=startFrame - 1)
+        obj.hide_render = False
+        obj.keyframe_insert(data_path="hide_render", frame=startFrame)
         obj.hide_render = True
         obj.keyframe_insert(data_path="hide_render", frame=math.ceil(startFrame + time))
 
@@ -154,6 +207,31 @@ class SpikeObject:
             orientConstraint.up_axis = "UP_Y"
 
         self.object = obj
+
+    def __repr__(self):
+        return "Spike" + "_" + str(self.timingID) + "_" + str(self.connectionID) + "_" + str(self.sourceNeuronID) + "_" + str(self.targetNeuronID)
+
+class SpikeObjectPre(SpikeObject):
+    def __init__(self, connectionID, sourceNeuronID, timingID, curve, startTime):
+        self.curve = curve
+        self.object = None
+        self.color = (1.0, 1.0, 1.0, 1.0)
+        self.startTime = startTime
+        self.spikeInfo = {}
+        self.connectionID = connectionID
+        self.sourceNeuronID = sourceNeuronID
+        self.timingID = timingID
+
+    def visualizeCurve(self):
+        if self.curve.curveObject is None:
+            self.curve.visualize()
+
+    def getDelay(self):
+        return 0
+
+    def __repr__(self):
+        return "Spike_Pre_" + str(self.timingID) + "_" + str(self.connectionID) + "_" + str(self.sourceNeuronID)
+
 
 def simulate():
     """Simulates all timings
@@ -188,10 +266,26 @@ def simulateTiming(timingID):
     c = model.CONNECTION_RESULTS
 
     for connectionID in connectionIDs:
+        # Pre synapse here
+        # Connection curves first?
+
+        curve_key = (connectionID[0], neuronID)
+        if curve_key not in CURVES_PRE:
+            curve_pre = ConnectionCurvePre(connectionID[0], neuronID, numpy.mean(data.DELAYS[connectionID[0]][neuronID]))
+            CURVES_PRE[curve_key] = curve_pre
+        else:
+            curve_pre = CURVES_PRE[curve_key]
+        at_least_one = False
         for index, i in enumerate(c[connectionID[0]]['c'][neuronID][:data.noAvailableConnections]):
             if i == -1 or data.DELAYS[connectionID[0]][neuronID][index] == 0:
                 continue
             simulateConnection(connectionID[0], neuronID, index, timingID)
+            at_least_one = True
+
+        if at_least_one:
+            # distance = data.DELAYS[connectionID][neuronID][targetNeuronIndex]
+            SPIKE_OBJECTS[(curve_key, timingID)] = SpikeObjectPre(connectionID[0], neuronID, timingID, curve_pre, fireTime)
+
 
 def simulateConnection(connectionID, sourceNeuronID, targetNeuronIndex, timingID):
     """Simulates a single connection at a specific timing
@@ -218,8 +312,18 @@ def simulateConnection(connectionID, sourceNeuronID, targetNeuronIndex, timingID
         curve = ConnectionCurve(connectionID, sourceNeuronID, targetNeuronID, distance)
         CURVES[curveKey] = curve
 
+    curve_key_pre = (connectionID, sourceNeuronID)
+    if curve_key_pre in CURVES_PRE:
+        curve_pre = CURVES_PRE[curve_key_pre]
+    else:
+        distance = data.DELAYS[connectionID][sourceNeuronID][targetNeuronIndex]
+        curve_pre = ConnectionCurvePre(connectionID, sourceNeuronID, numpy.mean(data.DELAYS[connectionID][sourceNeuronID]))
+        CURVES_PRE[curve_key_pre] = curve
+
+    curve_pre.curves_post.append(curve)
+
     fireTime = data.TIMINGS[timingID][2]
-    SPIKE_OBJECTS[(curveKey, timingID)] = SpikeObject(connectionID, sourceNeuronID, targetNeuronID, targetNeuronIndex, timingID, curve, fireTime)
+    SPIKE_OBJECTS[(curveKey, timingID)] = SpikeObject(connectionID, sourceNeuronID, targetNeuronID, targetNeuronIndex, timingID, curve, curve_pre, fireTime)
 
 def simulateColorsByLayer(source = "MATERIAL"):
     """Gives each spike the color of its source layer
@@ -334,6 +438,11 @@ def simulateColors(labelController = None):
         TIMING_COLORS[timingID] = color
         anim_spikes.setNeuronColorKeyframe(neuronID, neuronGroupID, fireTime, color)
         for connectionID in connectionIDs:
+            obj = SPIKE_OBJECTS[((connectionID[0], neuronID), timingID)]
+            if obj.object:
+                obj.object.color = color
+                obj.object['spiking_labels'] = str(layerValuesDecay)
+
             for index, i in enumerate(c[connectionID[0]]["c"][neuronID][:data.noAvailableConnections]):
                 if i == -1 or ((connectionID[0], neuronID, i), timingID) not in SPIKE_OBJECTS:
                     continue
@@ -395,6 +504,7 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
     logger.info("Generating " + str(total) + " objects")
 
     wm.progress_begin(0, 100)
+
     for (key, spike) in SPIKE_OBJECTS.items():
         i += 1
 
@@ -415,7 +525,7 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
         if random.random() > showPercent / 100.0:
             continue
 
-        logger.info("Generating spike " + str(i) + "/" + str(total) + ": " + str((spike.timingID, spike.connectionID, spike.sourceNeuronID, spike.targetNeuronID)))
+        logger.info("Generating spike " + str(i) + "/" + str(total) + ": " + str(spike))
         spike.visualize(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh], bpy.context.scene.pam_anim_mesh)
 
 

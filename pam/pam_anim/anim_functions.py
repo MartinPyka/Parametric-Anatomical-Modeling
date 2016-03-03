@@ -11,7 +11,8 @@ labelControllerDict = OrderedDict()
 def addLabelController(labelController):
     labelControllerDict[labelController.identifier] = labelController
     bpy.types.Scene.pam_anim_simulation = bpy.props.EnumProperty(name = 'Simulation type', 
-        items = [(c.identifier, c.name, c.description) for c in reversed(list(labelControllerDict.values()))])
+        items = [(c.identifier, c.name, c.description) for c in reversed(list(labelControllerDict.values()))],
+        default = 'LabelController')
     
     if labelController.properties:
         try:

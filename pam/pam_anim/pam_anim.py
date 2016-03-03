@@ -78,41 +78,53 @@ class ConnectionCurvePre:
         self.curves_post = []
         self.timeLength = timeLength
 
-    def visualize(self):
-        try:
-            self.curveObject = pam_vis.visualizeOneConnectionPre(self.connectionID, self.sourceNeuronID)
-            self.curveObject.name = "curve.%d_%d_pre" % (self.connectionID, self.sourceNeuronID)
-            bpy.data.groups[PATHS_GROUP_NAME].objects.link(self.curveObject)
-            
-            self.curveObject.data.resolution_u = bpy.context.scene.pam_anim_mesh.path_bevel_resolution
+    def visualize(self, max_connections = 0):
+        
+        max_connections = max_connections or len(self.curves_post)
+        max_connections = min(max_connections, len(self.curves_post))
 
-            dist_mean = 0.0
-            for curve_post in self.curves_post:
-                curve_post.visualize()
+        dist_mean = 0.0
+        count = 0
+        for curve_post in self.curves_post[:max_connections]:
+            curve_post.visualize()
+            if curve_post.curveObject:
+                count += 1
                 dist_mean += pam_vis.calculatePathLength(curve_post.curveObject)
-            dist_mean /= len(self.curves_post)
 
+        if count == 0:
+            return
+        dist_mean /= count
+        
+        try:
             self.curveObject = pam_vis.visualizeOneConnectionPre(self.connectionID, self.sourceNeuronID, 
                 bpy.context.scene.pam_visualize.smoothing)
-            dist_pre = pam_vis.calculatePathLength(self.curveObject)
-
-            fork_percent = dist_pre / (dist_pre + dist_mean)
-            fork_time = fork_percent * self.timeLength
-
-            frameLengthPre = timeToFrames(fork_time)
-            frameLengthPost = timeToFrames(self.timeLength - fork_time)
-
-            self.post_delay = fork_time
-
-            for curve_post in self.curves_post:
-                setAnimationSpeed(curve_post.curveObject.data, frameLengthPost)
-                curve_post.curveObject.data["timeLength"] = frameLengthPost
-
-            self.curveObject.data["timeLength"] = frameLengthPre
-            setAnimationSpeed(self.curveObject.data, frameLengthPre)
         except Exception as e:
             logger.info(traceback.format_exc())
             logger.error("Failed to visualize pre connection " + str((self.connectionID, self.sourceNeuronID)))
+            return
+
+        self.curveObject.name = "curve.%d_%d_pre" % (self.connectionID, self.sourceNeuronID)
+        bpy.data.groups[PATHS_GROUP_NAME].objects.link(self.curveObject)
+        
+        self.curveObject.data.resolution_u = bpy.context.scene.pam_anim_mesh.path_bevel_resolution
+
+        dist_pre = pam_vis.calculatePathLength(self.curveObject)
+
+        fork_percent = dist_pre / (dist_pre + dist_mean)
+        fork_time = fork_percent * self.timeLength
+
+        frameLengthPre = timeToFrames(fork_time)
+        frameLengthPost = timeToFrames(self.timeLength - fork_time)
+
+        self.post_delay = fork_time
+
+        for curve_post in self.curves_post:
+            if curve_post.curveObject:
+                setAnimationSpeed(curve_post.curveObject.data, frameLengthPost)
+                curve_post.curveObject.data["timeLength"] = frameLengthPost
+
+        self.curveObject.data["timeLength"] = frameLengthPre
+        setAnimationSpeed(self.curveObject.data, frameLengthPre)
 
 
 class SpikeObject:
@@ -142,14 +154,14 @@ class SpikeObject:
         self.targetNeuronIndex = targetNeuronIndex
         self.timingID = timingID
 
-    def visualizeCurve(self):
+    def visualizeCurve(self, max_connections = 0):
         if self.curve_pre.curveObject is None:
-            self.curve_pre.visualize()
+            self.curve_pre.visualize(max_connections)
 
     def getDelay(self):
         return self.curve_pre.post_delay
 
-    def visualize(self, meshObject, orientationOptions = {'orientationType': 'NONE'}):
+    def visualize(self, meshObject, orientationOptions = {'orientationType': 'NONE'}, max_connections = 0):
         """Generates an object for this spike
 
         This function generates a curve object for it's connection if there is none.
@@ -161,7 +173,7 @@ class SpikeObject:
             orientationObject: bpy.types.Object, Only used for orientationType OBJECT
         """
 
-        self.visualizeCurve()
+        self.visualizeCurve(max_connections)
 
         if self.curve.curveObject is None:
             logger.error("No curve object to attatch to for spike " + self.__repr__() + "!")
@@ -222,9 +234,9 @@ class SpikeObjectPre(SpikeObject):
         self.sourceNeuronID = sourceNeuronID
         self.timingID = timingID
 
-    def visualizeCurve(self):
+    def visualizeCurve(self, max_connections = 0):
         if self.curve.curveObject is None:
-            self.curve.visualize()
+            self.curve.visualize(max_connections)
 
     def getDelay(self):
         return 0
@@ -438,11 +450,7 @@ def simulateColors(labelController = None):
         TIMING_COLORS[timingID] = color
         anim_spikes.setNeuronColorKeyframe(neuronID, neuronGroupID, fireTime, color)
         for connectionID in connectionIDs:
-            obj = SPIKE_OBJECTS[((connectionID[0], neuronID), timingID)]
-            if obj.object:
-                obj.object.color = color
-                obj.object['spiking_labels'] = str(layerValuesDecay)
-
+            at_least_one = False
             for index, i in enumerate(c[connectionID[0]]["c"][neuronID][:data.noAvailableConnections]):
                 if i == -1 or ((connectionID[0], neuronID, i), timingID) not in SPIKE_OBJECTS:
                     continue
@@ -450,10 +458,18 @@ def simulateColors(labelController = None):
                 if obj.object:
                     obj.object.color = color
                     obj.object['spiking_labels'] = str(layerValuesDecay)
+                at_least_one = True
 
                 # Queue an update to the connected neuron
                 updateTime = fireTime + d[connectionID[0]][neuronID][index]
                 heapq.heappush(neuronUpdateQueue, (updateTime, connectionID[2], i, layerValuesDecay))
+
+            if at_least_one:
+                obj = SPIKE_OBJECTS[((connectionID[0], neuronID), timingID)]
+                if obj.object:
+                    obj.object.color = color
+                    obj.object['spiking_labels'] = str(layerValuesDecay)
+
 
 def simulateColorsByMask():
     """Paints all spikes originating from a neuron inside of a mask in a different color
@@ -515,7 +531,7 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
         if startFrame < frameStart or startFrame > frameEnd:
             continue
 
-        if maxConns > 0 and spike.targetNeuronIndex > maxConns:
+        if maxConns > 0 and getattr(spike, "targetNeuronIndex", 0) > maxConns:
             continue
 
         if connectionIndicesFilter is not None and not connectionIndicesFilter[spike.connectionID]:
@@ -526,7 +542,7 @@ def generateAllTimings(frameStart = 0, frameEnd = 250, maxConns = 0, showPercent
             continue
 
         logger.info("Generating spike " + str(i) + "/" + str(total) + ": " + str(spike))
-        spike.visualize(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh], bpy.context.scene.pam_anim_mesh)
+        spike.visualize(bpy.data.objects[bpy.context.scene.pam_anim_mesh.mesh], bpy.context.scene.pam_anim_mesh, max_connections = maxConns)
 
 
     wm.progress_end()
@@ -555,8 +571,10 @@ def clearVisualization():
     pam_vis.vis_objects = 0
 
     global CURVES
+    global CURVES_PRE
     global SPIKE_OBJECTS
     CURVES.clear()
+    CURVES_PRE.clear()
     SPIKE_OBJECTS.clear()
 
 def setAnimationSpeed(curve, animationSpeed):

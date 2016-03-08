@@ -32,7 +32,7 @@ CURVES_PRE = {}
 TIMING_COLORS = []
 
 class ConnectionCurve:
-    """Class for holding connection information
+    """Class for holding connection information for a post connection
 
     :attribute bpy.types.Object curveObject: The object generated for this curve. 
         May be None if object hasn't been generated.
@@ -54,7 +54,9 @@ class ConnectionCurve:
     def visualize(self):
         """Generates this curve as an object
 
-        This function calls visualizeOneConnection with it's IDs and saves the generated object in curveObject
+        This function calls visualizeOneConnection with it's IDs and saves the generated object in curveObject.
+        If the pre-curve has not been generated yet, the pre-curve will be generated and this curve will be used 
+        for the fork time calculation.
         """
         try:
             self.curveObject = pam_vis.visualizeOneConnectionPost(self.connectionID, self.sourceNeuronID, self.targetNeuronID, 
@@ -76,6 +78,16 @@ class ConnectionCurve:
             logger.error("Failed to visualize post connection " + str((self.connectionID, self.sourceNeuronID, self.targetNeuronID)))
 
 class ConnectionCurvePre:
+    """Class for holding connection information for a pre connection
+
+    :attribute bpy.types.Object curveObject: The object generated for this curve. 
+        May be None if object hasn't been generated.
+    :attribute float timeLength: The duration in ms how long a spike needs to 
+        get to the end of the curve        
+    :attribute int connectionID: The ID of the connection between two neuron groups
+    :attribute int sourceNeuronID: The ID of the source neuron in the firing neuron group
+    :attribute double post_delay: The delay a post spike has to start with
+    """
     def __init__(self, connectionID, sourceNeuronID, timeLength):
         self.curveObject = None
         self.connectionID = connectionID
@@ -84,6 +96,12 @@ class ConnectionCurvePre:
         self.timeLength = timeLength
 
     def visualize(self, post_curve):
+        """This visualizes the Pre-connection of a given post-connection. 
+        The Post-connection is used to calculate the animation timing and 
+        the time the spike forks.
+        :param post_curve: The post curve object, to calculate the distance
+        :type post_curve: bpy.types.Object or bpy.types.Curve
+        """
         
         dist_post = pam_vis.calculatePathLength(post_curve)
         
@@ -106,14 +124,8 @@ class ConnectionCurvePre:
         fork_time = fork_percent * self.timeLength
 
         frameLengthPre = timeToFrames(fork_time)
-        frameLengthPost = timeToFrames(self.timeLength - fork_time)
-
+        
         self.post_delay = fork_time
-
-        # for curve_post in self.curves_post:
-        #     if curve_post.curveObject:
-        #         setAnimationSpeed(curve_post.curveObject.data, frameLengthPost)
-        #         curve_post.curveObject.data["timeLength"] = frameLengthPost
 
         self.curveObject.data["timeLength"] = frameLengthPre
         setAnimationSpeed(self.curveObject.data, frameLengthPre)
@@ -147,10 +159,12 @@ class SpikeObject:
         self.timingID = timingID
 
     def visualizeCurve(self):
+        """Visualize the curve if it is not already visualized"""
         if self.curve.curveObject is None:
             self.curve.visualize()
 
     def getDelay(self):
+        """Returns the forking delay for this spike (since it's a post spike)"""
         return self.curve_pre.post_delay
 
     def visualize(self, meshObject, orientationOptions = {'orientationType': 'NONE'}):
@@ -316,12 +330,7 @@ def simulateConnection(connectionID, sourceNeuronID, targetNeuronIndex, timingID
         CURVES[curveKey] = curve
 
     curve_key_pre = (connectionID, sourceNeuronID)
-    if curve_key_pre in CURVES_PRE:
-        curve_pre = CURVES_PRE[curve_key_pre]
-    else:
-        distance = data.DELAYS[connectionID][sourceNeuronID][targetNeuronIndex]
-        curve_pre = ConnectionCurvePre(connectionID, sourceNeuronID, numpy.mean(data.DELAYS[connectionID][sourceNeuronID]))
-        CURVES_PRE[curve_key_pre] = curve
+    curve_pre = CURVES_PRE[curve_key_pre]
 
     curve_pre.curves_post.append(curve)
     curve.curvePre = curve_pre
@@ -567,9 +576,11 @@ def clearVisualization():
     global CURVES
     global CURVES_PRE
     global SPIKE_OBJECTS
+    global SPIKE_OBJECTS_PRE
     CURVES.clear()
     CURVES_PRE.clear()
     SPIKE_OBJECTS.clear()
+    SPIKE_OBJECTS_PRE.clear()
 
 def setAnimationSpeed(curve, animationSpeed):
     """Set the animation speed of a Bezier-curve

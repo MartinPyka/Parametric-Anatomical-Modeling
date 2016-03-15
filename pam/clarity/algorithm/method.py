@@ -24,23 +24,28 @@ import time
 
 # bruteforce relabel in 3d
 def color_neuron(volume, x,y,z, id):
-    for offsetZ in [-1,1]:
+    for offsetZ in [-1,0,1]:
         for offsetY in [-1,0,1]:
             for offsetX in [-1,0,1]:
                 curZ = z+offsetZ
                 curY = y+offsetY
                 curX = x+offsetX
-                if not(volume[curZ][curY][curX] == 0) and not(volume[curZ][curY][curX] == id):
+                #if not(volume[curZ][curY][curX] == 0) and not(volume[curZ][curY][curX] == id):
                     #color_neuron(volume, curX, curY, curZ, id)
+                if not(volume[curZ][curY][curX] == 0):
                     volume[curZ][curY][curX] = id
 
 
 # this is not exactly the proposed method since the test data differs too much
-def example_method( imageStack ):
-    neurons = imageStack.copy( )
-    for imageNum in range(0,imageStack.shape[0]):
+def example_method( volume ):
+
+    print('Preprocess volume...')
+    label_offset = 0
+    for imageNum in range(0,volume.shape[0]):
+        print('Processing slice ' + str(imageNum+1) + '/' + str(volume.shape[0]))
+
         # difference of gaussian detects neuron blobs
-        image_dog = ndi.gaussian_filter(imageStack[imageNum], .5) - ndi.gaussian_filter(imageStack[imageNum], 1)
+        image_dog = ndi.gaussian_filter(volume[imageNum], .5) - ndi.gaussian_filter(volume[imageNum], 1)
 
         # remove background
         image = np.bitwise_and(image_dog>10, image_dog<240)
@@ -52,34 +57,53 @@ def example_method( imageStack ):
         image = segmentation.clear_border(neuron_mask)
 
         # first pass, label all areas (neurons) independently
-        neurons[imageNum] = measure.label(image)
+        volume[imageNum],offadd = measure.label(image, return_num=True)
 
-        # second pass, extract borders
-        #neuron_shapes = segmentation.find_boundaries(neurons,mode='inner').astype(np.uint8)
+        # adjust labels.....the slow way
+        for y in range(1,volume.shape[1]-1):
+            for x in range(1,volume.shape[2]-1):
+                if not(volume[imageNum][y][x] == 0):
+                    volume[imageNum][y][x] = volume[imageNum][y][x] + label_offset
+
+        # adjust label offset
+        label_offset = label_offset + offadd
+
+
+    #imsave('intermediate-1.tif',volume)
 
 
     # NOTE THIS CODE BELOW IS JUST FOR TESTING PURPOSES! THE PERFORMANCE IS ACTUALLY TERRIBLE!
 
-    # group neurons between layers together....the slow way
+    # group neurons between layers together....
     #TODO optimize this step
-    for z in range(1,neurons.shape[0]-1):
-        for y in range(1,neurons.shape[1]-1):
-            for x in range(1,neurons.shape[2]-1):
+    print('Connecting layers...')
+
+    for z in range(1,volume.shape[0]-1):
+        print('Processing slice ' + str(z) + '/' + str(volume.shape[0]-2))
+        for y in range(1,volume.shape[1]-1):
+            for x in range(1,volume.shape[2]-1):
                 # we got a neuron
-                if not(neurons[z][y][x] == 0):
-                    color_neuron(neurons,x,y,z,neurons[z][y][x])
+                if not(volume[z][y][x] == 0):
+                    color_neuron(volume,x,y,z,volume[z][y][x])
+
+
+    #imsave('intermediate-2.tif',volume)
 
     # get the neuron coordinates .. the slow way
     #TODO optimize this step
+    print('Extract neuron positions...')
+
     skipme = []
     positions = []
-    for z in range(1,neurons.shape[0]-1):
-        for y in range(1,neurons.shape[1]-1):
-            for x in range(1,neurons.shape[2]-1):
+    for z in range(1,volume.shape[0]-1):
+        print('Processing slice ' + str(z) + '/' + str(volume.shape[0]-2))
+
+        for y in range(1,volume.shape[1]-1):
+            for x in range(1,volume.shape[2]-2):
                 # skip background for the sake of performance
-                if not(neurons[z][y][x] == 0):
-                    if not(neurons[z][y][x] in skipme):
-                        skipme.append(neurons[z][y][x])
+                if not(volume[z][y][x] == 0):
+                    if not(volume[z][y][x] in skipme):
+                        skipme.append(volume[z][y][x])
                         positions.append((x,y,z))
 
     return positions
@@ -97,15 +121,13 @@ if( __name__ == "__main__"):
     # read a [available working memory size]/ 2 /[number of threads] mb box for each thread
     # this results in
     # remember to leave some overlapping regions!
-    imageStack = imread(args.input.name)
+    imageStack = imread(args.input.name).astype(np.uint16)
 
     start = time.time( )
     positions = example_method( imageStack )
     stop = time.time( )
     print("The current implementation took "+str(stop-start)+" seconds to finish.")
 
-    #imsave(args.output,neurons.astype(np.uint32))
-
     with open(args.output,'wb') as f:
-        coordWriter = csv.writer(f, delimiter=' ', quotechar='|')
+        coordWriter = csv.writer(f, delimiter=';')
         coordWriter.writerow(positions)

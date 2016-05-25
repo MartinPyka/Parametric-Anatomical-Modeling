@@ -180,8 +180,7 @@ def mapUVPointTo3d(obj_uv, uv_list, check_edges = False, cleanup=True):
 
     for i in point_indices:
         point = uv_list[i]
-        polygons = qtree.getPolygons(point)
-        for polygon in polygons:
+        for polygon in qtree.getPolygons(point):
             uvs = polygon[0]
             p3ds = polygon[1]
 

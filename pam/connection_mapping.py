@@ -40,7 +40,7 @@ def selectRandomPoint(obj):
                        obj.data.vertices[vert_inds[3]],
                        random.random(), random.random())
 
-    p, n, f = obj.closest_point_on_mesh(poi)
+    _, p, n, f = obj.closest_point_on_mesh(poi)
 
     return p, n, f
 

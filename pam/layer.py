@@ -66,7 +66,8 @@ class Layer2d(AbstractLayer):
 
     def closest_point_on_mesh(self, point):
         """Wrapper function for bpy.types.object.closest_point_on_mesh"""
-        return self._obj.closest_point_on_mesh(point)
+        _, p, n, f = self._obj.closest_point_on_mesh(point)
+        return p, n, f
 
     def raycast(self, origin, direction):
         """Wrapper function for bpy.types.object.raycast"""

@@ -48,13 +48,22 @@ Otherwise, normal-, Euclidean- and random-based mapping are available.
 Installation
 ------------
 
-1. Download the latest official release ([a complete list can be found here](https://github.com/MartinPyka/Parametric-Anatomical-Modeling/releases)) or get a snapshot of [this GIT repository](https://github.com/MartinPyka/Parametric-Anatomical-Modeling)
+Automatic installation: 
+  1. Download the [latest release](https://github.com/MartinPyka/Parametric-Anatomical-Modeling/releases) as a zip file
+  2. Open up the Add-on Preferences screen (File -> User Preferences -> Add-ons)
+  3. Click `Install from File` and choose the downloaded zip
+  4. Make sure the add-on is activated in the list of add-ons
+  5. Click `Save User Settings` to always load the add-on on startup
 
-2. Install the pam-folder as Add-On in Blender ([how to install an Add-On](http://wiki.blender.org/index.php/Doc:2.6/Manual/Extensions/Python/Add-Ons)). You can, for example, copy the pam-folder into the 2.X/scripts/addon-folder of your Blender version. If you downloaded the ZIP-file, you must only install the pam-folder as addon for Blender
+Manual installation:
+  1. Clone the [git repository](https://github.com/MartinPyka/Parametric-Anatomical-Modeling) to your computer
+  2. Copy the folder `pam` to Blenders add-on folder
+    - On Windows 7 and above, the add-on folder is located in `C:\Users\%username%\AppData\Roaming\Blender Foundation\Blender\2.7x\scripts\addons`
+    - On Linux, the add-on folder is located in `/home/$user/.config/blender/$version/scripts/addons`
+  3. Start up Blender and activate the add-on in the Add-on Preferences (File -> User Preferences -> Add-ons)
+  5. Click `Save User Settings` to always load the add-on on startup
 
-3. In Blender, go to preferences - addons, search for PAM and activate it (optionally click on 'Save Preferences')
-
-4. In the 3d view a new panel should appear on the left side, called "PAM". This panel contains function to load and save connectivity data and to visualize them.
+In the 3d view three new panels should appear on the left side, called "PAM Mapping", "PAM Modeling" and "PAM Animate. These panels contains functions to load and save connectivity data and to visualize them.
 
 
 Usage

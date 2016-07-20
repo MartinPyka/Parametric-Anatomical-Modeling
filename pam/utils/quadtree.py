@@ -36,17 +36,20 @@ class Quadtree_node:
 
     def getPolygons(self, point):
         """Gives a list of all polygons in the quadtree that may contain the point"""
-        p = point
-        if p[0] < self.left or p[0] > self.right or p[1] < self.top or p[1] > self.bottom:
-            return []
-        else:
-            result = list(self.polygons)
-            if all(self.children):
-                result.extend(self.children[0].getPolygons(p))
-                result.extend(self.children[1].getPolygons(p))
-                result.extend(self.children[2].getPolygons(p))
-                result.extend(self.children[3].getPolygons(p))
-            return result
+        node = self
+        while True:
+            for polygon in node.polygons:
+                yield polygon
+            if not node.children[0]:
+                break
+            if point[0] < node.children[0].right:
+                c = 0
+            else:
+                c = 1
+            if point[1] > node.children[0].bottom:
+                c += 2
+            node = node.children[c]
+        
 
 def buildQuadtree(depth = 2, left = 0.0, top = 0.0, right = 1.0, bottom = 1.0):
     """Builds a new quadtree recursively with the given depth."""

@@ -1,6 +1,3 @@
-[Official Website](http://parametric-anatomical-modeling.com/)
-===============================================================
-
 PAM (Parametric Anatomical Modeling)
 ====================================
 
@@ -82,16 +79,6 @@ Contribute
 PAM is continuously under development. Any support and active participation in the development of PAM is very much welcome.
 
 One long-term goal of our research is to structurally and functionally compare brain structures across different species using PAM. Therefore, we are looking for people who can assist us in creating the anatomical layout of brain structures and the projections of neurons across neural layers.
-
-Contact
--------
-
-Dr. Martin Pyka
-Mercator Research Group "Structure of Memory", Ruhr-University Bochum
-
-m.pyka at rub.de
-+49-234- 32 24682
-
 
 License
 -------

@@ -16,7 +16,7 @@ before_install:
   - sudo apt-get install blender
 
   - wget http://launchpadlibrarian.net/130794928/libc6_2.17-0ubuntu4_amd64.deb
-  - sudo dpkg -i libc6_2.17-0ubuntu4_amd64.deb
+  - sudo dpkg -i ipts libc6_2.17-0ubuntu5.1_i386.deb
   - rm libc6_2.17-0ubuntu5.1_i386.deb
 
 install:

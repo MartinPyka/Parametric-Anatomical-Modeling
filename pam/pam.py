@@ -84,7 +84,7 @@ def maskParticle(p_layer, p_index, mask_layer, distance=0.2):
     """
     result = []
     for i, p in enumerate(p_layer.particle_systems[p_index].particles):
-        l, n, f = mask_layer.closest_point_on_mesh(p.location)
+        l, n, f = mask_layer.closest_point_on_mesh(p.location)[1:]
         if (p.location - l).length < distance:
             result.append(i)
     return result
@@ -103,7 +103,7 @@ def distanceToMask(p_layer, p_index, particle_index, mask_layer):
 
     """
     p = p_layer.particle_systems[p_index].particles[particle_index]
-    l, n, f = mask_layer.closest_point_on_mesh(p.location)
+    l, n, f = mask_layer.closest_point_on_mesh(p.location)[1:]
     return (p.location - l).length
 
 
@@ -259,7 +259,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
         return compute_path_length(path), path
 
     elif dis == constants.DIS_UVjump:
-        i_3d = ilayer.closest_point_on_mesh(s_3d[0])[0]
+        i_3d = ilayer.closest_point_on_mesh(s_3d[0])[1]
         path = [p_3d]
         path = path + ilayer.interpolateUVTrackIn3D(p_3d, i_3d)
         path.append(i_3d)
@@ -273,7 +273,7 @@ def computeDistanceToSynapse(ilayer, slayer, p_3d, s_2d, dis):
         return compute_path_length(path), path
 
     elif dis == constants.DIS_UVnormal:
-        p, n, f = slayers.closest_point_on_mesh(s_3d[0])
+        _, p, n, f = slayers.closest_point_on_mesh(s_3d[1])
         t_3d = ilayer.map3dPointTo3d(layer, p, n)
         if t_3d is None:
             raise exceptions.MapUVError(slayer, dis, [p, n])
@@ -423,11 +423,13 @@ def computeConnectivity(con, create=True, threads = None):
     mapping_pre = connection_mapping.Mapping(layers_pre, connections_pre, distances_pre)
 
     num_particles = con.pre_layer.neuron_count
+    pstep = num_particles // 100 + 1
     for i in range(0, num_particles):
         random.seed(i + SEED)
         pre_p3d, pre_p2d, pre_d = mapping_pre.computeMapping(con.pre_layer.getNeuronPosition(i))
 
-        logger.info(str(round((i / num_particles) * 10000) / 100) + '%')
+        if not i % pstep:
+            logger.info(str(round((i / num_particles) * 10000) / 100) + '%')
 
         if pre_p3d is None:
             for j in range(0, len(conn[i])):
@@ -830,7 +832,7 @@ def initializeUVs():
                 try:
                     obj['uv_scaling'], _ = computeUVScalingFactor(obj)
                 except:
-                    logger.error('Could not creaet uv_scaling-factor for ' + obj.name)
+                    logger.error('Could not create uv_scaling-factor for ' + obj.name)
 
             ''' area size of each polygon '''
             p_areas = []

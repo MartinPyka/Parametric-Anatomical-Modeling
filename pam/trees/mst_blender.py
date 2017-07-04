@@ -361,7 +361,7 @@ class CreateDendrites(bpy.types.Operator):
 
         points = [(x.location[0], x.location[1], x.location[2]) for x in particle_system.particles]
 
-        normals = [bpy.data.objects[options.target_object].closest_point_on_mesh(x.location)[2] for x in particle_system.particles]
+        normals = [bpy.data.objects[options.target_object].closest_point_on_mesh(x.location)[1] for x in particle_system.particles]
 
         trees = createMultipleTrees(points, normals, context.scene.mst_options)
 

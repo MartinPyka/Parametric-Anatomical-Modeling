@@ -40,7 +40,7 @@ def selectRandomPoint(obj):
                        obj.data.vertices[vert_inds[3]],
                        random.random(), random.random())
 
-    p, n, f = obj.closest_point_on_mesh(poi)[1:]
+    p, n, f = obj.closest_point_on_mesh(poi)
 
     return p, n, f
 
@@ -145,7 +145,7 @@ def euclid_dis_uv_jump(self, p3d_n, layer, layer_next):
     self.p3d = self.p3d + layer.interpolateUVTrackIn3D(self.p3d[-1], p3d_t)
     self.p3d.append(p3d_n)
 def euclid_dis_normal_uv(self, p3d_n, layer, layer_next):
-    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])[1:]
+    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])
     p3d_t = layer_next.map3dPointTo3d(layer_next, p, n)
     if p3d_t is None:
         raise MappingException()
@@ -164,7 +164,7 @@ def euclid_dis_jump_uv_syn(self, p3d_n, layer, layer_next):
 def euclid_dis_uv_jump_syn(self, p3d_n, layer, layer_next):
     pass
 def euclid_dis_normal_uv_syn(self, p3d_n, layer, layer_next):
-    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])[1:]
+    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])
     p3d_t = layer_next.map3dPointTo3d(layer_next, p, n)
     if p3d_t is None:
         raise MappingException()
@@ -175,7 +175,7 @@ def euclid_dis_uv_normal_syn(self, p3d_n, layer, layer_next):
 """Normal Mapping"""
 def con_normal(self, layer, layer_next, dis_func):
     # compute normal on layer for the last point
-    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])[1:]
+    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])
     # determine new point
     p3d_n = layer_next.map3dPointTo3d(layer_next, p, n)
     # if there is no intersection, abort
@@ -236,13 +236,13 @@ def random_dis_uv_jump(self, p3d_n, layer, layer_next):
     self.p3d = self.p3d + layer.interpolateUVTrackIn3D(self.p3d[-1], p3d_t)
     self.p3d.append(p3d_n)
 def random_dis_normal_uv(self, p3d_n, layer, layer_next):
-    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])[1:]
+    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])
     p3d_t = layer_next.map3dPointTo3d(layer_next, p, n)
     self.p3d.append(p3d_t)
     self.p3d = self.p3d + layer_next.interpolateUVTrackIn3D(p3d_t, p3d_n)
     self.p3d.append(p3d_n)
 def random_dis_uv_normal(self, p3d_n, layer, layer_next):
-    p, n, f = layer_next.closest_point_on_mesh(p3d_n)[1:]
+    p, n, f = layer_next.closest_point_on_mesh(p3d_n)
     p3d_t = layer.map3dPointTo3d(layer, p, n)
     if p3d_t is None:
         raise MappingException()
@@ -260,7 +260,7 @@ def random_dis_jump_uv_syn(self, p3d_n, layer, layer_next):
 def random_dis_uv_jump_syn(self, p3d_n, layer, layer_next):
     pass
 def random_dis_normal_uv_syn(self, p3d_n, layer, layer_next):
-    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])[1:]
+    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])
     # determine new point
     p3d_t = layer_next.map3dPointTo3d(layer_next, p, n)
     if p3d_t is None:
@@ -289,7 +289,7 @@ def top_dis_uv_jump(self, p3d_n, layer, layer_next):
     self.p3d = self.p3d + layer.interpolateUVTrackIn3D(self.p3d[-1], p3d_t)
     self.p3d.append(p3d_n)
 def top_dis_normal_uv(self, p3d_n, layer, layer_next):
-    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])[1:]
+    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])
     p3d_t = layer_next.map3dPointTo3d(layer_next, p, n)
     if p3d_t is None:
         raise MappingException()
@@ -297,7 +297,7 @@ def top_dis_normal_uv(self, p3d_n, layer, layer_next):
     self.p3d = self.p3d + layer_next.interpolateUVTrackIn3D(p3d_t, p3d_n)
     self.p3d.append(p3d_n)
 def top_dis_uv_normal(self, p3d_n, layer, layer_next):
-    p, n, f = layer_next.closest_point_on_mesh(p3d_n)[1:]
+    p, n, f = layer_next.closest_point_on_mesh(p3d_n)
     p3d_t = layer.map3dPointTo3d(layer, p, n)
     if p3d_t is None:
         raise MappingException()
@@ -315,7 +315,7 @@ def top_dis_jump_uv_syn(self, p3d_n, layer, layer_next):
 def top_dis_uv_jump_syn(self, p3d_n, layer, layer_next):
     pass
 def top_dis_normal_uv_syn(self, p3d_n, layer, layer_next):
-    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])[1:]
+    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])
     # determine new point
     p3d_t = layer_next.map3dPointTo3d(layer_next, p, n)
     if p3d_t is None:
@@ -351,7 +351,7 @@ def uv_dis_uv_jump(self, p3d_n, layer, layer_next):
     self.p3d = self.p3d + layer.interpolateUVTrackIn3D(self.p3d[-1], p3d_t)
     self.p3d.append(p3d_n)
 def uv_dis_normal_uv(self, p3d_n, layer, layer_next):
-    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])[1:]
+    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])
     p3d_t = layer_next.map3dPointTo3d(layer_next, p, n)
     if p3d_t is None:
         raise MappingException()
@@ -359,7 +359,7 @@ def uv_dis_normal_uv(self, p3d_n, layer, layer_next):
     self.p3d = self.p3d + layer_next.interpolateUVTrackIn3D(p3d_t, p3d_n)
     self.p3d.append(p3d_n)
 def uv_dis_uv_normal(self, p3d_n, layer, layer_next):
-    p, n, f = layer_next.closest_point_on_mesh(p3d_n)[1:]
+    p, n, f = layer_next.closest_point_on_mesh(p3d_n)
     p3d_t = layer.map3dPointTo3d(layer, p, n)
     if p3d_t is None:
         raise MappingException()
@@ -376,7 +376,7 @@ def uv_dis_jump_uv_syn(self, p3d_n, layer, layer_next):
 def uv_dis_uv_jump_syn(self, p3d_n, layer, layer_next):
     pass
 def uv_dis_normal_uv_syn(self, p3d_n, layer, layer_next):
-    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])[1:]
+    p, n, f = layer.closest_point_on_mesh(self.p3d[-1])
     # determine new point
     p3d_t = layer_next.map3dPointTo3d(layer_next, p, n)
     if p3d_t is None:

@@ -35,7 +35,3 @@ docs/_build/
 
 # Blender versioning
 *.blend([0-9])+
-
-#IDE
-.idea
-

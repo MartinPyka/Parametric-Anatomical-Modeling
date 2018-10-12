@@ -11,6 +11,7 @@ from . import tools
 from . import mapping
 from . import pam_anim
 from . import trees
+from . import clarity
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +108,8 @@ def register():
     pam_anim.pam_anim.register()
 
     trees.register()
+	
+    clarity.register()
 
     bpy.utils.register_module(__name__)
     logger.debug("Register addon")
@@ -121,6 +124,8 @@ def unregister():
     gui.menus.unregister()
 
     trees.unregister()
+	
+    clarity.unregister()
 
     bpy.utils.unregister_module(__name__)
     logger.debug("Unregister addon")

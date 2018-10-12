@@ -109,7 +109,7 @@ class Mapping():
                 p3d_n = con_func(self, layer, layer_next, dis_func)
             except MappingException:
                 if self.debug:
-                    return p3d, i, None
+                    return self.p3d, i, None
                 else:
                     return None, None, None
 

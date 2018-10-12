@@ -48,7 +48,7 @@ def debugPreMapping(no_connection):
     :type no_connection: int"""
     rows, cols = numpy.where(model.CONNECTION_RESULTS[no_connection]['c'] == -1)
     neuronIDs = numpy.unique(rows)
-    logger.info("Checking pre mapping " + str(model.CONNECTIONS[no_connection][0][0].name) + " -> " + str(model.CONNECTIONS[no_connection][0][-1].name))
+    logger.info("Checking pre mapping " + str(model.MODEL.connections[no_connection]))
     if len(neuronIDs):
         logger.info(str(len(neuronIDs)) + " neurons unconnected")
         for neuronID in neuronIDs:
@@ -67,19 +67,19 @@ def debugPreNeuron(no_connection, pre_index):
     :type no_connection: int
     :param pre_index: The pre-index of the neuron
     :type pre_index: int"""
-    layers = model.CONNECTIONS[no_connection][0]
-    neuronset1 = model.CONNECTIONS[no_connection][1]
-    neuronset2 = model.CONNECTIONS[no_connection][2]
-    slayer = model.CONNECTIONS[no_connection][3]
-    connections = model.CONNECTIONS[no_connection][4]
-    distances = model.CONNECTIONS[no_connection][5]
+    
+    con = model.MODEL.connections[no_connection] 
+    layers = con.layers
+    slayer = con.synaptic_layer_index
+    connections = con.mapping_connections
+    distances = con.mapping_distances
 
     for s in range(2, (slayer + 1)):
         pre_p3d, pre_p2d, pre_d = pam.computeMapping(
             layers[0:s],
             connections[0:(s - 1)],
             distances[0:(s - 2)] + [constants.DIS_euclidUV],
-            layers[0].particle_systems[neuronset1].particles[pre_index].location,
+            con.pre_layer.getNeuronPosition(pre_index),
             debug=True
         )
         logger.info("Layer: " + layers[s-1].name)
@@ -97,22 +97,22 @@ def debugPostMapping(no_connection):
     using the debug mode of pam.computeMapping()
     :param no_connection: The connection index of the mapping
     :type no_connection: int"""
-    layers = model.CONNECTIONS[no_connection][0]
-    neuronset1 = model.CONNECTIONS[no_connection][1]
-    neuronset2 = model.CONNECTIONS[no_connection][2]
-    slayer = model.CONNECTIONS[no_connection][3]
-    connections = model.CONNECTIONS[no_connection][4]
-    distances = model.CONNECTIONS[no_connection][5]
+
+    con = model.MODEL.connections[no_connection] 
+    layers = con.layers
+    slayer = con.synaptic_layer_index
+    connections = con.mapping_connections
+    distances = con.mapping_distances
 
     neuronIDs = []
 
-    logger.info("Checking post mapping " + str(model.CONNECTIONS[no_connection][0][0].name) + " -> " + str(model.CONNECTIONS[no_connection][0][-1].name))
+    logger.info("Checking post mapping " + str(model.MODEL.connections[no_connection]))
 
-    for i in range(0, len(layers[-1].particle_systems[neuronset2].particles)):
+    for i in range(0, con.post_layer.neuron_count):
         post_p3d, post_p2d, post_d = pam.computeMapping(layers[:(slayer - 1):-1],
                                                     connections[:(slayer - 1):-1],
                                                     distances[:(slayer - 1):-1],
-                                                    layers[-1].particle_systems[neuronset2].particles[i].location)
+                                                    con.post_layer.getNeuronPosition(i))
         if post_p3d is None:
             neuronIDs.append(i)
     if len(neuronIDs):
@@ -134,17 +134,18 @@ def debugPostNeuron(no_connection, post_index):
     :type no_connection: int
     :param post_index: The post-index of the neuron
     :type post_index: int"""
-    layers = model.CONNECTIONS[no_connection][0]
-    neuronset1 = model.CONNECTIONS[no_connection][1]
-    neuronset2 = model.CONNECTIONS[no_connection][2]
-    slayer = model.CONNECTIONS[no_connection][3]
-    connections = model.CONNECTIONS[no_connection][4]
-    distances = model.CONNECTIONS[no_connection][5]
+
+    con = model.MODEL.connections[no_connection] 
+    layers = con.layers
+    slayer = con.synaptic_layer_index
+    connections = con.mapping_connections
+    distances = con.mapping_distances
+
     for s in range(len(layers) - 1, slayer, -1):
         post_p3d, post_p2d, post_d = pam.computeMapping(layers[:s-2:-1],
                                                         connections[:s-2:-1],
                                                         distances[:s-2:-1],
-                                                        layers[-1].particle_systems[neuronset2].particles[post_index].location,
+                                                        con.post_layer.getNeuronPosition(post_index),
                                                         debug = True)
         logger.info("Layer: " + str(s))
         logger.info("   post_p3d: " + str(post_p3d))
